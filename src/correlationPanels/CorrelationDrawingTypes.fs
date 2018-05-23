@@ -171,20 +171,22 @@ type LogNodeBoxType = SimpleBox | TwoColorBox | FancyBox
 type LogNode = {
   // TODO add id
     
-    label       : string
-    nodeType    : LogNodeType
-    level       : int //TODO think about this; performance vs interaction
-    lBoundary   : Border
-    uBoundary   : Border
-    children    : plist<LogNode>
+    label         : string
+    isSelected    : bool
+                  
+    nodeType      : LogNodeType
+    level         : int //TODO think about this; performance vs interaction
+    lBoundary     : Border
+    uBoundary     : Border
+    children      : plist<LogNode>
+                  
+    elevation     : float
+    range         : Rangef
+    logYPos       : float
+    logXPos       : float
 
-    elevation   : float
-    range       : Rangef
-    logYPos     : float
-    logXPos     : float
-
-    pos         : V3d
-    size        : V3d
+    pos           : V3d
+    size          : V3d
 }
 
 [<DomainType>]

@@ -9,7 +9,7 @@ open UtilitiesGUI
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module SemanticApp = 
-
+  let binarySerializer = MBrace.FsPickler.FsPickler.CreateBinarySerializer()
 
   type Action =
     | SetSemantic       of option<string>
@@ -192,7 +192,20 @@ module SemanticApp =
         }
       | _ -> model
 
-  ///// VIEW
+  let save (model : SemanticApp) =
+    let arr = binarySerializer.Pickle model.semantics
+    System.IO.File.WriteAllBytes("./semantics.save", arr);
+    printf "write file" 
+    model
+
+  let load (model : SemanticApp) =
+    let bytes = System.IO.File.ReadAllBytes("./semantics.save");
+    let semantics = binarySerializer.UnPickle(bytes)
+    printf "load file" 
+    {model with semantics = semantics
+                semanticsList = getSortedList semantics model.sortBy}
+
+  ///// VIEW //TODO modules
 
   let viewSemantics (model : MSemanticApp) = 
     let menu = 

@@ -272,8 +272,6 @@ module GeologicalLog =
         |> AList.toSeq // TODO check if OK
         |> Seq.sortByDescending (fun n -> Mod.force n.elevation)
 
-    
-
     let nodeViews =
       alist {
         for n in minLvlNodes do
@@ -281,7 +279,6 @@ module GeologicalLog =
           for it in v do
             yield it           
       }
-
     nodeViews  
 
   let view (model : MGeologicalLog) (semanticApp : MSemanticApp) (isSelected : bool)  =
@@ -293,24 +290,33 @@ module GeologicalLog =
         |> Seq.sortByDescending (fun n -> Mod.force n.elevation)
       
 
+     
+
     let nodeViews =
       alist {
         for n in minLvlNodes do
-          yield Incremental.ul (AttributeMap.ofList [clazz "ui inverted list"]) 
-                    (alist {
-                      let! v = (LogNode.View.Debug.debugView n semanticApp)
-                      for it in v do
-                        yield it
-                    })                      
+          yield 
+              Incremental.ul ([clazz  "ui inverted list"] |> AttributeMap.ofList) 
+                        (alist {
+                          let! v = (LogNode.View.Debug.debugView n semanticApp)
+                          for it in v do
+                            yield it
+                        })                      
+              
       }
 
 
-    nodeViews  
+    let attributes = 
+      match isSelected with
+        | true  -> [style "border: 2px solid orange"]
+        | false -> []
+      |> AttributeMap.ofList
+    Incremental.div attributes nodeViews  
 
     
 
 
-  let getLogConnectionSg 
+  let getLogConnectionSg //TODO connections wrong
         (model : MGeologicalLog) 
         (semanticApp : MSemanticApp) 
         (isSelected : bool) //TODO performance: IMod<bool>

@@ -10,19 +10,19 @@ module LogNode =
 
 
   let initialEmpty : LogNode = {
-    nodeType    = LogNodeType.Empty
-    label       = "log node"
-    level       = -1
-    lBoundary   = {point = V3d.OOO; anno = (Annotation.initial "-1")}
-    uBoundary   = {point = V3d.OOO; anno = (Annotation.initial "-1")}
-    children    = plist.Empty
-    elevation   = 0.0
-    range       = Rangef.init
-    logYPos     = 0.0
-    logXPos     = 0.0
-    pos         = V3d.OOO
-    size        = V3d.OOO
-
+    isSelected   = false
+    nodeType     = LogNodeType.Empty
+    label        = "log node"
+    level        = -1
+    lBoundary    = {point = V3d.OOO; anno = (Annotation.initial "-1")}
+    uBoundary    = {point = V3d.OOO; anno = (Annotation.initial "-1")}
+    children     = plist.Empty
+    elevation    = 0.0
+    range        = Rangef.init
+    logYPos      = 0.0
+    logXPos      = 0.0
+    pos          = V3d.OOO
+    size         = V3d.OOO
   }
 
 
@@ -31,21 +31,20 @@ module LogNode =
     ((lp, la) : (V3d * Annotation)) 
     (children : plist<LogNode>)
     (level    : int) : LogNode = {
-
-    nodeType    = LogNodeType.TopLevel
-    label       = "log node"
-    level       = level
-    lBoundary   = {point = lp; anno = la}
-    uBoundary   = {point = up; anno = ua}
-    children    = children
-    elevation   = (up.Length + lp.Length) * 0.5
-    range       = {Rangef.init with min = lp.Length
-                                    max = up.Length}
-    logYPos     = 0.0
-    logXPos     = 0.0
-    pos         = V3d.OOO
-    size        = V3d.OOO
-
+    isSelected    = false
+    nodeType      = LogNodeType.TopLevel
+    label         = "log node"
+    level         = level
+    lBoundary     = {point = lp; anno = la}
+    uBoundary     = {point = up; anno = ua}
+    children      = children
+    elevation     = (up.Length + lp.Length) * 0.5
+    range         = {Rangef.init with min = lp.Length
+                                      max = up.Length}
+    logYPos       = 0.0
+    logXPos       = 0.0
+    pos           = V3d.OOO
+    size          = V3d.OOO
   }
 
   // TODO add level
@@ -58,10 +57,11 @@ module LogNode =
 
   let intialMetric (anno : Annotation) (lower : Border) (upper : Border) =
     {initialEmpty with
-      nodeType    = LogNodeType.Metric
-      elevation   = Annotation.elevation anno
-      lBoundary   = lower
-      uBoundary   = upper}
+      nodeType     = LogNodeType.Metric
+      elevation    = Annotation.elevation anno
+      lBoundary    = lower
+      uBoundary    = upper
+    }
 
 
   let intialAngular (anno : Annotation) (lower : Border) (upper : Border)  =
@@ -73,7 +73,7 @@ module LogNode =
   /////////////////////
 
 
-
+  ////////////////////
   module View =
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -152,6 +152,7 @@ module LogNode =
                   for v in sv do
                     yield v 
                     let! xAxisPos = (xFunction model)
+                    
                     yield Incremental.Svg.svg
                             (AttributeMap.ofList [
                               attribute "x" (sprintf "%.2f" xAxisPos)

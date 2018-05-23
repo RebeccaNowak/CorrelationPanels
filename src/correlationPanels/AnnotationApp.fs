@@ -16,11 +16,13 @@ namespace CorrelationDrawing
       | DeselectAllPoints       
       | SelectPoints            of List<(V3d * string)>
 
+
     let initial : AnnotationApp = {
-      //annotations         = hmap.Empty
       annotations         = plist.Empty
       selectedAnnotation  = None
     }
+ 
+    let binarySerializer = MBrace.FsPickler.FsPickler.CreateBinarySerializer()
     
     let findAnnotation (app : AnnotationApp) (id : string) =
       app.annotations.FirstOrDefault((fun x -> x.id = id), Annotation.initialDummy)
@@ -64,6 +66,19 @@ namespace CorrelationDrawing
                   
           {model with annotations = updated}
 
+    let save (model : AnnotationApp) =
+      let arr = binarySerializer.Pickle model.annotations
+      //let info = System.IO.Directory.CreateDirectory "./saved"
+      //let success = info.Exists
+      System.IO.File.WriteAllBytes("./annotations.save", arr);
+      printf "write file" 
+      model
+
+    let load (model : AnnotationApp) =
+      let bytes = System.IO.File.ReadAllBytes("./annotations.save");
+      let annos = binarySerializer.UnPickle(bytes)
+      printf "load file" 
+      {model with annotations = annos}
     
  
     let view (model : MAnnotationApp)  (semanticApp : MSemanticApp)  =

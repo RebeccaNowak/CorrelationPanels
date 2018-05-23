@@ -10,6 +10,7 @@
     open Aardvark.UI
     open UtilitiesGUI
     open Aardvark.UI.Primitives
+    open Aardvark.Base.MultimethodTest
 
     type Action =
       | ToggleSelectLog of option<string>
@@ -74,9 +75,21 @@
               match sel with
                 | Some s  -> s = (logs.Item i).id
                 | None    -> false              
-            yield Incremental.Svg.svg (AttributeMap.ofList [
-                                        attribute "x" (sprintf "%i" (i * 250))
-                                      ]) (GeologicalLog.svgView (logs.Item i) semApp isSelected viewType)
+            let log = logs.Item i
+            let attributes =
+              match isSelected with
+                | true  -> [style "border: 2px solid yellow";]
+                | false -> []
+              @ [
+                  attribute "x" (sprintf "%i" (i * 250))
+                  onMouseClick (fun _ -> ToggleSelectLog (Some log.id))
+                ]
+              |> AttributeMap.ofList 
+            yield Incremental.Svg.svg 
+                    (
+                      attributes
+                    )   
+                    (GeologicalLog.svgView log semApp isSelected viewType)
         } 
       
    
@@ -142,12 +155,10 @@
               yield
                         div [clazz "item"][
                           div [clazz "content"] [
-                            div [clazz "header"; onMouseClick (fun _ -> ToggleSelectLog (Some log.id))] [
-                              Incremental.text log.label
+                            div [clazz "header"; style "text-align: center"; onMouseClick (fun _ -> ToggleSelectLog (Some log.id))] [
+                              i [clazz "yellow arrow alternate circle down icon"] [] |> UtilitiesGUI.wrapToolTip "select"
                             ]
-                            Incremental.div 
-                              (AttributeMap.ofList []) 
-                              (GeologicalLog.view log semApp isSelected)
+                            div [] [GeologicalLog.view log semApp isSelected]
                           ]
                         ]
                     

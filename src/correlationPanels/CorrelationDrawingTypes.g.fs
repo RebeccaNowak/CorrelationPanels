@@ -775,6 +775,7 @@ module Mutable =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.LogNode> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.LogNode>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.LogNode>
         let _label = ResetMod.Create(__initial.label)
+        let _isSelected = ResetMod.Create(__initial.isSelected)
         let _nodeType = ResetMod.Create(__initial.nodeType)
         let _level = ResetMod.Create(__initial.level)
         let _lBoundary = MBorder.Create(__initial.lBoundary)
@@ -788,6 +789,7 @@ module Mutable =
         let _size = ResetMod.Create(__initial.size)
         
         member x.label = _label :> IMod<_>
+        member x.isSelected = _isSelected :> IMod<_>
         member x.nodeType = _nodeType :> IMod<_>
         member x.level = _level :> IMod<_>
         member x.lBoundary = _lBoundary
@@ -806,6 +808,7 @@ module Mutable =
                 __current.Value <- v
                 
                 ResetMod.Update(_label,v.label)
+                ResetMod.Update(_isSelected,v.isSelected)
                 ResetMod.Update(_nodeType,v.nodeType)
                 ResetMod.Update(_level,v.level)
                 MBorder.Update(_lBoundary, v.lBoundary)
@@ -838,6 +841,12 @@ module Mutable =
                     override x.Get(r) = r.label
                     override x.Set(r,v) = { r with label = v }
                     override x.Update(r,f) = { r with label = f r.label }
+                }
+            let isSelected =
+                { new Lens<CorrelationDrawing.LogNode, System.Boolean>() with
+                    override x.Get(r) = r.isSelected
+                    override x.Set(r,v) = { r with isSelected = v }
+                    override x.Update(r,f) = { r with isSelected = f r.isSelected }
                 }
             let nodeType =
                 { new Lens<CorrelationDrawing.LogNode, CorrelationDrawing.LogNodeType>() with

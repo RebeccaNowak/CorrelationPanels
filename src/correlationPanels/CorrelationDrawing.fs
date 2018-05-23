@@ -98,34 +98,7 @@ module CorrelationDrawing =
                     let model = addPoint model semanticApp m
                     {model with working  = None
                                 draw     = false}
-                  | false -> addPoint model semanticApp m
-            //| DeselectAllPoints, _  -> 
-            //  {model with annotations = 
-            //                model.annotations 
-            //                  |> PList.map
-            //                      (fun a -> Annotation.update (Annotation.Action.Deselect) a)
-            //  }    
-            //| SelectPoints lst, false ->
-            //  let deselected = model.annotations 
-            //                    |> PList.map
-            //                        (fun a -> Annotation.update (Annotation.Action.Deselect) a)
-            //  let annoInList (a : Annotation) = 
-            //    lst 
-            //      |> List.map snd
-            //      |> List.contains a.id
-              
-            //  let updateFunction (anno : Annotation) =
-            //      match annoInList anno with
-            //          | true  -> 
-            //            let ind = lst.FirstIndexOf (fun (p, a) -> a = anno.id)
-            //            let (pt, a) = lst.Item ind
-            //            Annotation.update (Annotation.Action.Select pt) anno
-            //          | false -> anno
-            //  let updated = deselected |> PList.map updateFunction
-                  
-            //  {model with annotations = updated}
-              
-
+                  | false -> addPoint model semanticApp m             
             | KeyDown Keys.Enter, _ -> 
                   match model.working with
                     | Some w  ->
@@ -149,49 +122,7 @@ module CorrelationDrawing =
                     model
             | _ -> model
 
-    module UI =
-        open Aardvark.Base.Incremental    
-       
-        //let viewAnnotationTools (model:MCorrelationDrawingModel) (semanticApp : MSemanticApp) =  
-        //  [div [clazz "item"] 
-        //      [div [clazz "ui small right labeled input"] [
-        //              label [clazz "ui basic label"] [text "Geometry"]  // style "color:white"
-        //              Html.SemUi.dropDown model.geometry SetGeometry]];
-        //  div [clazz "item"] 
-        //      [div [clazz "ui small right labeled input"] [
-        //              label [clazz "ui basic label"] [text "Projections"]
-        //              Html.SemUi.dropDown model.projection SetProjection]]]
-
-
-
-        //let viewAnnotations (model : MCorrelationDrawingModel) (semanticApp : MSemanticApp) = 
-        //  let domList = 
-        //    alist {
-        //      for a in model.annotations do
-        //        let! annoView = (Annotation.View.view a semanticApp)
-        //        yield (tr 
-        //          ([style tinyPadding])
-        //          (List.map (fun x -> x |> UI.map AnnotationMessage) annoView)
-        //        )
-        //    }  
-        //  div [] [
-        //    div[clazz "ui compact horizontal inverted menu"; 
-        //        style "float:middle; vertical-align: middle"] 
-        //        (viewAnnotationTools model semanticApp)
-        //    Html.SemUi.accordion "Annotations" "File Outline" true [
-        //      table 
-        //        ([clazz "ui celled striped inverted table unstackable"; 
-        //          style "padding: 1px 5px 1px 5px"]) 
-        //        [thead [][tr[][th[][text "Semantic"];
-        //                              th[][text "Geometry"];
-        //                              th[][text "Projection"];
-        //                              th[][text "Text"]
-        //                  ]];
-        //        Incremental.tbody (AttributeMap.ofList []) domList]    
-        //    ]
-        //  ]
-          
-
+ 
     module Sg =        
         let computeScale (view : IMod<CameraView>) (p:IMod<V3d>) (size:float) =
             adaptive {
@@ -201,8 +132,6 @@ module CorrelationDrawing =
                 let distF = V3d.Dot(v.Forward, distV)
                 return distF * size / 800.0 //needs hfov at this point
             }
-        
-
 
             
         let makeBrushSg (hovered : IMod<Trafo3d option>) (color : IMod<C4b>) = //(size : IMod<float>)= 
@@ -210,15 +139,12 @@ module CorrelationDrawing =
                 hovered |> Mod.map (function o -> match o with 
                                                     | Some t-> t
                                                     | None -> Trafo3d.Scale(V3d.Zero))
-            Sg.sphereDyn (color) (Mod.constant 0.05) |> Sg.trafo(trafo) // TODO hardcoded stuff
+            Sg.sphereDyn (color) (Mod.constant 0.2) |> Sg.trafo(trafo) // TODO hardcoded stuff
        
         let view (model         : MCorrelationDrawingModel)
                  (semanticApp   : MSemanticApp) 
-                 (cam           : IMod<CameraView>)  =
-                 //(annotationSg  : ISg<Action>)
-                 //(additionalSg  : ISg<Action>) =             
+                 (cam           : IMod<CameraView>)  =           
 
-                
             let sgWorking = 
               model.working |> Mod.map (fun x ->
                 match x with
@@ -241,10 +167,7 @@ module CorrelationDrawing =
                   ]
               sgWorking
               makeBrushSg model.hoverPosition (SemanticApp.getColor semanticApp semanticApp.selectedSemantic);
-              //annotationSg;
-              //additionalSg;
-            ] //@ createAnnotationSgs semanticApp model.working cam
-            //|> Sg.ofList
+            ]
             
             
             
