@@ -5,16 +5,21 @@ Aardvark.Base.Incremental
 Aardvark.Base.FSharp
 
 Aardvark.Base.Rendering
+Aardvark.Application.WinForms.GL
 Aardvark.Application.Slim
 Aardvark.Application.Slim.GL
-Aardvark.Application.Slim.Vulkan
 Aardvark.SceneGraph
 Aardvark.SceneGraph.IO
+Aardvark.Rendering.Text
 
-#if __Media__
+Another.Unofficial.Xilium.CefGlue
+Another.Unofficial.Xilium.CefGlue.UnpackNativeDependencies
+Another.Unofficial.Xilium.CefGlue.WindowsForms
+
+Suave
+
 Aardvark.Service
 Aardvark.UI
 Aardvark.UI.Primitives
 Aardvark.Compiler.DomainTypes.MSBuild
 Aardium
-#endif

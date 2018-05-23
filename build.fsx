@@ -8,13 +8,13 @@ open Aardvark.Fake
 
 do Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 
-DefaultSetup.install ["src/__SOLUTION_NAME__.sln"]
+DefaultSetup.install ["src/pro3dExt.sln"]
 
 Target "Start" (fun() ->
     let param (p : DotNetCli.CommandParams) =
         { p with WorkingDir = Path.Combine("bin", "Release", "netcoreapp2.0") }
 
-    DotNetCli.RunCommand param "__PROJECT_NAME__.dll"
+    DotNetCli.RunCommand param "correlationPanels.dll"
 )
 
 Target "Run" (fun () -> Run "Start")

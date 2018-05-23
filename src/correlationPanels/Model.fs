@@ -1,4 +1,4 @@
-namespace __PROJECT_NAME__.Model
+namespace correlationPanels.Model
 
 open System
 open Aardvark.Base
