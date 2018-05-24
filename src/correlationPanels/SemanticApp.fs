@@ -9,10 +9,11 @@ open UtilitiesGUI
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module SemanticApp = 
+
   let binarySerializer = MBrace.FsPickler.FsPickler.CreateBinarySerializer()
 
   type Action =
-    | SetSemantic       of option<string>
+    | SetSemantic       of option<SemanticId>
     | AddSemantic
     | CancelNew
     | SaveNew
@@ -24,7 +25,7 @@ module SemanticApp =
     ///// INITIAL
   let initial : SemanticApp = {
     semantics         = hmap.Empty
-    selectedSemantic  = ""
+    selectedSemantic  = SemanticId.invalid
     semanticsList     = plist.Empty
     sortBy            = SemanticsSortingOption.Level
     creatingNew       = false
@@ -32,10 +33,10 @@ module SemanticApp =
 
   ///// convenience functions Semantics
 
-  let getSemantic (app : SemanticApp) (semanticId : string) =
+  let getSemantic (app : SemanticApp) (semanticId : SemanticId) =
     HMap.tryFind semanticId app.semantics
 
-  let getColor (model : MSemanticApp) (semanticId : IMod<string>) =
+  let getColor (model : MSemanticApp) (semanticId : IMod<SemanticId>) =
     let sem = Mod.bind (fun id -> AMap.tryFind id model.semantics) semanticId
     Mod.bind (fun (se : option<MSemantic>) ->
       match se with
@@ -43,14 +44,14 @@ module SemanticApp =
                   | None -> Mod.constant C4b.Red) sem
 
 
-  let getThickness (model : MSemanticApp) (semanticId : IMod<string>) =
+  let getThickness (model : MSemanticApp) (semanticId : IMod<SemanticId>) =
     let sem = Mod.bind (fun id -> AMap.tryFind id model.semantics) semanticId
     Mod.bind (fun (se : option<MSemantic>) ->
       match se with
                   | Some s -> s.style.thickness.value
                   | None -> Mod.constant 1.0) sem
 
-  let getLabel (model : MSemanticApp) (semanticId : IMod<string>) = 
+  let getLabel (model : MSemanticApp) (semanticId : IMod<SemanticId>) = 
     let sem = Mod.bind (fun id -> AMap.tryFind id model.semantics) semanticId
     sem
         |> Mod.bind (fun x ->
@@ -76,6 +77,8 @@ module SemanticApp =
   let disableSemantic (s : option<Semantic>) = 
     (Option.map (fun x -> Semantic.update x (Semantic.SetState SemanticState.Display)) s)
 
+  let disableSemantic' (s : Semantic) =
+    Semantic.update s (Semantic.SetState SemanticState.Display) 
 
 
   let sortFunction (sortBy : SemanticsSortingOption) = 
@@ -84,16 +87,16 @@ module SemanticApp =
       | SemanticsSortingOption.Level        -> fun (x : Semantic) -> (sprintf "%03i" x.level)
 //      | SemanticsSortingOption.GeometryType -> fun (x : Semantic) -> x.geometry.ToString()
       | SemanticsSortingOption.SemanticType -> fun (x : Semantic) -> x.semanticType.ToString()
-      | SemanticsSortingOption.Id           -> fun (x : Semantic) -> x.id
+      | SemanticsSortingOption.SemanticId   -> fun (x : Semantic) -> x.id.id // TODO make more elegant
       | SemanticsSortingOption.Timestamp    -> fun (x : Semantic) -> x.timestamp
       | _                                   -> fun (x : Semantic) -> x.timestamp
 
-  let getSortedList (list    : hmap<string, Semantic>) 
+  let getSortedList (list    : hmap<SemanticId, Semantic>) 
                     (sortBy  : SemanticsSortingOption) =
     UtilitiesDatastructures.sortedPlistFromHmap list (sortFunction sortBy)
 
   let deleteSemantic (model : SemanticApp)=
-      let getAKey (m : hmap<string, 'a>) =
+      let getAKey (m : hmap<SemanticId, 'a>) =
         m |> HMap.toSeq |> Seq.map fst |> Seq.tryHead
 
       let rem =
@@ -137,8 +140,13 @@ module SemanticApp =
         |> insertSemantic (Semantic.initialCrossbed (System.Guid.NewGuid().ToString())) SemanticState.Display
         |> insertSemantic (Semantic.initialGrainSize (System.Guid.NewGuid().ToString())) SemanticState.Edit
 
+  let deselectAllSemantics (semantics : hmap<SemanticId, Semantic>) =
+    semantics |> HMap.map (fun k s -> disableSemantic' s)
+
+    
+
   ////// UPDATE 
-  let update (model : SemanticApp) (action : Action) =
+  let update (action : Action) (model : SemanticApp) =
     match (action, model.creatingNew) with 
       | SetSemantic sem, false ->
         match sem with
@@ -202,9 +210,18 @@ module SemanticApp =
     let bytes = System.IO.File.ReadAllBytes("./semantics.save");
     let semantics = binarySerializer.UnPickle(bytes)
     printf "load file" 
-    {model with semantics = semantics
-                semanticsList = getSortedList semantics model.sortBy}
-
+    let newModel =
+      match HMap.isEmpty semantics with
+        | true  -> getInitialWithSamples
+        | _     ->
+          let deselected = deselectAllSemantics semantics
+          let upd =
+            {model with semantics        = deselected
+                        semanticsList    = getSortedList deselected model.sortBy
+            }
+          upd |> update (Action.SetSemantic ((upd.semanticsList.TryGet 0) |> Option.map (fun s -> s.id)))
+    newModel
+                    
   ///// VIEW //TODO modules
 
   let viewSemantics (model : MSemanticApp) = 
@@ -291,7 +308,7 @@ module SemanticApp =
           unpersist = Unpersist.instance
           threads   = fun _ -> ThreadPool.empty
           initial   = getInitialWithSamples
-          update    = update
+          update    = (fun (model : SemanticApp) (action : Action) -> update action model)
           view      = viewSemantics
       }
 

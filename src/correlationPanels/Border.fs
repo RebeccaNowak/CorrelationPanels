@@ -16,8 +16,11 @@ module Border =
 //  }
 
   let initial : Border = {
-    anno  = Annotation.initialDummy
-    point = V3d.OOO
+    anno      = Annotation.initialDummy
+    point     = V3d.OOO
+    color     = C4b.Black
+    weight    = 1.0
+    styleType = BorderStyle.Annotation
   }
 
   let getAvgY (points : alist<V3d>) =

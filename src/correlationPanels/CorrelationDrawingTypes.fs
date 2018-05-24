@@ -1,16 +1,13 @@
 ﻿namespace CorrelationDrawing
 
-open System
 open Aardvark.Base
 open Aardvark.Base.Incremental
 open Aardvark.Base.Rendering
-//open Aardvark.UI.Mutable
 open Aardvark.UI
 open Aardvark.UI.Primitives
-open Aardvark.Application
 
 
-/// GUI
+/// BEGIN GUI
 
 [<DomainType>]
 type TextInput = {
@@ -34,15 +31,12 @@ type DropdownList<'a> = {
 /// END GUI
 
 
-/// CORRELATION PANELS
-
-type Projection   = Linear = 0 | Viewpoint = 1 | Sky = 2
-type GeometryType = Point = 0 | Line = 1 | Polyline = 2 | Polygon = 3 | DnS = 4 | Undefined = 5
-type SemanticType = Metric = 0 | Angular = 1 | Hierarchical = 2 | Dummy = 3 | Undefined = 4
+// BEGIN GENERAL
 type Rangef = {
   min     : float
   max     : float
-}
+}// with 
+//  member this.range = //TODO
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Rangef =
@@ -55,6 +49,13 @@ module Rangef =
     match r.max with 
       | a when a = Operators.infinity -> r.min * 1.01 //TODO HACK
       | _ -> r.max - r.min
+
+/// CORRELATION PANELS
+
+type Projection   = Linear = 0 | Viewpoint = 1 | Sky = 2
+type GeometryType = Point = 0 | Line = 1 | Polyline = 2 | Polygon = 3 | DnS = 4 | Undefined = 5
+type SemanticType = Metric = 0 | Angular = 1 | Hierarchical = 2 | Dummy = 3 | Undefined = 4
+
 
 [<DomainType>]
 type Style = {
@@ -72,11 +73,22 @@ type RenderingParameters = {
 
 
 type SemanticState = New | Edit | Display
+type SemanticId = {
+  id        : string 
+} with
+  member this.isValid = (this.id <> "")
+
+module SemanticId = 
+  let invalid = {id = ""}
+
+
+
+
 
 [<DomainType>]
 type Semantic = {
    [<NonIncremental;PrimaryKey>]
-   id                : string
+   id                : SemanticId
 
    [<NonIncremental>]
    timestamp         : string
@@ -89,13 +101,13 @@ type Semantic = {
    level             : int
  }
 
- type SemanticsSortingOption = Label = 0 | Level = 1 | GeometryType = 2 | SemanticType = 3 | Id = 4 | Timestamp = 5
+ type SemanticsSortingOption = Label = 0 | Level = 1 | GeometryType = 2 | SemanticType = 3 | SemanticId = 4 | Timestamp = 5
 
  [<DomainType>]
  type SemanticApp = {
-   semantics           : hmap<string, Semantic>
+   semantics           : hmap<SemanticId, Semantic>
    semanticsList       : plist<Semantic>
-   selectedSemantic    : string
+   selectedSemantic    : SemanticId
    sortBy              : SemanticsSortingOption
    creatingNew         : bool
  }
@@ -105,10 +117,6 @@ type AnnotationPoint = {
   point     : V3d
   selected  : bool
 }
-
-
-
-
 
 [<DomainType>]
 type Annotation = {     
@@ -127,7 +135,7 @@ type Annotation = {
     selected              : bool
     hovered               : bool
 
-    semanticId            : string
+    semanticId            : SemanticId
     points                : plist<AnnotationPoint>
     segments              : plist<plist<V3d>> //list<Segment>
     visible               : bool
@@ -138,28 +146,20 @@ type Annotation = {
 
 [<DomainType>]
 type AnnotationApp = {
-  //annotations         : hmap<string, Annotation>
   annotations         : plist<Annotation>
   selectedAnnotation  : option<string>
 }
 
 
-[<DomainType>]
-type Horizon = {
-  [<NonIncremental;PrimaryKey>]
-  id          : string
-
-  annotation  : Annotation
-  children    : plist<Annotation>
-
-
-}
-
+type BorderStyle = Annotation | Border
 
 [<DomainType>]
 type Border = {
-    anno      : Annotation
-    point     : V3d
+    anno        : Annotation
+    point       : V3d
+    color       : C4b
+    weight      : double
+    styleType   : BorderStyle
 }
 
 type LogNodeType    = TopLevel | Hierarchical | Metric | Angular | Infinity | Empty
@@ -170,7 +170,6 @@ type LogNodeBoxType = SimpleBox | TwoColorBox | FancyBox
 [<DomainType>]
 type LogNode = {
   // TODO add id
-    
     label         : string
     isSelected    : bool
                   
@@ -193,10 +192,11 @@ type LogNode = {
 type GeologicalLog = {
     [<NonIncremental;PrimaryKey>]
     id          : string
+
     label       : string
     annoPoints  : list<(V3d * Annotation)>
     nodes       : plist<LogNode>
-    range       : Rangef //?
+    range       : Rangef
     camera      : CameraControllerState
 }
 
@@ -209,28 +209,23 @@ type CorrelationPlotApp = {
    viewType            : LogNodeView
 }
 
-type AnnotationParameters = {Point:V3d;semanticId:string}
+//type AnnotationParameters = {Point:V3d;semanticId:string}
 
 [<DomainType>]
 type CorrelationDrawingModel = {
-    draw                : bool 
-    hoverPosition       : option<Trafo3d>
-    working             : option<Annotation>
-    projection          : Projection //TODO move to semantic
-    geometry            : GeometryType //TODO move to semantic
-    selectedAnnotation  : option<string>
-    //annotations         : plist<Annotation>
-    exportPath          : string
+    draw              : bool //maybe change to state selection
+    hoverPosition     : option<Trafo3d>
+    working           : option<Annotation>
+    projection        : Projection 
+    geometry          : GeometryType
+    exportPath        : string
 }
 
-
-
-[<DomainType>]
-type CorrelationAppModel = {
-
-    rendering        : RenderingParameters
-    drawing          : CorrelationDrawingModel 
-}
+//[<DomainType>]
+//type CorrelationAppModel = {
+//    rendering        : RenderingParameters
+//    drawing          : CorrelationDrawingModel 
+//}
 
 [<DomainType>]
 type Pages = 
@@ -241,7 +236,6 @@ type Pages =
         [<NonIncremental>]
         future        : Option<Pages>
 
-//        cameraState : CameraControllerState
         camera        : CameraControllerState
         cullMode      : CullMode
         fill          : bool

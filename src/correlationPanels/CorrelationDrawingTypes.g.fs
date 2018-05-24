@@ -321,7 +321,7 @@ module Mutable =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
             let id =
-                { new Lens<CorrelationDrawing.Semantic, System.String>() with
+                { new Lens<CorrelationDrawing.Semantic, CorrelationDrawing.SemanticId>() with
                     override x.Get(r) = r.id
                     override x.Set(r,v) = { r with id = v }
                     override x.Update(r,f) = { r with id = f r.id }
@@ -412,7 +412,7 @@ module Mutable =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
             let semantics =
-                { new Lens<CorrelationDrawing.SemanticApp, Aardvark.Base.hmap<System.String,CorrelationDrawing.Semantic>>() with
+                { new Lens<CorrelationDrawing.SemanticApp, Aardvark.Base.hmap<CorrelationDrawing.SemanticId,CorrelationDrawing.Semantic>>() with
                     override x.Get(r) = r.semantics
                     override x.Set(r,v) = { r with semantics = v }
                     override x.Update(r,f) = { r with semantics = f r.semantics }
@@ -424,7 +424,7 @@ module Mutable =
                     override x.Update(r,f) = { r with semanticsList = f r.semanticsList }
                 }
             let selectedSemantic =
-                { new Lens<CorrelationDrawing.SemanticApp, System.String>() with
+                { new Lens<CorrelationDrawing.SemanticApp, CorrelationDrawing.SemanticId>() with
                     override x.Get(r) = r.selectedSemantic
                     override x.Set(r,v) = { r with selectedSemantic = v }
                     override x.Update(r,f) = { r with selectedSemantic = f r.selectedSemantic }
@@ -583,7 +583,7 @@ module Mutable =
                     override x.Update(r,f) = { r with hovered = f r.hovered }
                 }
             let semanticId =
-                { new Lens<CorrelationDrawing.Annotation, System.String>() with
+                { new Lens<CorrelationDrawing.Annotation, CorrelationDrawing.SemanticId>() with
                     override x.Get(r) = r.semanticId
                     override x.Set(r,v) = { r with semanticId = v }
                     override x.Update(r,f) = { r with semanticId = f r.semanticId }
@@ -672,67 +672,20 @@ module Mutable =
                 }
     
     
-    type MHorizon(__initial : CorrelationDrawing.Horizon) =
-        inherit obj()
-        let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.Horizon> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.Horizon>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.Horizon>
-        let _annotation = MAnnotation.Create(__initial.annotation)
-        let _children = MList.Create(__initial.children, (fun v -> MAnnotation.Create(v)), (fun (m,v) -> MAnnotation.Update(m, v)), (fun v -> v))
-        
-        member x.id = __current.Value.id
-        member x.annotation = _annotation
-        member x.children = _children :> alist<_>
-        
-        member x.Current = __current :> IMod<_>
-        member x.Update(v : CorrelationDrawing.Horizon) =
-            if not (System.Object.ReferenceEquals(__current.Value, v)) then
-                __current.Value <- v
-                
-                MAnnotation.Update(_annotation, v.annotation)
-                MList.Update(_children, v.children)
-                
-        
-        static member Create(__initial : CorrelationDrawing.Horizon) : MHorizon = MHorizon(__initial)
-        static member Update(m : MHorizon, v : CorrelationDrawing.Horizon) = m.Update(v)
-        
-        override x.ToString() = __current.Value.ToString()
-        member x.AsString = sprintf "%A" __current.Value
-        interface IUpdatable<CorrelationDrawing.Horizon> with
-            member x.Update v = x.Update v
-    
-    
-    
-    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module Horizon =
-        [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-        module Lens =
-            let id =
-                { new Lens<CorrelationDrawing.Horizon, System.String>() with
-                    override x.Get(r) = r.id
-                    override x.Set(r,v) = { r with id = v }
-                    override x.Update(r,f) = { r with id = f r.id }
-                }
-            let annotation =
-                { new Lens<CorrelationDrawing.Horizon, CorrelationDrawing.Annotation>() with
-                    override x.Get(r) = r.annotation
-                    override x.Set(r,v) = { r with annotation = v }
-                    override x.Update(r,f) = { r with annotation = f r.annotation }
-                }
-            let children =
-                { new Lens<CorrelationDrawing.Horizon, Aardvark.Base.plist<CorrelationDrawing.Annotation>>() with
-                    override x.Get(r) = r.children
-                    override x.Set(r,v) = { r with children = v }
-                    override x.Update(r,f) = { r with children = f r.children }
-                }
-    
-    
     type MBorder(__initial : CorrelationDrawing.Border) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.Border> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.Border>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.Border>
         let _anno = MAnnotation.Create(__initial.anno)
         let _point = ResetMod.Create(__initial.point)
+        let _color = ResetMod.Create(__initial.color)
+        let _weight = ResetMod.Create(__initial.weight)
+        let _styleType = ResetMod.Create(__initial.styleType)
         
         member x.anno = _anno
         member x.point = _point :> IMod<_>
+        member x.color = _color :> IMod<_>
+        member x.weight = _weight :> IMod<_>
+        member x.styleType = _styleType :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : CorrelationDrawing.Border) =
@@ -741,6 +694,9 @@ module Mutable =
                 
                 MAnnotation.Update(_anno, v.anno)
                 ResetMod.Update(_point,v.point)
+                ResetMod.Update(_color,v.color)
+                ResetMod.Update(_weight,v.weight)
+                ResetMod.Update(_styleType,v.styleType)
                 
         
         static member Create(__initial : CorrelationDrawing.Border) : MBorder = MBorder(__initial)
@@ -768,6 +724,24 @@ module Mutable =
                     override x.Get(r) = r.point
                     override x.Set(r,v) = { r with point = v }
                     override x.Update(r,f) = { r with point = f r.point }
+                }
+            let color =
+                { new Lens<CorrelationDrawing.Border, Aardvark.Base.C4b>() with
+                    override x.Get(r) = r.color
+                    override x.Set(r,v) = { r with color = v }
+                    override x.Update(r,f) = { r with color = f r.color }
+                }
+            let weight =
+                { new Lens<CorrelationDrawing.Border, System.Double>() with
+                    override x.Get(r) = r.weight
+                    override x.Set(r,v) = { r with weight = v }
+                    override x.Update(r,f) = { r with weight = f r.weight }
+                }
+            let styleType =
+                { new Lens<CorrelationDrawing.Border, CorrelationDrawing.BorderStyle>() with
+                    override x.Get(r) = r.styleType
+                    override x.Set(r,v) = { r with styleType = v }
+                    override x.Update(r,f) = { r with styleType = f r.styleType }
                 }
     
     
@@ -1077,7 +1051,6 @@ module Mutable =
         let _working = MOption.Create(__initial.working, (fun v -> MAnnotation.Create(v)), (fun (m,v) -> MAnnotation.Update(m, v)), (fun v -> v))
         let _projection = ResetMod.Create(__initial.projection)
         let _geometry = ResetMod.Create(__initial.geometry)
-        let _selectedAnnotation = MOption.Create(__initial.selectedAnnotation)
         let _exportPath = ResetMod.Create(__initial.exportPath)
         
         member x.draw = _draw :> IMod<_>
@@ -1085,7 +1058,6 @@ module Mutable =
         member x.working = _working :> IMod<_>
         member x.projection = _projection :> IMod<_>
         member x.geometry = _geometry :> IMod<_>
-        member x.selectedAnnotation = _selectedAnnotation :> IMod<_>
         member x.exportPath = _exportPath :> IMod<_>
         
         member x.Current = __current :> IMod<_>
@@ -1098,7 +1070,6 @@ module Mutable =
                 MOption.Update(_working, v.working)
                 ResetMod.Update(_projection,v.projection)
                 ResetMod.Update(_geometry,v.geometry)
-                MOption.Update(_selectedAnnotation, v.selectedAnnotation)
                 ResetMod.Update(_exportPath,v.exportPath)
                 
         
@@ -1146,63 +1117,11 @@ module Mutable =
                     override x.Set(r,v) = { r with geometry = v }
                     override x.Update(r,f) = { r with geometry = f r.geometry }
                 }
-            let selectedAnnotation =
-                { new Lens<CorrelationDrawing.CorrelationDrawingModel, Microsoft.FSharp.Core.Option<System.String>>() with
-                    override x.Get(r) = r.selectedAnnotation
-                    override x.Set(r,v) = { r with selectedAnnotation = v }
-                    override x.Update(r,f) = { r with selectedAnnotation = f r.selectedAnnotation }
-                }
             let exportPath =
                 { new Lens<CorrelationDrawing.CorrelationDrawingModel, System.String>() with
                     override x.Get(r) = r.exportPath
                     override x.Set(r,v) = { r with exportPath = v }
                     override x.Update(r,f) = { r with exportPath = f r.exportPath }
-                }
-    
-    
-    type MCorrelationAppModel(__initial : CorrelationDrawing.CorrelationAppModel) =
-        inherit obj()
-        let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationAppModel> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.CorrelationAppModel>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationAppModel>
-        let _rendering = MRenderingParameters.Create(__initial.rendering)
-        let _drawing = MCorrelationDrawingModel.Create(__initial.drawing)
-        
-        member x.rendering = _rendering
-        member x.drawing = _drawing
-        
-        member x.Current = __current :> IMod<_>
-        member x.Update(v : CorrelationDrawing.CorrelationAppModel) =
-            if not (System.Object.ReferenceEquals(__current.Value, v)) then
-                __current.Value <- v
-                
-                MRenderingParameters.Update(_rendering, v.rendering)
-                MCorrelationDrawingModel.Update(_drawing, v.drawing)
-                
-        
-        static member Create(__initial : CorrelationDrawing.CorrelationAppModel) : MCorrelationAppModel = MCorrelationAppModel(__initial)
-        static member Update(m : MCorrelationAppModel, v : CorrelationDrawing.CorrelationAppModel) = m.Update(v)
-        
-        override x.ToString() = __current.Value.ToString()
-        member x.AsString = sprintf "%A" __current.Value
-        interface IUpdatable<CorrelationDrawing.CorrelationAppModel> with
-            member x.Update v = x.Update v
-    
-    
-    
-    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module CorrelationAppModel =
-        [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-        module Lens =
-            let rendering =
-                { new Lens<CorrelationDrawing.CorrelationAppModel, CorrelationDrawing.RenderingParameters>() with
-                    override x.Get(r) = r.rendering
-                    override x.Set(r,v) = { r with rendering = v }
-                    override x.Update(r,f) = { r with rendering = f r.rendering }
-                }
-            let drawing =
-                { new Lens<CorrelationDrawing.CorrelationAppModel, CorrelationDrawing.CorrelationDrawingModel>() with
-                    override x.Get(r) = r.drawing
-                    override x.Set(r,v) = { r with drawing = v }
-                    override x.Update(r,f) = { r with drawing = f r.drawing }
                 }
     
     

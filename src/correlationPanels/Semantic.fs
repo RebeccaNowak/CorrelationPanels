@@ -21,8 +21,7 @@ module Semantic =
     let levels = [0;1;2;3;4;5;6;7;8]
 
     let initial id = {
-
-        id            = id
+        id            = {id = id}
         timestamp     = Time.getTimestamp
         state         = SemanticState.New
         label         = TextInput.init
@@ -42,6 +41,10 @@ module Semantic =
         semanticType  = SemanticType.Metric
         level         = 0
     }
+
+    let initInvalid = 
+      initial SemanticId.invalid.id
+    
 
     /////// DEFAULT SEMANTICS
     let initialHorizon0 id = {
@@ -124,7 +127,6 @@ module Semantic =
         | ChangeThickness     of Numeric.Action
         | TextInputMessage    of TextInput.Action
         | SetLevel            of int
-//        | SetGeometry         of GeometryType
         | SetSemanticType     of SemanticType
         | Save
         | Cancel
@@ -160,8 +162,8 @@ module Semantic =
       
 
     ////// VIEW
-    let viewNew (model : MSemantic) =
-       [td [] [text "foobar"]|> UI.map TextInputMessage] // WORKS
+    //let viewNew (model : MSemantic) =
+    //   [td [] [text "foobar"]|> UI.map TextInputMessage] // WORKS
 //      let thNode = Numeric.view'' 
 //                     NumericInputType.InputBox 
 //                     model.style.thickness
@@ -311,6 +313,6 @@ module Semantic =
                         
                           | SemanticState.Display  -> viewDisplay model // [td [] [text "foobar"]|> UI.map TextInputMessage] WORKS
                           | SemanticState.Edit -> viewEdit model
-                          | SemanticState.New -> viewNew model
+                          | SemanticState.New -> viewEdit model //TODO probably not necessary
                      ) 
           

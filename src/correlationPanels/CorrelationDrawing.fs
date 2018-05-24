@@ -26,13 +26,13 @@ module CorrelationDrawing =
         working = None
         projection = Projection.Viewpoint
         geometry = GeometryType.Line
-        selectedAnnotation = None
         //annotations = plist.Empty
         exportPath = @"."
        // log = GeologicalLog.intial (Guid.NewGuid().ToString()) plist<AnnotationPoint * Annotation>.Empty
     }
 
     type Action =
+        | Clear
         | DoNothing
         | AnnotationMessage       of Annotation.Action
         | SetGeometry             of GeometryType
@@ -82,38 +82,43 @@ module CorrelationDrawing =
       {model with working  = Some working}
 
     let update (model : CorrelationDrawingModel) 
-                   (semanticApp : SemanticApp) 
-                   (act : Action)  =
+               (semanticApp : SemanticApp) 
+               (act : Action)  =
         match (act, model.draw) with
-            | DoNothing, _ -> model
+            | Clear, _         ->
+                {model with draw = false
+                            working = None
+                }
+            | DoNothing, _             -> 
+                model
             | KeyDown Keys.LeftCtrl, _ ->                     
                 { model with draw = true }
-            | KeyUp Keys.LeftCtrl, _ -> 
+            | KeyUp Keys.LeftCtrl, _   -> 
                 {model with draw = false; hoverPosition = None }
             | Move p, true -> 
                 { model with hoverPosition = Some (Trafo3d.Translation p) }
-            | AddPoint m, true -> 
+            | AddPoint m, true         -> 
                 match isDone model with
-                  | true  -> 
+                  | true               -> 
                     let model = addPoint model semanticApp m
                     {model with working  = None
                                 draw     = false}
-                  | false -> addPoint model semanticApp m             
-            | KeyDown Keys.Enter, _ -> 
+                  | false  -> addPoint model semanticApp m             
+            | KeyDown Keys.Enter, _   -> 
                   match model.working with
                     | Some w  ->
                         {model with working  = None
                                     draw     = false}
                     | None   -> model
-            | Exit, _ -> 
+            | Exit, _                 -> 
                     { model with hoverPosition = None }
-            | SetGeometry mode, _   ->
+            | SetGeometry mode, _     ->
                     { model with geometry = mode }
-            | SetProjection mode, _ ->
+            | SetProjection mode, _   ->
                     { model with projection = mode }        
-            | SetExportPath s, _    ->
+            | SetExportPath s, _      ->
                     { model with exportPath = s }
-            | Export, _             ->
+            | Export, _               ->
                     //let path = Path.combine([model.exportPath; "drawing.json"])
                     //printf "Writing %i annotations to %s" (model.annotations |> PList.count) path
                     //let json = model.annotations |> PList.map JsonTypes.ofAnnotation |> JsonConvert.SerializeObject

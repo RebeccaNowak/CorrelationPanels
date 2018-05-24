@@ -13,6 +13,7 @@
     open Aardvark.Base.MultimethodTest
 
     type Action =
+      | Clear
       | ToggleSelectLog of option<string>
       | NewLog          
       | TogglePoint     of (V3d * Annotation)
@@ -29,28 +30,38 @@
       viewType            = LogNodeView.StackedView2ColorBoxes
     }
 
-    let update (annos : plist<Annotation>) (semApp : SemanticApp) (action : Action) (model : CorrelationPlotApp) = 
+    let update (annos : plist<Annotation>) 
+               (semApp : SemanticApp) 
+               (action : Action) 
+               (model : CorrelationPlotApp) = 
       match action, model.creatingNew with
+        | Clear, _                     ->
+          {model with logs = PList.empty
+                      selectedPoints      = List<(V3d * Annotation)>.Empty
+                      selectedLog         = None
+                      creatingNew         = false
+          }
         | ToggleSelectLog oStr, false  -> 
           match (oStr = model.selectedLog) with
             | true  -> {model with selectedLog = None}
             | false -> {model with selectedLog = oStr}
-        | NewLog, false          -> {model with creatingNew = true
-                                                selectedPoints     = List<(V3d * Annotation)>.Empty}
-        | FinishLog, true        ->
-              match model.selectedPoints with
-                | []      -> 
-                  printf "no points in list for creating log"
-                  model
-                | working ->
-                    {model with creatingNew = false
-                                logs        = (model.logs.Append 
-                                                (GeologicalLog.intial (System.Guid.NewGuid().ToString()) working annos semApp))
-                                selectedPoints     = List<(V3d * Annotation)>.Empty}
-        | DeleteLog, false       -> model
-        | LogMessage m, _        -> model//{model with logs = model.logs.Update m}
-        | ChangeView m, _        -> {model with viewType = m}
-        | _,_                    -> model
+        | NewLog, false                -> 
+          {model with creatingNew     = true
+                      selectedPoints  = List<(V3d * Annotation)>.Empty}
+        | FinishLog, true              ->
+          match model.selectedPoints with
+            | []      -> 
+              printf "no points in list for creating log"
+              model
+            | working ->
+              {model with creatingNew = false
+                          logs        = (model.logs.Append 
+                                          (GeologicalLog.intial (System.Guid.NewGuid().ToString()) working annos semApp))
+                          selectedPoints     = List<(V3d * Annotation)>.Empty}
+        | DeleteLog, false             -> model
+        | LogMessage m, _              -> model//{model with logs = model.logs.Update m}
+        | ChangeView m, _              -> {model with viewType = m}
+        | _,_                          -> model
 
 
     let viewSvg (model : MCorrelationPlotApp) (semApp : MSemanticApp) =

@@ -11,6 +11,7 @@ namespace CorrelationDrawing
   module AnnotationApp =
   
     type Action =
+      | Clear
       | AnnotationMessage       of Annotation.Action
       | AddAnnotation           of Annotation
       | DeselectAllPoints       
@@ -35,10 +36,13 @@ namespace CorrelationDrawing
     let update (model       : AnnotationApp)
                (action      : Action) =
       match action with
-        | AnnotationMessage m -> 
+        | Clear                -> {model with annotations        = PList.empty
+                                              selectedAnnotation = None
+                                  }
+        | AnnotationMessage m  -> 
             {model with annotations = model.annotations 
                                         |> PList.map (fun a -> Annotation.update m a)}
-        | AddAnnotation a  ->      
+        | AddAnnotation a      ->      
             {model with annotations = model.annotations.Append a}
         | DeselectAllPoints _  -> 
           {model with annotations = 

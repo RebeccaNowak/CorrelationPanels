@@ -63,10 +63,6 @@ module Pages =
                         //dockelement { id "annotations"; title "Annotations"; weight 1.0}
                     ]
                   ]
-                   
-                  
-
-                  
                 )
                 appName "CDPages"
                 useCachedConfig false
@@ -106,7 +102,7 @@ module Pages =
             { model with drawingApp  = d
                          camera      = CameraController.update model.camera (CameraController.Message.KeyUp k)}
           | SemanticAppMessage m, false, false ->
-                {model with semanticApp = SemanticApp.update model.semanticApp m}
+                {model with semanticApp = model.semanticApp |> SemanticApp.update m}
           | AnnotationAppMessage m, creatingLog, drawing -> 
             {model with annotationApp = AnnotationApp.update model.annotationApp m}
           | CorrelationDrawingMessage m, creatingPlot, drawing ->
@@ -212,8 +208,12 @@ module Pages =
               {model with semanticApp   = SemanticApp.load model.semanticApp
                           annotationApp = AnnotationApp.load model.annotationApp}
 //                  
-          | Clear, _,_ -> model
-//                  { model with drawing = { model.drawing with annotations = PList.empty }}            
+          | Clear, _,_ -> 
+                  { model with annotationApp = AnnotationApp.update model.annotationApp (AnnotationApp.Clear)
+                               drawingApp    = CorrelationDrawing.update model.drawingApp model.semanticApp (CorrelationDrawing.Clear)
+                               corrPlotApp   = CorrelationPlotApp.update PList.empty model.semanticApp (CorrelationPlotApp.Clear) model.corrPlotApp 
+
+                  }            
 
 //          | Undo ->
 //              match model.past with

@@ -14,8 +14,8 @@ module LogNode =
     nodeType     = LogNodeType.Empty
     label        = "log node"
     level        = -1
-    lBoundary    = {point = V3d.OOO; anno = (Annotation.initial "-1")}
-    uBoundary    = {point = V3d.OOO; anno = (Annotation.initial "-1")}
+    lBoundary    = {Border.initial with point = V3d.OOO; anno = (Annotation.initial "-1")}
+    uBoundary    = {Border.initial with point = V3d.OOO; anno = (Annotation.initial "-1")}
     children     = plist.Empty
     elevation    = 0.0
     range        = Rangef.init
@@ -35,8 +35,8 @@ module LogNode =
     nodeType      = LogNodeType.TopLevel
     label         = "log node"
     level         = level
-    lBoundary     = {point = lp; anno = la}
-    uBoundary     = {point = up; anno = ua}
+    lBoundary     = {Border.initial with point = lp; anno = la}
+    uBoundary     = {Border.initial with point = up; anno = ua}
     children      = children
     elevation     = (up.Length + lp.Length) * 0.5
     range         = {Rangef.init with min = lp.Length

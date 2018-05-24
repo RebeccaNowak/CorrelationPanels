@@ -3,25 +3,19 @@
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module GeologicalLog =
 
-  open System
   open Aardvark.Base
   open Aardvark.Base.Rendering
   open Aardvark.Rendering.Text
   open Aardvark.Base.Incremental
-  open Aardvark.Base.Incremental.Operators
   open Aardvark.SceneGraph.SgPrimitives
   open Aardvark.SceneGraph.FShadeSceneGraph
   open Aardvark.UI
   open Aardvark.UI.Primitives
-//  open Aardvark.UI.Extensions.Sg
   open Aardvark.SceneGraph
-  open UtilitiesRendering
   open Aardvark.Application
-  open UtilitiesGUI
+
 
   let getSecond (_, s) = s
-
-  
 
   let copyAnnoWith (v : V3d) (aToAdd : (V3d * Annotation)) = 
     let a = 
@@ -236,12 +230,12 @@ module GeologicalLog =
 
     nodes       = (generateLevel 
                     lst 
-                    annos //(annos |> PList.map (Annotation.update Annotation.Action.HoverOut))
+                    annos
                     semApp 
-                    {point = (V3d.OOO)
-                     anno = (Annotation.initialDummyWithPoints (V3d.OOO))}
-                    {point = (V3d.PositiveInfinity)
-                     anno = (Annotation.initialDummyWithPoints (V3d.PositiveInfinity))}
+                    {Border.initial with point = (V3d.OOO)
+                                         anno = (Annotation.initialDummyWithPoints (V3d.OOO))}
+                    {Border.initial with point = (V3d.PositiveInfinity)
+                                         anno = (Annotation.initialDummyWithPoints (V3d.PositiveInfinity))}
                   ) |> calcLogYPos 300.0
 
     annoPoints  = lst
@@ -288,8 +282,6 @@ module GeologicalLog =
         |> AList.filter (fun n -> Mod.force n.level = minLvl)
         |> AList.toSeq
         |> Seq.sortByDescending (fun n -> Mod.force n.elevation)
-      
-
      
 
     let nodeViews =
@@ -302,7 +294,6 @@ module GeologicalLog =
                           for it in v do
                             yield it
                         })                      
-              
       }
 
 

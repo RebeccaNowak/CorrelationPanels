@@ -16,7 +16,7 @@ module Annotation =
           id              = id
           semanticType    = SemanticType.Hierarchical
           geometry        = GeometryType.Line
-          semanticId      = ""
+          semanticId      = SemanticId.invalid
           points          = plist<AnnotationPoint>.Empty
           segments        = plist.Empty
           projection      = Projection.Viewpoint
@@ -33,7 +33,7 @@ module Annotation =
         id              = "-1"
         semanticType    = SemanticType.Dummy
         geometry        = GeometryType.Line
-        semanticId      = ""
+        semanticId      = SemanticId.invalid
         points          = plist.Empty
         segments        = plist.Empty
         projection      = Projection.Viewpoint
@@ -50,7 +50,7 @@ module Annotation =
         id              = "-2"
         semanticType    = SemanticType.Dummy
         geometry        = GeometryType.Point
-        semanticId      = ""
+        semanticId      = SemanticId.invalid
         points          = PList.ofList [{point    = v
                                          selected = false
                                        }]
@@ -67,7 +67,7 @@ module Annotation =
     }
 
   type Action =
-      | SetSemantic     of option<string>
+      | SetSemantic     of option<SemanticId>
       | ToggleSelected  of V3d
       | Select          of V3d 
       | HoverIn         of string
@@ -144,16 +144,16 @@ module Annotation =
 
   module View = 
     let getColourIcon (model : MAnnotation) (semanticApp : MSemanticApp) =
-        let ignoreOverride = // TODO dirty hack
-          match Mod.force model.semanticId with
-            | "-1" -> false
-            | "-2" -> false
-            | _    -> true
+        //let ignoreOverride = // TODO dirty hack
+        //  match Mod.force model.semanticId with
+        //    | id where id.isInvalid -> false
+        //    | "-2" -> false
+        //    | _    -> true
 
         let iconAttr =
           amap {
             yield clazz "circle icon"
-            let! c = getConstColor model semanticApp ignoreOverride
+            let! c = getConstColor model semanticApp false
             yield style (sprintf "color:%s" (colorToHexStr c))
           }      
         Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
@@ -427,7 +427,7 @@ module Annotation =
     let sem (a : Annotation) =  
       match (SemanticApp.getSemantic semanticApp a.semanticId) with
         | Some s -> s
-        | None -> Semantic.initial "-1"
+        | None -> Semantic.initInvalid //TODO something useful
 
     let levels = 
       annos 
