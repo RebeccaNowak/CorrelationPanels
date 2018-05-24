@@ -213,7 +213,7 @@ type CorrelationPlotApp = {
 
 [<DomainType>]
 type CorrelationDrawingModel = {
-    draw              : bool //maybe change to state selection
+    isDrawing         : bool //maybe change to state selection
     hoverPosition     : option<Trafo3d>
     working           : option<Annotation>
     projection        : Projection 

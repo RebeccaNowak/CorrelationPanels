@@ -146,7 +146,7 @@ module SemanticApp =
     
 
   ////// UPDATE 
-  let update (action : Action) (model : SemanticApp) =
+  let update (model : SemanticApp) (action : Action) =
     match (action, model.creatingNew) with 
       | SetSemantic sem, false ->
         match sem with
@@ -208,7 +208,7 @@ module SemanticApp =
 
   let load (model : SemanticApp) =
     let bytes = System.IO.File.ReadAllBytes("./semantics.save");
-    let semantics = binarySerializer.UnPickle(bytes)
+    let semantics = binarySerializer.UnPickle(bytes) //TODO catch unpickle exceptions
     printf "load file" 
     let newModel =
       match HMap.isEmpty semantics with
@@ -219,7 +219,7 @@ module SemanticApp =
             {model with semantics        = deselected
                         semanticsList    = getSortedList deselected model.sortBy
             }
-          upd |> update (Action.SetSemantic ((upd.semanticsList.TryGet 0) |> Option.map (fun s -> s.id)))
+          update upd (Action.SetSemantic ((upd.semanticsList.TryGet 0) |> Option.map (fun s -> s.id)))
     newModel
                     
   ///// VIEW //TODO modules
@@ -308,7 +308,7 @@ module SemanticApp =
           unpersist = Unpersist.instance
           threads   = fun _ -> ThreadPool.empty
           initial   = getInitialWithSamples
-          update    = (fun (model : SemanticApp) (action : Action) -> update action model)
+          update    = update
           view      = viewSemantics
       }
 

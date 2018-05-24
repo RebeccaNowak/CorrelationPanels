@@ -28,10 +28,17 @@ namespace CorrelationDrawing
     let findAnnotation (app : AnnotationApp) (id : string) =
       app.annotations.FirstOrDefault((fun x -> x.id = id), Annotation.initialDummy)
 
-    let getSelected (model : AnnotationApp) =
+    let getSelectedPoints (model : AnnotationApp) =
       model.annotations
         |> PList.map (fun a -> Annotation.getSelected a)
         |> PList.filterNone
+
+    let getSelectedPoints' (model : AnnotationApp) =
+      model.annotations
+        |> PList.map (fun a -> Annotation.getSelected a)
+        |> PList.filterNone
+        |> PList.toList
+        |> List.map (fun (p, a) -> (p.point, a))
  
     let update (model       : AnnotationApp)
                (action      : Action) =

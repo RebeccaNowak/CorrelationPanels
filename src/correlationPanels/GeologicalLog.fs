@@ -348,9 +348,6 @@ module GeologicalLog =
       
       
 
-
-
-
     //          yield (Incremental.tr 
 //            (AttributeMap.ofList []) //[st; onClick (fun str -> ToggleSelectLog (Some log.id))])
 //              children

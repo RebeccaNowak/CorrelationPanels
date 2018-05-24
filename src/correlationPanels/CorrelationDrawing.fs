@@ -21,7 +21,7 @@ module CorrelationDrawing =
     open UtilitiesDatastructures
 
     let initial : CorrelationDrawingModel = {
-        draw = false
+        isDrawing = false
         hoverPosition = None
         working = None
         projection = Projection.Viewpoint
@@ -84,17 +84,17 @@ module CorrelationDrawing =
     let update (model : CorrelationDrawingModel) 
                (semanticApp : SemanticApp) 
                (act : Action)  =
-        match (act, model.draw) with
+        match (act, model.isDrawing) with
             | Clear, _         ->
-                {model with draw = false
+                {model with isDrawing = false
                             working = None
                 }
             | DoNothing, _             -> 
                 model
             | KeyDown Keys.LeftCtrl, _ ->                     
-                { model with draw = true }
+                { model with isDrawing = true }
             | KeyUp Keys.LeftCtrl, _   -> 
-                {model with draw = false; hoverPosition = None }
+                {model with isDrawing = false; hoverPosition = None }
             | Move p, true -> 
                 { model with hoverPosition = Some (Trafo3d.Translation p) }
             | AddPoint m, true         -> 
@@ -102,13 +102,13 @@ module CorrelationDrawing =
                   | true               -> 
                     let model = addPoint model semanticApp m
                     {model with working  = None
-                                draw     = false}
+                                isDrawing     = false}
                   | false  -> addPoint model semanticApp m             
             | KeyDown Keys.Enter, _   -> 
                   match model.working with
                     | Some w  ->
                         {model with working  = None
-                                    draw     = false}
+                                    isDrawing     = false}
                     | None   -> model
             | Exit, _                 -> 
                     { model with hoverPosition = None }

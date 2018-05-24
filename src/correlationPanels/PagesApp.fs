@@ -10,7 +10,7 @@ module Pages =
   open Aardvark.Base.Incremental
   open Aardvark.Base.Rendering
   open UtilitiesGUI
-  //open Mutable.PagesModule
+
 
   type Action =
       | CameraMessage                 of CameraController.Message
@@ -44,7 +44,7 @@ module Pages =
         camera      = initialCamera
         cullMode    = CullMode.None
         fill        = true
-        rendering = RenderingPars.initial
+        rendering   = RenderingPars.initial
         dockConfig  =
             config {
                 content (
@@ -73,160 +73,136 @@ module Pages =
         corrPlotApp   = CorrelationPlotApp.initial 
     }
 
-  let update (model : Pages) (msg : Action) =
-      match msg, model.corrPlotApp.creatingNew, model.drawingApp.draw with
-          | KeyDown Keys.Enter, _, _ ->                          
-            let aa = AnnotationApp.update 
-                        model.annotationApp 
-                        (AnnotationApp.Action.AddAnnotation model.drawingApp.working.Value) //TODO make this safe
-            let da = CorrelationDrawing.update 
-                                model.drawingApp
-                                model.semanticApp
-                                (CorrelationDrawing.Action.KeyDown Keys.Enter)
-            {model with drawingApp    = da
-                        annotationApp = aa}
-          | KeyDown k, _,_       -> 
-            printf "%s" "key down"
-            let d = CorrelationDrawing.update 
-                      model.drawingApp
-                      model.semanticApp
-                      (CorrelationDrawing.Action.KeyDown k)
-            {model with drawingApp   = d
-                        camera       = CameraController.update model.camera (CameraController.Message.KeyDown k)}
-          | KeyUp k, _,_        -> 
-            printf "%s" "key up"
-            let d = CorrelationDrawing.update 
-                      model.drawingApp 
-                      model.semanticApp
-                      (CorrelationDrawing.Action.KeyUp k)
-            { model with drawingApp  = d
-                         camera      = CameraController.update model.camera (CameraController.Message.KeyUp k)}
-          | SemanticAppMessage m, false, false ->
-                {model with semanticApp = model.semanticApp |> SemanticApp.update m}
-          | AnnotationAppMessage m, creatingLog, drawing -> 
-            {model with annotationApp = AnnotationApp.update model.annotationApp m}
-          | CorrelationDrawingMessage m, creatingPlot, drawing ->
-            let (corrApp, drawingApp, annoApp) =               
-                match m, creatingPlot, drawing with
-                  | CorrelationDrawing.AddPoint p, creatingLog, drawing-> 
-                    printf "%s" "Add Point"
-                    let (drawingApp, annoApp) =
-                      match CorrelationDrawing.isDone model.drawingApp with
-                        | true  -> 
-                          let da = CorrelationDrawing.addPoint model.drawingApp model.semanticApp p
-                          let aa = AnnotationApp.update model.annotationApp (AnnotationApp.Action.AddAnnotation da.working.Value) //TODO safe but  maybe do this differently
-                          let da = {da with working = None
-                                            draw    = false}
-                          (da, aa)
-                        | false -> (CorrelationDrawing.update model.drawingApp model.semanticApp m, model.annotationApp)
-                    (
-                      model.corrPlotApp, 
-                      drawingApp,
-                      annoApp
-                    ) 
-                  | _ ,_ ,_-> 
-                    (
-                      model.corrPlotApp, 
-                      CorrelationDrawing.update model.drawingApp model.semanticApp m,
-                      model.annotationApp
-                    )
-            {model with drawingApp    = drawingApp
-                        corrPlotApp   = corrApp
-                        annotationApp = annoApp}
+  let update (model : Pages) (msg : Action) = //TODO model always last?
+    let updateDrawingApp =
+      CorrelationDrawing.update model.drawingApp model.semanticApp
+    let updateAnnotationApp =
+      AnnotationApp.update model.annotationApp 
+    let updateCamera =
+      CameraController.update model.camera 
+    let updateSemanticApp =
+      SemanticApp.update model.semanticApp
+    let updatePlot =
+      CorrelationPlotApp.update model.corrPlotApp model.annotationApp.annotations model.semanticApp
 
-          | CorrPlotMessage m, _, false -> // TODO refactor
-            let corrPlotApp = 
-              let sel = (AnnotationApp.getSelected model.annotationApp)
-                          |> PList.toList
-                          |> List.map (fun (p, a) -> (p.point, a))
-              {model.corrPlotApp with selectedPoints = sel}
-                |> CorrelationPlotApp.update 
-                    model.annotationApp.annotations
-                    model.semanticApp m
+    match msg, model.corrPlotApp.creatingNew, model.drawingApp.isDrawing with
+      | KeyDown Keys.Enter, _, true ->                          
+        match model.drawingApp.working with
+          | None   -> model
+          | Some w ->
+            {
+              model with 
+                drawingApp    = updateDrawingApp 
+                                  (CorrelationDrawing.KeyDown Keys.Enter)
+                annotationApp = updateAnnotationApp 
+                                  (AnnotationApp.AddAnnotation w)
+            }
+
+      | KeyDown k, _, _       -> 
+        {
+          model with 
+            drawingApp = updateDrawingApp (CorrelationDrawing.KeyDown k)
+            camera     = updateCamera (CameraController.Message.KeyDown k)
+        }
+
+      | KeyUp k, _, _         -> 
+        {  
+          model with 
+            drawingApp = updateDrawingApp (CorrelationDrawing.KeyUp k)
+            camera     = updateCamera (CameraController.Message.KeyUp k)
+        }
+
+      | SemanticAppMessage m, false, false ->
+        {model with semanticApp = updateSemanticApp m}
+
+      | AnnotationAppMessage m, _, _ -> 
+        {model with annotationApp = updateAnnotationApp m}
+
+      | CorrelationDrawingMessage m, _, _ ->
+        let (corrApp, drawingApp, annoApp) =               
             match m with
-              | CorrelationPlotApp.NewLog | CorrelationPlotApp.FinishLog -> 
-                {model with 
-                  drawingApp = 
-                        (CorrelationDrawing.update model.drawingApp model.semanticApp CorrelationDrawing.DeselectAllPoints)
-                    
-                  corrPlotApp = corrPlotApp
-                }
+              | CorrelationDrawing.AddPoint p -> 
+                let (drawingApp, annoApp) =
+                  match CorrelationDrawing.isDone model.drawingApp with
+                    | true  -> 
+                      let da = CorrelationDrawing.addPoint model.drawingApp model.semanticApp p
+                      let aa = updateAnnotationApp (AnnotationApp.AddAnnotation da.working.Value) //TODO safe but  maybe do this differently
+                      let da = {da with working   = None
+                                        isDrawing = false}
+                      (da, aa)
+                    | false -> (updateDrawingApp m, model.annotationApp)
+                (
+                  model.corrPlotApp, 
+                  drawingApp,
+                  annoApp
+                ) 
+              | _  -> 
+                (
+                  model.corrPlotApp, 
+                  updateDrawingApp m,
+                  model.annotationApp
+                )
+        {model with drawingApp    = drawingApp
+                    corrPlotApp   = corrApp
+                    annotationApp = annoApp}
 
-              | _ -> {model with corrPlotApp = corrPlotApp}
-              //  match logId with
-              //    | Some lid -> 
-              //      let (drawingApp, cApp) =
-              //        let updateBoth = 
-              //          let ind = model.corrPlotApp.logs.FirstIndexOf (fun l -> l.id = lid)
-              //          let selLog = model.corrPlotApp.logs.Item ind
-              //          let cdUpdate = CorrelationDrawing.update 
-              //                model.drawingApp.drawing 
-              //                model.semanticApp 
-              //                (CorrelationDrawing.SelectPoints (
-              //                    selLog.annoPoints
-              //                      |> List.map (fun (p,a) -> (p, a.id))
-              //                  )
-              //                )
-                          
-              //            (cdUpdate, {corrPlotApp with selectedLog = logId})
+      | CorrPlotMessage m, _, false -> // TODO refactor
+        let corrPlotApp = 
+          let sel      = AnnotationApp.getSelectedPoints' model.annotationApp
+          let updModel = {model.corrPlotApp with selectedPoints = sel}
+          CorrelationPlotApp.update 
+                updModel
+                model.annotationApp.annotations
+                model.semanticApp m
+        match m with
+          | CorrelationPlotApp.NewLog | CorrelationPlotApp.FinishLog -> 
+            {model with 
+              drawingApp = updateDrawingApp CorrelationDrawing.DeselectAllPoints
+              corrPlotApp = corrPlotApp
+            }
+          | _ -> {model with corrPlotApp = corrPlotApp}
 
-              //        match model.corrPlotApp.selectedLog with
-              //          | Some se -> 
-              //            match (se = lid) with 
-              //              | true  ->                           
-              //                ((CorrelationDrawing.update 
-              //                          model.drawingApp
-              //                          model.semanticApp 
-              //                          (CorrelationDrawing.DeselectAllPoints))
-              //                , {corrPlotApp with selectedLog = None})
-              //              | false -> updateBoth
+      | CenterScene, _, _ -> 
+          { model with camera = initialCamera }
 
-              //          | None -> updateBoth
-                          
-              //      {model with corrPlotApp = cApp
-              //                  drawingApp  = drawingApp}
-              //    | None -> model
-              //| _ -> 
-              //  { model with corrPlotApp = corrPlotApp}
-          | CenterScene, _, _ -> 
-              { model with camera = initialCamera }
+      | UpdateConfig cfg, _,_->
+          { model with dockConfig = cfg; past = Some model }
 
-          | UpdateConfig cfg, _,_->
-              { model with dockConfig = cfg; past = Some model }
+      | SetCullMode mode, _,_ ->
+          { model with cullMode = mode; past = Some model }
 
-          | SetCullMode mode, _,_ ->
-              { model with cullMode = mode; past = Some model }
+      | ToggleFill, _,_ ->
+          { model with fill = not model.fill; past = Some model }
 
-          | ToggleFill, _,_ ->
-              { model with fill = not model.fill; past = Some model }
-          | Save, false, false -> 
-              ignore (SemanticApp.save model.semanticApp)
-              ignore (AnnotationApp.save model.annotationApp)
-              //let cdApp = CorrelationDrawingApp.update model.drawingApp model.semanticApp CorrelationDrawingApp.Action.Save
-              model
-          | Load, false, false -> 
-              {model with semanticApp   = SemanticApp.load model.semanticApp
-                          annotationApp = AnnotationApp.load model.annotationApp}
+      | Save, false, false -> 
+          ignore (SemanticApp.save model.semanticApp)
+          ignore (AnnotationApp.save model.annotationApp)
+          model
+
+      | Load, false, false -> 
+          {model with semanticApp   = SemanticApp.load model.semanticApp
+                      annotationApp = AnnotationApp.load model.annotationApp}
 //                  
-          | Clear, _,_ -> 
-                  { model with annotationApp = AnnotationApp.update model.annotationApp (AnnotationApp.Clear)
-                               drawingApp    = CorrelationDrawing.update model.drawingApp model.semanticApp (CorrelationDrawing.Clear)
-                               corrPlotApp   = CorrelationPlotApp.update PList.empty model.semanticApp (CorrelationPlotApp.Clear) model.corrPlotApp 
+      | Clear, _,_ -> 
+        { model with  annotationApp = updateAnnotationApp (AnnotationApp.Clear)
+                      drawingApp    = updateDrawingApp (CorrelationDrawing.Clear)
+                      corrPlotApp   = updatePlot (CorrelationPlotApp.Clear) 
+        }            
 
-                  }            
+        | Undo,_,_ ->
+            match model.past with
+                | Some p -> { p with future = Some model; camera = model.camera }
+                | None -> model
 
-//          | Undo ->
-//              match model.past with
-//                  | Some p -> { p with future = Some model; cameraState = model.cameraState }
-//                  | None -> model
-//
-//          | Redo ->
-//              match model.future with
-//                  | Some f -> { f with past = Some model; cameraState = model.cameraState }
-//                  | None -> model
-          | CameraMessage m, _,_ -> 
-                { model with camera = CameraController.update model.camera m }   
-          | _   -> model
+        | Redo,_,_ ->
+            match model.future with
+                | Some f -> { f with past = Some model; camera = model.camera }
+                | None -> model
+
+        | CameraMessage m, _,_ -> 
+              { model with camera = updateCamera m }   
+
+        | _   -> model
 
   let viewScene (model : MPages) =
       Sg.box (Mod.constant C4b.Green) (Mod.constant Box3d.Unit)
@@ -242,24 +218,13 @@ module Pages =
   let view  (runtime : IRuntime) (model : MPages) =
     let menu = 
       let menuItems = [
-              div [clazz "item"]
-                  [button [clazz "ui icon button"; onMouseClick (fun _ -> Save)] 
-                          [i [clazz "small save icon"] [] ] |> wrapToolTip "save"];
-              div [clazz "item"]
-                  [button [clazz "ui icon button"; onMouseClick (fun _ -> Load)] 
-                          [i [clazz "small folder outline icon"] [] ] |> wrapToolTip "load"];
-              div [clazz "item"]
-                  [button [clazz "ui icon button"; onMouseClick (fun _ -> Clear)]
-                          [i [clazz "small file outline icon"] [] ] |> wrapToolTip "clear"];
-              div [clazz "item"]
-                  [button [clazz "ui icon button"; onMouseClick (fun _ -> Export)]
-                          [i [clazz "small external icon"] [] ] |> wrapToolTip "export"];
-              div [clazz "item"]
-                  [button [clazz "ui icon button"; onMouseClick (fun _ -> Undo)] 
-                          [i [clazz "small arrow left icon"] [] ] |> wrapToolTip "undo"];
-              div [clazz "item"]
-                  [button [clazz "ui icon button"; onMouseClick (fun _ -> Redo)] 
-                          [i [clazz "small arrow right icon"] [] ] |> wrapToolTip "redo"]]
+        iconButton "small save icon"          "save"    (fun _ -> Save)
+        iconButton "small folder icon"        "laod"    (fun _ -> Load)
+        iconButton "small file outline icon"  "clear"   (fun _ -> Clear)
+        iconButton "small external icon"      "export"  (fun _ -> Export)
+        iconButton "small arrow left icon"    "undo"    (fun _ -> Undo)
+        iconButton "small arrow right icon"   "redo"    (fun _ -> Redo)
+      ]
 
       body [style "width: 100%; height:100%; background: transparent; overflow: auto"] [
         div [style "vertical-align: middle"]

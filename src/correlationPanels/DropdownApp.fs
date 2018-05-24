@@ -31,9 +31,9 @@ module DropdownList =
     
 
   let view' (mDropdown : MDropdownList<'a, _>)  
-           (changeFunction     : (option<'a> -> 'msg))
-           (labelFunction      : ('a -> IMod<string>))
-           (getIsSelected      : ('a -> IMod<bool>))  =
+            (changeFunction     : (option<'a> -> 'msg))
+            (labelFunction      : ('a -> IMod<string>))
+            (getIsSelected      : ('a -> IMod<bool>))  =
            
 
     let attributes (value : 'a) (name : string) =

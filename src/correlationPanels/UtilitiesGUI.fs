@@ -5,8 +5,20 @@ open Aardvark.Base.Incremental
 open Aardvark.Base
 open Aardvark.UI
 
+
 module UtilitiesGUI = 
     // SEMUI
+    type Size = Mini | Tiny | Small | Medium | Large | Big | Huge | Massive
+      with member this.semuiString = 
+            match this with
+              | Mini    -> "mini"
+              | Tiny    -> "tiny"
+              | Small   -> "small"
+              | Medium  -> "medium"
+              | Large   -> "large"
+              | Big     -> "big"
+              | Huge    -> "huge"
+              | Massive -> "massive"
 
     let myCss = [
               { kind = Stylesheet; name = "semui"; url = "https://cdn.jsdelivr.net/semantic-ui/2.2.6/semantic.min.css" }
@@ -14,6 +26,21 @@ module UtilitiesGUI =
               { kind = Script; name = "semui"; url = "https://cdn.jsdelivr.net/semantic-ui/2.2.6/semantic.min.js" }
             ]
 
+
+
+    // ICONS
+
+
+    module Icons =
+      type Type = ArrowDown | ArrowUp 
+        with member this.semuiString =
+              match this with
+               | ArrowDown      -> "arrow down"
+               | ArrowUp        -> "arrow up"
+
+      let icon (s : Size) (t : Type) =
+
+        sprintf "%s %s icon" s.semuiString t.semuiString
 
     // GENERAL
     let colorToHexStr (color : C4b) = 
@@ -98,3 +125,11 @@ module UtilitiesGUI =
         )
 
 
+        // GUI ELEMENTS
+
+    let iconButton (iconStr : string) (tooltip : string) (onClick : V2i -> 'msg) = 
+      div [clazz "item"]
+          [
+            button [clazz "ui icon button"; onMouseClick onClick] 
+                   [i [clazz iconStr] [] ] |> wrapToolTip tooltip
+          ]

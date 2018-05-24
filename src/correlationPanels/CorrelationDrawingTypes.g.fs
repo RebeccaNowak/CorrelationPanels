@@ -1046,14 +1046,14 @@ module Mutable =
     type MCorrelationDrawingModel(__initial : CorrelationDrawing.CorrelationDrawingModel) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationDrawingModel> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.CorrelationDrawingModel>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationDrawingModel>
-        let _draw = ResetMod.Create(__initial.draw)
+        let _isDrawing = ResetMod.Create(__initial.isDrawing)
         let _hoverPosition = MOption.Create(__initial.hoverPosition)
         let _working = MOption.Create(__initial.working, (fun v -> MAnnotation.Create(v)), (fun (m,v) -> MAnnotation.Update(m, v)), (fun v -> v))
         let _projection = ResetMod.Create(__initial.projection)
         let _geometry = ResetMod.Create(__initial.geometry)
         let _exportPath = ResetMod.Create(__initial.exportPath)
         
-        member x.draw = _draw :> IMod<_>
+        member x.isDrawing = _isDrawing :> IMod<_>
         member x.hoverPosition = _hoverPosition :> IMod<_>
         member x.working = _working :> IMod<_>
         member x.projection = _projection :> IMod<_>
@@ -1065,7 +1065,7 @@ module Mutable =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
-                ResetMod.Update(_draw,v.draw)
+                ResetMod.Update(_isDrawing,v.isDrawing)
                 MOption.Update(_hoverPosition, v.hoverPosition)
                 MOption.Update(_working, v.working)
                 ResetMod.Update(_projection,v.projection)
@@ -1087,11 +1087,11 @@ module Mutable =
     module CorrelationDrawingModel =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
-            let draw =
+            let isDrawing =
                 { new Lens<CorrelationDrawing.CorrelationDrawingModel, System.Boolean>() with
-                    override x.Get(r) = r.draw
-                    override x.Set(r,v) = { r with draw = v }
-                    override x.Update(r,f) = { r with draw = f r.draw }
+                    override x.Get(r) = r.isDrawing
+                    override x.Set(r,v) = { r with isDrawing = v }
+                    override x.Update(r,f) = { r with isDrawing = f r.isDrawing }
                 }
             let hoverPosition =
                 { new Lens<CorrelationDrawing.CorrelationDrawingModel, Microsoft.FSharp.Core.Option<Aardvark.Base.Trafo3d>>() with

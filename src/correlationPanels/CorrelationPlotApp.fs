@@ -30,10 +30,11 @@
       viewType            = LogNodeView.StackedView2ColorBoxes
     }
 
-    let update (annos : plist<Annotation>) 
+    let update (model : CorrelationPlotApp)
+               (annos : plist<Annotation>) 
                (semApp : SemanticApp) 
-               (action : Action) 
-               (model : CorrelationPlotApp) = 
+               (action : Action) = 
+               
       match action, model.creatingNew with
         | Clear, _                     ->
           {model with logs = PList.empty
