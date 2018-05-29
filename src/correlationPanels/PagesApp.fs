@@ -157,7 +157,7 @@ module Pages =
         match m with
           | CorrelationPlotApp.NewLog | CorrelationPlotApp.FinishLog -> 
             {model with 
-              drawingApp = updateDrawingApp CorrelationDrawing.DeselectAllPoints
+              //TODO @Design deselect points yes or know?
               corrPlotApp = corrPlotApp
             }
           | _ -> {model with corrPlotApp = corrPlotApp}

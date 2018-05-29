@@ -18,6 +18,12 @@
     <RunWorkingDirectory>$(OutputPath)</RunWorkingDirectory>
   </PropertyGroup>
   <ItemGroup>
+	<Content Include="spectrum.css">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</Content>
+	<None Include="spectrum.js">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</None>
 	<Content Include="semui-overrides.css">
 	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	</Content>

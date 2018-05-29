@@ -17,16 +17,16 @@ module GeologicalLog =
 
   let getSecond (_, s) = s
 
-  let copyAnnoWith (v : V3d) (aToAdd : (V3d * Annotation)) = 
-    let a = 
-      (fun (p,a) -> 
-        (v, {a with points = PList.ofList [{AnnotationPoint.initial with point    = v
-                                                                         selected = false
-                                          }]
-            }
-        )
-      ) aToAdd
-    a
+  //let copyAnnoWith (v : V3d) (aToAdd : (V3d * Annotation)) = 
+  //  let a = 
+  //    (fun (p,a) -> 
+  //      (v, {a with points = PList.ofList [{AnnotationPoint.initial with point    = v
+  //                                                                       selected = false
+  //                                        }]
+  //          }
+  //      )
+  //    ) aToAdd
+  //  a
 
   let getMinLevel ( model : MGeologicalLog) =
     model.nodes |> AList.toList
@@ -37,27 +37,26 @@ module GeologicalLog =
     annos 
       |> PList.map 
         (fun a -> 
-          let lBorder = {Border.initial with anno  = a
-                                             point = lp} // TODO think of a better way
-          let uBorder = {Border.initial with anno  = a
-                                             point = up}         
+          let lBorder = Border.initial a lp // TODO think of a better way
+          let uBorder = Border.initial a up         
           
           match (Annotation.getType semApp a) with
-           | SemanticType.Hierarchical -> (LogNode.initialHierarchical a lBorder uBorder) //happens if not selected
+           | SemanticType.Hierarchical -> {LogNode.initialHierarchical a lBorder uBorder with
+                                            nodeType = LogNodeType.HierarchicalLeaf}
            | SemanticType.Angular -> (LogNode.intialAngular a lBorder uBorder)
            | SemanticType.Metric -> (LogNode.intialMetric a  lBorder uBorder)
            | SemanticType.Undefined -> (LogNode.initialEmpty) //TODO something useful
            | _ -> (LogNode.initialEmpty) //TODO something useful
         )
-      |> PList.filter (fun n -> n.nodeType <> LogNodeType.Empty)
+     // |> PList.filter (fun n -> n.nodeType <> LogNodeType.Empty) //TODO why is this necessary
 
       
-  let rec generateLevel (lst : List<V3d * Annotation>) 
+  let rec generateLevel (selectedPoints : List<V3d * Annotation>) 
                         (annos : plist<Annotation>) 
                         (semApp : SemanticApp) 
                         (lowerBorder : Border) 
                         (upperBorder : Border) =
-    match lst with
+    match selectedPoints with
       | [] -> plist.Empty
       | lst ->
         let currentLevel =
@@ -65,25 +64,25 @@ module GeologicalLog =
             |> List.map (fun (p,a) -> Annotation.getLevel semApp a)
             |> List.min
 
-        let filteredList = 
+        let onlyCurrentLevel = 
           lst 
             |> List.filter (fun (p, a) -> (Annotation.getLevel semApp a) = currentLevel)
             |> List.sortBy (fun (p, a) -> (p.Length))
 
-        let lBorder = {lowerBorder with anno = {lowerBorder.anno with overrideLevel = Some currentLevel}}
-        let uBorder = {upperBorder with anno = {upperBorder.anno with overrideLevel = Some currentLevel}}
+        let lBorder = {lowerBorder with anno = lowerBorder.anno}
+        let uBorder = {upperBorder with anno = upperBorder.anno}
         
         let listWithBorders = 
           List.concat 
                 [
                   [(lBorder.point, lBorder.anno)]
-                  filteredList;
+                  onlyCurrentLevel;
                   [(uBorder.point, uBorder.anno)]
                 ]
           |> List.sortBy (fun (p, a) -> (p.Length))
 
         
-        let pwList =
+        let pairwiseWithBorders =
           listWithBorders
             |> List.pairwise
 
@@ -95,39 +94,35 @@ module GeologicalLog =
           lst 
             |> List.filter (fun (p, a) -> (Annotation.getLevel semApp a) <> currentLevel)
         
-        let foo =
+        let nodesInCurrentLevel =
           seq {
-            for ((p1, a1), (p2, a2)) in pwList do
-              // sort pairs
-              let (lp, la) = if p1.Length < p2.Length then (p1, a1) else (p2, a2) //TODO refactor
-              let (up, ua) = if p1.Length < p2.Length then (p2, a2) else (p1, a1)
-              let layerChildren = 
-                let between (a : Annotation) = (lp.Length < (Annotation.elevation a) && (up.Length > (Annotation.elevation a)))
-                let layerRestAnnos = 
-                  restAnnos
-                    |> PList.filter between
-                let layerRestSelPoints = 
-                  restSelPoints
+            for ((p1, a1), (p2, a2)) in pairwiseWithBorders do
+              let ((lp,la),(up,ua)) = Annotation.sortByElevation (p1, a1) (p2, a2)
+              let nodeChildren = 
+                let childrenAnnos = 
+                  restAnnos // only take Annotations with elevations within the current node borders
+                    |> PList.filter (Annotation.isElevationBetween lp.Length up.Length)
+                let childrenSelectedPoints = 
+                  restSelPoints // only take selected points with elevations within the current node borders
                     |> List.filter (
                       fun (p, a) -> 
                         (lp.Length < p.Length && (up.Length > p.Length)))
 
-                match layerRestSelPoints with
-                  | []    -> generateNonLevelNodes layerRestAnnos (lp, la) (up, ua) semApp
+                match childrenSelectedPoints with
+                  | []    -> generateNonLevelNodes childrenAnnos (lp, la) (up, ua) semApp
                   | cLst  -> 
-
-                    let lBorder = {Border.initial with anno  = la
-                                                       point = lp}
-                    let uBorder = {Border.initial with anno  = ua
-                                                       point = up} 
-                    generateLevel layerRestSelPoints layerRestAnnos semApp lBorder uBorder
-
-              yield LogNode.initialTopLevel (up, ua) (lp, la) layerChildren currentLevel
-
-              
+                    match childrenAnnos with
+                      | lst when lst.IsEmpty() -> 
+                        PList.empty
+                        // TODO think about LogNodeType .  is Hierarchical the best choice here?
+                      | _ -> 
+                        let lBorder = Border.initial la lp
+                        let uBorder = Border.initial ua up
+                        generateLevel cLst childrenAnnos semApp lBorder uBorder
+              yield LogNode.initialTopLevel (up, ua) (lp, la) nodeChildren currentLevel        
           }
 
-        foo
+        nodesInCurrentLevel
           |> Seq.sortByDescending (fun x -> x.elevation)
           |> PList.ofSeq
         
@@ -164,6 +159,7 @@ module GeologicalLog =
           result
 
   
+    
 
   let calcLogYPos (logHeight : float)  (plst : plist<LogNode>) =
     let lst = PList.toList plst
@@ -232,11 +228,12 @@ module GeologicalLog =
                     lst 
                     annos
                     semApp 
-                    {Border.initial with point = (V3d.OOO)
-                                         anno = (Annotation.initialDummyWithPoints (V3d.OOO))}
-                    {Border.initial with point = (V3d.PositiveInfinity)
-                                         anno = (Annotation.initialDummyWithPoints (V3d.PositiveInfinity))}
-                  ) |> calcLogYPos 300.0
+                    Border.initNegInf
+                    Border.initPosInf
+                  ) |> PList.map LogNode.replaceInfinity
+                    |> PList.filter LogNode.isInfinityType
+                    |> calcLogYPos 300.0
+                    
 
     annoPoints  = lst
     range       = Rangef.init

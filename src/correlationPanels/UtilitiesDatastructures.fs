@@ -69,7 +69,37 @@ module PList =
                           | None    -> false)
       |> PList.map (fun el -> el.Value)
 
+  let minBy (f : 'a -> 'b) (lst : plist<'a>) : 'a =
+    lst
+      |> PList.toList
+      |> List.reduce (fun x y -> if (f x) < (f y) then x else y)
 
+  let minMapBy (mapTo: 'a -> 'c) (minBy : 'a -> 'b) (lst : plist<'a>) : 'c =
+    lst
+      |> PList.toList
+      |> List.reduce (fun x y -> if (minBy x) < (minBy y) then x else y)
+      |> mapTo 
+
+  let maxMapBy (mapTo: 'a -> 'c) (maxBy : 'a -> 'b) (lst : plist<'a>) : 'c =
+    lst
+      |> PList.toList
+      |> List.reduce (fun x y -> if (maxBy x) < (maxBy y) then x else y)
+      |> mapTo 
+
+  
+
+  //type foo = {
+  //  bar : string
+  //  foo : float
+  //}
+
+  // let minBy (f : 'a -> 'b) (alst : list<'a>) =
+  //    alst
+  //      |> List.reduce (fun x y -> if (f x) < (f y) then x else y)
+  // let foobar = [{foo = 1.0;bar = "2"}
+  //               {foo = 1.0;bar = "4"}
+  //               {foo = 1.0;bar = "1"}]
+  // let res = minBy (fun f -> f.foo) foobar
 
 
   //let (lst : List<option<string>>) = []                                     

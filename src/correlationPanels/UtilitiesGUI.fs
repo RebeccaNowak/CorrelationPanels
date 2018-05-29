@@ -26,6 +26,44 @@ module UtilitiesGUI =
               { kind = Script; name = "semui"; url = "https://cdn.jsdelivr.net/semantic-ui/2.2.6/semantic.min.js" }
             ]
 
+    // TOOLTIPS
+    let wrapToolTip (text:string) (dom:DomNode<'a>) : DomNode<'a> =
+        let attr = 
+            [attribute "title" text
+             attribute "data-position" "top center"
+             attribute "data-variation" "mini" ] 
+                |> AttributeMap.ofList
+                |> AttributeMap.union dom.Attributes                
+                
+        onBoot "$('#__ID__').popup({inline:true,hoverable:true});" (       
+            dom.WithAttributes attr     
+        )
+
+    let wrapToolTipRight (text:string) (dom:DomNode<'a>) : DomNode<'a> =
+
+        let attr = 
+            [ attribute "title" text
+              attribute "data-position" "right center"
+              attribute "data-variation" "mini"] 
+                |> AttributeMap.ofList
+                |> AttributeMap.union dom.Attributes                
+                
+        onBoot "$('#__ID__').popup({inline:true,hoverable:true});" (       
+            dom.WithAttributes attr     
+        )
+
+    let wrapToolTipBottom (text:string) (dom:DomNode<'a>) : DomNode<'a> =
+
+        let attr = 
+            [ attribute "title" text
+              attribute "data-position" "bottom center"
+              attribute "data-variation" "mini"] 
+                |> AttributeMap.ofList
+                |> AttributeMap.union dom.Attributes                
+                
+        onBoot "$('#__ID__').popup({inline:true,hoverable:true});" (       
+            dom.WithAttributes attr     
+        )
 
 
     // ICONS
@@ -38,9 +76,32 @@ module UtilitiesGUI =
                | ArrowDown      -> "arrow down"
                | ArrowUp        -> "arrow up"
 
-      let icon (s : Size) (t : Type) =
+      
+      type Icon = {
+        typ   : Type
+        size  : Size
+      } with
+          member this.semuiString =
+                sprintf "%s %s icon" this.size.semuiString this.typ.semuiString
 
-        sprintf "%s %s icon" s.semuiString t.semuiString
+      let icon (t : Type) : Icon = {
+        typ = t
+        size = Size.Medium
+      }
+      
+      type IconButton = {
+        typ   : Type
+        size  : Size
+      }
+
+    let iconButton (iconStr : string) (tooltip : string) (onClick : V2i -> 'msg) = 
+      div [clazz "item"]
+          [
+            button [clazz "ui icon button"; onMouseClick onClick] 
+                    [i [clazz iconStr] [] ] |> wrapToolTip tooltip
+          ]
+      
+      
 
     // GENERAL
     let colorToHexStr (color : C4b) = 
@@ -84,52 +145,8 @@ module UtilitiesGUI =
     let lrPadding = "padding: 1px 4px 1px 4px"
 
 
-    // TOOLTIPS
-    let wrapToolTip (text:string) (dom:DomNode<'a>) : DomNode<'a> =
 
-        let attr = 
-            [attribute "title" text
-             attribute "data-position" "top center"
-             attribute "data-variation" "mini" ] 
-                |> AttributeMap.ofList
-                |> AttributeMap.union dom.Attributes                
-                
-        onBoot "$('#__ID__').popup({inline:true,hoverable:true});" (       
-            dom.WithAttributes attr     
-        )
-
-    let wrapToolTipRight (text:string) (dom:DomNode<'a>) : DomNode<'a> =
-
-        let attr = 
-            [ attribute "title" text
-              attribute "data-position" "right center"
-              attribute "data-variation" "mini"] 
-                |> AttributeMap.ofList
-                |> AttributeMap.union dom.Attributes                
-                
-        onBoot "$('#__ID__').popup({inline:true,hoverable:true});" (       
-            dom.WithAttributes attr     
-        )
-
-    let wrapToolTipBottom (text:string) (dom:DomNode<'a>) : DomNode<'a> =
-
-        let attr = 
-            [ attribute "title" text
-              attribute "data-position" "bottom center"
-              attribute "data-variation" "mini"] 
-                |> AttributeMap.ofList
-                |> AttributeMap.union dom.Attributes                
-                
-        onBoot "$('#__ID__').popup({inline:true,hoverable:true});" (       
-            dom.WithAttributes attr     
-        )
 
 
         // GUI ELEMENTS
 
-    let iconButton (iconStr : string) (tooltip : string) (onClick : V2i -> 'msg) = 
-      div [clazz "item"]
-          [
-            button [clazz "ui icon button"; onMouseClick onClick] 
-                   [i [clazz iconStr] [] ] |> wrapToolTip tooltip
-          ]

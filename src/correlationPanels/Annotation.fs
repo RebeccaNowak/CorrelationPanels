@@ -23,7 +23,7 @@ module Annotation =
           visible         = true
           text            = "text"
           overrideStyle   = None
-          overrideLevel   = None
+          //overrideLevel   = None
           selected        = false
           hovered         = false
       }
@@ -40,7 +40,7 @@ module Annotation =
         visible         = true
         text            = "dummy"
         overrideStyle   = None
-        overrideLevel   = None
+        //overrideLevel   = None
         selected        = false
         hovered         = false
     }
@@ -61,7 +61,7 @@ module Annotation =
         overrideStyle   = 
           Some {Style.color     = { c = C4b.Black }
                 Style.thickness = Numeric.init}
-        overrideLevel   = Some 0
+        //overrideLevel   = Some 0
         selected        = false
         hovered         = false
     }
@@ -144,20 +144,13 @@ module Annotation =
 
   module View = 
     let getColourIcon (model : MAnnotation) (semanticApp : MSemanticApp) =
-        //let ignoreOverride = // TODO dirty hack
-        //  match Mod.force model.semanticId with
-        //    | id where id.isInvalid -> false
-        //    | "-2" -> false
-        //    | _    -> true
-
-        let iconAttr =
-          amap {
-            yield clazz "circle icon"
-            let! c = getConstColor model semanticApp false
-            yield style (sprintf "color:%s" (colorToHexStr c))
-          }      
-        Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
-
+      let iconAttr =
+        amap {
+          yield clazz "circle icon"
+          let! c = getConstColor model semanticApp false
+          yield style (sprintf "color:%s" (colorToHexStr c))
+        }      
+      Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
 
     let viewSelected (model : MAnnotation)  (semanticApp : MSemanticApp) = 
       let semanticsNode = 
@@ -166,13 +159,12 @@ module Annotation =
             yield clazz "circle outline icon"
             let! c = SemanticApp.getColor semanticApp model.semanticId
             yield style (sprintf "color:%s" (colorToHexStr c))
-  //          yield attribute "color" "blue"
           }      
         td [clazz "center aligned"; style lrPadding] 
            [
             Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList []);
-            //label  [clazz "ui label"] 
-                   Incremental.text (SemanticApp.getLabel semanticApp model.semanticId)]
+            Incremental.text (SemanticApp.getLabel semanticApp model.semanticId)
+           ]
 
         
       let geometryTypeNode =
@@ -286,7 +278,8 @@ module Annotation =
         } 
         |> Sg.set
 
-      [Sg.noEvents <| makeLinesSg model color thickness;
+      [
+       Sg.noEvents <| makeLinesSg model color thickness;
        Sg.noEvents <| dots
       ] |> ASet.ofList
 
@@ -340,7 +333,7 @@ module Annotation =
 //                | false -> SemanticApp.getColor semanticApp anno.semanticId
 
 
-
+  
     
  
 
@@ -365,6 +358,15 @@ module Annotation =
       |> PList.toList
       |> List.map (fun x -> x.point.Length)
       |> List.average
+
+  let isElevationBetween (a : float) (b : float) (model : Annotation)  =
+    (a < (elevation model) && (b > (elevation model)))
+
+  let sortByElevation (p1 : V3d, a1 : Annotation)  (p2 : V3d, a2 : Annotation) =
+    let (lp, la) = if p1.Length < p2.Length then (p1, a1) else (p2, a2) //TODO refactor
+    let (up, ua) = if p1.Length < p2.Length then (p2, a2) else (p1, a1)
+    ((lp,la),(up,ua))
+
 //
 //  let getMinElevation (anno : MAnnotation) = 
 //    anno.points
@@ -408,9 +410,9 @@ module Annotation =
       | None   -> SemanticType.Undefined
 
   let getLevel (semanticApp : SemanticApp) (anno : Annotation) =
-    match anno.overrideLevel with
-      | Some o -> o
-      | None ->
+    //match anno.overrideLevel with
+    //  | Some o -> o
+    //  | None ->
         let s = (SemanticApp.getSemantic semanticApp anno.semanticId)
         match s with
           | Some s -> s.level

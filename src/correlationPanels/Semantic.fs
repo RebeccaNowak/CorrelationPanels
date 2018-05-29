@@ -237,8 +237,7 @@ module Semantic =
         thNode 
           |> UI.map ChangeThickness
           |> intoTd
-        
-        //ColorPicker.view model.style.color // TODO COLOR PICKER IS BROKEN
+        //ColorPicker.view model.style.color
         //  |> UI.map ColorPickerMessage
 
         domNodeColor

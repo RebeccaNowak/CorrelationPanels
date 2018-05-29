@@ -141,7 +141,7 @@ type Annotation = {
     visible               : bool
     text                  : string
     overrideStyle         : option<Style>
-    overrideLevel         : option<int>
+    //overrideLevel         : option<int>
 }
 
 [<DomainType>]
@@ -152,6 +152,7 @@ type AnnotationApp = {
 
 
 type BorderStyle = Annotation | Border
+type BorderType  = PositiveInfinity | NegativeInfinity | Normal
 
 [<DomainType>]
 type Border = {
@@ -160,9 +161,12 @@ type Border = {
     color       : C4b
     weight      : double
     styleType   : BorderStyle
+
+    [<NonIncremental>]
+    borderType  : BorderType
 }
 
-type LogNodeType    = TopLevel | Hierarchical | Metric | Angular | Infinity | Empty
+type LogNodeType    = Hierarchical | HierarchicalLeaf | Metric | Angular | PosInfinity | NegInfinity | Infinity | Empty
 type LogNodeView    = StackedViewSimpleBoxes | StackedView2ColorBoxes | LineView
 type LogNodeBoxType = SimpleBox | TwoColorBox | FancyBox
 
@@ -179,7 +183,7 @@ type LogNode = {
     uBoundary     : Border
     children      : plist<LogNode>
                   
-    elevation     : float
+    elevation     : float //TODO should be a function if at all
     range         : Rangef
     logYPos       : float
     logXPos       : float

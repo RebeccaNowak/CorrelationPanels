@@ -14,8 +14,8 @@ module LogNode =
     nodeType     = LogNodeType.Empty
     label        = "log node"
     level        = -1
-    lBoundary    = {Border.initial with point = V3d.OOO; anno = (Annotation.initial "-1")}
-    uBoundary    = {Border.initial with point = V3d.OOO; anno = (Annotation.initial "-1")}
+    lBoundary    = Border.initial (Annotation.initial "-1") (V3d(1.0))
+    uBoundary    = Border.initial (Annotation.initial "-1") (V3d(1.0))
     children     = plist.Empty
     elevation    = 0.0
     range        = Rangef.init
@@ -30,27 +30,38 @@ module LogNode =
     ((up, ua) : (V3d * Annotation)) 
     ((lp, la) : (V3d * Annotation)) 
     (children : plist<LogNode>)
-    (level    : int) : LogNode = {
-    isSelected    = false
-    nodeType      = LogNodeType.TopLevel
-    label         = "log node"
-    level         = level
-    lBoundary     = {Border.initial with point = lp; anno = la}
-    uBoundary     = {Border.initial with point = up; anno = ua}
-    children      = children
-    elevation     = (up.Length + lp.Length) * 0.5
-    range         = {Rangef.init with min = lp.Length
-                                      max = up.Length}
-    logYPos       = 0.0
-    logXPos       = 0.0
-    pos           = V3d.OOO
-    size          = V3d.OOO
-  }
+    (level    : int) : LogNode = 
+    
+    let lBoundary = Border.initial la lp
+    let uBoundary = Border.initial ua up
+
+    {initialEmpty with
+      nodeType      = 
+        match lBoundary.borderType, uBoundary.borderType with
+          | BorderType.NegativeInfinity, BorderType.Normal 
+            -> LogNodeType.NegInfinity
+          | BorderType.Normal, BorderType.PositiveInfinity
+            -> LogNodeType.PosInfinity
+          | BorderType.NegativeInfinity, BorderType.PositiveInfinity
+            -> LogNodeType.Infinity
+          | BorderType.Normal, BorderType.Normal
+            -> LogNodeType.Hierarchical
+          | _,_ -> LogNodeType.Empty
+
+      label         = "log node"
+      level         = level
+      lBoundary     = lBoundary
+      uBoundary     = uBoundary
+      children      = children
+      elevation     = (up.Length + lp.Length) * 0.5
+      range         = {Rangef.init with min = lp.Length
+                                        max = up.Length}
+    }
 
   // TODO add level
   let initialHierarchical (anno : Annotation) (lower : Border) (upper : Border) =
     {initialEmpty with
-      nodeType    = LogNodeType.Hierarchical
+      nodeType    = LogNodeType.HierarchicalLeaf
       elevation   = Annotation.elevation anno
       lBoundary   = lower
       uBoundary   = upper}
@@ -72,6 +83,65 @@ module LogNode =
       uBoundary   = upper}
   /////////////////////
 
+  let rec findLowestBorder (lst : plist<LogNode>) =
+    lst |> PList.minMapBy (fun p -> p.lBoundary) (fun p -> Border.calcElevation p.lBoundary)
+
+  let rec findHighestBorder (lst : plist<LogNode>) =
+    lst |> PList.maxMapBy (fun p -> p.uBoundary) (fun p -> Border.calcElevation p.uBoundary)
+      
+
+  let rec replaceInfinity (model : LogNode) =
+    match model.children.IsEmpty(), model.nodeType with
+      | true, _ -> model
+      | false, LogNodeType.NegInfinity -> 
+            let children   = model.children |> PList.map (fun c -> replaceInfinity c)   
+            {model with lBoundary = findLowestBorder children
+                        children  = children
+                        nodeType  = LogNodeType.Hierarchical}
+      | false, LogNodeType.PosInfinity ->
+            let children   = model.children |> PList.map (fun c -> replaceInfinity c)   
+            {model with uBoundary = findHighestBorder children
+                        children  = children
+                        nodeType  = LogNodeType.Hierarchical}
+        //{(model.children.Item 0) with level     = model.level
+        //                              children  = List.tail (model.children |> PList.toList) |> PList.ofList //TODO refactor }
+        //}
+      | _ , _ -> model
+        //let firstChild = model.children.Item 0
+        //match firstChild.nodeType with
+        //  | LogNodeType.Angular | LogNodeType.Metric | HierarchicalLeaf ->
+        //    {model with lBoundary   = firstChild.lBoundary
+        //                nodeType    = LogNodeType.Hierarchical}
+        //  | LogNodeType.Hierarchical ->
+        //    let children   = model.children |> PList.map (fun c -> replaceInfinity c)  
+        //    {model with children = children}
+        //                      //TODO refactor 
+            
+        //  | LogNodeType.NegInfinity ->
+        //    // find child with smallest elevation
+        //    //let elevations = model.children |> PList.map (fun c -> c.elevation) //TODO check if elevation should be a function
+        //    let children   = model.children |> PList.map (fun c -> replaceInfinity c)   
+        //    {model with lBoundary = findLowestBorder children}
+        //  | LogNodeType.PosInfinity ->
+        //    let children   = model.children |> PList.map (fun c -> replaceInfinity c)   
+        //    {
+        //      model with uBoundary = (findLowestBorder (model.children))
+        //                 children  = children
+        //    }
+            
+            
+            //{firstChild with level     = model.level
+            //                 children  = match firstChild.children.IsEmpty() with
+            //                               | false -> List.tail (children |> PList.toList) |> PList.ofList //TODO write safe PList.tail
+            //                               | true  -> PList.empty
+            //}
+
+
+  let isInfinityType (model : LogNode) =
+    match model.nodeType with 
+      | LogNodeType.NegInfinity
+      | LogNodeType.PosInfinity -> false
+      | _ -> true
 
   ////////////////////
   module View =
@@ -79,6 +149,7 @@ module LogNode =
 /////////////////////////////////////////////////////////////////////////////////
     module Debug =
       let description (model : MLogNode) (semApp : MSemanticApp) = 
+
         let createDomNode (descString : IMod<string>) =
           div [] [
             Annotation.View.getColourIcon model.uBoundary.anno semApp
@@ -91,13 +162,18 @@ module LogNode =
             |> Mod.bind 
               (fun t -> 
                 match t with
-                  | LogNodeType.Hierarchical | LogNodeType.Infinity | LogNodeType.TopLevel ->
-                    (Mod.map2 (fun (u : V3d) (l : V3d)  -> 
-                                    sprintf "%.2f-%.2f" l.Length u.Length)
-                              model.uBoundary.point model.lBoundary.point)
+                  | LogNodeType.HierarchicalLeaf 
+                  | LogNodeType.NegInfinity
+                  | LogNodeType.PosInfinity
+                  | LogNodeType.Hierarchical ->
+                      model.nodeType |> Mod.map (fun x -> x.ToString())
+                    //(Mod.map2 (fun (u : V3d) (l : V3d)  -> 
+                                    //sprintf "%.2f-%.2f" l.Length u.Length)
+                                    //model.uBoundary.point model.lBoundary.point)
                   | LogNodeType.Angular | LogNodeType.Metric ->
-                      model.elevation |> Mod.map (sprintf "%.2f" )
-                  | LogNodeType.Empty -> Mod.constant "EmptyNode"
+                      //Mod.map (sprintf "%s" ) model.label
+                      model.nodeType |> Mod.map (fun x -> x.ToString())
+                  | LogNodeType.Empty | LogNodeType.Infinity -> model.nodeType |> Mod.map (fun x -> x.ToString())
               )
       
         createDomNode modStr
@@ -173,13 +249,14 @@ module LogNode =
               match nt with
                 | LogNodeType.Angular | LogNodeType.Metric ->
                     boxCreator model semApp
-                | LogNodeType.TopLevel -> 
+                | LogNodeType.Hierarchical -> 
                     boxCreator model semApp
-                | LogNodeType.Hierarchical ->
+                | LogNodeType.HierarchicalLeaf ->
                     boxCreator model semApp
-                | LogNodeType.Infinity ->
+                | LogNodeType.NegInfinity
+                | LogNodeType.PosInfinity ->
                     boxCreator model semApp
-                | LogNodeType.Empty -> //TODO draw debug output
+                | LogNodeType.Empty | LogNodeType.Infinity -> //TODO draw debug output
                     Mod.constant (Svg.drawRectangle 
                                       (new V2d(0.0,0.0))
                                       0.0
@@ -207,7 +284,7 @@ module LogNode =
                     size.X
                     size.Y
                     lCol]
-              | LogNodeType.TopLevel -> 
+              | LogNodeType.Hierarchical -> 
                 match level with
                   | le when le = 0 -> 
                     [Svg.drawRectangle 
@@ -227,19 +304,20 @@ module LogNode =
                                      ]
                                      uCol]
                     
-              | LogNodeType.Hierarchical ->
+              | LogNodeType.HierarchicalLeaf ->
                   [Svg.drawRectangle 
                     (new V2d(0.0, logYPos)) 
                     size.X
                     size.Y
                     lCol]
-              | LogNodeType.Infinity ->
+              | LogNodeType.PosInfinity
+              | LogNodeType.NegInfinity ->
                   [Svg.drawRectangle 
                     (new V2d(0.0, logYPos)) 
                     size.X
                     size.Y
                     lCol]
-              | LogNodeType.Empty -> //TODO draw debug output
+              | LogNodeType.Empty | LogNodeType.Infinity -> //TODO draw debug output
                   [Svg.drawRectangle 
                     (new V2d(0.0,0.0))
                     0.0

@@ -15,13 +15,33 @@ module Border =
 //    point = V3d.OOO
 //  }
 
-  let initial : Border = {
-    anno      = Annotation.initialDummy
-    point     = V3d.OOO
-    color     = C4b.Black
-    weight    = 1.0
-    styleType = BorderStyle.Annotation
+
+  let posInf = V3d.PositiveInfinity
+  let negInf = V3d(0.0)
+
+  let initial anno point : Border = {
+    anno        = anno //Annotation.initialDummy
+    point       = point //V3d.OOO
+    color       = C4b.Black
+    weight      = 1.0
+    styleType   = BorderStyle.Annotation
+    borderType  =
+      match point with
+        | p when p = posInf -> BorderType.PositiveInfinity
+        | p when p = negInf -> BorderType.NegativeInfinity
+        | _      -> BorderType.Normal
   }
+
+  let initNegInf = 
+    initial (Annotation.initialDummyWithPoints (negInf)) negInf
+  
+  let initPosInf = 
+    initial (Annotation.initialDummyWithPoints (posInf)) posInf
+
+  //type Action
+
+  //let update (model : Border) =
+
 
   let getAvgY (points : alist<V3d>) =
     (AList.toList points) |> List.averageBy  (fun x -> x.Y)

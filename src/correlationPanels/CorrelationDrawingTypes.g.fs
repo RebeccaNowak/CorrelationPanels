@@ -500,7 +500,6 @@ module Mutable =
         let _visible = ResetMod.Create(__initial.visible)
         let _text = ResetMod.Create(__initial.text)
         let _overrideStyle = MOption.Create(__initial.overrideStyle, (fun v -> MStyle.Create(v)), (fun (m,v) -> MStyle.Update(m, v)), (fun v -> v))
-        let _overrideLevel = MOption.Create(__initial.overrideLevel)
         
         member x.id = __current.Value.id
         member x.geometry = __current.Value.geometry
@@ -514,7 +513,6 @@ module Mutable =
         member x.visible = _visible :> IMod<_>
         member x.text = _text :> IMod<_>
         member x.overrideStyle = _overrideStyle :> IMod<_>
-        member x.overrideLevel = _overrideLevel :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : CorrelationDrawing.Annotation) =
@@ -529,7 +527,6 @@ module Mutable =
                 ResetMod.Update(_visible,v.visible)
                 ResetMod.Update(_text,v.text)
                 MOption.Update(_overrideStyle, v.overrideStyle)
-                MOption.Update(_overrideLevel, v.overrideLevel)
                 
         
         static member Create(__initial : CorrelationDrawing.Annotation) : MAnnotation = MAnnotation(__initial)
@@ -618,12 +615,6 @@ module Mutable =
                     override x.Set(r,v) = { r with overrideStyle = v }
                     override x.Update(r,f) = { r with overrideStyle = f r.overrideStyle }
                 }
-            let overrideLevel =
-                { new Lens<CorrelationDrawing.Annotation, Microsoft.FSharp.Core.Option<System.Int32>>() with
-                    override x.Get(r) = r.overrideLevel
-                    override x.Set(r,v) = { r with overrideLevel = v }
-                    override x.Update(r,f) = { r with overrideLevel = f r.overrideLevel }
-                }
     
     
     type MAnnotationApp(__initial : CorrelationDrawing.AnnotationApp) =
@@ -686,6 +677,7 @@ module Mutable =
         member x.color = _color :> IMod<_>
         member x.weight = _weight :> IMod<_>
         member x.styleType = _styleType :> IMod<_>
+        member x.borderType = __current.Value.borderType
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : CorrelationDrawing.Border) =
@@ -742,6 +734,12 @@ module Mutable =
                     override x.Get(r) = r.styleType
                     override x.Set(r,v) = { r with styleType = v }
                     override x.Update(r,f) = { r with styleType = f r.styleType }
+                }
+            let borderType =
+                { new Lens<CorrelationDrawing.Border, CorrelationDrawing.BorderType>() with
+                    override x.Get(r) = r.borderType
+                    override x.Set(r,v) = { r with borderType = v }
+                    override x.Update(r,f) = { r with borderType = f r.borderType }
                 }
     
     

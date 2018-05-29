@@ -13,9 +13,6 @@ module CorrelationDrawing =
     open Aardvark.UI
     open Aardvark.UI.Primitives
     open Aardvark.Rendering.Text
-
-    open Aardvark.SceneGraph.SgPrimitives
-    open Aardvark.SceneGraph.FShadeSceneGraph
     open Annotation
     open UtilitiesGUI
     open UtilitiesDatastructures
