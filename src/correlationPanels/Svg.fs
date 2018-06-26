@@ -26,7 +26,14 @@
       Aardvark.UI.Incremental.Svg.g ([clazz "g"] @ atts) 
                                     content
 
+    
 
+    let drawText (a : V2d) (str : string) =
+      Svg.text
+        [
+          atf "x" a.X
+          atf "y" a.Y
+        ] str
 
     let drawLine (a : V2d) (b : V2d) (color : C4b) (strokeWidth : float)=
       Svg.line 
@@ -39,66 +46,56 @@
           atf "stroke-width" strokeWidth
         ]
 
-    let drawCircle (centre : V2d) (radius : float) (color : C4b) = 
-      Svg.circle
+    let drawHorizontalLine (a : V2d) (length : float) (color : C4b) (strokeWidth : float) =
+      Svg.line 
         [
-          atf "cx" (centre.X - radius + margin)
-          atf "cy" (centre.Y - radius + margin)
-          atf "r" radius
-          atc "stroke" C4b.Black //Performance
-          ats "stroke-width" sw
-          atc "fill" color
+          atf "x1" a.X
+          atf "y1" a.Y
+          atf "x2" (a.X + length)
+          atf "y2" a.Y
+          atc "stroke" color
+          atf "stroke-width" strokeWidth
         ]
 
-    let drawRectangle (leftUpper : V2d) width height  (color : C4b) =
-      Svg.rect [
-        atf "x" leftUpper.X
-        atf "y" leftUpper.Y
-        atf "width" width
-        atf "height" height
-        atc "fill" color
-      ]
-
-    let drawRectangleWs (leftUpper : V2d) width height  (color : C4b) (strokeWidth : float) (strokeColor : C4b)=
-      Svg.rect [
-        atf "x" leftUpper.X
-        atf "y" leftUpper.Y
-        atf "width" width
-        atf "height" height
-        atc "stroke" strokeColor
-        atf "stroke-width" strokeWidth
-        atc "fill" color
-      ]
-
-    let drawRectangle2c (leftUpper : V2d) width height  (color1 : C4b) (color2 : C4b) =
-      let half = height * 0.5       
-      
-      toGroup 
-        [ 
-          drawRectangle leftUpper width half color1
-          drawRectangle (new V2d(leftUpper.X, leftUpper.Y + half)) width half color2
-        ]            
+    let drawVerticalLine (a : V2d) (length : float) (color : C4b) (strokeWidth : float) =
+      Svg.line 
         [
-          atc "stroke" C4b.Black
-          ats "stroke-width" "0"
+          atf "x1" a.X
+          atf "y1" a.Y
+          atf "x2" a.X 
+          atf "y2" (a.Y + length)
+          atc "stroke" color
+          atf "stroke-width" strokeWidth
+        ]
+
+    let drawHorizontalDottedLine  (a : V2d) (length : float) (color : C4b) 
+                                  (strokeWidth : float) (dashWidth : float) (dashDist : float) =
+      Svg.line 
+        [
+          ats "stroke-dasharray" (sprintf "%f,%f" dashWidth dashDist)
+          atf "x1" a.X
+          atf "y1" a.Y
+          atf "x2" (a.X + length)
+          atf "y2" a.Y
+          atc "stroke" color
+          atf "stroke-width" strokeWidth
+        ]
+
+    let drawVerticalDottedLine (a : V2d) (length : float) (color : C4b) (strokeWidth : float) =
+      Svg.line 
+        [
+          ats "stroke-dasharray" "5,5"
+          atf "x1" a.X
+          atf "y1" a.Y
+          atf "x2" a.X 
+          atf "y2" (a.Y + length)
+          atc "stroke" color
+          atf "stroke-width" strokeWidth
         ]
 
 
-    let drawFancyRectangle (leftUpper : V2d) width height  (color1 : C4b) (color2 : C4b) = //TODO WIP
-      let half = height * 0.5       
-      
-      toGroup 
-        [ 
-          drawRectangle leftUpper width half color1
-          drawRectangle (new V2d(leftUpper.X, leftUpper.Y + half)) width half color2
-          drawLine leftUpper (new V2d(leftUpper.X + width, leftUpper.Y)) C4b.Black 2.0
-          drawLine (new V2d(leftUpper.X, leftUpper.Y + height)) (new V2d(leftUpper.X + width, leftUpper.Y + height)) C4b.Black 2.0
-        ]            
-        [
-        ]
-     
-    // PATHS
 
+    /////// PATHS
     let inline (>>) (x : string) (y : string) =
       sprintf "%s %s" x y
 
@@ -142,11 +139,6 @@
           attribute "fill" "none"
         ]
                    
-      
-         
-           
-        
-
 
     let drawCurvedPath (points : List<V2d>) (curveType : CurveType) =
       match curveType with
@@ -158,10 +150,142 @@
             points |> List.map (fun x -> curveTo "S" x x)
 
 
-    let drawDottedLine (fromLine : V2d) (toLine : V2d) =
-      Svg.strokeDasharray
-        [
-          attribute "stroke-dasharray" "5,5"
-          attribute "d" ""
 
+
+    let drawCircle (centre : V2d) (radius : float) (color : C4b) = 
+      Svg.circle
+        [
+          atf "cx" (centre.X - radius + margin)
+          atf "cy" (centre.Y - radius + margin)
+          atf "r" radius
+          atc "stroke" C4b.Black //Performance
+          ats "stroke-width" sw
+          atc "fill" color
         ]
+
+    let drawCircleButton (centre : V2d) (radius : float)
+                         (color : C4b) (filled : bool) 
+                         (callback   : list<string> -> 'msg) = 
+      let atts = [
+          atf "cx" (centre.X - radius + margin)
+          atf "cy" (centre.Y - radius + margin)
+          atf "r" radius
+          atc "stroke" C4b.Black //Performance
+          ats "stroke-width" sw 
+        ]
+      toGroup [
+        Svg.circle (if filled then atts @ [atc "fill" color] else atts)
+      ] (Svg.Events.onClickAttribute (callback))
+
+        
+
+    let drawRectangle (leftUpper : V2d) width height  (color : C4b) =
+      Svg.rect [
+        atf "x" leftUpper.X
+        atf "y" leftUpper.Y
+        atf "width" width
+        atf "height" height
+        atc "fill" color
+      ]
+
+    let drawRectangleWs (leftUpper : V2d) width height  (color : C4b) (strokeWidth : float) (strokeColor : C4b)=
+      Svg.rect [
+        atf "x" leftUpper.X
+        atf "y" leftUpper.Y
+        atf "width" width
+        atf "height" height
+        atc "stroke" strokeColor
+        atf "stroke-width" strokeWidth
+        atc "fill" color
+      ]
+
+    let drawRectangle2c (leftUpper : V2d) width height  (color1 : C4b) (color2 : C4b) =
+      let half = height * 0.5       
+      
+      toGroup 
+        [ 
+          drawRectangle leftUpper width half color1
+          drawRectangle (new V2d(leftUpper.X, leftUpper.Y + half)) width half color2
+        ]            
+        [
+          atc "stroke" C4b.Black
+          ats "stroke-width" "0"
+        ]
+
+    let drawRectangleHBorder (leftUpper   : V2d) 
+                              (width      : float)
+                              (height     : float)
+                              (fill       : C4b) 
+                              (uBorder    : C4b) 
+                              (lBorder    : C4b)
+                              (bWeight    : float) = //TODO WIP
+      toGroup 
+        [ 
+          drawRectangle leftUpper width height fill
+          drawLine leftUpper (new V2d(leftUpper.X + width, leftUpper.Y)) uBorder bWeight
+          drawLine (new V2d(leftUpper.X, leftUpper.Y + height)) (new V2d(leftUpper.X + width, leftUpper.Y + height)) lBorder bWeight
+        ]            
+        [
+        ]
+
+    let drawHBorders  (leftUpper   : V2d) 
+                      (width      : float)
+                      (height     : float)
+                      (uBorder    : C4b) 
+                      (lBorder    : C4b)
+                      (bWeight    : float)
+                      (callback   : V2i -> 'msg) =
+      toGroup 
+        [ 
+          drawHorizontalLine 
+            (new V2d(leftUpper.X, leftUpper.Y + bWeight * 0.5)) 
+            width uBorder bWeight
+          drawHorizontalLine 
+            (new V2d(leftUpper.X, leftUpper.Y + height - bWeight * 0.5)) 
+            width lBorder bWeight
+        ][ onMouseEnter (callback) ]
+
+    let drawBorderedRectangle (leftUpper    : V2d) 
+                              (width        : float)
+                              (height       : float)
+                              (fill         : C4b) 
+                              (uBorder      : C4b) 
+                              (lBorder      : C4b)
+                              (bWeight      : float)
+                              (selectionCallback     : list<string> -> 'msg)
+                              (selected     : bool)
+                              (dottedBorder : bool)
+                              (buttonCallback     : option<(list<string> -> 'msg)>) =
+      let fill =
+        match selected with //TODO read papers: mark selection state
+          | true  -> C4b.DarkYellow
+          | false -> fill
+      let elements = 
+          [
+            drawRectangle leftUpper width height fill
+            drawHorizontalLine 
+              (new V2d(leftUpper.X, leftUpper.Y + bWeight * 0.5)) 
+              width lBorder bWeight
+            drawHorizontalLine 
+              (new V2d(leftUpper.X, leftUpper.Y + height - bWeight * 0.5)) 
+              width uBorder bWeight 
+            drawVerticalLine leftUpper height C4b.Black 2.0
+          ]
+      let rBorder = 
+        match dottedBorder with
+          | true  -> drawVerticalDottedLine (new V2d(leftUpper.X + width , leftUpper.Y)) height C4b.Black 2.0
+          | false -> drawVerticalLine (new V2d(leftUpper.X + width , leftUpper.Y)) height C4b.Black 2.0
+
+      toGroup 
+        (elements @ [rBorder])
+        (Svg.Events.onClickAttribute (selectionCallback))
+
+
+     
+    let drawXAxis (leftUpper : V2d) (length : float) (color : C4b) (weight : float) (granularity : float) =
+      toGroup
+        [
+          drawHorizontalLine  (new V2d(leftUpper.X, leftUpper.Y + weight * 0.5)) length color weight
+          drawHorizontalDottedLine (new V2d(leftUpper.X, leftUpper.Y + weight)) length color (weight * 3.0) 1.0 (granularity - 1.0)
+        ]
+        []

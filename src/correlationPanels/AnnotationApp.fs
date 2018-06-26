@@ -96,7 +96,9 @@ namespace CorrelationDrawing
       let domList = 
         alist {
           for a in model.annotations do
-            let! annoView = (Annotation.View.view a semanticApp)
+            let! annoView = (Annotation.View.view a semanticApp
+            
+            )
             yield (tr 
               ([style tinyPadding])
               (List.map (fun x -> x |> UI.map AnnotationMessage) annoView)

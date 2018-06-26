@@ -7,6 +7,15 @@ open Aardvark.UI
 
 
 module UtilitiesGUI = 
+    // GENERAL
+    let colorToHexStr (color : C4b) = 
+        let bytes = [| color.R; color.G; color.B |]
+        let str =
+            bytes 
+                |> (Array.map (fun (x : byte) -> System.String.Format("{0:X2}", x)))
+                |> (String.concat System.String.Empty)
+        String.concat String.Empty ["#";str] 
+
     // SEMUI
     type Size = Mini | Tiny | Small | Medium | Large | Big | Huge | Massive
       with member this.semuiString = 
@@ -100,17 +109,40 @@ module UtilitiesGUI =
             button [clazz "ui icon button"; onMouseClick onClick] 
                     [i [clazz iconStr] [] ] |> wrapToolTip tooltip
           ]
-      
-      
 
-    // GENERAL
-    let colorToHexStr (color : C4b) = 
-        let bytes = [| color.R; color.G; color.B |]
-        let str =
-            bytes 
-                |> (Array.map (fun (x : byte) -> System.String.Format("{0:X2}", x)))
-                |> (String.concat System.String.Empty)
-        String.concat String.Empty ["#";str] 
+    module Incremental =
+      let iconButton (iconStr : string) (onClick : V2i -> 'msg) = 
+        //div [clazz "item"] 
+            //[
+              button [clazz "ui icon button"; onMouseClick onClick] 
+                      [i [clazz iconStr] [] ] //TODO |> wrapToolTip tooltip 
+            //]
+
+      
+    let getColourIconButton (color : IMod<C4b>) (label : IMod<string>) (onClick : V2i -> 'msg) =
+      let icon = 
+        let iconAttr =
+          amap {
+            yield clazz "circle icon"
+            let! c = color
+            yield style (sprintf "color:%s" (colorToHexStr c))
+          }      
+        Incremental.i (AttributeMap.ofAMap iconAttr) (alist{yield Incremental.text label})
+      button [clazz "ui labeled icon button"; onMouseClick onClick] 
+             [icon]
+
+    let getColourIconButton' (color : IMod<C4b>) (onClick : V2i -> 'msg) =
+      let icon = 
+        let iconAttr =
+          amap {
+            yield clazz "circle icon"
+            let! c = color
+            yield style (sprintf "color:%s" (colorToHexStr c))
+          }      
+        Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
+      button [clazz "ui icon button"; onMouseClick onClick] 
+             [icon]
+
 
 
     

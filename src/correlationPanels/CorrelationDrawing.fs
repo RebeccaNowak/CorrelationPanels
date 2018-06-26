@@ -156,12 +156,6 @@ module CorrelationDrawing =
                   | None   -> Sg.ofList [])
                 |> Sg.dynamic
             [
-              //[Mars.Terrain.mkISg() 
-              //  |> Sg.effect Mars.Terrain.defaultEffects
-              //  |> Sg.noEvents
-              //] 
-              //|> Sg.ofList;
-              //pick;
               Mars.Terrain.mars [
                     Sg.onMouseMove (fun p -> (Action.Move p))
                     Sg.onClick(fun p -> Action.AddPoint p)

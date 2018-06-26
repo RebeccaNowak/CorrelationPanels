@@ -102,6 +102,15 @@ module Semantic =
         level         = -1
       }
 
+    let initialGrainSize2 id = {
+      initial id with 
+        label         = {TextInput.init with text = "Grainsize2"}
+        style         = {Style.color      = {c = new C4b(247,252,185)}
+                         Style.thickness  = {Numeric.init with value = 1.0}}
+        semanticType  = SemanticType.Metric
+        level         = -1
+      }
+
     let initialCrossbed id = {
       initial id with 
         label         = {TextInput.init with text = "Crossbed"}

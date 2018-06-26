@@ -228,11 +228,11 @@ module Annotation =
   module Sg =
     let view (model : MAnnotation) (cam : IMod<CameraView>) (semApp : MSemanticApp) =
       let annoPointToSg (point : MAnnotationPoint) (color : IMod<C4b>) (weight : IMod<float>) =  
-        let trafo = (Mod.constant (Trafo3d.Translation(Mod.force point.point))) //TODO dynamic
+        let trafo = (Mod.constant (Trafo3d.Translation(point.point))) //TODO dynamic
         let pickSg = 
            Sg.sphereWithEvents (Mod.constant C4b.White) weight 
                 [
-                  Sg.onClick (fun p -> ToggleSelected (Mod.force point.point))
+                  Sg.onClick (fun p -> ToggleSelected (point.point))
                   Sg.onEnter (fun _ -> HoverIn model.id)
                   Sg.onLeave (fun _ -> HoverOut model.id)
                 ]
@@ -254,7 +254,7 @@ module Annotation =
       let makeLinesSg (model : MAnnotation) (color : IMod<C4b>) (width : IMod<float>) = 
           Mod.constant (Sg.pathDyn false (model.points //TODO dynamic
                               |> AList.toList 
-                              |> List.map (fun ap -> Mod.force ap.point)))
+                              |> List.map (fun ap -> ap.point)))
               |> Sg.lines color
               |> Sg.effect [
                   toEffect DefaultSurfaces.trafo
@@ -358,6 +358,23 @@ module Annotation =
       |> PList.toList
       |> List.map (fun x -> x.point.Length)
       |> List.average
+
+  let lowestPoint (anno : Annotation) =
+    anno.points 
+      |> PList.minBy (fun x -> x.point.Length)
+
+  let highestPoint (anno : Annotation) =
+    anno.points 
+      |> PList.maxBy (fun x -> x.point.Length)
+
+  let elevation' (anno : MAnnotation) =
+    adaptive {
+      let! lst = anno.points.Content
+      return lst
+              |> PList.map (fun x -> x.point.Length)
+              |> PList.toList
+              |> List.average
+    }
 
   let isElevationBetween (a : float) (b : float) (model : Annotation)  =
     (a < (elevation model) && (b > (elevation model)))

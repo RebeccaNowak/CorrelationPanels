@@ -10,29 +10,42 @@
     open Aardvark.UI
     open UtilitiesGUI
     open Aardvark.UI.Primitives
-    open Aardvark.Base.MultimethodTest
 
     type Action =
       | Clear
-      | ToggleSelectLog of option<string>
-      | NewLog          
-      | TogglePoint     of (V3d * Annotation)
-      | FinishLog       
-      | DeleteLog       
-      | LogMessage      of GeologicalLog.Action
-      | ChangeView      of LogNodeView
+      | ToggleSelectLog        of option<LogId>
+      | NewLog                 
+      | TogglePoint            of (V3d * Annotation)
+      | FinishLog              
+      | DeleteLog              
+      | LogMessage             of (LogId * GeologicalLog.Action)
+      | ChangeView             of CorrelationPlotViewType
+      | ChangeXAxis            of SemanticId
+      | LogNodeStyleAppMessage of LogNodeStyleApp.Action
+      | NoMessage              of obj
+      | ToggleEditCorrelations
+      //| UpdateAnnotations      of plist<Annotation>
+      //| LogNodeMessage         of LogNode.Action
 
-    let initial : CorrelationPlotApp = {
-      logs                = PList.empty
-      selectedPoints      = List<(V3d * Annotation)>.Empty
-      selectedLog         = None
-      creatingNew         = false
-      viewType            = LogNodeView.StackedView2ColorBoxes
-    }
+    let initial : CorrelationPlotApp  = 
+      {
+        logs                = PList.empty
+        correlations        = PList.empty
+        editCorrelations    = false
+        selectedPoints      = List<(V3d * Annotation)>.Empty
+        selectedLog         = None
+        secondaryLvl        = 1
+        creatingNew         = false
+        viewType            = CorrelationPlotViewType.LogView
+        logNodeStyleApp     = LogNodeStyleApp.initial
+        xAxis               = SemanticId.invalid
+        semanticApp         = SemanticApp.getInitialWithSamples
+        annotations         = PList.empty
+      }
 
     let update (model : CorrelationPlotApp)
-               (annos : plist<Annotation>) 
-               (semApp : SemanticApp) 
+               //(annos : plist<Annotation>) 
+               //(semApp : SemanticApp) 
                (action : Action) = 
                
       match action, model.creatingNew with
@@ -49,40 +62,81 @@
         | NewLog, false                -> 
           {model with creatingNew     = true
                       selectedPoints  = List<(V3d * Annotation)>.Empty}
-        | FinishLog, true              ->
+        | FinishLog ,  true              ->
           match model.selectedPoints with
             | []      -> 
               printf "no points in list for creating log"
               model
             | working ->
-              {model with creatingNew = false
-                          logs        = (model.logs.Append 
-                                          (GeologicalLog.intial (System.Guid.NewGuid().ToString()) working annos semApp))
-                          selectedPoints     = List<(V3d * Annotation)>.Empty}
+              let guid = System.Guid.NewGuid().ToString()
+              let xAxis = 
+                match model.xAxis with
+                  | x when  x = SemanticId.invalid -> 
+                    let optS = SemanticApp.getMetricId model.semanticApp
+                    match optS with
+                     | Some o -> o
+                     | None   -> SemanticId.invalid
+                  | _ -> model.xAxis
+              {model with 
+                creatingNew        = false
+                xAxis              = xAxis
+                logs               = (model.logs.Append 
+                                        (GeologicalLog.generate
+                                                guid working model.annotations model.semanticApp xAxis 300.0))
+                selectedPoints     = List<(V3d * Annotation)>.Empty}
         | DeleteLog, false             -> model
-        | LogMessage m, _              -> model//{model with logs = model.logs.Update m}
+        | LogMessage (id, m), _        -> 
+            let ind = model.logs.FirstIndexOf (fun (x : GeologicalLog) -> x.id = id)
+            let log = (model.logs.TryGet ind)
+            match log with
+              | Some lo ->
+                  let upd = GeologicalLog.update lo m
+                  {model with logs = model.logs.Update (ind, (fun x -> upd))}
+              | None -> model
+
+        | LogNodeStyleAppMessage m, _  -> 
+          {model with logNodeStyleApp  = (LogNodeStyleApp.update model.logNodeStyleApp m)}
         | ChangeView m, _              -> {model with viewType = m}
+        | ChangeXAxis id, _            -> 
+          let updLogs = model.logs 
+                          |> PList.map (fun log -> 
+                              GeologicalLog.update log (GeologicalLog.ChangeXAxis id))
+          {model with xAxis    = id
+                      logs     = updLogs
+          }
+        | ToggleEditCorrelations, _ -> {model with editCorrelations = not model.editCorrelations}
+        //| UpdateAnnotations annos ->
+        //  {model with annotations = annos}
         | _,_                          -> model
+        
 
 
     let viewSvg (model : MCorrelationPlotApp) (semApp : MSemanticApp) =
       let atts = 
         AttributeMap.ofList 
           [
-            clazz "svgRoot"; 
-            style "border: 1px solid black";
-            attribute "height" "100%"
-            attribute "width" "100%"
+            clazz "svgRoot"
+            style "border: 1px solid black"
+            attribute "viewBox" "0 0 600 400"
+            attribute "preserveAspectRatio" "xMinYMin meet"
+            //attribute "height" "100%"
+            //attribute "width" "100%"
           ]
       
       
       let svgList =
         alist {          //TODO more elegant
-          let! length = (AList.count model.logs)
-          let! logs = model.logs.Content
+          let! length   = (AList.count model.logs)
+          let! logs     = model.logs.Content
           let! viewType = model.viewType
+          let! xAxis    = model.xAxis
+          let semLabel  = SemanticApp.getLabel model.semanticApp model.xAxis
+          let! secLvl   = model.secondaryLvl
+          //let! styleTemplate = model.logNodeStyleApp.selectedTemplate
+
           for i in [0..length - 1] do //log in model.logs do
             let! sel = model.selectedLog
+            let startX = (i * 10 + i * 250)
             let isSelected = 
               match sel with
                 | Some s  -> s = (logs.Item i).id
@@ -93,40 +147,71 @@
                 | true  -> [style "border: 2px solid yellow";]
                 | false -> []
               @ [
-                  attribute "x" (sprintf "%i" (i * 250))
-                  onMouseClick (fun _ -> ToggleSelectLog (Some log.id))
+                  attribute "x" (sprintf "%i" startX)
+                //  onMouseClick (fun _ -> ToggleSelectLog (Some log.id))
                 ]
               |> AttributeMap.ofList 
-            yield Incremental.Svg.svg 
+            let! xAxisSvg = (LogNodeStyleApp.svgXAxis 
+                            model.logNodeStyleApp 
+                            (new V2d((float startX), 350.0)) 
+                            (250.0) 
+                            2.0
+                            semLabel) 
+            let mapper (a : DomNode<GeologicalLog.Action>) =
+              a |> UI.map (fun m -> LogMessage (log.id, m))
+            let logView =
+              Incremental.Svg.svg 
                     (
                       attributes
                     )   
-                    (GeologicalLog.svgView log semApp isSelected viewType)
+                    (GeologicalLog.svgView 
+                      log viewType secLvl
+                      (LogNodeStyleApp.getStyle model.logNodeStyleApp)
+                    )
+            yield (logView |>  mapper)
+            yield xAxisSvg                   
+                    
+                    //|> AList.append (AList.single xAxisSvg) 
         } 
       
    
       
       let menu = 
-        div [clazz "ui horizontal menu";
-             style "float:right; vertical-align: top"][
-          div [clazz "item"]
-              [button [clazz "ui small icon button"; onMouseClick (fun _ -> ChangeView LogNodeView.StackedViewSimpleBoxes)] 
-                      [i [clazz "small align left icon"] [] ] |> UtilitiesGUI.wrapToolTip "Stacked view with simple boxes"];
-          div [clazz "item"]
-              [button [clazz "ui small icon button"; onMouseClick (fun _ -> ChangeView LogNodeView.StackedView2ColorBoxes)] 
-                      [i [clazz "small align left icon"] [] ] |> UtilitiesGUI.wrapToolTip "Stacked view with fancy boxes"];
-          div [clazz "item"]
-              [button [clazz "ui small icon button"; onMouseClick (fun _ -> ChangeView LogNodeView.LineView)] 
-                      [i [clazz "small align left icon"] [] ] |> UtilitiesGUI.wrapToolTip "Line view"];
-        ]
+          let viewSelection = 
+            alist {
+              for sem in semApp.semanticsList do
+                let! sType = sem.semanticType
+                if sType = SemanticType.Metric then
+                      yield getColourIconButton' sem.style.color.c
+                                                    //sem.label.text
+                                                    (fun _ -> ChangeXAxis sem.id)
+            }
+          div [clazz "ui horizontal menu";
+               style "float:right; vertical-align: top"][
+            div [clazz "item"]
+                [button [clazz "ui small icon button"; onMouseClick (fun _ -> ChangeView CorrelationPlotViewType.LineView)] 
+                        [i [clazz "small align left icon"] [] ] |> UtilitiesGUI.wrapToolTip "Line view"];
+            div [clazz "item"]
+                [button [clazz "ui small icon button"; onMouseClick (fun _ -> ChangeView CorrelationPlotViewType.LogView)] 
+                        [i [clazz "small align left icon"] [] ] |> UtilitiesGUI.wrapToolTip "Log view"];
+            div [clazz "item"]
+                [button [clazz "ui small icon button"; onMouseClick (fun _ -> ChangeView CorrelationPlotViewType.CorrelationView)] 
+                        [i [clazz "small exchange icon"] [] ] |> UtilitiesGUI.wrapToolTip "edit correlations"];
+            Incremental.div (AttributeMap.ofList [clazz "item"])
+                            viewSelection
+            Incremental.div (AttributeMap.ofList [clazz "item"])
+                            (LogNodeStyleApp.view model.logNodeStyleApp) |> UI.map Action.LogNodeStyleAppMessage
+          ]
+              
+        
 
-      div [style "width:100%; height: 100%"] [
+      div [attribute "overflow-x" "scroll";attribute "overflow-y" "scroll"] [//[style "width:100%; height: 100%"] [
               menu
               Incremental.Svg.svg atts svgList
              ]
 
 
-    let view (model : MCorrelationPlotApp) (semApp : MSemanticApp) =
+    let view  (model : MCorrelationPlotApp) =
       let menu =
         let icon =
           alist {
@@ -139,11 +224,11 @@
             yield ic
           }
         div [clazz "ui horizontal inverted menu";
-             style "float:top"]
+              style "float:top"]
             [
               div [clazz "item"]
                   [Incremental.button (AttributeMap.ofList [clazz "ui small icon button"; onMouseClick (fun _ -> NewLog)]) 
-                                       icon
+                                        icon
                   ];
               div [clazz "item"]
                   [button [clazz "ui small icon button"; onMouseClick (fun _ -> FinishLog)] 
@@ -155,8 +240,11 @@
                   ]; 
             ]
 
+
       let domList =
          alist {            
+            let! xAxis = model.xAxis
+            //let! styleTemplate = model.logNodeStyleApp.selectedTemplate
             for log in model.logs do
               let! sel = model.selectedLog
               let isSelected = 
@@ -170,7 +258,16 @@
                             div [clazz "header"; style "text-align: center"; onMouseClick (fun _ -> ToggleSelectLog (Some log.id))] [
                               i [clazz "yellow arrow alternate circle down icon"] [] |> UtilitiesGUI.wrapToolTip "select"
                             ]
-                            div [] [GeologicalLog.view log semApp isSelected]
+                            div [] 
+                                [
+                                  (GeologicalLog.view 
+                                    log 
+                                  //  model.semanticApp 
+                                  //  isSelected 
+                                  //  xAxis 
+                                   // (LogNodeStyleApp.getStyle model.logNodeStyleApp)
+                                  )
+                                ]        
                           ]
                         ]
                     
@@ -199,27 +296,6 @@
         ]
       )
 
-//      require (myCss) (
-//        body [] [
-//          div [] [
-//            menu
-//            table
-//              ([clazz "ui celled striped inverted table unstackable";
-//                                    style "padding: 1px 5px 1px 5px"]) (
-//                  [thead [][
-//                    tr[][th[][text "Name"];
-//                                  //th[][text "Weight"];
-//                                  //th[][text "Colour"];
-//                                  //th[][text "Level"];
-//  //                               th[][text "Default Geometry Type"];
-//                                  //th[][text "Semantic Type"]
-//                    ]
-//                  ];
-//                  Incremental.tbody  (AttributeMap.ofList []) domList]           
-//              )
-//          ]
-//        ]
-//      )
 
     let getLogConnectionSgs 
           (model : MCorrelationPlotApp)
@@ -243,6 +319,23 @@
       |> Sg.dynamic
 
 
+    let threads (model : CorrelationPlotApp) =
+      match model.logs.IsEmpty() with
+        | true  -> ThreadPool.empty
+        | false ->
+            model.logs |> PList.map (fun lo -> GeologicalLog.threads lo)
+                       |> PList.toList
+                       |> List.reduce ThreadPool.union
 
         
         
+    let app : App<CorrelationPlotApp,MCorrelationPlotApp,Action> =
+          {
+              unpersist = Unpersist.instance
+              threads = threads
+              initial = initial
+              update = update
+              view = view
+          }
+
+    let start = App.start app

@@ -20,6 +20,11 @@ module UtilitiesDatastructures =
 
 
 module List =
+  let averageOrZero (lst : list<float>) = 
+    match lst with
+      | [] -> 0.0
+      | li -> List.average li
+
   let contains' (f : 'a -> bool) (lst : List<'a>)  =
     match lst with
       | []  -> false
@@ -73,6 +78,11 @@ module PList =
     lst
       |> PList.toList
       |> List.reduce (fun x y -> if (f x) < (f y) then x else y)
+
+  let maxBy (f : 'a -> 'b) (lst : plist<'a>) : 'a =
+    lst
+      |> PList.toList
+      |> List.reduce (fun x y -> if (f x) > (f y) then x else y)
 
   let minMapBy (mapTo: 'a -> 'c) (minBy : 'a -> 'b) (lst : plist<'a>) : 'c =
     lst

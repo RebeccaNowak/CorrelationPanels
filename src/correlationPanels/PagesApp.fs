@@ -30,6 +30,7 @@ module Pages =
       | Redo
       | SetCullMode                   of CullMode
       | ToggleFill
+      | TopLevelEvent
       
 
   let initialCamera = {CameraController.initial with
@@ -38,40 +39,44 @@ module Pages =
                                                     Mars.Terrain.up}
 
   let initial   = 
-    { 
-        past        = None
-        future      = None
-        camera      = initialCamera
-        cullMode    = CullMode.None
-        fill        = true
-        rendering   = RenderingPars.initial
-        dockConfig  =
-            config {
-                content (
-                 // element {id "render"; title "Render View"; weight 5}
-                  vertical 0.6 [
-                    element { id "controls"; title "Controls"; weight 0.1 }
-                    horizontal 0.5 [
-                      element {id "render"; title "Render View"; weight 0.4}
-                      element {id "semantics"; title "Semantics"; weight 0.6}
+    let semApp  = SemanticApp.getInitialWithSamples
+    {   
+      past        = None
+      future      = None
+      camera      = initialCamera
+      cullMode    = CullMode.None
+      fill        = true
+      rendering   = RenderingPars.initial
+      dockConfig  =
+          config {
+              content (
+                // element {id "render"; title "Render View"; weight 5}
+                vertical 0.6 [
+                  element { id "controls"; title "Controls"; weight 0.1 }
+                  horizontal 0.5 [
+                    element {id "render"; title "Render View"; weight 0.4}
+                    element {id "semantics"; title "Semantics"; weight 0.6}
 //                      stack 9.0 (Some "render") [dockelement {id "render"; title "Render View"; weight 5};
 //                                                 dockelement { id "semantics"; title "Semantics"; weight 5}]
-                    ]
-                    horizontal 0.5 [
-                      element { id "svg"; title "SVG"; weight 0.5}
-                      element { id "logs"; title "Logs"; weight 0.5}
-                        //dockelement { id "annotations"; title "Annotations"; weight 1.0}
-                    ]
                   ]
-                )
-                appName "CDPages"
-                useCachedConfig false
-            }
-        annotationApp = AnnotationApp.initial
-        semanticApp   = SemanticApp.getInitialWithSamples
-        drawingApp    = CorrelationDrawing.initial 
-        corrPlotApp   = CorrelationPlotApp.initial 
+                  horizontal 0.5 [
+                    element { id "svg"; title "SVG"; weight 0.5}
+                    element { id "logs"; title "Logs"; weight 0.5}
+                      //dockelement { id "annotations"; title "Annotations"; weight 1.0}
+                  ]
+                ]
+              )
+              appName "CDPages"
+              useCachedConfig false
+          }
+      annotationApp = AnnotationApp.initial
+      semanticApp   = semApp
+      drawingApp    = CorrelationDrawing.initial 
+      corrPlotApp   = CorrelationPlotApp.initial
     }
+
+  let tmpDebug =
+    printf "%s" "PagesAppAction"
 
   let update (model : Pages) (msg : Action) = //TODO model always last?
     let updateDrawingApp =
@@ -81,9 +86,9 @@ module Pages =
     let updateCamera =
       CameraController.update model.camera 
     let updateSemanticApp =
-      SemanticApp.update model.semanticApp
+        SemanticApp.update model.semanticApp
     let updatePlot =
-      CorrelationPlotApp.update model.corrPlotApp model.annotationApp.annotations model.semanticApp
+      CorrelationPlotApp.update model.corrPlotApp //model.annotationApp.annotations model.semanticApp
 
     match msg, model.corrPlotApp.creatingNew, model.drawingApp.isDrawing with
       | KeyDown Keys.Enter, _, true ->                          
@@ -113,7 +118,9 @@ module Pages =
         }
 
       | SemanticAppMessage m, false, false ->
-        {model with semanticApp = updateSemanticApp m}
+        let updSemApp = updateSemanticApp m
+        {model with semanticApp = updSemApp
+                    corrPlotApp = {model.corrPlotApp with semanticApp = updSemApp}}
 
       | AnnotationAppMessage m, _, _ -> 
         {model with annotationApp = updateAnnotationApp m}
@@ -149,18 +156,12 @@ module Pages =
       | CorrPlotMessage m, _, false -> // TODO refactor
         let corrPlotApp = 
           let sel      = AnnotationApp.getSelectedPoints' model.annotationApp
-          let updModel = {model.corrPlotApp with selectedPoints = sel}
-          CorrelationPlotApp.update 
-                updModel
-                model.annotationApp.annotations
-                model.semanticApp m
-        match m with
-          | CorrelationPlotApp.NewLog | CorrelationPlotApp.FinishLog -> 
-            {model with 
-              //TODO @Design deselect points yes or know?
-              corrPlotApp = corrPlotApp
-            }
-          | _ -> {model with corrPlotApp = corrPlotApp}
+          let updModel = {model.corrPlotApp with selectedPoints = sel
+                                                 annotations    = model.annotationApp.annotations}
+          CorrelationPlotApp.update updModel m
+                //model.annotationApp.annotations
+                //model.semanticApp m
+        {model with corrPlotApp = corrPlotApp}
 
       | CenterScene, _, _ -> 
           { model with camera = initialCamera }
@@ -180,8 +181,10 @@ module Pages =
           model
 
       | Load, false, false -> 
-          {model with semanticApp   = SemanticApp.load model.semanticApp
-                      annotationApp = AnnotationApp.load model.annotationApp}
+          let semApp = SemanticApp.load model.semanticApp
+          {model with semanticApp   = semApp
+                      annotationApp = AnnotationApp.load model.annotationApp
+                      corrPlotApp   = {model.corrPlotApp with semanticApp = semApp}}
 //                  
       | Clear, _,_ -> 
         { model with  annotationApp = updateAnnotationApp (AnnotationApp.Clear)
@@ -202,7 +205,10 @@ module Pages =
         | CameraMessage m, _,_ -> 
               { model with camera = updateCamera m }   
 
+        | TopLevelEvent, _ , _ -> 
+              model
         | _   -> model
+        
 
   let viewScene (model : MPages) =
       Sg.box (Mod.constant C4b.Green) (Mod.constant Box3d.Unit)
@@ -274,14 +280,14 @@ module Pages =
                     menu
                 )
             | Some "svg" -> 
+              require (myCss) (
                 body [] [
-                  div [] [
                     CorrelationPlotApp.viewSvg model.corrPlotApp model.semanticApp |> (UI.map CorrPlotMessage)
-                  ]
                 ]
+              )
 
             | Some "logs" ->
-                CorrelationPlotApp.view model.corrPlotApp model.semanticApp
+                CorrelationPlotApp.view model.corrPlotApp
                   |> UI.map CorrPlotMessage
 
             | Some "semantics" ->
@@ -306,14 +312,16 @@ module Pages =
                 ]
     )
 
-//  let threads (model : Pages) = 
-//      CameraController.threads model.cameraState |> ThreadPool.map Camera
+  let threads (model : Pages) = 
+      CameraController.threads model.camera |> ThreadPool.map CameraMessage
+        |> ThreadPool.union (CorrelationPlotApp.threads model.corrPlotApp)
+
 
 
   let start (runtime: IRuntime) =
       App.start {
           unpersist = Unpersist.instance
-          threads = fun _ -> ThreadPool.empty//threads
+          threads = threads //fun _ -> ThreadPool.empty//threads
           view = view runtime
           update = update
           initial = initial

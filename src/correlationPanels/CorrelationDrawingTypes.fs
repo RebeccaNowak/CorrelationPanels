@@ -35,8 +35,12 @@ type DropdownList<'a> = {
 type Rangef = {
   min     : float
   max     : float
-}// with 
-//  member this.range = //TODO
+} with 
+    member this.range   = this.max - this.min
+    member this.mapRange (other : Rangef) = 
+      fun (x : float) ->
+        x *  (other.range / this.range)
+        
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Rangef =
@@ -114,7 +118,9 @@ type Semantic = {
 
 [<DomainType>]
 type AnnotationPoint = {
+  [<NonIncremental>]
   point     : V3d
+
   selected  : bool
 }
 
@@ -166,51 +172,143 @@ type Border = {
     borderType  : BorderType
 }
 
-type LogNodeType    = Hierarchical | HierarchicalLeaf | Metric | Angular | PosInfinity | NegInfinity | Infinity | Empty
-type LogNodeView    = StackedViewSimpleBoxes | StackedView2ColorBoxes | LineView
-type LogNodeBoxType = SimpleBox | TwoColorBox | FancyBox
+type LogNodeType             = Hierarchical | HierarchicalLeaf | Metric | Angular | PosInfinity | NegInfinity | Infinity | Empty
+type CorrelationPlotViewType = LineView | LogView | CorrelationView
+type LogNodeBoxType          = SimpleBox | TwoColorBox | FancyBox
+type XAxisFunction           = Average | Minimum | Maximum
+
+[<DomainType>]
+type LogNodeStyle = {
+    label     : string
+    color     : C4b
+    range     : Rangef
+}
+
+type LNStyleListId = {
+    id        : string
+}
+
+type LogNodeId = {
+  id        : string 
+} with
+  member this.isValid = (this.id <> "")
+
+module LogNodeId = 
+  let invalid = {id = ""}
+
+
 
 
 [<DomainType>]
 type LogNode = {
-  // TODO add id
+    [<NonIncremental>]
+    id            : LogNodeId
+
     label         : string
     isSelected    : bool
+    hasDefaultX   : bool
                   
+    //[<NonIncremental>]
     nodeType      : LogNodeType
+
     level         : int //TODO think about this; performance vs interaction
     lBoundary     : Border
     uBoundary     : Border
     children      : plist<LogNode>
                   
-    elevation     : float //TODO should be a function if at all
-    range         : Rangef
+   // elevation     : float //TODO should be a function if at all
+   // range         : Rangef
     logYPos       : float
     logXPos       : float
-
     pos           : V3d
     size          : V3d
+} with 
+    member this.range = 
+            {Rangef.init with min = this.lBoundary.point.Length
+                              max = this.uBoundary.point.Length}
+              
+
+[<DomainType>]
+type LogNodeStyleTemplate = { //TODO make dynamic
+    [<NonIncremental>]
+    id                 : LNStyleListId
+    [<NonIncremental>]
+    label              : string
+    [<NonIncremental>]
+    defaultRange       : Rangef
+    [<NonIncremental>]
+    metricToSvgSize    : float
+    [<NonIncremental>]
+    defaultGranularity : float //TODO must be positive and > 0; maybe use uint
+    [<NonIncremental>]
+    styleTemplate      : list<LogNodeStyle>
+    
 }
+
+[<DomainType>]
+type LogNodeStyleApp = {
+    [<NonIncremental>]
+    templates        : list<LogNodeStyleTemplate>
+    selectedTemplate : LNStyleListId
+}
+
+
+
+type LogId = {
+  id        : string 
+} with
+  member this.isValid = (this.id <> "")
+
+module LogId = 
+  let invalid = {id = ""}
+  let newId unit : LogId  = //TODO hack: how can I do make this a function without an argument?
+    {id = System.Guid.NewGuid().ToString()}
+
+//let a = LogId.newId()
+//let b = LogId.newId()
+
 
 [<DomainType>]
 type GeologicalLog = {
     [<NonIncremental;PrimaryKey>]
-    id          : string
+    id          : LogId
 
+    isSelected  : bool
     label       : string
     annoPoints  : list<(V3d * Annotation)>
     nodes       : plist<LogNode>
     range       : Rangef
     camera      : CameraControllerState
+
+    semanticApp : SemanticApp
+
+    xAxis       : SemanticId
+}
+
+[<DomainType>]
+type Correlation = {
+  fromLog       : LogId
+  toLog         : LogId
+  fromLogNode   : LogNodeId
+  fromBorder    : Border
+  toLogNode     : LogNodeId
+  toBorder      : Border
 }
 
 [<DomainType>]
 type CorrelationPlotApp = {
    logs                : plist<GeologicalLog>
+   correlations        : plist<Correlation>
+   editCorrelations    : bool
    selectedPoints      : list<(V3d * Annotation)>
-   selectedLog         : option<string>
+   annotations         : plist<Annotation>
+   selectedLog         : option<LogId>
+   secondaryLvl        : int
    creatingNew         : bool
-   viewType            : LogNodeView
+   viewType            : CorrelationPlotViewType
+   logNodeStyleApp     : LogNodeStyleApp
+   xAxis               : SemanticId
+   semanticApp         : SemanticApp
 }
 
 //type AnnotationParameters = {Point:V3d;semanticId:string}

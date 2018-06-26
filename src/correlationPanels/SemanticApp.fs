@@ -22,6 +22,7 @@ module SemanticApp =
     | SortBy            
 
 
+
     ///// INITIAL
   let initial : SemanticApp = {
     semantics         = hmap.Empty
@@ -35,6 +36,17 @@ module SemanticApp =
 
   let getSemantic (app : SemanticApp) (semanticId : SemanticId) =
     HMap.tryFind semanticId app.semantics
+
+  let getSemanticOrDefault  (app : SemanticApp) (semanticId : SemanticId) =
+    HMap.tryFind semanticId app.semantics
+      |> Option.defaultValue Semantic.initInvalid
+
+  let getSemantic' (app : MSemanticApp) (semanticId : SemanticId) =
+    AMap.tryFind semanticId app.semantics
+
+  let getSemanticOrDefault'  (app : MSemanticApp) (semanticId : SemanticId) =
+    AMap.tryFind semanticId app.semantics
+
 
   let getColor (model : MSemanticApp) (semanticId : IMod<SemanticId>) =
     let sem = Mod.bind (fun id -> AMap.tryFind id model.semantics) semanticId
@@ -58,8 +70,15 @@ module SemanticApp =
                           match x with 
                             | Some s -> s.label.text
                             | None -> Mod.constant "-NONE-")
+   
+  let getMetricSemantics (model : SemanticApp) =
+    model.semanticsList |> PList.filter (fun s -> s.semanticType = SemanticType.Metric)
+  
+  let getMetricId (model : SemanticApp) =
+    model |> getMetricSemantics
+          |> PList.tryAt 0
+          |> Option.map (fun x -> x.id)
 
- 
 
   ///// convienience functions II
 
@@ -132,13 +151,14 @@ module SemanticApp =
 
   let getInitialWithSamples =
       initial
-        |> insertSemantic (Semantic.initialHorizon0 (System.Guid.NewGuid().ToString())) SemanticState.Display
-        |> insertSemantic (Semantic.initialHorizon1 (System.Guid.NewGuid().ToString())) SemanticState.Display
-        |> insertSemantic (Semantic.initialHorizon2 (System.Guid.NewGuid().ToString())) SemanticState.Display
-        |> insertSemantic (Semantic.initialHorizon3 (System.Guid.NewGuid().ToString())) SemanticState.Display
-        |> insertSemantic (Semantic.initialHorizon4 (System.Guid.NewGuid().ToString())) SemanticState.Display
-        |> insertSemantic (Semantic.initialCrossbed (System.Guid.NewGuid().ToString())) SemanticState.Display
-        |> insertSemantic (Semantic.initialGrainSize (System.Guid.NewGuid().ToString())) SemanticState.Edit
+        |> insertSemantic (Semantic.initialHorizon0   (System.Guid.NewGuid().ToString())) SemanticState.Display
+        |> insertSemantic (Semantic.initialHorizon1   (System.Guid.NewGuid().ToString())) SemanticState.Display
+        |> insertSemantic (Semantic.initialHorizon2   (System.Guid.NewGuid().ToString())) SemanticState.Display
+        |> insertSemantic (Semantic.initialHorizon3   (System.Guid.NewGuid().ToString())) SemanticState.Display
+        |> insertSemantic (Semantic.initialHorizon4   (System.Guid.NewGuid().ToString())) SemanticState.Display
+        |> insertSemantic (Semantic.initialCrossbed   (System.Guid.NewGuid().ToString())) SemanticState.Display
+        |> insertSemantic (Semantic.initialGrainSize  (System.Guid.NewGuid().ToString())) SemanticState.Display
+        |> insertSemantic (Semantic.initialGrainSize2 (System.Guid.NewGuid().ToString())) SemanticState.Edit
 
   let deselectAllSemantics (semantics : hmap<SemanticId, Semantic>) =
     semantics |> HMap.map (fun k s -> disableSemantic' s)
