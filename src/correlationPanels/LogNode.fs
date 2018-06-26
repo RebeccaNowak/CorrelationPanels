@@ -311,7 +311,8 @@
           let offset =
             adaptive {
               let! lvl = model.level 
-              return match (lvl = secondaryLvl), lvl = 0 with
+              let sLvl = secondaryLvl
+              return match (lvl = sLvl), lvl = 0 with
                       | true, true  -> offset + breadthSec
                       | false, true -> offset + breadthSec
                       | true, false -> offset
@@ -333,7 +334,9 @@
               let! selfViewFunction = viewFunction os model
               let! hasCs = hasChildren model
               let selfView = selfViewFunction os None
-              for v in (selfViewFunction 0.0 (Some breadthSec)) do yield v
+              let! lvl = model.level 
+              if lvl = secondaryLvl then
+                for v in (selfViewFunction 0.0 (Some breadthSec)) do yield v
               match hasCs with
                 | false  -> 
                     for v in selfView do
@@ -351,15 +354,17 @@
           rval
 
         let view (model        : MLogNode) 
-                 (secondaryLvl : int)
+                 (secondaryLvl : IMod<int>)
                  (viewType     : CorrelationPlotViewType) 
                  (styleFun     : float -> IMod<LogNodeStyle>) =
           let f = LogNodeSvg.getDomNodeFunction 
                     viewType styleFun 
                     (fun id lst -> ToggleSelectNode id) 
                     (Some (fun id lst -> DrawCorrelation id))
-
-          createView 0.0 secondaryLvl model f          
+          adaptive {
+            let! sLvl = secondaryLvl
+            return createView 0.0 sLvl model f          
+          }
                                         
           
 

@@ -269,12 +269,12 @@ module SemanticApp =
           if state = SemanticState.New then 
             let! domNode = Semantic.view mSem
             let menu =
-              div[clazz "ui buttons"; style "vertical-align: top; horizontal-align: middle"]
-                 [
-                    button[clazz "compact ui button"; onMouseClick (fun _ -> SaveNew)][text "Save"];
-                    div[clazz "or"][];
-                    button[clazz "compact ui button"; onMouseClick (fun _ -> CancelNew)][text "Cancel"]
-                 ]
+              div [clazz "ui buttons"; style "vertical-align: top; horizontal-align: middle"]
+                  [
+                    button [clazz "compact ui button"; onMouseClick (fun _ -> SaveNew)][text "Save"];
+                    div    [clazz "or"][];
+                    button [clazz "compact ui button"; onMouseClick (fun _ -> CancelNew)][text "Cancel"]
+                  ]
               
             yield tr 
                     ([clazz "active";style UtilitiesGUI.tinyPadding; onClick (fun str -> SetSemantic (Some mSem.id))])
@@ -313,7 +313,6 @@ module SemanticApp =
                                 th[][text "Weight"];
                                 th[][text "Colour"];
                                 th[][text "Level"];
-//                               th[][text "Default Geometry Type"];
                                 th[][text "Semantic Type"]]];
 
                   Incremental.tbody  (AttributeMap.ofList []) domList

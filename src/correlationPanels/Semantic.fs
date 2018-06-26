@@ -253,7 +253,6 @@ module Semantic =
 
         Html.SemUi.dropDown' (AList.ofList levels) model.level SetLevel (fun x -> sprintf "%i" x)
           |> intoTd
-//        domNodeGeometryType
         domNodeSemanticType
       //[td [] [text "foobar"]|> UI.map TextInputMessage] // WORKS
       ]
@@ -320,7 +319,7 @@ module Semantic =
                         match state with
                         
                           | SemanticState.Display  -> viewDisplay model // [td [] [text "foobar"]|> UI.map TextInputMessage] WORKS
-                          | SemanticState.Edit -> viewEdit model
-                          | SemanticState.New -> viewEdit model //TODO probably not necessary
+                          | SemanticState.Edit     -> viewEdit model
+                          | SemanticState.New      -> viewEdit model //TODO probably not necessary
                      ) 
           

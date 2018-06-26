@@ -24,6 +24,7 @@
       | LogNodeStyleAppMessage of LogNodeStyleApp.Action
       | NoMessage              of obj
       | ToggleEditCorrelations
+      | SetSecondaryLevel      of int
       //| UpdateAnnotations      of plist<Annotation>
       //| LogNodeMessage         of LogNode.Action
 
@@ -104,10 +105,11 @@
           {model with xAxis    = id
                       logs     = updLogs
           }
-        | ToggleEditCorrelations, _ -> {model with editCorrelations = not model.editCorrelations}
-        //| UpdateAnnotations annos ->
-        //  {model with annotations = annos}
-        | _,_                          -> model
+        | ToggleEditCorrelations, _   -> 
+          {model with editCorrelations = not model.editCorrelations}
+        | SetSecondaryLevel lvl, _    -> 
+          {model with secondaryLvl = lvl}
+        | _,_                         -> model
         
 
 
@@ -131,7 +133,7 @@
           let! viewType = model.viewType
           let! xAxis    = model.xAxis
           let semLabel  = SemanticApp.getLabel model.semanticApp model.xAxis
-          let! secLvl   = model.secondaryLvl
+          
           //let! styleTemplate = model.logNodeStyleApp.selectedTemplate
 
           for i in [0..length - 1] do //log in model.logs do
@@ -165,7 +167,7 @@
                       attributes
                     )   
                     (GeologicalLog.svgView 
-                      log viewType secLvl
+                      log viewType model.secondaryLvl
                       (LogNodeStyleApp.getStyle model.logNodeStyleApp)
                     )
             yield (logView |>  mapper)
@@ -201,6 +203,12 @@
                             viewSelection
             Incremental.div (AttributeMap.ofList [clazz "item"])
                             (LogNodeStyleApp.view model.logNodeStyleApp) |> UI.map Action.LogNodeStyleAppMessage
+            div []
+                [Html.SemUi.dropDown' 
+                  (AList.ofList Semantic.levels) 
+                  model.secondaryLvl 
+                  SetSecondaryLevel 
+                  (fun x -> sprintf "%i" x)]
           ]
               
         

@@ -64,8 +64,8 @@
 
       let domNode = 
         match nodeType with
-            | LogNodeType.Angular -> Default.angularNode position.Y "A" selectionCallback
-            | LogNodeType.Metric  -> Default.metricNode position.Y "M" selectionCallback
+            | LogNodeType.Angular -> DomNode.Void ("AngularNode",(AttributeMap.ofList []))  //Default.angularNode position.Y "A" selectionCallback
+            | LogNodeType.Metric  -> DomNode.Void ("AngularNode",(AttributeMap.ofList [])) //Default.metricNode position.Y "M" selectionCallback
             | LogNodeType.Hierarchical -> 
               drawRectangle
             | LogNodeType.HierarchicalLeaf -> 

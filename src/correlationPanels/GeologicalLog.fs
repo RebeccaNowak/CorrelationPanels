@@ -295,7 +295,7 @@
 
     let svgView (model        : MGeologicalLog) 
                 (viewType     : CorrelationPlotViewType) 
-                (secondaryLvl : int)
+                (secondaryLvl : IMod<int>)
                 (styleFun     : float -> IMod<LogNodeStyle>) =
       let minLvl = getMinLevel model
       let minLvlNodes =
@@ -312,7 +312,7 @@
               SelectLogNode n.id
               // WIP!!!! 
 
-            let v = (LogNode.View.Svg.view n secondaryLvl viewType styleFun) 
+            let! v = (LogNode.View.Svg.view n secondaryLvl viewType styleFun) 
                       //|> AList.map (UI.map LogNodeMessage)
             for it in v do
               yield it |> UI.map LogNodeMessage          
