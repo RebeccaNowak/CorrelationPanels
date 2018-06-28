@@ -159,19 +159,20 @@
           atf "cy" (centre.Y - radius + margin)
           atf "r" radius
           atc "stroke" C4b.Black //Performance
-          ats "stroke-width" sw
+          ats "stroke-width" "1.0"
           atc "fill" color
         ]
 
     let drawCircleButton (centre : V2d) (radius : float)
                          (color : C4b) (filled : bool) 
+                         (stroke : float)
                          (callback   : list<string> -> 'msg) = 
       let atts = [
           atf "cx" (centre.X - radius + margin)
           atf "cy" (centre.Y - radius + margin)
           atf "r" radius
-          atc "stroke" C4b.Black //Performance
-          ats "stroke-width" sw 
+          atc "stroke" color 
+          atf "stroke-width" stroke 
         ]
       toGroup [
         Svg.circle (if filled then atts @ [atc "fill" color] else atts)
@@ -254,14 +255,13 @@
                               (bWeight      : float)
                               (selectionCallback     : list<string> -> 'msg)
                               (selected     : bool)
-                              (dottedBorder : bool)
-                              (buttonCallback     : option<(list<string> -> 'msg)>) =
+                              (dottedBorder : bool) =
       let fill =
         match selected with //TODO read papers: mark selection state
           | true  -> C4b.DarkYellow
           | false -> fill
       let elements = 
-          [
+          [  
             drawRectangle leftUpper width height fill
             drawHorizontalLine 
               (new V2d(leftUpper.X, leftUpper.Y + bWeight * 0.5)) 

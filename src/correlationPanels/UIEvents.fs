@@ -31,6 +31,25 @@
             clientEvent "onclick" ("aardvark.processEvent('__ID__', 'foobar');")
         ] 
 
+
+      let onClickAttributes (cbs : list<list<string> -> 'msg>) : list<Attribute<'msg>>  =
+        let fNames = 
+          seq {
+            for i in 1..cbs.Length do
+              yield sprintf "userfunction%i" i
+          } |> List.ofSeq
+
+        let att (fname : string) (cb : list<string> -> 'msg) = 
+          let evStr = sprintf "aardvark.processEvent('__ID__', '%s');" fname
+          [
+            onEvent fname [] cb
+            clientEvent "onclick" evStr
+          ]
+         
+        List.map2 (fun c s -> att s c) cbs fNames 
+          |> List.concat
+        
+                   
         //  let cb = Pickler.json.UnPickleOfString >> args 
         //let args = ["{ X: evt.clientX, Y: evt.clientY  });evt.preventDefault();//"]
         //"onclick", AttributeValue.Event(Event.ofDynamicArgs args (cb >> Seq.singleton))

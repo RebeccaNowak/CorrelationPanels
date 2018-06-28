@@ -7,28 +7,27 @@
     open Aardvark.UI
     open UtilitiesGUI
     open Aardvark.Base.Incremental
+    open Aardvark.SceneGraph
 
-
-
-          
 
     type Action =
       | ChangeXAxis       of SemanticId
       | MouseOver         of LogNodeId
       | ToggleSelectNode  of LogNodeId
-      | DrawCorrelation   of LogNodeId
+      | BorderMessage     of Border.Action
+      | DrawCorrelation   of BorderId
 
 
 
-    let initialEmpty (id : LogNodeId) : LogNode = {
-      id           = id
+    let initialEmpty  : LogNode = {
+      id           = LogNodeId.invalid
       isSelected   = false
       hasDefaultX  = false
       nodeType     = LogNodeType.Empty
       label        = "log node"
       level        = -1
-      lBoundary    = Border.initial (Annotation.initial "-1") (V3d(1.0))
-      uBoundary    = Border.initial (Annotation.initial "-1") (V3d(1.0))
+      lBorder      = Border.initialEmpty
+      uBorder      = Border.initialEmpty
       children     = plist.Empty
       logYPos      = 0.0
       logXPos      = 0.0
@@ -38,57 +37,75 @@
 
 
     let initialTopLevel 
-      (id : LogNodeId) 
+      (logId    : LogId)
       ((up, ua) : (V3d * Annotation)) 
       ((lp, la) : (V3d * Annotation)) 
       (children : plist<LogNode>)
       (level    : int) : LogNode = 
-    
-      let lBoundary = Border.initial la lp
-      let uBoundary = Border.initial ua up
+      let nodeId = LogNodeId.newId()
+      let lBorder = Border.initial la lp nodeId logId
+      let uBorder = Border.initial ua up nodeId logId
+      let nodeType = 
+        match (lp = Border.negInf),
+              (up = Border.posInf) with
+          | true, false  -> LogNodeType.NegInfinity
+          | false, true  -> LogNodeType.PosInfinity
+          | false, false -> LogNodeType.Hierarchical
+          | true, true   -> LogNodeType.Infinity
 
-      {initialEmpty id with
-        nodeType      = 
-          match lBoundary.borderType, uBoundary.borderType with
-            | BorderType.NegativeInfinity, BorderType.Normal 
-              -> LogNodeType.NegInfinity
-            | BorderType.Normal, BorderType.PositiveInfinity
-              -> LogNodeType.PosInfinity
-            | BorderType.NegativeInfinity, BorderType.PositiveInfinity
-              -> LogNodeType.Infinity
-            | BorderType.Normal, BorderType.Normal
-              -> LogNodeType.Hierarchical
-            | _,_ -> LogNodeType.Empty
-
-        label         = "log node"
-        level         = level
-        lBoundary     = lBoundary
-        uBoundary     = uBoundary
-        children      = children
+      { 
+        initialEmpty with 
+          id          = nodeId
+          nodeType    = nodeType
+          label       = "log node"
+          level       = level
+          lBorder     = lBorder
+          uBorder     = uBorder
+          children    = children
       }
+
+    let initialTLWithId
+      (nodeId   : LogNodeId)
+      (logId    : LogId)
+      ((up, ua)  : (V3d * Annotation)) 
+      ((lp, la) : (V3d * Annotation)) 
+      (children : plist<LogNode>)
+      (level    : int) : LogNode = 
+
+      let n = initialTopLevel logId (up, ua) (lp, la) children level
+      {n with id = nodeId}
+
 
     // TODO add level
-    let initialHierarchical (id : LogNodeId)  (anno : Annotation) (lower : Border) (upper : Border) =
-      {initialEmpty id with
-        nodeType    = LogNodeType.HierarchicalLeaf
-       // elevation   = Annotation.elevation anno
-        lBoundary   = lower
-        uBoundary   = upper}
+    let initialHierarchicalLeaf 
+      (logId    : LogId)
+      (anno     : Annotation) 
+      (lp       : V3d ) 
+      (up       : V3d )  =
+      let nodeId = LogNodeId.newId()
+      {initialEmpty with
+        id        = nodeId
+        nodeType  = LogNodeType.HierarchicalLeaf
+        lBorder   = Border.initial anno lp nodeId logId
+        uBorder   = Border.initial anno up nodeId logId}
 
-    let intialMetric (id : LogNodeId)  (anno : Annotation)  =
-
-      {initialEmpty id with
-        nodeType     = LogNodeType.Metric
-        lBoundary    = Border.initial anno (Annotation.lowestPoint anno).point
-        uBoundary    = Border.initial anno (Annotation.highestPoint anno).point
+    let intialMetric (logId : LogId)  (anno : Annotation)  =
+      let nodeId = LogNodeId.newId()
+      {initialEmpty with
+        id         = nodeId
+        nodeType   = LogNodeType.Metric
+        lBorder    = Border.initial anno (Annotation.lowestPoint anno).point nodeId logId
+        uBorder    = Border.initial anno (Annotation.highestPoint anno).point nodeId logId
       }
 
 
-    let intialAngular (id : LogNodeId)  (anno : Annotation) =
-      {initialEmpty id with
-        nodeType    = LogNodeType.Angular
-        lBoundary    = Border.initial anno (Annotation.lowestPoint anno).point
-        uBoundary    = Border.initial anno (Annotation.highestPoint anno).point}
+    let intialAngular (logId : LogId) (anno : Annotation) =
+      let nodeId = LogNodeId.newId()
+      {initialEmpty with
+        id         = nodeId
+        nodeType   = LogNodeType.Angular
+        lBorder    = Border.initial anno (Annotation.lowestPoint anno).point nodeId logId
+        uBorder    = Border.initial anno (Annotation.highestPoint anno).point nodeId logId}
     /////////////////////
 
 
@@ -128,20 +145,20 @@
                 |> List.collect (fun (x : MLogNode) -> filterAndCollect' x f))
 
     let elevation  (model : LogNode) = 
-      (Annotation.elevation model.lBoundary.anno) 
-        + (Annotation.elevation model.uBoundary.anno) * 0.5
+      (Annotation.elevation model.lBorder.anno) 
+        + (Annotation.elevation model.uBorder.anno) * 0.5
 
     let elevation'  (model : MLogNode) = 
       Mod.map2 (fun x y -> (x + y) * 0.5)
-               (Annotation.elevation' model.lBoundary.anno) 
-               (Annotation.elevation' model.uBoundary.anno)
+               (Annotation.elevation' model.lBorder.anno) 
+               (Annotation.elevation' model.uBorder.anno)
               
 
     let findLowestBorder (lst : plist<LogNode>) =
-      lst |> PList.minMapBy (fun p -> p.lBoundary) (fun p -> Border.calcElevation p.lBoundary)
+      lst |> PList.minMapBy (fun p -> p.lBorder) (fun p -> Border.calcElevation p.lBorder)
 
     let findHighestBorder (lst : plist<LogNode>) =
-      lst |> PList.maxMapBy (fun p -> p.uBoundary) (fun p -> Border.calcElevation p.uBoundary)
+      lst |> PList.maxMapBy (fun p -> p.uBorder) (fun p -> Border.calcElevation p.uBorder)
       
 
     let rec replaceInfinity (model : LogNode) =
@@ -150,14 +167,14 @@
         | false, LogNodeType.NegInfinity -> 
               let children   = model.children |> PList.map (fun c -> replaceInfinity c)   
               let lb = findLowestBorder children
-              {model with lBoundary = lb
+              {model with lBorder = lb
                           children  = children
                           nodeType  = LogNodeType.Hierarchical
               }
         | false, LogNodeType.PosInfinity ->
               let children   = model.children |> PList.map (fun c -> replaceInfinity c)   
               let ub = findHighestBorder children
-              {model with uBoundary = ub
+              {model with uBorder = ub
                           children  = children
                           nodeType  = LogNodeType.Hierarchical
               }
@@ -170,9 +187,16 @@
         | LogNodeType.PosInfinity -> false
         | _ -> true
 
+    let findBorder (model : LogNode) (id : BorderId) =
+      match model.lBorder.id = id, model.uBorder.id = id with
+        | true, _      -> Some model.lBorder
+        | _,true       -> Some model.uBorder
+        | false, false -> None
+        //TODO false,false
+
 
     let calcMetricValue (n : LogNode) =
-      let points = n.lBoundary.anno.points |> PList.toList
+      let points = n.lBorder.anno.points |> PList.toList
       let h = List.tryHead points
       let t = List.tryLast points
       Option.map2 (fun (x : AnnotationPoint) (y : AnnotationPoint) -> 
@@ -182,7 +206,7 @@
 
     let calcSizeX (model : LogNode) (xAxis : SemanticId) = 
       let cs (node : LogNode) = 
-        let metricNodes = filterAndCollect node (fun n -> n.lBoundary.anno.semanticId = xAxis)
+        let metricNodes = filterAndCollect node (fun n -> n.lBorder.anno.semanticId = xAxis)
         let metricValues = metricNodes |> List.map (fun n -> calcMetricValue n)
         let sizeX = (metricValues |> List.filterNone |> List.averageOrZero) * 30.0 //TODO hardcoded
         {node with size = (node.size * V3d.OII) + (V3d.IOO) * sizeX}
@@ -198,7 +222,7 @@
           | _ -> node
       apply model diz
 
-    /////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////// UPDATE //////////////////////////////////////////
     let update  (action : Action) (model : LogNode) =
       match action with
         | ChangeXAxis id -> calcSizeX model id
@@ -211,160 +235,100 @@
                 | true -> {n with isSelected = not n.isSelected}
                 | false -> n)
           apply model  res
-        | DrawCorrelation id -> model
-      
+        | DrawCorrelation id -> 
+            match (id = model.lBorder.id), (id = model.uBorder.id) with
+              | true, true -> model //TODO debug output
+              | true, false -> {model with lBorder = (Border.update model.lBorder (Border.Correlate id))} //TODO Lens 
+              | false, true -> {model with uBorder = (Border.update model.uBorder (Border.Correlate id))}
+              | false, false -> model
+        | BorderMessage m ->
+          let f model = {model with lBorder = (Border.update model.lBorder m)
+                                    uBorder = (Border.update model.uBorder m)}
+          apply model f //TODO performance!
         
 
 
 
     /////////////////////////////////////////////////////////////////////////////////
 
-    let hasChildren (model : MLogNode) =
-      let isEmpty = AList.isEmpty model.children
-      Mod.map (fun x -> not x) isEmpty
-
-    module View =
-
-      module Debug =
-        let description (model : MLogNode) (semApp : MSemanticApp) = 
+    module Debug =
+      let description (model : MLogNode) (semApp : MSemanticApp) = 
           
 
-          let createDomNode (descString : IMod<string>) (sel : IMod<bool>) =
-            Incremental.div
-              (amap {
-                let! sel = model.isSelected
-                match sel with
-                  | true  -> yield style "border: 2px solid orange"
-                  | false -> yield style "border: none"
-              }
-              |> AttributeMap.ofAMap)        
+        let createDomNode (descString : IMod<string>) (sel : IMod<bool>) =
+          Incremental.div
+            (amap {
+              let! sel = model.isSelected
+              match sel with
+                | true  -> yield style "border: 2px solid orange"
+                | false -> yield style "border: none"
+            }
+            |> AttributeMap.ofAMap)        
               
-              (AList.ofList 
-                [
-                  Annotation.View.getColourIcon model.uBoundary.anno semApp
-                  Annotation.View.getColourIcon model.lBoundary.anno semApp
-                  Incremental.text descString
-                ])
+            (AList.ofList 
+              [
+                Annotation.View.getColourIcon model.uBorder.anno semApp
+                Annotation.View.getColourIcon model.lBorder.anno semApp
+                Incremental.text descString
+              ])
 
-          let modStr = 
-            model.nodeType 
-              |> Mod.bind 
-                (fun t -> 
-                  match t with
-                    | LogNodeType.HierarchicalLeaf 
-                    | LogNodeType.NegInfinity
-                    | LogNodeType.PosInfinity
-                    | LogNodeType.Hierarchical ->
-                        model.nodeType |> Mod.map (fun x -> x.ToString())
-                      //(Mod.map2 (fun (u : V3d) (l : V3d)  -> 
-                                      //sprintf "%.2f-%.2f" l.Length u.Length)
-                                      //model.uBoundary.point model.lBoundary.point)
-                    | LogNodeType.Angular | LogNodeType.Metric ->
-                        //Mod.map (sprintf "%s" ) model.label
-                        model.nodeType |> Mod.map (fun x -> x.ToString())
-                    | LogNodeType.Empty | LogNodeType.Infinity -> model.nodeType |> Mod.map (fun x -> x.ToString())
-                )
+        let modStr = 
+          model.nodeType 
+            |> Mod.bind 
+              (fun t -> 
+                match t with
+                  | LogNodeType.HierarchicalLeaf 
+                  | LogNodeType.NegInfinity
+                  | LogNodeType.PosInfinity
+                  | LogNodeType.Hierarchical ->
+                      model.nodeType |> Mod.map (fun x -> x.ToString())
+                    //(Mod.map2 (fun (u : V3d) (l : V3d)  -> 
+                                    //sprintf "%.2f-%.2f" l.Length u.Length)
+                                    //model.uBorder.point model.lBorder.point)
+                  | LogNodeType.Angular | LogNodeType.Metric ->
+                      //Mod.map (sprintf "%s" ) model.label
+                      model.nodeType |> Mod.map (fun x -> x.ToString())
+                  | LogNodeType.Empty | LogNodeType.Infinity -> model.nodeType |> Mod.map (fun x -> x.ToString())
+              )
       
-          createDomNode modStr model.isSelected
+        createDomNode modStr model.isSelected
 
-        let rec debugView (model : MLogNode) (semApp : MSemanticApp) =
-          let childrenView = 
-            alist {
-              for c in model.children do
-                let! (v : alist<DomNode<'a>>) = (debugView c semApp)
-                for it in v do
-                  yield it
-            }
-    
-          let rval =
-            adaptive {
-              let isEmpty = AList.isEmpty model.children
-              let! (b : bool) = isEmpty
-              match b with
-                | true  -> 
-                    return AList.ofList [li [attribute "value" ">"] [(description model semApp)]]
-                | false ->                
-                    return AList.ofList [li [attribute "value" "-"] [(description model semApp)];
-                           ul [] [Incremental.li (AttributeMap.ofList [attribute "value" "-"]) childrenView]]
-            }
-          rval
-
-      module Svg =
-      
-        let containsHNodes (node : MLogNode) =
-          let foo = (Mod.force node.children.Content) 
-                      |> PList.filter (fun n -> (Mod.force n.nodeType = LogNodeType.Hierarchical))
-          (not (foo.IsEmpty()))
-        
-        let rec createView (offset        : float)
-                           (secondaryLvl  : int)
-                           (model         : MLogNode) 
-                           (viewFunction  : float 
-                                            -> MLogNode 
-                                            -> IMod<(float 
-                                                      -> Option<float> 
-                                                      -> list<DomNode<'msg>>
-                                            )>
-                           )
-                           : alist<DomNode<'msg>> =
-          let breadthSec = 20.0
-          let offset =
-            adaptive {
-              let! lvl = model.level 
-              let sLvl = secondaryLvl
-              return match (lvl = sLvl), lvl = 0 with
-                      | true, true  -> offset + breadthSec
-                      | false, true -> offset + breadthSec
-                      | true, false -> offset
-                      | false, false -> offset
-            }
-          
-          let childrenView = 
-            alist {
-              let! os = offset
-              for c in model.children do               
-                let v = (createView os secondaryLvl c viewFunction)
-                for it in (v : alist<DomNode<'msg>>) do
-                  yield it
-            }
-    
-          let rval =
-            alist {
-              let! os = offset
-              let! selfViewFunction = viewFunction os model
-              let! hasCs = hasChildren model
-              let selfView = selfViewFunction os None
-              let! lvl = model.level 
-              if lvl = secondaryLvl then
-                for v in (selfViewFunction 0.0 (Some breadthSec)) do yield v
-              match hasCs with
-                | false  -> 
-                    for v in selfView do
-                      yield v                
-                | true   ->  
-                  let! lstChildren = childrenView.Content     
-                  match (containsHNodes model) with
-                    | true  ->
-                      yield (Svg.toGroup (lstChildren |> PList.toList) [])                                              
-                    | false ->
-                      for v in selfView do
-                        yield v 
-                      yield (Svg.toGroup (lstChildren |> PList.toList) [])
-            }
-          rval
-
-        let view (model        : MLogNode) 
-                 (secondaryLvl : IMod<int>)
-                 (viewType     : CorrelationPlotViewType) 
-                 (styleFun     : float -> IMod<LogNodeStyle>) =
-          let f = LogNodeSvg.getDomNodeFunction 
-                    viewType styleFun 
-                    (fun id lst -> ToggleSelectNode id) 
-                    (Some (fun id lst -> DrawCorrelation id))
-          adaptive {
-            let! sLvl = secondaryLvl
-            return createView 0.0 sLvl model f          
+      let rec debugView (model : MLogNode) (semApp : MSemanticApp) =
+        let childrenView = 
+          alist {
+            for c in model.children do
+              let! (v : alist<DomNode<'a>>) = (debugView c semApp)
+              for it in v do
+                yield it
           }
+    
+        let rval =
+          adaptive {
+            let isEmpty = AList.isEmpty model.children
+            let! (b : bool) = isEmpty
+            match b with
+              | true  -> 
+                  return AList.ofList [li [attribute "value" ">"] [(description model semApp)]]
+              | false ->                
+                  return AList.ofList [li [attribute "value" "-"] [(description model semApp)];
+                          ul [] [Incremental.li (AttributeMap.ofList [attribute "value" "-"]) childrenView]]
+          }
+        rval
+
+    module Svg =
+      let view  (model        : MLogNode) 
+                (secondaryLvl : IMod<int>)
+                (viewType     : IMod<CorrelationPlotViewType>) 
+                (styleFun     : float -> IMod<LogNodeStyle>) =
+        let f = LogNodeSvg.getDomNodeFunction 
+                  viewType styleFun 
+                  (ToggleSelectNode) 
+                  (BorderMessage) //(fun (id : BorderId) lst -> Border.ToggleSelect id)
+                  
+        adaptive {
+          let! sLvl = secondaryLvl
+          return LogNodeSvg.createView 0.0 sLvl model f          
+        }
                                         
           
 

@@ -61,6 +61,46 @@ type GeometryType = Point = 0 | Line = 1 | Polyline = 2 | Polygon = 3 | DnS = 4 
 type SemanticType = Metric = 0 | Angular = 1 | Hierarchical = 2 | Dummy = 3 | Undefined = 4
 
 
+
+///// IDs /////////////
+type SemanticId = {
+  id        : string 
+} with
+  member this.isValid = (this.id <> "")
+module SemanticId = 
+  let invalid = {id = ""}
+  let newId unit : SemanticId  = 
+    {id = System.Guid.NewGuid().ToString()}
+
+type BorderId = {
+  id        : string 
+} with
+  member this.isValid = (this.id <> "")
+module BorderId = 
+  let invalid = {id = ""}
+  let newId unit : BorderId  = 
+    {id = System.Guid.NewGuid().ToString()}
+
+type LogId = {
+  id        : string 
+} with
+  member this.isValid = (this.id <> "")
+module LogId = 
+  let invalid = {id = ""}
+  let newId unit : LogId  = 
+    {id = System.Guid.NewGuid().ToString()}
+
+type LogNodeId = {
+  id        : string 
+} with
+  member this.isValid = (this.id <> "")
+
+module LogNodeId = 
+  let invalid = {id = ""}
+  let newId unit : LogNodeId  = 
+    {id = System.Guid.NewGuid().ToString()}
+/////
+
 [<DomainType>]
 type Style = {
     color     : ColorInput
@@ -77,13 +117,7 @@ type RenderingParameters = {
 
 
 type SemanticState = New | Edit | Display
-type SemanticId = {
-  id        : string 
-} with
-  member this.isValid = (this.id <> "")
 
-module SemanticId = 
-  let invalid = {id = ""}
 
 
 
@@ -157,16 +191,24 @@ type AnnotationApp = {
 }
 
 
-type BorderStyle = Annotation | Border
-type BorderType  = PositiveInfinity | NegativeInfinity | Normal
+type BorderType  = PositiveInfinity | NegativeInfinity | Normal | Invalid
+
+
+
 
 [<DomainType>]
 type Border = {
+    [<NonIncremental>]
+    id          : BorderId
+
+    nodeId      : LogNodeId
+    logId       : LogId
+    isSelected  : bool
+    correlation : Option<BorderId>
     anno        : Annotation
     point       : V3d
     color       : C4b
     weight      : double
-    styleType   : BorderStyle
 
     [<NonIncremental>]
     borderType  : BorderType
@@ -188,13 +230,7 @@ type LNStyleListId = {
     id        : string
 }
 
-type LogNodeId = {
-  id        : string 
-} with
-  member this.isValid = (this.id <> "")
 
-module LogNodeId = 
-  let invalid = {id = ""}
 
 
 
@@ -212,8 +248,8 @@ type LogNode = {
     nodeType      : LogNodeType
 
     level         : int //TODO think about this; performance vs interaction
-    lBoundary     : Border
-    uBoundary     : Border
+    lBorder       : Border
+    uBorder       : Border
     children      : plist<LogNode>
                   
    // elevation     : float //TODO should be a function if at all
@@ -224,8 +260,8 @@ type LogNode = {
     size          : V3d
 } with 
     member this.range = 
-            {Rangef.init with min = this.lBoundary.point.Length
-                              max = this.uBoundary.point.Length}
+            {Rangef.init with min = this.lBorder.point.Length
+                              max = this.uBorder.point.Length}
               
 
 [<DomainType>]
@@ -252,26 +288,13 @@ type LogNodeStyleApp = {
     selectedTemplate : LNStyleListId
 }
 
-
-
-type LogId = {
-  id        : string 
-} with
-  member this.isValid = (this.id <> "")
-
-module LogId = 
-  let invalid = {id = ""}
-  let newId unit : LogId  = //TODO hack: how can I do make this a function without an argument?
-    {id = System.Guid.NewGuid().ToString()}
-
-//let a = LogId.newId()
-//let b = LogId.newId()
-
-
 [<DomainType>]
 type GeologicalLog = {
     [<NonIncremental;PrimaryKey>]
     id          : LogId
+
+    [<NonIncremental>]
+    index       : int
 
     isSelected  : bool
     label       : string
@@ -287,11 +310,7 @@ type GeologicalLog = {
 
 [<DomainType>]
 type Correlation = {
-  fromLog       : LogId
-  toLog         : LogId
-  fromLogNode   : LogNodeId
   fromBorder    : Border
-  toLogNode     : LogNodeId
   toBorder      : Border
 }
 
@@ -299,6 +318,8 @@ type Correlation = {
 type CorrelationPlotApp = {
    logs                : plist<GeologicalLog>
    correlations        : plist<Correlation>
+   selectedBorder      : Option<Border>
+
    editCorrelations    : bool
    selectedPoints      : list<(V3d * Annotation)>
    annotations         : plist<Annotation>

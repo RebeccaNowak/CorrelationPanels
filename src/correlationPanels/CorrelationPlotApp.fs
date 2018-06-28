@@ -10,6 +10,7 @@
     open Aardvark.UI
     open UtilitiesGUI
     open Aardvark.UI.Primitives
+    open Aardvark.Base.Runtime
 
     type Action =
       | Clear
@@ -25,13 +26,12 @@
       | NoMessage              of obj
       | ToggleEditCorrelations
       | SetSecondaryLevel      of int
-      //| UpdateAnnotations      of plist<Annotation>
-      //| LogNodeMessage         of LogNode.Action
 
     let initial : CorrelationPlotApp  = 
       {
         logs                = PList.empty
         correlations        = PList.empty
+        selectedBorder      = None
         editCorrelations    = false
         selectedPoints      = List<(V3d * Annotation)>.Empty
         selectedLog         = None
@@ -43,6 +43,77 @@
         semanticApp         = SemanticApp.getInitialWithSamples
         annotations         = PList.empty
       }
+
+    let findBorder (model : CorrelationPlotApp) 
+                   (logId : LogId)
+                   (nodeId : LogNodeId)
+                   (borderId : BorderId) = 
+      let log = 
+        model.logs
+          |> PList.toList
+          |> List.tryFind (fun x -> x.id = logId)
+      let node =         
+        match log with
+          | None -> None
+          | Some l ->
+            GeologicalLog.findNode l nodeId        
+            
+      let border = 
+        match node with
+          | None -> None
+          | Some n ->
+            LogNode.findBorder n borderId
+      (log, node, border)
+
+    let correlate (model : CorrelationPlotApp) 
+                  (logId : LogId)
+                  (nodeId : LogNodeId)
+                  (borderId : BorderId) =
+      match model.selectedBorder with
+        | Some border ->
+          match border.logId = logId, border.id = borderId with
+            | true, true   ->
+              model
+            | true, false  -> 
+              // toggle the prev Border
+              {model with selectedBorder = Some border} //TODO toggleselect Action
+            | false, true  -> //TODO debug output: this shouldn't happen
+              model
+            | false, false ->
+                let (_, _, toBo) = (findBorder model logId nodeId borderId)
+                match toBo with
+                  | Some toBo ->
+                      let newCorrelation : Correlation = 
+                        {
+                                fromBorder    = border
+                                toBorder      = toBo
+                        }
+                      {
+                        model with correlations = model.correlations.Append newCorrelation
+                      }
+                  | None     -> model
+        | None   ->
+            let (_,_,b) = (findBorder model logId nodeId borderId)
+            {model with selectedBorder = b}
+            
+
+    let tryCorrelate (model : CorrelationPlotApp) (a : Action) =
+      match a with
+        | LogMessage (logId, b) ->
+          match b with
+            | GeologicalLog.LogNodeMessage (nodeId, c) ->
+              match c with
+                | LogNode.BorderMessage d ->
+                  match d with
+                    | Border.ToggleSelect borderId ->
+                    //| Border.Correlate borderId -> 
+                      correlate model logId nodeId borderId
+                    | _ -> model
+                | _ -> model
+            | _ -> model
+        | _ -> model
+                  
+
 
     let update (model : CorrelationPlotApp)
                //(annos : plist<Annotation>) 
@@ -82,8 +153,10 @@
                 creatingNew        = false
                 xAxis              = xAxis
                 logs               = (model.logs.Append 
-                                        (GeologicalLog.generate
-                                                guid working model.annotations model.semanticApp xAxis 300.0))
+                                        (GeologicalLog.generate 
+                                                (model.logs.Count)
+                                                working model.annotations
+                                                model.semanticApp xAxis 300.0))
                 selectedPoints     = List<(V3d * Annotation)>.Empty}
         | DeleteLog, false             -> model
         | LogMessage (id, m), _        -> 
@@ -92,7 +165,9 @@
             match log with
               | Some lo ->
                   let upd = GeologicalLog.update lo m
-                  {model with logs = model.logs.Update (ind, (fun x -> upd))}
+                  let updatedModel = 
+                    {model with logs = model.logs.Update (ind, (fun x -> upd))}
+                  tryCorrelate updatedModel action
               | None -> model
 
         | LogNodeStyleAppMessage m, _  -> 
@@ -130,7 +205,6 @@
         alist {          //TODO more elegant
           let! length   = (AList.count model.logs)
           let! logs     = model.logs.Content
-          let! viewType = model.viewType
           let! xAxis    = model.xAxis
           let semLabel  = SemanticApp.getLabel model.semanticApp model.xAxis
           
@@ -167,7 +241,7 @@
                       attributes
                     )   
                     (GeologicalLog.svgView 
-                      log viewType model.secondaryLvl
+                      log model.viewType model.secondaryLvl
                       (LogNodeStyleApp.getStyle model.logNodeStyleApp)
                     )
             yield (logView |>  mapper)
@@ -176,8 +250,7 @@
                     //|> AList.append (AList.single xAxisSvg) 
         } 
       
-   
-      
+     
       let menu = 
           let viewSelection = 
             alist {

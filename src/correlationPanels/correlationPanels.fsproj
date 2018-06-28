@@ -48,11 +48,11 @@
 	<Compile Include="Border.fs" />
 	<Compile Include="LogNodeStyle.fs" />
 	<Compile Include="LogNodeStyleApp.fs" />
-	<Compile Include="CorrelationPlotViewTypes.fs" />
 	<Compile Include="LogNodeSvg.fs" />
 	<Compile Include="LogNode.fs" />
 	<Compile Include="GeologicalLog.fs" />
 	<Compile Include="GeologicalLogApp.fs" />
+	<Compile Include="Correlation.fs" />
 	<Compile Include="CorrelationPlot.fs" />
 	<Compile Include="CorrelationPlotApp.fs" />
 	<Compile Include="CorrelationDrawing.fs" />
