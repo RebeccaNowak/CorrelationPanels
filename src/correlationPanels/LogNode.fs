@@ -29,10 +29,10 @@
       lBorder      = Border.initialEmpty
       uBorder      = Border.initialEmpty
       children     = plist.Empty
-      logYPos      = 0.0
-      logXPos      = 0.0
-      pos          = V3d.OOO
-      size         = V3d.OOO
+      //svgPos.Y      = 0.0
+      //svgPos.X      = 0.0
+      svgPos       = V2d.OO
+      size         = V2d.OO
     }
 
 
@@ -71,9 +71,14 @@
       ((lp, la) : (V3d * Annotation)) 
       (children : plist<LogNode>)
       (level    : int) : LogNode = 
-
+      let lBorder = Border.initial la lp nodeId logId
+      let uBorder = Border.initial ua up nodeId logId
       let n = initialTopLevel logId (up, ua) (lp, la) children level
-      {n with id = nodeId}
+      {
+        n with id       = nodeId
+               lBorder  = lBorder
+               uBorder  = uBorder
+      }
 
 
     // TODO add level
@@ -107,7 +112,14 @@
         lBorder    = Border.initial anno (Annotation.lowestPoint anno).point nodeId logId
         uBorder    = Border.initial anno (Annotation.highestPoint anno).point nodeId logId}
     /////////////////////
-
+    let rec mapAndCollect (n : LogNode) (f : LogNode -> 'a) =
+      match PList.count n.children with
+      | 0      -> [f n]
+      | other  -> 
+        [f n] @ 
+          (n.children 
+                |> PList.toList
+                |> List.collect (fun (x : LogNode) -> mapAndCollect x f))
 
     let rec apply (n : LogNode) (f : LogNode -> LogNode) =
       match PList.count n.children with
@@ -144,7 +156,7 @@
                 |> AList.toList
                 |> List.collect (fun (x : MLogNode) -> filterAndCollect' x f))
 
-    let elevation  (model : LogNode) = 
+    let elevation  (model : LogNode) = //TODO function in Border
       (Annotation.elevation model.lBorder.anno) 
         + (Annotation.elevation model.uBorder.anno) * 0.5
 
@@ -167,14 +179,14 @@
         | false, LogNodeType.NegInfinity -> 
               let children   = model.children |> PList.map (fun c -> replaceInfinity c)   
               let lb = findLowestBorder children
-              {model with lBorder = lb
+              {model with lBorder = {lb with nodeId = model.id}
                           children  = children
                           nodeType  = LogNodeType.Hierarchical
               }
         | false, LogNodeType.PosInfinity ->
               let children   = model.children |> PList.map (fun c -> replaceInfinity c)   
               let ub = findHighestBorder children
-              {model with uBorder = ub
+              {model with uBorder = {ub with nodeId = model.id}
                           children  = children
                           nodeType  = LogNodeType.Hierarchical
               }
@@ -209,7 +221,7 @@
         let metricNodes = filterAndCollect node (fun n -> n.lBorder.anno.semanticId = xAxis)
         let metricValues = metricNodes |> List.map (fun n -> calcMetricValue n)
         let sizeX = (metricValues |> List.filterNone |> List.averageOrZero) * 30.0 //TODO hardcoded
-        {node with size = (node.size * V3d.OII) + (V3d.IOO) * sizeX}
+        {node with size = (node.size * V2d.OI) + (V2d.IO) * sizeX}
       apply model cs
 
     
@@ -217,7 +229,7 @@
       let diz (node : LogNode) = 
         match node with
           | n when n.size.X = 0.0 -> 
-            {n with size        = (node.size * V3d.OII) + (V3d.IOO) * defaultSizeX
+            {n with size        = (node.size * V2d.OI) + (V2d.IO) * defaultSizeX
                     hasDefaultX = true}
           | _ -> node
       apply model diz
@@ -241,7 +253,7 @@
               | true, false -> {model with lBorder = (Border.update model.lBorder (Border.Correlate id))} //TODO Lens 
               | false, true -> {model with uBorder = (Border.update model.uBorder (Border.Correlate id))}
               | false, false -> model
-        | BorderMessage m ->
+        | BorderMessage m -> //TODO performance! stop messages sooner
           let f model = {model with lBorder = (Border.update model.lBorder m)
                                     uBorder = (Border.update model.uBorder m)}
           apply model f //TODO performance!
@@ -252,6 +264,14 @@
     /////////////////////////////////////////////////////////////////////////////////
 
     module Debug =
+      let print (n : LogNode) = 
+        printf "%s\n%i\nn=%s\nub=%s\nlb=%s\n" 
+                  (n.nodeType.ToString()) 
+                  (n.level)
+                  n.id.id 
+                  n.uBorder.nodeId.id 
+                  n.lBorder.nodeId.id
+
       let description (model : MLogNode) (semApp : MSemanticApp) = 
           
 
@@ -329,6 +349,9 @@
           let! sLvl = secondaryLvl
           return LogNodeSvg.createView 0.0 sLvl model f          
         }
+
+
+
                                         
           
 

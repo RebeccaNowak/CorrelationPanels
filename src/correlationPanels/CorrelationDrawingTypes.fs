@@ -209,6 +209,7 @@ type Border = {
     point       : V3d
     color       : C4b
     weight      : double
+    svgPosition : V2d
 
     [<NonIncremental>]
     borderType  : BorderType
@@ -254,10 +255,10 @@ type LogNode = {
                   
    // elevation     : float //TODO should be a function if at all
    // range         : Rangef
-    logYPos       : float
-    logXPos       : float
-    pos           : V3d
-    size          : V3d
+    //svgPos.Y       : float
+    //svgPos.X       : float
+    svgPos        : V2d
+    size          : V2d
 } with 
     member this.range = 
             {Rangef.init with min = this.lBorder.point.Length
@@ -304,7 +305,6 @@ type GeologicalLog = {
     camera      : CameraControllerState
 
     semanticApp : SemanticApp
-
     xAxis       : SemanticId
 }
 
@@ -319,6 +319,7 @@ type CorrelationPlotApp = {
    logs                : plist<GeologicalLog>
    correlations        : plist<Correlation>
    selectedBorder      : Option<Border>
+   //aardvark dies: selectedBorder      : Option<(Border * V2d)>
 
    editCorrelations    : bool
    selectedPoints      : list<(V3d * Annotation)>

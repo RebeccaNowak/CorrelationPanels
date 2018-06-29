@@ -5,7 +5,6 @@
     open Aardvark.Base.Incremental
     open Aardvark.UI
 
-
     let hasChildren (model : MLogNode) =
       let isEmpty = AList.isEmpty model.children
       Mod.map (fun x -> not x) isEmpty
@@ -138,8 +137,16 @@
 
       let domNode = 
         match nodeType with
-            | LogNodeType.Angular -> [Svg.drawCircleButton (new V2d(offset + size.X, (position.Y + size.Y) * 0.5)) 2.0 C4b.Black false 0.5 selectionCallback]
-            | LogNodeType.Metric  -> [Svg.drawCircleButton (new V2d(offset + size.X, (position.Y + size.Y) * 0.5)) 2.0 C4b.Black false 0.5 selectionCallback]
+            | LogNodeType.Angular -> 
+              [
+                Svg.drawCircleButton 
+                  (new V2d(offset + size.X, (position.Y + size.Y) * 0.5))
+                  2.0 C4b.Black false 0.5 selectionCallback
+              ]
+            | LogNodeType.Metric  -> 
+              [Svg.drawCircleButton 
+                (new V2d(offset + size.X, (position.Y + size.Y) * 0.5))
+                2.0 C4b.Black false 0.5 selectionCallback]
             | LogNodeType.Hierarchical -> [drawRectangle]@btns
             | LogNodeType.HierarchicalLeaf -> [drawRectangle]@btns
             | LogNodeType.PosInfinity
@@ -160,21 +167,22 @@
       adaptive {
         let! size              =  (model.size)
         let! s                 = styleFun size.X
-        let! ypos              = model.logYPos
+        let! pos              = model.svgPos
         let size               = new V2d(size.X, size.Y)
         let color              = s.color
         let! uBorderColor      = model.uBorder.color
         let! lBorderColor      = model.lBorder.color
         let! dottedRBorder     = model.hasDefaultX
-        let! (lvl : int)         = model.level
+        let! (lvl : int)       = model.level
         let weight             = (Default.levelToWeight lvl)
         let! isSelected        = model.isSelected
-        let position           = new V2d(offset, ypos)
+        let position           = new V2d(offset, pos.Y)
         let! lnType            = model.nodeType
         let! viewType          = viewType
 
-        let! (b1, b2) = (Border.Svg.getCorrelationButtons model offset)// buttonCallback) //TODO performance
-        let btns = (b1 |> UI.map mapper , b2 |> UI.map mapper)
+        let! ((btnL), (btnU)) = 
+              (Border.Svg.getCorrelationButtons model offset weight)// buttonCallback) //TODO performance
+        let btns = (btnL |> UI.map mapper , btnU |> UI.map mapper)
         let btns = 
           match viewType with
             | CorrelationPlotViewType.CorrelationView -> Some btns

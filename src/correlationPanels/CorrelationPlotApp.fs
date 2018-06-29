@@ -2,15 +2,12 @@
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module CorrelationPlotApp =
-    open Aardvark.Base.Rendering
     open Aardvark.Base.Incremental
-    //open Aardvark.Base.Incremental.Operators
     open Aardvark.Base
     open Aardvark.Application
     open Aardvark.UI
     open UtilitiesGUI
     open Aardvark.UI.Primitives
-    open Aardvark.Base.Runtime
 
     type Action =
       | Clear
@@ -26,6 +23,9 @@
       | NoMessage              of obj
       | ToggleEditCorrelations
       | SetSecondaryLevel      of int
+
+    let logOffset (index : int) =
+      float (index * 10 + index * 250)
 
     let initial : CorrelationPlotApp  = 
       {
@@ -44,6 +44,8 @@
         annotations         = PList.empty
       }
 
+
+
     let findBorder (model : CorrelationPlotApp) 
                    (logId : LogId)
                    (nodeId : LogNodeId)
@@ -52,6 +54,7 @@
         model.logs
           |> PList.toList
           |> List.tryFind (fun x -> x.id = logId)
+
       let node =         
         match log with
           | None -> None
@@ -59,42 +62,62 @@
             GeologicalLog.findNode l nodeId        
             
       let border = 
-        match node with
+        match log with
           | None -> None
-          | Some n ->
-            LogNode.findBorder n borderId
+          | Some l ->
+            let n = GeologicalLog.findNode' l borderId
+            match n with
+              | None -> None
+              | Some n ->
+                (LogNode.findBorder n borderId)
       (log, node, border)
 
     let correlate (model : CorrelationPlotApp) 
                   (logId : LogId)
                   (nodeId : LogNodeId)
-                  (borderId : BorderId) =
+                  (borderId : BorderId)
+                  (pos      : V2d) =
       match model.selectedBorder with
         | Some border ->
           match border.logId = logId, border.id = borderId with
-            | true, true   ->
-              model
+            | true, true   -> model
             | true, false  -> 
               // toggle the prev Border
-              {model with selectedBorder = Some border} //TODO toggleselect Action
+              let (l,_,b) = (findBorder model logId nodeId borderId)
+              match b with //TODO refactor
+                | None -> model
+                | Some b ->
+                  match l with
+                    | None -> model
+                    | Some l ->
+                      {
+                        model with selectedBorder = 
+                                     Some ({b with svgPosition = (new V2d (pos.X + (logOffset l.index), pos.Y))})
+                      } //TODO toggleselect Action
             | false, true  -> //TODO debug output: this shouldn't happen
               model
             | false, false ->
-                let (_, _, toBo) = (findBorder model logId nodeId borderId)
-                match toBo with
-                  | Some toBo ->
+                let (toLo, toNo, toBo) = (findBorder model logId nodeId borderId)
+                match toBo, toLo, toNo with
+                  | Some toBo, Some toLo, Some toNo ->
                       let newCorrelation : Correlation = 
                         {
-                                fromBorder    = border
-                                toBorder      = toBo
+                            fromBorder    = border
+                            toBorder      = {toBo with svgPosition = (new V2d (toNo.svgPos.X + (logOffset toLo.index), pos.Y))}
                         }
                       {
-                        model with correlations = model.correlations.Append newCorrelation
+                        model with correlations   = model.correlations.Append newCorrelation
+                                   selectedBorder = None
                       }
-                  | None     -> model
+                  | _,_,_     -> model
         | None   ->
-            let (_,_,b) = (findBorder model logId nodeId borderId)
-            {model with selectedBorder = b}
+            let (lo,_,b) = (findBorder model logId nodeId borderId)
+            match lo with
+              | None -> model
+              | Some lo ->
+                {model with selectedBorder = 
+                              (Option.map (fun x -> 
+                                ({x with svgPosition = (new V2d (pos.X + (logOffset lo.index), pos.Y))})) b)}
             
 
     let tryCorrelate (model : CorrelationPlotApp) (a : Action) =
@@ -105,9 +128,8 @@
               match c with
                 | LogNode.BorderMessage d ->
                   match d with
-                    | Border.ToggleSelect borderId ->
-                    //| Border.Correlate borderId -> 
-                      correlate model logId nodeId borderId
+                    | Border.ToggleSelect (borderId, pos) ->
+                      correlate model logId nodeId borderId pos
                     | _ -> model
                 | _ -> model
             | _ -> model
@@ -164,9 +186,9 @@
             let log = (model.logs.TryGet ind)
             match log with
               | Some lo ->
-                  let upd = GeologicalLog.update lo m
+                  let upd (l) = GeologicalLog.update l m
                   let updatedModel = 
-                    {model with logs = model.logs.Update (ind, (fun x -> upd))}
+                    {model with logs = model.logs.Update (ind, (fun x -> upd x))}
                   tryCorrelate updatedModel action
               | None -> model
 
@@ -200,19 +222,18 @@
             //attribute "width" "100%"
           ]
       
-      
+
       let svgList =
         alist {          //TODO more elegant
           let! length   = (AList.count model.logs)
           let! logs     = model.logs.Content
           let! xAxis    = model.xAxis
           let semLabel  = SemanticApp.getLabel model.semanticApp model.xAxis
-          
-          //let! styleTemplate = model.logNodeStyleApp.selectedTemplate
 
+          /// LOGS
           for i in [0..length - 1] do //log in model.logs do
             let! sel = model.selectedLog
-            let startX = (i * 10 + i * 250)
+            
             let isSelected = 
               match sel with
                 | Some s  -> s = (logs.Item i).id
@@ -223,18 +244,14 @@
                 | true  -> [style "border: 2px solid yellow";]
                 | false -> []
               @ [
-                  attribute "x" (sprintf "%i" startX)
+                  attribute "x" (sprintf "%0.2f" (logOffset i))
                 //  onMouseClick (fun _ -> ToggleSelectLog (Some log.id))
                 ]
               |> AttributeMap.ofList 
-            let! xAxisSvg = (LogNodeStyleApp.svgXAxis 
-                            model.logNodeStyleApp 
-                            (new V2d((float startX), 350.0)) 
-                            (250.0) 
-                            2.0
-                            semLabel) 
+
             let mapper (a : DomNode<GeologicalLog.Action>) =
               a |> UI.map (fun m -> LogMessage (log.id, m))
+            
             let logView =
               Incremental.Svg.svg 
                     (
@@ -243,11 +260,27 @@
                     (GeologicalLog.svgView 
                       log model.viewType model.secondaryLvl
                       (LogNodeStyleApp.getStyle model.logNodeStyleApp)
-                    )
+                    ) 
             yield (logView |>  mapper)
-            yield xAxisSvg                   
-                    
-                    //|> AList.append (AList.single xAxisSvg) 
+            ///
+
+            /// X AXIS
+            let! xAxisSvg = (LogNodeStyleApp.svgXAxis 
+                              model.logNodeStyleApp 
+                              (new V2d((logOffset i), 350.0)) 
+                              (250.0) 
+                              2.0
+                              semLabel) 
+            yield xAxisSvg 
+            ///
+
+          /// CORRELATIONS
+          let correlations = 
+            model.correlations |> AList.map (fun x -> Correlation.Svg.view x)
+          for c in correlations do
+            let! c = c
+            yield c
+         ///
         } 
       
      
@@ -325,7 +358,6 @@
       let domList =
          alist {            
             let! xAxis = model.xAxis
-            //let! styleTemplate = model.logNodeStyleApp.selectedTemplate
             for log in model.logs do
               let! sel = model.selectedLog
               let isSelected = 
@@ -343,20 +375,10 @@
                                 [
                                   (GeologicalLog.view 
                                     log 
-                                  //  model.semanticApp 
-                                  //  isSelected 
-                                  //  xAxis 
-                                   // (LogNodeStyleApp.getStyle model.logNodeStyleApp)
                                   )
                                 ]        
                           ]
                         ]
-                    
-
-//              yield (Incremental.tr 
-//                      (AttributeMap.ofList [st; onClick (fun str -> ToggleSelectLog (Some log.id))])
-//                      (GeologicalLog.view log semApp isSelected)
-//                    )
           }     
 
       let myCss = [
@@ -377,6 +399,7 @@
         ]
       )
 
+    
 
     let getLogConnectionSgs 
           (model : MCorrelationPlotApp)

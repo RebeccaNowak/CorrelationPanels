@@ -29,6 +29,7 @@ module Border =
       color       = C4b.Gray
       weight      = 0.0
       borderType  = BorderType.Invalid
+      svgPosition = V2d(0.0)
     }
 
   let initial anno point nodeId logId : Border = {
@@ -46,6 +47,7 @@ module Border =
         | p when p = posInf -> BorderType.PositiveInfinity
         | p when p = negInf -> BorderType.NegativeInfinity
         | _      -> BorderType.Normal
+    svgPosition = V2d(0.0)
   }
 
   let initNegInf = 
@@ -56,12 +58,12 @@ module Border =
 
   type Action =
     | Correlate of BorderId 
-    | ToggleSelect of BorderId
+    | ToggleSelect of (BorderId * V2d)
 
   let update (model : Border) (action : Action) =
     match action with
       | Correlate b   -> {model with correlation = Some b}
-      | ToggleSelect id -> 
+      | ToggleSelect (id, pos) -> 
         match id = model.id with
           | true  -> {model with isSelected = not model.isSelected}
           | false -> model
@@ -87,31 +89,38 @@ module Border =
           |> Sg.trafo(Mod.constant (Trafo3d.Translation pos))
 
   module Svg = 
-    let getCorrelationButtons (model : MLogNode) (offset : float) = //callback  =
+    let getCorrelationButtons (model : MLogNode) (offset : float) (weight : float) = //callback  =
+      let btnSize = 5.0 //TODO might want to make this an argument
       adaptive {
-        let! uBorderColor      = model.uBorder.color
-        let! lBorderColor      = model.lBorder.color
+        let! uBorderColor = model.uBorder.color
+        let! lBorderColor = model.lBorder.color
         
-        let! size              =  (model.size)
-        let! ypos              = model.logYPos
-        let position           = new V2d(offset, ypos)
-        
-        let lcb = (fun lst -> ToggleSelect model.lBorder.id) //callback model.lBorder.id
-        let ucb = (fun lst -> ToggleSelect model.uBorder.id) //callback model.uBorder.id
+        let! size = model.size
+        let! pos  = model.svgPos
+        //let pos   = new V2d(offset, pos.Y)
+
+        let posL  = (new V2d(offset + size.X, pos.Y + size.Y - (weight * 0.5)))
+        let posU  = (new V2d(offset + size.X, pos.Y + (weight * 0.5)))
+
+        let posLBtn = new V2d(posL.X, posL.Y - btnSize)
+        let posUBtn = new V2d(posU.X, posU.Y + btnSize)
+
+        let lcb = (fun lst -> ToggleSelect (model.lBorder.id, posL)) //callback model.lBorder.id
+        let ucb = (fun lst -> ToggleSelect (model.uBorder.id, posU)) //callback model.uBorder.id
 
         let! lSel = model.lBorder.isSelected
         let btnLowerBorder =              
          Svg.drawCircleButton 
-           (new V2d(offset + size.X, (position.Y + size.Y - 5.0)))
+           posLBtn
            5.0 lBorderColor lSel 1.0 lcb
 
         let! uSel = model.uBorder.isSelected
         let btnUpperBorder = 
           Svg.drawCircleButton 
-            (new V2d(offset + size.X,(position.Y + 5.0)))
+            posUBtn
             5.0 uBorderColor uSel 1.0 ucb
 
-        return (btnLowerBorder, btnUpperBorder)
+        return ((btnLowerBorder), (btnUpperBorder))
       }
 
 

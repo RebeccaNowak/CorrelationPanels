@@ -672,6 +672,7 @@ module Mutable =
         let _point = ResetMod.Create(__initial.point)
         let _color = ResetMod.Create(__initial.color)
         let _weight = ResetMod.Create(__initial.weight)
+        let _svgPosition = ResetMod.Create(__initial.svgPosition)
         
         member x.id = __current.Value.id
         member x.nodeId = _nodeId :> IMod<_>
@@ -682,6 +683,7 @@ module Mutable =
         member x.point = _point :> IMod<_>
         member x.color = _color :> IMod<_>
         member x.weight = _weight :> IMod<_>
+        member x.svgPosition = _svgPosition :> IMod<_>
         member x.borderType = __current.Value.borderType
         
         member x.Current = __current :> IMod<_>
@@ -697,6 +699,7 @@ module Mutable =
                 ResetMod.Update(_point,v.point)
                 ResetMod.Update(_color,v.color)
                 ResetMod.Update(_weight,v.weight)
+                ResetMod.Update(_svgPosition,v.svgPosition)
                 
         
         static member Create(__initial : CorrelationDrawing.Border) : MBorder = MBorder(__initial)
@@ -766,6 +769,12 @@ module Mutable =
                     override x.Get(r) = r.weight
                     override x.Set(r,v) = { r with weight = v }
                     override x.Update(r,f) = { r with weight = f r.weight }
+                }
+            let svgPosition =
+                { new Lens<CorrelationDrawing.Border, Aardvark.Base.V2d>() with
+                    override x.Get(r) = r.svgPosition
+                    override x.Set(r,v) = { r with svgPosition = v }
+                    override x.Update(r,f) = { r with svgPosition = f r.svgPosition }
                 }
             let borderType =
                 { new Lens<CorrelationDrawing.Border, CorrelationDrawing.BorderType>() with
@@ -841,9 +850,7 @@ module Mutable =
         let _lBorder = MBorder.Create(__initial.lBorder)
         let _uBorder = MBorder.Create(__initial.uBorder)
         let _children = MList.Create(__initial.children, (fun v -> MLogNode.Create(v)), (fun (m,v) -> MLogNode.Update(m, v)), (fun v -> v))
-        let _logYPos = ResetMod.Create(__initial.logYPos)
-        let _logXPos = ResetMod.Create(__initial.logXPos)
-        let _pos = ResetMod.Create(__initial.pos)
+        let _svgPos = ResetMod.Create(__initial.svgPos)
         let _size = ResetMod.Create(__initial.size)
         
         member x.id = __current.Value.id
@@ -855,9 +862,7 @@ module Mutable =
         member x.lBorder = _lBorder
         member x.uBorder = _uBorder
         member x.children = _children :> alist<_>
-        member x.logYPos = _logYPos :> IMod<_>
-        member x.logXPos = _logXPos :> IMod<_>
-        member x.pos = _pos :> IMod<_>
+        member x.svgPos = _svgPos :> IMod<_>
         member x.size = _size :> IMod<_>
         
         member x.Current = __current :> IMod<_>
@@ -873,9 +878,7 @@ module Mutable =
                 MBorder.Update(_lBorder, v.lBorder)
                 MBorder.Update(_uBorder, v.uBorder)
                 MList.Update(_children, v.children)
-                ResetMod.Update(_logYPos,v.logYPos)
-                ResetMod.Update(_logXPos,v.logXPos)
-                ResetMod.Update(_pos,v.pos)
+                ResetMod.Update(_svgPos,v.svgPos)
                 ResetMod.Update(_size,v.size)
                 
         
@@ -947,26 +950,14 @@ module Mutable =
                     override x.Set(r,v) = { r with children = v }
                     override x.Update(r,f) = { r with children = f r.children }
                 }
-            let logYPos =
-                { new Lens<CorrelationDrawing.LogNode, System.Double>() with
-                    override x.Get(r) = r.logYPos
-                    override x.Set(r,v) = { r with logYPos = v }
-                    override x.Update(r,f) = { r with logYPos = f r.logYPos }
-                }
-            let logXPos =
-                { new Lens<CorrelationDrawing.LogNode, System.Double>() with
-                    override x.Get(r) = r.logXPos
-                    override x.Set(r,v) = { r with logXPos = v }
-                    override x.Update(r,f) = { r with logXPos = f r.logXPos }
-                }
-            let pos =
-                { new Lens<CorrelationDrawing.LogNode, Aardvark.Base.V3d>() with
-                    override x.Get(r) = r.pos
-                    override x.Set(r,v) = { r with pos = v }
-                    override x.Update(r,f) = { r with pos = f r.pos }
+            let svgPos =
+                { new Lens<CorrelationDrawing.LogNode, Aardvark.Base.V2d>() with
+                    override x.Get(r) = r.svgPos
+                    override x.Set(r,v) = { r with svgPos = v }
+                    override x.Update(r,f) = { r with svgPos = f r.svgPos }
                 }
             let size =
-                { new Lens<CorrelationDrawing.LogNode, Aardvark.Base.V3d>() with
+                { new Lens<CorrelationDrawing.LogNode, Aardvark.Base.V2d>() with
                     override x.Get(r) = r.size
                     override x.Set(r,v) = { r with size = v }
                     override x.Update(r,f) = { r with size = f r.size }

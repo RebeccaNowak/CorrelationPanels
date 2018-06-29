@@ -33,10 +33,8 @@
 
       let getMinLevel ( model : MGeologicalLog) = 
         model.nodes |> AList.toList
-          //|> List.map (LogNode.filterAndCollect' (fun n -> true)) // not necessary, because the root nodes have min level
-          //|> List.reduce List.append
-          |> List.map (fun (n : MLogNode) -> Mod.force n.level)
-          |> List.min 
+                    |> List.map (fun (n : MLogNode) -> Mod.force n.level)
+                    |> List.min 
 
     let update (model : GeologicalLog) (action : Action) =
       match action with
@@ -67,7 +65,7 @@
                           (selectedPoints : List<V3d * Annotation>) 
                           (annos          : plist<Annotation>) 
                           (semApp         : SemanticApp) 
-                          (lowerBorder    : Border) 
+                          (lowerBorder    : Border) //TODO could pass point and anno
                           (upperBorder    : Border) =
       
       match selectedPoints with
@@ -147,19 +145,18 @@
             let result = 
               lst
                 |> List.map (fun (x : LogNode) -> 
-                              {x with size = V3d.OOI 
-                                              + V3d.OIO * (Rangef.calcRange x.range) * factor
+                              {x with size = V2d.OO 
+                                              + V2d.OI * (Rangef.calcRange x.range) * factor
                               }
                             )
                 |> List.scan (fun (a : LogNode) (b : LogNode) -> 
-                                  {b with logYPos = a.logYPos + a.size.Y
-                                          logXPos = 0.0}
-                              ) {LogNode.initialEmpty with logYPos = startAt}
+                                  {b with svgPos   = V2d(0.0, a.svgPos.Y + a.size.Y)}
+                              ) {LogNode.initialEmpty with svgPos = V2d(0.0, startAt)}
                 |> List.tail  
                 |> List.map (fun (x : LogNode) ->
                               {x with children = calcLogPosChildren 
                                                   x.size.Y
-                                                  x.logYPos
+                                                  x.svgPos.Y
                                                   x.children
                               }
               )
@@ -167,7 +164,7 @@
             result
 
 
-    let calcLogYPos (logHeight : float)  (plst : plist<LogNode>) =
+    let calcsvgPosY (logHeight : float)  (plst : plist<LogNode>) =
       let lst = PList.toList plst
       match lst with 
         | [] -> PList.empty
@@ -178,18 +175,18 @@
         let result = 
           lst
             |> List.map (fun (x : LogNode) ->
-                          {x with size = V3d.OOI 
-                                          + V3d.OIO * (Rangef.calcRange x.range) * factor
+                          {x with size = V2d.OO 
+                                          + V2d.OI * (Rangef.calcRange x.range) * factor
                           }
                         )
             |> List.scan (fun (x : LogNode) (y : LogNode) -> 
-                              {y with logYPos = x.logYPos + x.size.Y}
+                              {y with svgPos = V2d(y.svgPos.X, x.svgPos.Y + x.size.Y)}
                           ) (LogNode.initialEmpty) 
             |> List.tail  
             |> List.map (fun (x : LogNode) ->
                           {x with children = calcLogPosChildren 
                                               x.size.Y
-                                              x.logYPos
+                                              x.svgPos.Y
                                               x.children
                           }
                         )
@@ -208,7 +205,7 @@
         {ArcBallController.initial with 
           view = CameraView.lookAt (2.0 * V3d.III) V3d.Zero V3d.OOI}    
       semanticApp   = SemanticApp.initial
-      xAxis = SemanticId.invalid
+      xAxis         = SemanticId.invalid
     }
 
     let generate     (index     : int)
@@ -232,8 +229,12 @@
         nodes1 |> PList.filter LogNode.isInfinityType
 
       let nodes3 =
-        nodes2 |> calcLogYPos logHeight
+        nodes2 |> calcsvgPosY logHeight
                |> Helpers.calcXPosition xAxis
+
+      nodes3 |> PList.map (fun (x : LogNode) -> LogNode.filterAndCollect x (fun x -> x.nodeType = LogNodeType.Hierarchical))
+             |> List.concat
+             |> List.map LogNode.Debug.print
       {
         id          = id
         index       =  index
@@ -252,6 +253,21 @@
     let findNode (model : GeologicalLog) (nodeId : LogNodeId) =
       let filter (n : LogNode) = 
         (n.id = nodeId)
+      let nodeIds = model.nodes
+                          |> PList.toList
+                          |> List.map (fun n -> (LogNode.filterAndCollect n filter))
+      match nodeIds with
+        | []       -> None
+        | lst ->
+            lst
+              |> List.reduce (fun l1 l2 -> l1@l2)
+              |> List.tryHead
+
+
+    let findNode' (model : GeologicalLog) (borderId : BorderId) = //TODO make more generic!!
+      let filter (n : LogNode) = 
+        (n.lBorder.id = borderId) || (n.uBorder.id = borderId)
+
       let nodeIds = model.nodes
                           |> PList.toList
                           |> List.map (fun n -> (LogNode.filterAndCollect n filter))
