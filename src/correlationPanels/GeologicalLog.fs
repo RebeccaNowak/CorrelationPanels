@@ -233,9 +233,9 @@
         nodes2 |> calcsvgPosY logHeight
                |> Helpers.calcXPosition xAxis
 
-      nodes3 |> PList.map (fun (x : LogNode) -> LogNode.filterAndCollect x (fun x -> x.nodeType = LogNodeType.Hierarchical))
-             |> List.concat
-             |> List.map LogNode.Debug.print
+      //nodes3 |> PList.map (fun (x : LogNode) -> LogNode.filterAndCollect x (fun x -> x.nodeType = LogNodeType.Hierarchical))
+      //       |> List.concat
+      //       |> List.map LogNode.Debug.print
       {
         id          = id
         index       =  index

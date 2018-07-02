@@ -138,9 +138,7 @@
                   
 
 
-    let update (model : CorrelationPlot)
-               //(annos : plist<Annotation>) 
-               //(semApp : SemanticApp) 
+    let update (model : CorrelationPlot) 
                (action : Action) = 
                
       match action, model.creatingNew with
@@ -211,7 +209,7 @@
         
 
 
-    let viewSvg (model : MCorrelationPlot) (semApp : MSemanticApp) =
+    let viewSvg (model : MCorrelationPlot) =
       let atts = 
         AttributeMap.ofList 
           [
@@ -284,124 +282,7 @@
             yield c
          ///
         } 
-      
-     
-      let menu = 
-          let viewSelection = 
-            alist {
-              for sem in semApp.semanticsList do
-                let! sType = sem.semanticType
-                if sType = SemanticType.Metric then
-                      yield getColourIconButton' sem.style.color.c
-                                                    //sem.label.text
-                                                    (fun _ -> ChangeXAxis sem.id)
-            }
-          div [clazz "ui horizontal menu";
-               style "float:right; vertical-align: top"][
-            div [clazz "item"]
-                [button [clazz "ui small icon button"; onMouseClick (fun _ -> ChangeView CorrelationPlotViewType.LineView)] 
-                        [i [clazz "small align left icon"] [] ] |> UtilitiesGUI.wrapToolTip "Line view"];
-            div [clazz "item"]
-                [button [clazz "ui small icon button"; onMouseClick (fun _ -> ChangeView CorrelationPlotViewType.LogView)] 
-                        [i [clazz "small align left icon"] [] ] |> UtilitiesGUI.wrapToolTip "Log view"];
-            div [clazz "item"]
-                [button [clazz "ui small icon button"; onMouseClick (fun _ -> ChangeView CorrelationPlotViewType.CorrelationView)] 
-                        [i [clazz "small exchange icon"] [] ] |> UtilitiesGUI.wrapToolTip "edit correlations"];
-            Incremental.div (AttributeMap.ofList [clazz "item"])
-                            viewSelection
-            Incremental.div (AttributeMap.ofList [clazz "item"])
-                            (LogNodeStyleApp.view model.logNodeStyleApp) |> UI.map Action.LogNodeStyleAppMessage
-            div []
-                [Html.SemUi.dropDown' 
-                  (AList.ofList Semantic.levels) 
-                  model.secondaryLvl 
-                  SetSecondaryLevel 
-                  (fun x -> sprintf "%i" x)]
-          ]
-              
-        
-
-      div [] [//[style "width:100%; height: 100%"] [
-              menu
-              Incremental.Svg.svg atts svgList
-             ]
-
-
-    let view  (model : MCorrelationPlot) =
-      let menu =
-        let icon =
-          alist {
-            let! ic =
-              (model.creatingNew |> Mod.map (fun n -> 
-                                              match n with
-                                                | true  -> i [clazz "small yellow plus icon"] [] 
-                                                | false -> i [clazz "small plus icon"] []
-                                            ))
-            yield ic
-          }
-        div [clazz "ui horizontal inverted menu";
-              style "float:top"]
-            [
-              div [clazz "item"]
-                  [Incremental.button (AttributeMap.ofList [clazz "ui small icon button"; onMouseClick (fun _ -> NewLog)]) 
-                                        icon
-                  ];
-              div [clazz "item"]
-                  [button [clazz "ui small icon button"; onMouseClick (fun _ -> FinishLog)] 
-                          [i [clazz "small check icon"] [] ] |> UtilitiesGUI.wrapToolTip "done"
-                  ];
-              div [clazz "item"]
-                  [button [clazz "ui small icon button"; onMouseClick (fun _ -> DeleteLog)] 
-                          [i [clazz "small minus icon"] [] ] |> UtilitiesGUI.wrapToolTip "delete"
-                  ]; 
-            ]
-
-
-      let domList =
-         alist {            
-            let! xAxis = model.xAxis
-            for log in model.logs do
-              let! sel = model.selectedLog
-              let isSelected = 
-                match sel with
-                  | Some s  -> s = log.id
-                  | None    -> false
-              
-              yield
-                        div [clazz "item"][
-                          div [clazz "content"] [
-                            div [clazz "header"; style "text-align: center"; onMouseClick (fun _ -> ToggleSelectLog (Some log.id))] [
-                              i [clazz "yellow arrow alternate circle down icon"] [] |> UtilitiesGUI.wrapToolTip "select"
-                            ]
-                            div [] 
-                                [
-                                  (GeologicalLog.view 
-                                    log 
-                                  )
-                                ]        
-                          ]
-                        ]
-          }     
-
-      let myCss = [
-          { kind = Stylesheet;  name = "semui";           url = "https://cdn.jsdelivr.net/semantic-ui/2.2.6/semantic.min.css" }
-          { kind = Stylesheet;  name = "semui-overrides"; url = "semui-overrides.css" }
-          { kind = Script;      name = "semui";           url = "https://cdn.jsdelivr.net/semantic-ui/2.2.6/semantic.min.js" }
-        ]
-
-      require (myCss) (
-        body [] [
-          div [] [
-            menu
-            div [clazz "ui inverted segment"]
-                [Incremental.div (AttributeMap.ofList [clazz "ui inverted divided list"])
-                                 domList
-                ]           
-          ]
-        ]
-      )
-
-    
+      Incremental.Svg.svg atts svgList
 
     let getLogConnectionSgs 
           (model : MCorrelationPlot)
@@ -441,7 +322,7 @@
               threads = threads
               initial = initial
               update = update
-              view = view
+              view = viewSvg
           }
 
     let start = App.start app

@@ -337,6 +337,7 @@ type CorrelationPlot = {
 [<DomainType>]
 type CorrelationPlotApp = {
    correlationPlot     : CorrelationPlot
+   semanticApp         : SemanticApp
 }
 
 //type AnnotationParameters = {Point:V3d;semanticId:string}

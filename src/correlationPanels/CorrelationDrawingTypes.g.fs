@@ -1396,8 +1396,10 @@ module Mutable =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlotApp> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.CorrelationPlotApp>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlotApp>
         let _correlationPlot = MCorrelationPlot.Create(__initial.correlationPlot)
+        let _semanticApp = MSemanticApp.Create(__initial.semanticApp)
         
         member x.correlationPlot = _correlationPlot
+        member x.semanticApp = _semanticApp
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : CorrelationDrawing.CorrelationPlotApp) =
@@ -1405,6 +1407,7 @@ module Mutable =
                 __current.Value <- v
                 
                 MCorrelationPlot.Update(_correlationPlot, v.correlationPlot)
+                MSemanticApp.Update(_semanticApp, v.semanticApp)
                 
         
         static member Create(__initial : CorrelationDrawing.CorrelationPlotApp) : MCorrelationPlotApp = MCorrelationPlotApp(__initial)
@@ -1426,6 +1429,12 @@ module Mutable =
                     override x.Get(r) = r.correlationPlot
                     override x.Set(r,v) = { r with correlationPlot = v }
                     override x.Update(r,f) = { r with correlationPlot = f r.correlationPlot }
+                }
+            let semanticApp =
+                { new Lens<CorrelationDrawing.CorrelationPlotApp, CorrelationDrawing.SemanticApp>() with
+                    override x.Get(r) = r.semanticApp
+                    override x.Set(r,v) = { r with semanticApp = v }
+                    override x.Update(r,f) = { r with semanticApp = f r.semanticApp }
                 }
     
     

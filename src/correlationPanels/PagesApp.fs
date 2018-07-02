@@ -85,12 +85,30 @@ module Pages =
       AnnotationApp.update model.annotationApp 
     let updateCamera =
       CameraController.update model.camera 
-    let updateSemanticApp =
-        SemanticApp.update model.semanticApp
     let updatePlot =
-      CorrelationPlotApp.update model.corrPlotApp //model.annotationApp.annotations model.semanticApp
-
-    match msg, model.corrPlotApp.creatingNew, model.drawingApp.isDrawing with
+      CorrelationPlotApp.update model.corrPlotApp
+    let updateSemantics m model = 
+      let updSemApp = SemanticApp.update model.semanticApp m
+      {model with semanticApp = updSemApp //TODO refactor
+                  corrPlotApp = {model.corrPlotApp with semanticApp     = updSemApp
+                                                        correlationPlot = {model.corrPlotApp.correlationPlot with semanticApp = updSemApp}
+                                }
+      }
+    let loadSemantics model = //TODO refactor
+      let updSemApp = SemanticApp.load model.semanticApp
+      {model with semanticApp = updSemApp 
+                  corrPlotApp = {model.corrPlotApp with semanticApp     = updSemApp
+                                                        correlationPlot = {model.corrPlotApp.correlationPlot with semanticApp = updSemApp}
+                            }
+      }
+    let loadAnnotations (model : Pages) = 
+      let annoApp = AnnotationApp.load model.annotationApp
+      let updCPA = (CorrelationPlotApp.update model.corrPlotApp CorrelationPlotApp.Clear)
+      {model with   
+              annotationApp = annoApp
+              corrPlotApp   = updCPA
+      }
+    match msg, model.corrPlotApp.correlationPlot.creatingNew, model.drawingApp.isDrawing with
       | KeyDown Keys.Enter, _, true ->                          
         match model.drawingApp.working with
           | None   -> model
@@ -118,9 +136,7 @@ module Pages =
         }
 
       | SemanticAppMessage m, false, false ->
-        let updSemApp = updateSemanticApp m
-        {model with semanticApp = updSemApp
-                    corrPlotApp = {model.corrPlotApp with semanticApp = updSemApp}}
+        updateSemantics m model
 
       | AnnotationAppMessage m, _, _ -> 
         {model with annotationApp = updateAnnotationApp m}
@@ -156,8 +172,10 @@ module Pages =
       | CorrPlotMessage m, _, false -> // TODO refactor
         let corrPlotApp = 
           let sel      = AnnotationApp.getSelectedPoints' model.annotationApp
-          let updModel = {model.corrPlotApp with selectedPoints = sel
-                                                 annotations    = model.annotationApp.annotations}
+          let updModel = //TODO refactor
+            {model.corrPlotApp with 
+              correlationPlot = {model.corrPlotApp.correlationPlot with selectedPoints = sel
+                                                                        annotations    = model.annotationApp.annotations}}
           CorrelationPlotApp.update updModel m
                 //model.annotationApp.annotations
                 //model.semanticApp m
@@ -181,10 +199,9 @@ module Pages =
           model
 
       | Load, false, false -> 
-          let semApp = SemanticApp.load model.semanticApp
-          {model with semanticApp   = semApp
-                      annotationApp = AnnotationApp.load model.annotationApp
-                      corrPlotApp   = {model.corrPlotApp with semanticApp = semApp}}
+        model
+          |> loadSemantics 
+          |> loadAnnotations
 //                  
       | Clear, _,_ -> 
         { model with  annotationApp = updateAnnotationApp (AnnotationApp.Clear)
@@ -247,7 +264,7 @@ module Pages =
                                        |> Sg.map AnnotationAppMessage                
       let drawingSgList  = CorrelationDrawing.Sg.view model.drawingApp model.semanticApp model.camera.view
                               |> List.map (fun x -> x |> Sg.map CorrelationDrawingMessage) 
-      let corrSg         = CorrelationPlotApp.getLogConnectionSgs model.corrPlotApp model.semanticApp model.camera
+      let corrSg         = CorrelationPlot.getLogConnectionSgs model.corrPlotApp.correlationPlot model.semanticApp model.camera
                               |> Sg.map CorrPlotMessage
       let frustum = Mod.constant (Frustum.perspective 60.0 0.1 100.0 1.0)
       require (myCss) (
@@ -286,7 +303,7 @@ module Pages =
             | Some "svg" -> 
               require (myCss) (
                 body [] [
-                    CorrelationPlotApp.viewSvg model.corrPlotApp model.semanticApp |> (UI.map CorrPlotMessage)
+                    CorrelationPlotApp.viewSvg model.corrPlotApp |> (UI.map CorrPlotMessage)
                 ]
               )
 
