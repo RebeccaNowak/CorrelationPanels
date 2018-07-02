@@ -1089,6 +1089,7 @@ module Mutable =
         let _camera = Aardvark.UI.Primitives.Mutable.MCameraControllerState.Create(__initial.camera)
         let _semanticApp = MSemanticApp.Create(__initial.semanticApp)
         let _xAxis = ResetMod.Create(__initial.xAxis)
+        let _svgYOffset = ResetMod.Create(__initial.svgYOffset)
         
         member x.id = __current.Value.id
         member x.index = __current.Value.index
@@ -1100,6 +1101,7 @@ module Mutable =
         member x.camera = _camera
         member x.semanticApp = _semanticApp
         member x.xAxis = _xAxis :> IMod<_>
+        member x.svgYOffset = _svgYOffset :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : CorrelationDrawing.GeologicalLog) =
@@ -1114,6 +1116,7 @@ module Mutable =
                 Aardvark.UI.Primitives.Mutable.MCameraControllerState.Update(_camera, v.camera)
                 MSemanticApp.Update(_semanticApp, v.semanticApp)
                 ResetMod.Update(_xAxis,v.xAxis)
+                ResetMod.Update(_svgYOffset,v.svgYOffset)
                 
         
         static member Create(__initial : CorrelationDrawing.GeologicalLog) : MGeologicalLog = MGeologicalLog(__initial)
@@ -1190,6 +1193,12 @@ module Mutable =
                     override x.Set(r,v) = { r with xAxis = v }
                     override x.Update(r,f) = { r with xAxis = f r.xAxis }
                 }
+            let svgYOffset =
+                { new Lens<CorrelationDrawing.GeologicalLog, System.Double>() with
+                    override x.Get(r) = r.svgYOffset
+                    override x.Set(r,v) = { r with svgYOffset = v }
+                    override x.Update(r,f) = { r with svgYOffset = f r.svgYOffset }
+                }
     
     
     type MCorrelation(__initial : CorrelationDrawing.Correlation) =
@@ -1238,9 +1247,9 @@ module Mutable =
                 }
     
     
-    type MCorrelationPlotApp(__initial : CorrelationDrawing.CorrelationPlotApp) =
+    type MCorrelationPlot(__initial : CorrelationDrawing.CorrelationPlot) =
         inherit obj()
-        let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlotApp> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.CorrelationPlotApp>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlotApp>
+        let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlot> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.CorrelationPlot>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlot>
         let _logs = MList.Create(__initial.logs, (fun v -> MGeologicalLog.Create(v)), (fun (m,v) -> MGeologicalLog.Update(m, v)), (fun v -> v))
         let _correlations = MList.Create(__initial.correlations, (fun v -> MCorrelation.Create(v)), (fun (m,v) -> MCorrelation.Update(m, v)), (fun v -> v))
         let _selectedBorder = MOption.Create(__initial.selectedBorder, (fun v -> MBorder.Create(v)), (fun (m,v) -> MBorder.Update(m, v)), (fun v -> v))
@@ -1270,7 +1279,7 @@ module Mutable =
         member x.semanticApp = _semanticApp
         
         member x.Current = __current :> IMod<_>
-        member x.Update(v : CorrelationDrawing.CorrelationPlotApp) =
+        member x.Update(v : CorrelationDrawing.CorrelationPlot) =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
@@ -1289,6 +1298,115 @@ module Mutable =
                 MSemanticApp.Update(_semanticApp, v.semanticApp)
                 
         
+        static member Create(__initial : CorrelationDrawing.CorrelationPlot) : MCorrelationPlot = MCorrelationPlot(__initial)
+        static member Update(m : MCorrelationPlot, v : CorrelationDrawing.CorrelationPlot) = m.Update(v)
+        
+        override x.ToString() = __current.Value.ToString()
+        member x.AsString = sprintf "%A" __current.Value
+        interface IUpdatable<CorrelationDrawing.CorrelationPlot> with
+            member x.Update v = x.Update v
+    
+    
+    
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module CorrelationPlot =
+        [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+        module Lens =
+            let logs =
+                { new Lens<CorrelationDrawing.CorrelationPlot, Aardvark.Base.plist<CorrelationDrawing.GeologicalLog>>() with
+                    override x.Get(r) = r.logs
+                    override x.Set(r,v) = { r with logs = v }
+                    override x.Update(r,f) = { r with logs = f r.logs }
+                }
+            let correlations =
+                { new Lens<CorrelationDrawing.CorrelationPlot, Aardvark.Base.plist<CorrelationDrawing.Correlation>>() with
+                    override x.Get(r) = r.correlations
+                    override x.Set(r,v) = { r with correlations = v }
+                    override x.Update(r,f) = { r with correlations = f r.correlations }
+                }
+            let selectedBorder =
+                { new Lens<CorrelationDrawing.CorrelationPlot, Microsoft.FSharp.Core.Option<CorrelationDrawing.Border>>() with
+                    override x.Get(r) = r.selectedBorder
+                    override x.Set(r,v) = { r with selectedBorder = v }
+                    override x.Update(r,f) = { r with selectedBorder = f r.selectedBorder }
+                }
+            let editCorrelations =
+                { new Lens<CorrelationDrawing.CorrelationPlot, System.Boolean>() with
+                    override x.Get(r) = r.editCorrelations
+                    override x.Set(r,v) = { r with editCorrelations = v }
+                    override x.Update(r,f) = { r with editCorrelations = f r.editCorrelations }
+                }
+            let selectedPoints =
+                { new Lens<CorrelationDrawing.CorrelationPlot, Microsoft.FSharp.Collections.List<(Aardvark.Base.V3d * CorrelationDrawing.Annotation)>>() with
+                    override x.Get(r) = r.selectedPoints
+                    override x.Set(r,v) = { r with selectedPoints = v }
+                    override x.Update(r,f) = { r with selectedPoints = f r.selectedPoints }
+                }
+            let annotations =
+                { new Lens<CorrelationDrawing.CorrelationPlot, Aardvark.Base.plist<CorrelationDrawing.Annotation>>() with
+                    override x.Get(r) = r.annotations
+                    override x.Set(r,v) = { r with annotations = v }
+                    override x.Update(r,f) = { r with annotations = f r.annotations }
+                }
+            let selectedLog =
+                { new Lens<CorrelationDrawing.CorrelationPlot, Microsoft.FSharp.Core.Option<CorrelationDrawing.LogId>>() with
+                    override x.Get(r) = r.selectedLog
+                    override x.Set(r,v) = { r with selectedLog = v }
+                    override x.Update(r,f) = { r with selectedLog = f r.selectedLog }
+                }
+            let secondaryLvl =
+                { new Lens<CorrelationDrawing.CorrelationPlot, System.Int32>() with
+                    override x.Get(r) = r.secondaryLvl
+                    override x.Set(r,v) = { r with secondaryLvl = v }
+                    override x.Update(r,f) = { r with secondaryLvl = f r.secondaryLvl }
+                }
+            let creatingNew =
+                { new Lens<CorrelationDrawing.CorrelationPlot, System.Boolean>() with
+                    override x.Get(r) = r.creatingNew
+                    override x.Set(r,v) = { r with creatingNew = v }
+                    override x.Update(r,f) = { r with creatingNew = f r.creatingNew }
+                }
+            let viewType =
+                { new Lens<CorrelationDrawing.CorrelationPlot, CorrelationDrawing.CorrelationPlotViewType>() with
+                    override x.Get(r) = r.viewType
+                    override x.Set(r,v) = { r with viewType = v }
+                    override x.Update(r,f) = { r with viewType = f r.viewType }
+                }
+            let logNodeStyleApp =
+                { new Lens<CorrelationDrawing.CorrelationPlot, CorrelationDrawing.LogNodeStyleApp>() with
+                    override x.Get(r) = r.logNodeStyleApp
+                    override x.Set(r,v) = { r with logNodeStyleApp = v }
+                    override x.Update(r,f) = { r with logNodeStyleApp = f r.logNodeStyleApp }
+                }
+            let xAxis =
+                { new Lens<CorrelationDrawing.CorrelationPlot, CorrelationDrawing.SemanticId>() with
+                    override x.Get(r) = r.xAxis
+                    override x.Set(r,v) = { r with xAxis = v }
+                    override x.Update(r,f) = { r with xAxis = f r.xAxis }
+                }
+            let semanticApp =
+                { new Lens<CorrelationDrawing.CorrelationPlot, CorrelationDrawing.SemanticApp>() with
+                    override x.Get(r) = r.semanticApp
+                    override x.Set(r,v) = { r with semanticApp = v }
+                    override x.Update(r,f) = { r with semanticApp = f r.semanticApp }
+                }
+    
+    
+    type MCorrelationPlotApp(__initial : CorrelationDrawing.CorrelationPlotApp) =
+        inherit obj()
+        let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlotApp> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.CorrelationPlotApp>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlotApp>
+        let _correlationPlot = MCorrelationPlot.Create(__initial.correlationPlot)
+        
+        member x.correlationPlot = _correlationPlot
+        
+        member x.Current = __current :> IMod<_>
+        member x.Update(v : CorrelationDrawing.CorrelationPlotApp) =
+            if not (System.Object.ReferenceEquals(__current.Value, v)) then
+                __current.Value <- v
+                
+                MCorrelationPlot.Update(_correlationPlot, v.correlationPlot)
+                
+        
         static member Create(__initial : CorrelationDrawing.CorrelationPlotApp) : MCorrelationPlotApp = MCorrelationPlotApp(__initial)
         static member Update(m : MCorrelationPlotApp, v : CorrelationDrawing.CorrelationPlotApp) = m.Update(v)
         
@@ -1303,83 +1421,11 @@ module Mutable =
     module CorrelationPlotApp =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
-            let logs =
-                { new Lens<CorrelationDrawing.CorrelationPlotApp, Aardvark.Base.plist<CorrelationDrawing.GeologicalLog>>() with
-                    override x.Get(r) = r.logs
-                    override x.Set(r,v) = { r with logs = v }
-                    override x.Update(r,f) = { r with logs = f r.logs }
-                }
-            let correlations =
-                { new Lens<CorrelationDrawing.CorrelationPlotApp, Aardvark.Base.plist<CorrelationDrawing.Correlation>>() with
-                    override x.Get(r) = r.correlations
-                    override x.Set(r,v) = { r with correlations = v }
-                    override x.Update(r,f) = { r with correlations = f r.correlations }
-                }
-            let selectedBorder =
-                { new Lens<CorrelationDrawing.CorrelationPlotApp, Microsoft.FSharp.Core.Option<CorrelationDrawing.Border>>() with
-                    override x.Get(r) = r.selectedBorder
-                    override x.Set(r,v) = { r with selectedBorder = v }
-                    override x.Update(r,f) = { r with selectedBorder = f r.selectedBorder }
-                }
-            let editCorrelations =
-                { new Lens<CorrelationDrawing.CorrelationPlotApp, System.Boolean>() with
-                    override x.Get(r) = r.editCorrelations
-                    override x.Set(r,v) = { r with editCorrelations = v }
-                    override x.Update(r,f) = { r with editCorrelations = f r.editCorrelations }
-                }
-            let selectedPoints =
-                { new Lens<CorrelationDrawing.CorrelationPlotApp, Microsoft.FSharp.Collections.List<(Aardvark.Base.V3d * CorrelationDrawing.Annotation)>>() with
-                    override x.Get(r) = r.selectedPoints
-                    override x.Set(r,v) = { r with selectedPoints = v }
-                    override x.Update(r,f) = { r with selectedPoints = f r.selectedPoints }
-                }
-            let annotations =
-                { new Lens<CorrelationDrawing.CorrelationPlotApp, Aardvark.Base.plist<CorrelationDrawing.Annotation>>() with
-                    override x.Get(r) = r.annotations
-                    override x.Set(r,v) = { r with annotations = v }
-                    override x.Update(r,f) = { r with annotations = f r.annotations }
-                }
-            let selectedLog =
-                { new Lens<CorrelationDrawing.CorrelationPlotApp, Microsoft.FSharp.Core.Option<CorrelationDrawing.LogId>>() with
-                    override x.Get(r) = r.selectedLog
-                    override x.Set(r,v) = { r with selectedLog = v }
-                    override x.Update(r,f) = { r with selectedLog = f r.selectedLog }
-                }
-            let secondaryLvl =
-                { new Lens<CorrelationDrawing.CorrelationPlotApp, System.Int32>() with
-                    override x.Get(r) = r.secondaryLvl
-                    override x.Set(r,v) = { r with secondaryLvl = v }
-                    override x.Update(r,f) = { r with secondaryLvl = f r.secondaryLvl }
-                }
-            let creatingNew =
-                { new Lens<CorrelationDrawing.CorrelationPlotApp, System.Boolean>() with
-                    override x.Get(r) = r.creatingNew
-                    override x.Set(r,v) = { r with creatingNew = v }
-                    override x.Update(r,f) = { r with creatingNew = f r.creatingNew }
-                }
-            let viewType =
-                { new Lens<CorrelationDrawing.CorrelationPlotApp, CorrelationDrawing.CorrelationPlotViewType>() with
-                    override x.Get(r) = r.viewType
-                    override x.Set(r,v) = { r with viewType = v }
-                    override x.Update(r,f) = { r with viewType = f r.viewType }
-                }
-            let logNodeStyleApp =
-                { new Lens<CorrelationDrawing.CorrelationPlotApp, CorrelationDrawing.LogNodeStyleApp>() with
-                    override x.Get(r) = r.logNodeStyleApp
-                    override x.Set(r,v) = { r with logNodeStyleApp = v }
-                    override x.Update(r,f) = { r with logNodeStyleApp = f r.logNodeStyleApp }
-                }
-            let xAxis =
-                { new Lens<CorrelationDrawing.CorrelationPlotApp, CorrelationDrawing.SemanticId>() with
-                    override x.Get(r) = r.xAxis
-                    override x.Set(r,v) = { r with xAxis = v }
-                    override x.Update(r,f) = { r with xAxis = f r.xAxis }
-                }
-            let semanticApp =
-                { new Lens<CorrelationDrawing.CorrelationPlotApp, CorrelationDrawing.SemanticApp>() with
-                    override x.Get(r) = r.semanticApp
-                    override x.Set(r,v) = { r with semanticApp = v }
-                    override x.Update(r,f) = { r with semanticApp = f r.semanticApp }
+            let correlationPlot =
+                { new Lens<CorrelationDrawing.CorrelationPlotApp, CorrelationDrawing.CorrelationPlot>() with
+                    override x.Get(r) = r.correlationPlot
+                    override x.Set(r,v) = { r with correlationPlot = v }
+                    override x.Update(r,f) = { r with correlationPlot = f r.correlationPlot }
                 }
     
     

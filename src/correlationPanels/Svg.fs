@@ -46,6 +46,22 @@
           atf "stroke-width" strokeWidth
         ]
 
+    let drawDottedLine (a : V2d) (b : V2d) 
+                       (color : C4b) 
+                       (strokeWidth : float) 
+                       (dashWidth : float) 
+                       (dashDist : float) =
+      Svg.line 
+        [
+          ats "stroke-dasharray" (sprintf "%f,%f" dashWidth dashDist)
+          atf "x1" a.X
+          atf "y1" a.Y
+          atf "x2" b.X
+          atf "y2" b.Y
+          atc "stroke" color
+          atf "stroke-width" strokeWidth
+        ]
+
     let drawHorizontalLine (a : V2d) (length : float) (color : C4b) (strokeWidth : float) =
       Svg.line 
         [
@@ -81,10 +97,12 @@
           atf "stroke-width" strokeWidth
         ]
 
-    let drawVerticalDottedLine (a : V2d) (length : float) (color : C4b) (strokeWidth : float) =
+    let drawVerticalDottedLine (a : V2d) (length : float) (color : C4b)// (strokeWidth : float) =
+                               (strokeWidth : float) (dashWidth : float) (dashDist : float) =
       Svg.line 
-        [
-          ats "stroke-dasharray" "5,5"
+        [ 
+          ats "stroke-dasharray" (sprintf "%f,%f" dashWidth dashDist)
+          //ats "stroke-dasharray" "5,5"
           atf "x1" a.X
           atf "y1" a.Y
           atf "x2" a.X 
@@ -273,8 +291,8 @@
           ]
       let rBorder = 
         match dottedBorder with
-          | true  -> drawVerticalDottedLine (new V2d(leftUpper.X + width , leftUpper.Y)) height C4b.Black 2.0
-          | false -> drawVerticalLine (new V2d(leftUpper.X + width , leftUpper.Y)) height C4b.Black 2.0
+          | true  -> drawVerticalDottedLine (new V2d(leftUpper.X + width , leftUpper.Y)) height C4b.Black 2.0 3.0 3.0
+          | false -> drawVerticalLine (new V2d(leftUpper.X + width , leftUpper.Y)) height C4b.Black 2.0 
 
       toGroup 
         (elements @ [rBorder])
@@ -287,5 +305,13 @@
         [
           drawHorizontalLine  (new V2d(leftUpper.X, leftUpper.Y + weight * 0.5)) length color weight
           drawHorizontalDottedLine (new V2d(leftUpper.X, leftUpper.Y + weight)) length color (weight * 3.0) 1.0 (granularity - 1.0)
+        ]
+        []
+
+    let drawYAxis (leftUpper : V2d) (length : float) (color : C4b) (weight : float) (granularity : float) =
+      toGroup
+        [
+          drawVerticalLine  (new V2d(leftUpper.X, leftUpper.Y + weight * 0.5)) length color weight
+          drawVerticalDottedLine (new V2d(leftUpper.X, leftUpper.Y + weight)) length color (weight * 3.0) 1.0 (granularity - 1.0)
         ]
         []

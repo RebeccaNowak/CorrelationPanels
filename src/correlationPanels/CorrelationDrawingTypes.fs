@@ -306,6 +306,7 @@ type GeologicalLog = {
 
     semanticApp : SemanticApp
     xAxis       : SemanticId
+    svgYOffset  : float
 }
 
 [<DomainType>]
@@ -315,7 +316,7 @@ type Correlation = {
 }
 
 [<DomainType>]
-type CorrelationPlotApp = {
+type CorrelationPlot = {
    logs                : plist<GeologicalLog>
    correlations        : plist<Correlation>
    selectedBorder      : Option<Border>
@@ -331,6 +332,11 @@ type CorrelationPlotApp = {
    logNodeStyleApp     : LogNodeStyleApp
    xAxis               : SemanticId
    semanticApp         : SemanticApp
+}
+
+[<DomainType>]
+type CorrelationPlotApp = {
+   correlationPlot     : CorrelationPlot
 }
 
 //type AnnotationParameters = {Point:V3d;semanticId:string}

@@ -1,15 +1,13 @@
 ﻿namespace CorrelationDrawing
 
 
-
-
-//open Aardvark.Base
-//open Aardvark.Base.Incremental
-//open Aardvark.Application
-//open Aardvark.SceneGraph
-//open Aardvark.UI
-//open Aardvark.UI.Primitives
-//open Aardvark.Rendering.Text
+open Aardvark.Base
+open Aardvark.Base.Incremental
+open Aardvark.Application
+open Aardvark.SceneGraph
+open Aardvark.UI
+open Aardvark.UI.Primitives
+open Aardvark.Rendering.Text
 
 
 //module Serialization =

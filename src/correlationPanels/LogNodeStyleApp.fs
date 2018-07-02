@@ -53,9 +53,9 @@ module LogNodeStyleApp =
       metricToSvgSize     = 30.0
       styleTemplate       = 
         [
-          {label = "clay";  color = new C4b(99,99,99);    range = {min = System.Double.NegativeInfinity ;    max = 2.0}}
-          {label = "silt";  color = new C4b(255,247,188); range = {min = 1.0 ;    max = 2.0}}
-          {label = "sand";  color = new C4b(254,196,79);  range = {min = 2.0 ;  max = 4.0}}
+          {label = "clay";  color = new C4b(99,99,99);    range = {min = System.Double.NegativeInfinity ;    max = 1.0}}
+          {label = "silt";  color = new C4b(255,247,188); range = {min = 1.0 ; max = 2.0}}
+          {label = "sand";  color = new C4b(254,196,79);  range = {min = 2.0 ; max = 4.0}}
           {label = "gravel";color = new C4b(217,95,14);   range = {min = 4.0 ; max = System.Double.PositiveInfinity}}
         ]
     }
@@ -105,19 +105,23 @@ module LogNodeStyleApp =
                         let leftShift = ((float label.Length) * 3.0)
                         // axis label
                         yield Svg.drawText (new V2d(startPoint.X + (length * 0.5) - leftShift, startPoint.Y + 40.0)) label
+
                         // text labels
-                        //for i in 0..((t.styleTemplate.Length) - 1) do
-                        //  let st = (t.styleTemplate.Item i)
-                        //  let leftShift = ((float st.label.Length) * 3.0) //TODO create function
-                        //  let txt = st.label
-                        //  let max = match st.range.max with //TODO move into Rangef
-                        //               | System.Double.PositiveInfinity -> st.range.min * 2.0
-                        //               | _ -> st.range.max
-                        //  let min = match st.range.min with
-                        //               | System.Double.NegativeInfinity -> 0.0
-                        //               | _ -> st.range.min
-                        //  let posX =  metricToSvgSize (startPoint.X + ((max - min)))
-                        //  yield Svg.drawText (new V2d(posX - leftShift, startPoint.Y + 30.0)) txt
+                        for i in 0..((t.styleTemplate.Length) - 1) do
+                          let st = (t.styleTemplate.Item i)
+                          let txt = st.label
+                          //let leftShift = ((float txt.Length) * 3.0) //TODO create function
+                          
+                          let max = match st.range.max with //TODO move into Rangef
+                                       | System.Double.PositiveInfinity -> st.range.min * 2.0
+                                       | _ -> st.range.max
+                          let min = match st.range.min with
+                                       | System.Double.NegativeInfinity -> -st.range.min
+                                       | _ -> st.range.min
+                          let posX = (startPoint.X + ((max - min)) * t.metricToSvgSize)
+                          yield Svg.drawText (new V2d(posX, startPoint.Y + 30.0)) txt //TODO hardcoded
+
+
                         //number labels
                         for i in 0..((List.length labelIndices) - 1) do
                           let txt = (labelText.Item i)

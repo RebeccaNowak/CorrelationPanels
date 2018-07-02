@@ -206,6 +206,7 @@
           view = CameraView.lookAt (2.0 * V3d.III) V3d.Zero V3d.OOI}    
       semanticApp   = SemanticApp.initial
       xAxis         = SemanticId.invalid
+      svgYOffset    = 0.0
     }
 
     let generate     (index     : int)
@@ -248,7 +249,8 @@
             view = CameraView.lookAt (2.0 * V3d.III) V3d.Zero V3d.OOI}    
         semanticApp = semApp
         xAxis = xAxis
-    }
+        svgYOffset = 0.0  
+      }
 
     let findNode (model : GeologicalLog) (nodeId : LogNodeId) =
       let filter (n : LogNode) = 

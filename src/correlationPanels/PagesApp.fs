@@ -272,6 +272,10 @@ module Pages =
       )
 
     page (fun request -> 
+        let qu = request.queryParams
+        for q in qu do //DEBUG
+          printf "%s=%s" q.Key q.Value
+
         match Map.tryFind "page" request.queryParams with
             | Some "render" -> // renderControl
               renderView
