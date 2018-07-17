@@ -332,9 +332,7 @@ module Annotation =
 //                | true -> Mod.constant C4b.Yellow
 //                | false -> SemanticApp.getColor semanticApp anno.semanticId
 
-
-  
-    
+   
  
 
   let getThickness (anno : IMod<Option<MAnnotation>>) (semanticApp : MSemanticApp) = 
@@ -359,13 +357,21 @@ module Annotation =
       |> List.map (fun x -> x.point.Length)
       |> List.average
 
-  let lowestPoint (anno : Annotation) =
+  let lowestPoint (anno : Annotation) = //TODO unsafe
     anno.points 
       |> PList.minBy (fun x -> x.point.Length)
 
-  let highestPoint (anno : Annotation) =
+  let tryLowestPoint (anno : Annotation) =
+    anno.points 
+      |> PList.tryMinBy (fun x -> x.point.Length)
+
+  let highestPoint (anno : Annotation) = //TODO unsafe
     anno.points 
       |> PList.maxBy (fun x -> x.point.Length)
+
+  let tryHighestPoint (anno : Annotation) = 
+    anno.points 
+      |> PList.tryMaxBy (fun x -> x.point.Length)
 
   let elevation' (anno : MAnnotation) =
     adaptive {

@@ -31,8 +31,10 @@
       children     = plist.Empty
       //svgPos.Y      = 0.0
       //svgPos.X      = 0.0
+      nativePos    = V2d.OO
+      nativeSize   = V2d.OO
       svgPos       = V2d.OO
-      size         = V2d.OO
+      svgSize         = V2d.OO
     }
 
 
@@ -220,16 +222,16 @@
       let cs (node : LogNode) = 
         let metricNodes = filterAndCollect node (fun n -> n.lBorder.anno.semanticId = xAxis)
         let metricValues = metricNodes |> List.map (fun n -> calcMetricValue n)
-        let sizeX = (metricValues |> List.filterNone |> List.averageOrZero) * 30.0 //TODO hardcoded
-        {node with size = (node.size * V2d.OI) + (V2d.IO) * sizeX}
+        let sizeX = (metricValues |> List.filterNone |> List.averageOrZero) * 30.0 //TODO hardcoded xAxisScaleFactor
+        {node with svgSize = (node.svgSize * V2d.OI) + (V2d.IO) * sizeX}
       apply model cs
 
     
     let defaultIfZero (model : LogNode) (defaultSizeX : float) =
       let diz (node : LogNode) = 
         match node with
-          | n when n.size.X = 0.0 -> 
-            {n with size        = (node.size * V2d.OI) + (V2d.IO) * defaultSizeX
+          | n when n.svgSize.X = 0.0 -> 
+            {n with svgSize        = (node.svgSize * V2d.OI) + (V2d.IO) * defaultSizeX
                     hasDefaultX = true}
           | _ -> node
       apply model diz
@@ -302,11 +304,7 @@
                   | LogNodeType.PosInfinity
                   | LogNodeType.Hierarchical ->
                       model.nodeType |> Mod.map (fun x -> x.ToString())
-                    //(Mod.map2 (fun (u : V3d) (l : V3d)  -> 
-                                    //sprintf "%.2f-%.2f" l.Length u.Length)
-                                    //model.uBorder.point model.lBorder.point)
                   | LogNodeType.Angular | LogNodeType.Metric ->
-                      //Mod.map (sprintf "%s" ) model.label
                       model.nodeType |> Mod.map (fun x -> x.ToString())
                   | LogNodeType.Empty | LogNodeType.Infinity -> model.nodeType |> Mod.map (fun x -> x.ToString())
               )
@@ -338,10 +336,12 @@
     module Svg =
       let view  (model        : MLogNode) 
                 (secondaryLvl : IMod<int>)
-                (viewType     : IMod<CorrelationPlotViewType>) 
-                (styleFun     : float -> IMod<LogNodeStyle>) =
+                //(viewType     : IMod<CorrelationPlotViewType>)
+                (flags        : IMod<LogSvgFlags>)
+                (options      : SvgOptions)
+                (styleFun     : float -> IMod<LogAxisSection>) =
         let f = LogNodeSvg.getDomNodeFunction 
-                  viewType styleFun 
+                  flags options styleFun 
                   (ToggleSelectNode) 
                   (BorderMessage) //(fun (id : BorderId) lst -> Border.ToggleSelect id)
                   

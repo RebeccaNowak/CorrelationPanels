@@ -10,6 +10,7 @@ module Pages =
   open Aardvark.Base.Incremental
   open Aardvark.Base.Rendering
   open UtilitiesGUI
+  open Aardvark.Base.MultimethodTest
 
 
   type Action =
@@ -24,7 +25,7 @@ module Pages =
       | UpdateConfig                  of DockConfig
       | Export
       | Save
-      | Load
+      | Load                          of SaveIndex
       | Clear
       | Undo
       | Redo
@@ -73,6 +74,7 @@ module Pages =
       semanticApp   = semApp
       drawingApp    = CorrelationDrawing.initial 
       corrPlotApp   = CorrelationPlotApp.initial
+      saveIndex     = SaveIndex.init
     }
 
   let tmpDebug =
@@ -94,15 +96,15 @@ module Pages =
                                                         correlationPlot = {model.corrPlotApp.correlationPlot with semanticApp = updSemApp}
                                 }
       }
-    let loadSemantics model = //TODO refactor
-      let updSemApp = SemanticApp.load model.semanticApp
+    let loadSemantics (ind : SaveIndex) model = //TODO refactor
+      let updSemApp = SemanticApp.load model.semanticApp (ind.filename SaveType.Semantics)
       {model with semanticApp = updSemApp 
                   corrPlotApp = {model.corrPlotApp with semanticApp     = updSemApp
                                                         correlationPlot = {model.corrPlotApp.correlationPlot with semanticApp = updSemApp}
                             }
       }
-    let loadAnnotations (model : Pages) = 
-      let annoApp = AnnotationApp.load model.annotationApp
+    let loadAnnotations (ind : SaveIndex) model = 
+      let annoApp = AnnotationApp.load model.annotationApp (ind.filename SaveType.Annotations)
       let updCPA = (CorrelationPlotApp.update model.corrPlotApp CorrelationPlotApp.Clear)
       {model with   
               annotationApp = annoApp
@@ -194,14 +196,15 @@ module Pages =
           { model with fill = not model.fill; past = Some model }
 
       | Save, false, false -> 
-          ignore (SemanticApp.save model.semanticApp)
-          ignore (AnnotationApp.save model.annotationApp)
-          model
+          let newSaveInd = model.saveIndex.next
+          ignore (SemanticApp.save model.semanticApp (newSaveInd.filename SaveType.Semantics))
+          ignore (AnnotationApp.save model.annotationApp (newSaveInd.filename SaveType.Annotations))
+          {model with saveIndex = newSaveInd}
 
-      | Load, false, false -> 
+      | Load ind, false, false -> 
         model
-          |> loadSemantics 
-          |> loadAnnotations
+          |> loadSemantics ind
+          |> loadAnnotations ind
 //                  
       | Clear, _,_ -> 
         { model with  annotationApp = updateAnnotationApp (AnnotationApp.Clear)
@@ -240,9 +243,25 @@ module Pages =
 
   let view  (runtime : IRuntime) (model : MPages) =
     let menu = 
+      let menuLoad =
+        let inds = 
+          SaveIndex.findSavedIndices
+            |> List.map (fun i -> 
+                          div [clazz "item"; onClick (fun _ -> Load i)]
+                              [text (sprintf "Load %s" (string i.ind))])
+                  //iconButton "small folder icon" (string i) (fun _ -> Load i))
+
+        div [clazz "ui simple dropdown item"]
+            [
+              i [clazz "dropdown icon"][]
+              div [clazz "menu"]
+                  inds //[div [clazz "header"][text "load"]]
+            ]
+            
+
       let menuItems = [
+        menuLoad
         iconButton "small save icon"          "save"    (fun _ -> Save)
-        iconButton "small folder icon"        "laod"    (fun _ -> Load)
         iconButton "small file outline icon"  "clear"   (fun _ -> Clear)
         iconButton "small external icon"      "export"  (fun _ -> Export)
         iconButton "small arrow left icon"    "undo"    (fun _ -> Undo)
@@ -267,71 +286,86 @@ module Pages =
       let corrSg         = CorrelationPlot.getLogConnectionSgs model.corrPlotApp.correlationPlot model.semanticApp model.camera
                               |> Sg.map CorrPlotMessage
       let frustum = Mod.constant (Frustum.perspective 60.0 0.1 100.0 1.0)
+      
       require (myCss) (
-        body [clazz "ui"; style "background: #1B1C1E; width: 100%; height:100%; overflow: auto;"] [
-          div [] [
-            CameraController.controlledControl 
-                model.camera
-                CameraMessage 
-                frustum
-                (AttributeMap.ofList [
-                            onKeyDown (KeyDown)
-                            onKeyUp (KeyUp)
-                            attribute "style" "width:70%; height: 100%; float: left;"]
-                )
+        (
+          body [clazz "ui"; style "background: #1B1C1E; width: 100%; height:100%; overflow: auto;"] [
+            div [] [
+              CameraController.controlledControl 
+                  model.camera
+                  CameraMessage 
+                  frustum
+                  (AttributeMap.ofList [
+                              onKeyDown (KeyDown)
+                              onKeyUp (KeyUp)
+                              attribute "style" "width:70%; height: 100%; float: left;"]
+                  )
 
-                (drawingSgList @ [annoSg; corrSg]
-                  |> Sg.ofList 
-                  |> Sg.fillMode (model.rendering.fillMode)     
-                  |> Sg.cullMode (model.rendering.cullMode))                                                                                                             
+                  (drawingSgList @ [annoSg; corrSg]
+                    |> Sg.ofList 
+                    |> Sg.fillMode (model.rendering.fillMode)     
+                    |> Sg.cullMode (model.rendering.cullMode))                                                                                                             
+            ]
           ]
-        ]
-      )
+        )
+      ) 
 
     page (fun request -> 
-        let qu = request.queryParams
-        for q in qu do //DEBUG
-          printf "%s=%s" q.Key q.Value
+      let qu = request.queryParams
+      //for q in qu do //DEBUG
+      //  printf "%s=%s" q.Key q.Value
+        //require [
+        //  { kind = Stylesheet; name = "docking"; url = "docking.css" }
+          
+      // override stylesheet for docking layout
+      onBoot "$('head').append('<link rel=\"stylesheet\" type=\"text/css\" href=\"docking.css\">');" (
+        // override some semantic ui stuff
+        onBoot "$('head').append('<link rel=\"stylesheet\" type=\"text/css\" href=\"semui-overrides.css\">');" (
+          // get semantic ui toggle buttons to work
+          onBoot "$('head').append('<script> $(document).ready( function() {$(\".ui.button.toggle\").state();} );');" 
+        
+            (
+              match Map.tryFind "page" request.queryParams with
+                  | Some "render" -> // renderControl
+                    renderView
+                  | Some "controls" -> 
+                      require Html.semui (
+                          menu
+                      )
+                  | Some "svg" -> 
+                    require (myCss) (
+                      body [attribute "overflow-x" "hidden";attribute "overflow-y" "hidden"] [
+                          CorrelationPlotApp.viewSvg model.corrPlotApp |> (UI.map CorrPlotMessage)
+                      ]
+                    )
 
-        match Map.tryFind "page" request.queryParams with
-            | Some "render" -> // renderControl
-              renderView
-            | Some "controls" -> 
-                require Html.semui (
-                    menu
-                )
-            | Some "svg" -> 
-              require (myCss) (
-                body [] [
-                    CorrelationPlotApp.viewSvg model.corrPlotApp |> (UI.map CorrPlotMessage)
-                ]
-              )
+                  | Some "logs" ->
+                      CorrelationPlotApp.view model.corrPlotApp
+                        |> UI.map CorrPlotMessage
 
-            | Some "logs" ->
-                CorrelationPlotApp.view model.corrPlotApp
-                  |> UI.map CorrPlotMessage
-
-            | Some "semantics" ->
-                SemanticApp.viewSemantics model.semanticApp 
-                  |> UI.map SemanticAppMessage
+                  | Some "semantics" ->
+                      SemanticApp.viewSemantics model.semanticApp 
+                        |> UI.map SemanticAppMessage
              
-            | Some "annotations" ->
-              require (myCss) (
-                body [] [
-                  AnnotationApp.view model.annotationApp model.semanticApp |> UI.map AnnotationAppMessage
-                ]
-              )
-            | Some other ->
-                let msg = sprintf "Unknown page: %A" other
-                body [] [
-                    div [style "color: white; font-size: large; background-color: red; width: 100%; height: 100%"] [text msg]
-                ]  
-            | None -> 
-                model.dockConfig |> Mod.force |> Mod.constant |> docking [
-                    style "width:100%;height:100%;"
-                    onLayoutChanged UpdateConfig
-                ]
-    )
+                  | Some "annotations" ->
+                    require (myCss) (
+                      body [] [
+                        AnnotationApp.view model.annotationApp model.semanticApp |> UI.map AnnotationAppMessage
+                      ]
+                    )
+                  | Some other ->
+                      let msg = sprintf "Unknown page: %A" other
+                      body [] [
+                          div [style "color: white; font-size: large; background-color: red; width: 100%; height: 100%"] [text msg]
+                      ]  
+                  | None -> 
+                      model.dockConfig |> Mod.force |> Mod.constant |> docking [
+                          style "width:100%;height:100%;"
+                          onLayoutChanged UpdateConfig
+                      ]
+
+          ))))
+    
 
   let threads (model : Pages) = 
       CameraController.threads model.camera |> ThreadPool.map CameraMessage

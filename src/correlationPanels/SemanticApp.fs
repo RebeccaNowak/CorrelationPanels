@@ -220,14 +220,21 @@ module SemanticApp =
         }
       | _ -> model
 
-  let save (model : SemanticApp) =
+  let save (model : SemanticApp) (savename : string) =
     let arr = binarySerializer.Pickle model.semantics
-    System.IO.File.WriteAllBytes("./semantics.save", arr);
+    System.IO.File.WriteAllBytes
+      (
+        sprintf "%s%s" "./" savename, arr
+      )
     printf "write file" 
     model
 
-  let load (model : SemanticApp) =
-    let bytes = System.IO.File.ReadAllBytes("./semantics.save");
+  let load (model : SemanticApp) (savename : string) =
+    let bytes = 
+      System.IO.File.ReadAllBytes
+        (
+          sprintf "%s%s" "./" savename
+        ) //"./semantics.save");
     let semantics = binarySerializer.UnPickle(bytes) //TODO catch unpickle exceptions
     printf "load file" 
     let newModel =

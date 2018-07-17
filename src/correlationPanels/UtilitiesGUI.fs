@@ -110,6 +110,13 @@ module UtilitiesGUI =
                     [i [clazz iconStr] [] ] |> wrapToolTip tooltip
           ]
 
+
+    let toggleButton (str : string) (onClick : list<string> -> 'msg) = 
+      Incremental.button
+        (AttributeMap.ofList ([clazz "small ui toggle button"]@(Event.toggleAttribute onClick)) )
+        (AList.ofList [text str])
+          
+
     module Incremental =
       let iconButton (iconStr : string) (onClick : V2i -> 'msg) = 
         //div [clazz "item"] 
@@ -117,7 +124,8 @@ module UtilitiesGUI =
               button [clazz "ui icon button"; onMouseClick onClick] 
                       [i [clazz iconStr] [] ] //TODO |> wrapToolTip tooltip 
             //]
-
+      let toggleButton (str : IMod<string>) (onClick : V2i -> 'msg) = 
+        button [clazz "ui toggle button"; onMouseClick onClick] [Incremental.text str]
       
     let getColourIconButton (color : IMod<C4b>) (label : IMod<string>) (onClick : V2i -> 'msg) =
       let icon = 

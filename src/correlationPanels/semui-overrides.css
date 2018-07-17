@@ -12,3 +12,11 @@
 input {
     color: black;
 }
+
+body {
+    overflow-y: hidden;
+}
+
+
+
+

@@ -5,6 +5,8 @@ open Aardvark.Base.Incremental
 open Aardvark.Base.Rendering
 open Aardvark.UI
 open Aardvark.UI.Primitives
+open Aardvark.SceneGraph
+open Aardvark.Base
 
 
 /// BEGIN GUI
@@ -40,6 +42,11 @@ type Rangef = {
     member this.mapRange (other : Rangef) = 
       fun (x : float) ->
         x *  (other.range / this.range)
+    member this.outer (other : Rangef) : Rangef =
+      {
+        min = min this.min other.min
+        max = max this.max other.max
+      }
         
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -220,21 +227,31 @@ type CorrelationPlotViewType = LineView | LogView | CorrelationView
 type LogNodeBoxType          = SimpleBox | TwoColorBox | FancyBox
 type XAxisFunction           = Average | Minimum | Maximum
 
+[<System.FlagsAttribute>]
+type LogSvgFlags = 
+    None = 0 | BorderAnnotationColor = 1 | RadialDiagrams = 2 | Histograms = 4 | Legend = 8 | NodeLabels = 16 | LogLabels = 32 | XAxis = 64 | YAxis = 128 | EditCorrelations = 256
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module LogSvgFlags =
+  let isSet (flag : LogSvgFlags) (flags : LogSvgFlags) =
+    ((flags &&& flag) = flag)
+  let parse str = //TODO make safer and more general
+    ((System.Enum.Parse(typeof<LogSvgFlags>, str)) :?> LogSvgFlags)
+  let toggle flag flags =
+    match (isSet flag flags) with
+      | true  -> flag &&& (~~~flags)
+      | false -> flag ||| flags
+
 [<DomainType>]
-type LogNodeStyle = {
+type LogAxisSection = {
     label     : string
     color     : C4b
     range     : Rangef
 }
 
-type LNStyleListId = {
+type LogAxisConfigId = {
     id        : string
 }
-
-
-
-
-
 
 [<DomainType>]
 type LogNode = {
@@ -258,7 +275,9 @@ type LogNode = {
     //svgPos.Y       : float
     //svgPos.X       : float
     svgPos        : V2d
-    size          : V2d
+    nativePos     : V2d
+    svgSize       : V2d
+    nativeSize    : V2d
 } with 
     member this.range = 
             {Rangef.init with min = this.lBorder.point.Length
@@ -266,27 +285,27 @@ type LogNode = {
               
 
 [<DomainType>]
-type LogNodeStyleTemplate = { //TODO make dynamic
+type LogAxisConfig = { //TODO make dynamic
     [<NonIncremental>]
-    id                 : LNStyleListId
+    id                 : LogAxisConfigId
     [<NonIncremental>]
     label              : string
     [<NonIncremental>]
     defaultRange       : Rangef
     [<NonIncremental>]
-    metricToSvgSize    : float
+    metricToSvgSize    : float //TODO put into svgOptions, needs to be able to handle negative numbers!
     [<NonIncremental>]
     defaultGranularity : float //TODO must be positive and > 0; maybe use uint
     [<NonIncremental>]
-    styleTemplate      : list<LogNodeStyle>
+    styleTemplate      : list<LogAxisSection>
     
 }
 
 [<DomainType>]
-type LogNodeStyleApp = {
+type LogAxisApp = {
     [<NonIncremental>]
-    templates        : list<LogNodeStyleTemplate>
-    selectedTemplate : LNStyleListId
+    templates        : list<LogAxisConfig>
+    selectedTemplate : LogAxisConfigId
 }
 
 [<DomainType>]
@@ -306,7 +325,7 @@ type GeologicalLog = {
 
     semanticApp : SemanticApp
     xAxis       : SemanticId
-    svgYOffset  : float
+    yOffset     : float
 }
 
 [<DomainType>]
@@ -314,6 +333,40 @@ type Correlation = {
   fromBorder    : Border
   toBorder      : Border
 }
+
+type SvgOptions = {
+  logPadding       : float
+  logHeight        : float
+  logMaxWidth      : float
+  cpWidth          : float
+  secLevelWidth    : float
+  xAxisYPosition   : float
+  xAxisScaleFactor : float
+  axisWeight       : float
+
+} with 
+    member this.xAxisPosition i = 
+            new V2d((this.logXOffset i) + 2.0 * this.secLevelWidth, this.xAxisYPosition)
+
+    member this.logXOffset i =
+            let i = float i
+            i * this.logPadding + i * this.logMaxWidth //TODO hardcoded log width
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module SvgOptions = 
+  let init : SvgOptions = 
+    {
+      logPadding       = 50.0
+      logHeight        = 300.0
+      logMaxWidth      = 250.0
+      cpWidth          = 900.0
+      secLevelWidth    = 20.0
+      xAxisYPosition   = 330.0 //TODO logHeight + 0.1 *lh
+      xAxisScaleFactor = 30.0 //TODO
+      axisWeight       = 2.0
+    }
+  
+
 
 [<DomainType>]
 type CorrelationPlot = {
@@ -329,9 +382,12 @@ type CorrelationPlot = {
    secondaryLvl        : int
    creatingNew         : bool
    viewType            : CorrelationPlotViewType
-   logNodeStyleApp     : LogNodeStyleApp
+   svgFlags            : LogSvgFlags
+   svgOptions          : SvgOptions
+   logAxisApp          : LogAxisApp
    xAxis               : SemanticId
    semanticApp         : SemanticApp
+   yRange               : Rangef
 }
 
 [<DomainType>]
@@ -358,11 +414,54 @@ type CorrelationDrawingModel = {
 //    drawing          : CorrelationDrawingModel 
 //}
 
+type SaveType = Annotations | Semantics
+type SaveIndex =
+  {
+    ind : int
+  } with
+    member this.next : SaveIndex =
+      {ind = this.ind + 1}
+    member this.filename (t : SaveType) : string =
+      match t with
+        | SaveType.Annotations ->
+          sprintf "%03i_annotations.save" this.ind
+        | SaveType.Semantics ->
+          sprintf "%03i_semantics.save" this.ind
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module SaveIndex =
+  let init : SaveIndex =
+    {ind = 0}
+  let findSavedIndices =
+      System.IO.Directory.GetFiles( "./", "*.save")
+        |> Array.toList
+        |> List.filter (fun (str : string) ->
+                          let (b, _) = System.Int32.TryParse str.[2..4] //TODO hardcoded
+                          b
+                       )
+        |> List.map (fun str -> str.[2..4])
+        |> List.map int
+        |> List.distinct //TODO only if sem & anno
+        |> List.map (fun i -> {ind = i})
+
+
+//  //TEST
+//System.Int32.TryParse "ABC"
+//let lst = ["./001_annotations.save";"./001_semantics.save";"./002_annotations.save";"./002_semantics.save"]
+//SaveIndex.findSavedIndices lst
+//let i1 = SaveIndex.init
+//let i2 = i1.next
+//let i1s = i1.filename SaveType.Annotations
+//let i1a = i1.filename SaveType.Semantics
+//let lst = SaveIndex.findSavedIndices
+
+
 [<DomainType>]
 type Pages = 
     {
         [<NonIncremental>]
         past          : Option<Pages>
+        saveIndex     : SaveIndex
 
         [<NonIncremental>]
         future        : Option<Pages>

@@ -1,7 +1,7 @@
 ﻿namespace CorrelationDrawing
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module LogNodeStyleApp =
+module LogAxisApp =
   open Aardvark.Base
   open Aardvark.UI
   open Aardvark.Base.Incremental
@@ -10,14 +10,14 @@ module LogNodeStyleApp =
 
 
   type Action = 
-    | SetStyle of LNStyleListId
+    | SetStyle of LogAxisConfigId
   
-  let update (model : LogNodeStyleApp) (action : Action) =
+  let update (model : LogAxisApp) (action : Action) =
     match action with
       | SetStyle id -> {model with selectedTemplate = id}
 
 
-  let invalidTemplate : LogNodeStyleTemplate =
+  let invalidTemplate : LogAxisConfig =
     {
       id            = {id = System.Guid.NewGuid().ToString()}
       label         = "invalid"
@@ -28,7 +28,7 @@ module LogNodeStyleApp =
         [{label = "Invalid";color = new C4b(255,0,0);   range = {min = 0.0 ; max = 0.0}}]
     }
 
-  let grainsizeStyle : LogNodeStyleTemplate =
+  let grainsizeStyle : LogAxisConfig =
     {
       id                  = {id = System.Guid.NewGuid().ToString()}
       label               = "grainsize"
@@ -44,7 +44,7 @@ module LogNodeStyleApp =
         ]
     }
 
-  let grainsizeStyle2 : LogNodeStyleTemplate =
+  let grainsizeStyle2 : LogAxisConfig =
     {
       id                  = {id = System.Guid.NewGuid().ToString()}
       label               = "grainsize2"
@@ -60,19 +60,19 @@ module LogNodeStyleApp =
         ]
     }
 
-  let initial : LogNodeStyleApp = {
+  let initial : LogAxisApp = {
     templates = [grainsizeStyle;grainsizeStyle2]
     selectedTemplate = grainsizeStyle2.id
   }
 
-  let selectedTemplateOrDefault (model : LogNodeStyleApp) =
+  let selectedTemplateOrDefault (model : LogAxisApp) =
     let tm = model.templates |> List.tryFind ( fun x ->  x.id = model.selectedTemplate)
     match tm with
       | Some t -> t
       | None -> invalidTemplate
 
 
-  let getStyle (model : MLogNodeStyleApp) (x : float) =
+  let getStyle (model : MLogAxisApp) (x : float) =
     model.selectedTemplate |> Mod.map (fun templId ->
       let templ = 
         (model.templates |> List.tryFind (fun t -> t.id.id = templId.id)
@@ -86,7 +86,7 @@ module LogNodeStyleApp =
   
 
 
-  let svgXAxis (template : MLogNodeStyleApp) (startPoint : V2d) (length : float) (weight : float) (label : IMod<string>) = 
+  let svgXAxis (template : MLogAxisApp) (startPoint : V2d) (length : float) (weight : float) (label : IMod<string>) = 
     adaptive {
       let! templateId = template.selectedTemplate
       let! label = label
@@ -94,8 +94,8 @@ module LogNodeStyleApp =
       let res = match templateOpt with
                 | Some t ->
                     let gr = 
-                      let toSvg (x : float) = 
-                        x * (((startPoint.X + length) - startPoint.X) / t.defaultRange.range)
+                      let toSvg (x : float) = x * (length / t.defaultRange.range)
+                        //x * (((startPoint.X + length) - startPoint.X) / t.defaultRange.range)
                       let labelIndices = seq { 0..  (int t.defaultGranularity) .. (int t.defaultRange.max)} //TODO round
                                            |> List.ofSeq
                       let labelPositions = labelIndices |> List.map (fun x -> (float x) * (toSvg t.defaultGranularity))
@@ -104,7 +104,7 @@ module LogNodeStyleApp =
                         yield Svg.drawXAxis startPoint length C4b.Black 2.0 (toSvg t.defaultGranularity)
                         let leftShift = ((float label.Length) * 3.0)
                         // axis label
-                        yield Svg.drawText (new V2d(startPoint.X + (length * 0.5) - leftShift, startPoint.Y + 40.0)) label
+                        yield Svg.drawText (new V2d(startPoint.X + (length * 0.5) - leftShift, startPoint.Y + 45.0)) label
 
                         // text labels
                         for i in 0..((t.styleTemplate.Length) - 1) do
@@ -112,13 +112,11 @@ module LogNodeStyleApp =
                           let txt = st.label
                           //let leftShift = ((float txt.Length) * 3.0) //TODO create function
                           
-                          let max = match st.range.max with //TODO move into Rangef
-                                       | System.Double.PositiveInfinity -> st.range.min * 2.0
-                                       | _ -> st.range.max
-                          let min = match st.range.min with
-                                       | System.Double.NegativeInfinity -> -st.range.min
-                                       | _ -> st.range.min
-                          let posX = (startPoint.X + ((max - min)) * t.metricToSvgSize)
+                          let posX = 
+                            match st.range.max, st.range.min with //TODO move into Rangef
+                                         | System.Double.PositiveInfinity, _ -> (startPoint.X + (((st.range.min * 2.0) - st.range.min)) * t.metricToSvgSize) 
+                                         | _, System.Double.NegativeInfinity -> startPoint.X
+                                         | max,min  -> (startPoint.X + ((max - min)) * t.metricToSvgSize)
                           yield Svg.drawText (new V2d(posX, startPoint.Y + 30.0)) txt //TODO hardcoded
 
 
@@ -134,29 +132,7 @@ module LogNodeStyleApp =
       return res
     }
 
-  //let getStyle' (model : MLogNodeStyleApp) (n : MLogNode)  =
-  //  let el =  Mod.force (LogNode.elevation n) //TODO make adaptive
-
-  //  model.selectedTemplate |> Mod.map (fun templ ->
-  //    (model.templates |> List.filter (fun t -> t.id.id = templ.id)
-  //                     |> List.tryHead
-  //                     |> Option.defaultValue invalidTemplate).styleTemplate
-  //                     |> List.filter (fun t -> (t.range.min <= el) && (el < t.range.max))
-  //                     |> List.tryHead
-  //                     |> Option.defaultValue {label = "Invalid";color = new C4b(255,0,0);   range = {min = 0.0 ; max = 0.0}} )
-      
-    //let st =
-    //  styleTemplate.styleTemplate 
-    //    |> List.filter (fun t -> (t.range.min <= el) && (el < t.range.max))
-    //    |> List.tryHead
-    //match st with
-    //  | Some t -> t
-    //  | None   -> {label = "Invalid";color = new C4b(255,0,0);   range = {min = 0.0 ; max = 0.0}}
-
-
-    
-
-  let view (model : MLogNodeStyleApp) = 
+  let view (model : MLogAxisApp) = 
     alist {
       let! selId = model.selectedTemplate
       for styleTemplate in model.templates do

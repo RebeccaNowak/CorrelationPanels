@@ -19,15 +19,15 @@
       | ChangeXAxis               of SemanticId
       | LogNodeMessage            of (LogNodeId * LogNode.Action)
       | SelectLogNode             of LogNodeId
-
+      
 
     module Helpers = 
       let calcXPosition (id : SemanticId) (nodes : plist<LogNode>) = 
         let nodes = nodes |> PList.map (fun n -> LogNode.update (LogNode.ChangeXAxis id) n) 
         let avg = nodes
                     |> PList.toList
-                    |> List.filter (fun n -> n.size.X <> 0.0) 
-                    |> List.map (fun (n : LogNode) -> n.size.X)
+                    |> List.filter (fun n -> n.svgSize.X <> 0.0) 
+                    |> List.map (fun (n : LogNode) -> n.svgSize.X)
                     |> List.averageOrZero
         nodes |> PList.map (fun n -> LogNode.defaultIfZero n avg)
 
@@ -145,17 +145,17 @@
             let result = 
               lst
                 |> List.map (fun (x : LogNode) -> 
-                              {x with size = V2d.OO 
+                              {x with svgSize = V2d.OO 
                                               + V2d.OI * (Rangef.calcRange x.range) * factor
                               }
                             )
                 |> List.scan (fun (a : LogNode) (b : LogNode) -> 
-                                  {b with svgPos   = V2d(0.0, a.svgPos.Y + a.size.Y)}
+                                  {b with svgPos   = V2d(0.0, a.svgPos.Y + a.svgSize.Y)}
                               ) {LogNode.initialEmpty with svgPos = V2d(0.0, startAt)}
                 |> List.tail  
                 |> List.map (fun (x : LogNode) ->
                               {x with children = calcLogPosChildren 
-                                                  x.size.Y
+                                                  x.svgSize.Y
                                                   x.svgPos.Y
                                                   x.children
                               }
@@ -167,7 +167,7 @@
     let calcsvgPosY (logHeight : float)  (plst : plist<LogNode>) =
       let lst = PList.toList plst
       match lst with 
-        | [] -> PList.empty
+        | [] -> (PList.empty, (fun x -> x))
         | lst ->
 
         let accHeight = lst |> List.sumBy (fun x -> (abs (Rangef.calcRange x.range)))
@@ -175,23 +175,33 @@
         let result = 
           lst
             |> List.map (fun (x : LogNode) ->
-                          {x with size = V2d.OO 
-                                          + V2d.OI * (Rangef.calcRange x.range) * factor
+                          {x with svgSize = V2d.OO 
+                                             + V2d.OI
+                                             * (Rangef.calcRange x.range) 
+                                             * factor
+                                  nativeSize = V2d.OO 
+                                                + V2d.OI 
+                                                * (Rangef.calcRange x.range) 
+                                                  
                           }
                         )
             |> List.scan (fun (x : LogNode) (y : LogNode) -> 
-                              {y with svgPos = V2d(y.svgPos.X, x.svgPos.Y + x.size.Y)}
+                              {y with svgPos    = V2d(y.svgPos.X, x.svgPos.Y + x.svgSize.Y)
+                                      nativePos = V2d(y.nativePos.X, x.nativePos.Y + x.nativeSize.Y)
+                              }
                           ) (LogNode.initialEmpty) 
             |> List.tail  
             |> List.map (fun (x : LogNode) ->
                           {x with children = calcLogPosChildren 
-                                              x.size.Y
+                                              x.svgSize.Y
                                               x.svgPos.Y
                                               x.children
                           }
                         )
             |> PList.ofList
-        result
+        let mapping = (fun (posY : float) -> posY * factor)
+        (result, mapping)
+        //result
 
     let initial = {
       id            = LogId.invalid
@@ -206,17 +216,19 @@
           view = CameraView.lookAt (2.0 * V3d.III) V3d.Zero V3d.OOI}    
       semanticApp   = SemanticApp.initial
       xAxis         = SemanticId.invalid
-      svgYOffset    = 0.0
+      yOffset    = 0.0
     }
 
+    ///////////////////////////////////////////////////// GENERATE ///////////////////////////////////////////////////////////////////////
     let generate     (index     : int)
                      (lst       : List<V3d * Annotation>) 
                      (annos     : plist<Annotation>) 
                      (semApp    : SemanticApp)
                      (xAxis     : SemanticId) 
-                     (logHeight : float) : GeologicalLog = 
+                     (yOffset   : float)
+                     (logHeight : float)  = 
       let id = LogId.newId()
-      let nodes0 = (generateLevel //TODO make more compact by removing debug stuff
+      let nodes = (generateLevel //TODO make more compact by removing debug stuff
                         id
                         lst 
                         annos
@@ -224,33 +236,44 @@
                         (Border.initNegInf id)
                         (Border.initPosInf id)
                    )
-      let nodes1 = 
-        nodes0 |> PList.map LogNode.replaceInfinity
-      let nodes2 = 
-        nodes1 |> PList.filter LogNode.isInfinityType
+      let nodes = 
+        nodes |> PList.map LogNode.replaceInfinity
+      let nodes = 
+        nodes |> PList.filter LogNode.isInfinityType
 
-      let nodes3 =
-        nodes2 |> calcsvgPosY logHeight
-               |> Helpers.calcXPosition xAxis
+      let (nodes, yMapper) =
+        nodes |> calcsvgPosY logHeight
+      let nodes =
+        nodes
+           |> Helpers.calcXPosition xAxis
 
+      let range : option<Rangef> = AnnotationPoint.tryCalcRange annos
+      let range = 
+        match range with
+          | None ->
+            printf "could not calculate log range" //TODO proper debug output
+            Rangef.init
+          | Some r -> r
       //nodes3 |> PList.map (fun (x : LogNode) -> LogNode.filterAndCollect x (fun x -> x.nodeType = LogNodeType.Hierarchical))
       //       |> List.concat
       //       |> List.map LogNode.Debug.print
-      {
-        id          = id
-        index       =  index
-        isSelected  = false
-        label       = "log"
-        nodes       = nodes3
-        annoPoints  = lst
-        range       = Rangef.init
-        camera      = //TODO for 3D view
-          {ArcBallController.initial with 
-            view = CameraView.lookAt (2.0 * V3d.III) V3d.Zero V3d.OOI}    
-        semanticApp = semApp
-        xAxis = xAxis
-        svgYOffset = 0.0  
-      }
+      let newLog = 
+        {
+          id          = id
+          index       =  index
+          isSelected  = false
+          label       = "log"
+          nodes       = nodes
+          annoPoints  = lst
+          range       = range
+          camera      = //TODO for 3D view
+            {ArcBallController.initial with 
+              view = CameraView.lookAt (2.0 * V3d.III) V3d.Zero V3d.OOI}    
+          semanticApp = semApp
+          xAxis       = xAxis
+          yOffset     = yOffset  
+        }
+      (newLog, yMapper)
 
     let findNode (model : GeologicalLog) (nodeId : LogNodeId) =
       let filter (n : LogNode) = 
@@ -281,9 +304,12 @@
               |> List.tryHead
 
     let svgView (model        : MGeologicalLog) 
-                (viewType     : IMod<CorrelationPlotViewType>) 
+               // (viewType     : IMod<CorrelationPlotViewType>) 
+                (flags        : IMod<LogSvgFlags>)
+                (svgOptions   : SvgOptions)
                 (secondaryLvl : IMod<int>)
-                (styleFun     : float -> IMod<LogNodeStyle>) =
+                (styleFun     : float -> IMod<LogAxisSection>) 
+                 =
                 
       let minLvl = Helpers.getMinLevel model
       let minLvlNodes =
@@ -295,16 +321,11 @@
       let nodeViews =
         alist {
           for n in minLvlNodes do
-            let callback (args : list<string>) = 
-              printf "%s" "foobar"
-              SelectLogNode n.id
-              // WIP!!!! 
             let mapper (a : DomNode<LogNode.Action>) =
               a |> UI.map (fun m -> LogNodeMessage (n.id, m))
-            let! v = (LogNode.Svg.view n secondaryLvl viewType styleFun) 
+            let! v = (LogNode.Svg.view n secondaryLvl flags svgOptions styleFun) 
                       //|> AList.map (UI.map LogNodeMessage)
             for it in v do
-              //|> UI.map LogNodeMessage //
               yield (mapper it)
         }
       nodeViews  

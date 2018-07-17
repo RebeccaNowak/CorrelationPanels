@@ -90,20 +90,20 @@ module Border =
 
   module Svg = 
     let getCorrelationButtons (model : MLogNode) (offset : float) (weight : float) = //callback  =
-      let btnSize = 5.0 //TODO might want to make this an argument
+      let btnSize = 4.0 //TODO might want to make this an argument
       adaptive {
         let! uBorderColor = model.uBorder.color
         let! lBorderColor = model.lBorder.color
         
-        let! size = model.size
+        let! size = model.svgSize
         let! pos  = model.svgPos
         //let pos   = new V2d(offset, pos.Y)
 
         let posL  = (new V2d(offset + size.X, pos.Y + size.Y - (weight * 0.5)))
         let posU  = (new V2d(offset + size.X, pos.Y + (weight * 0.5)))
 
-        let posLBtn = new V2d(posL.X, posL.Y - btnSize)
-        let posUBtn = new V2d(posU.X, posU.Y + btnSize)
+        let posLBtn = new V2d(posL.X, posL.Y - (btnSize * 0.5))
+        let posUBtn = new V2d(posU.X, posU.Y + (btnSize * 0.5))
 
         let lcb = (fun lst -> ToggleSelect (model.lBorder.id, posL)) //callback model.lBorder.id
         let ucb = (fun lst -> ToggleSelect (model.uBorder.id, posU)) //callback model.uBorder.id

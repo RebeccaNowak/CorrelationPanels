@@ -77,16 +77,23 @@ namespace CorrelationDrawing
                   
           {model with annotations = updated}
 
-    let save (model : AnnotationApp) =
+    let save (model : AnnotationApp) (savename : string) =
       let arr = binarySerializer.Pickle model.annotations
       //let info = System.IO.Directory.CreateDirectory "./saved"
       //let success = info.Exists
-      System.IO.File.WriteAllBytes("./annotations.save", arr);
+      System.IO.File.WriteAllBytes
+        (
+          sprintf "%s%s" "./" savename, arr
+        )
       printf "write file" 
       model
 
-    let load (model : AnnotationApp) =
-      let bytes = System.IO.File.ReadAllBytes("./annotations.save");
+    let load (model : AnnotationApp) (savename : string) =
+      let bytes = 
+        System.IO.File.ReadAllBytes
+          (
+            sprintf "%s%s" "./" savename 
+          )
       let annos = binarySerializer.UnPickle(bytes)
       printf "load file" 
       {model with annotations = annos}

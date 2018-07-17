@@ -84,6 +84,16 @@ module PList =
       |> PList.toList
       |> List.reduce (fun x y -> if (f x) > (f y) then x else y)
 
+  let tryMinBy (f : 'a -> 'b) (lst : plist<'a>) : option<'a> =
+    match lst.IsEmptyOrNull() with
+      | true  -> None
+      | false -> Some (minBy f lst)
+
+  let tryMaxBy (f : 'a -> 'b) (lst : plist<'a>) : option<'a> =
+    match lst.IsEmptyOrNull() with
+      | true  -> None
+      | false -> Some (maxBy f lst)
+
   let minMapBy (mapTo: 'a -> 'c) (minBy : 'a -> 'b) (lst : plist<'a>) : 'c =
     lst
       |> PList.toList

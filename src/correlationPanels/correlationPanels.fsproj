@@ -18,6 +18,9 @@
     <RunWorkingDirectory>$(OutputPath)</RunWorkingDirectory>
   </PropertyGroup>
   <ItemGroup>
+	<Content Include="docking.css">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</Content>
 	<Content Include="spectrum.css">
 	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	</Content>
@@ -46,8 +49,8 @@
 	<Compile Include="AnnotationApp.fs" />
 	<Compile Include="AnnotationPoint.fs" />
 	<Compile Include="Border.fs" />
-	<Compile Include="LogNodeStyle.fs" />
-	<Compile Include="LogNodeStyleApp.fs" />
+	<Compile Include="LogAxisSection.fs" />
+	<Compile Include="LogAxisApp.fs" />
 	<Compile Include="LogNodeSvg.fs" />
 	<Compile Include="LogNode.fs" />
 	<Compile Include="GeologicalLog.fs" />

@@ -21,7 +21,6 @@ let main argv =
     Ag.initialize()
     Aardvark.Init()
     Aardium.init()
-
     use app = new OpenGlApplication()
     
 
@@ -43,6 +42,7 @@ let main argv =
         width 1024
         height 768
         debug true
+        menu true
     }
 
     //use ctrl = new AardvarkCefBrowser()

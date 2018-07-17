@@ -11,6 +11,15 @@
         let send = processEvent name
         evt.clientSide send id
 
+  
+      let toggleAttribute (cb : list<string> -> 'msg) : list<Attribute<'msg>>  =
+        //let js = "$('__ID__').toggleClass('active');aardvark.processEvent('__ID__','foobar');"
+        [              
+            onEvent "foobar" [] cb
+            clientEvent "onclick" ("aardvark.processEvent('__ID__','foobar');")
+            //clientEvent "onclick" (js)
+        ] 
+
   module Svg =
     
     module Events =
@@ -28,8 +37,10 @@
         
         [ 
             onEvent "foobar" [] cb
-            clientEvent "onclick" ("aardvark.processEvent('__ID__', 'foobar');")
+            clientEvent "onclick" ("aardvark.processEvent('__ID__', 'foobar');$('#__ID__').state();")
         ] 
+
+
 
 
       let onClickAttributes (cbs : list<list<string> -> 'msg>) : list<Attribute<'msg>>  =

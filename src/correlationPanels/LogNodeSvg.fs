@@ -28,7 +28,7 @@
                                         )>
                         )
                         : alist<DomNode<'msg>> =
-      let breadthSec = 20.0
+      let breadthSec = 20.0 //TODO hardcoded
       let offset =
         adaptive {
           let! lvl = model.level 
@@ -92,12 +92,12 @@
           [Svg.drawText (new V2d(5.0, 5.0)) txt]
           (Svg.Events.onClickAttribute selectionCallback)
 
-      let levelToWeight (level : int) = 
+      let levelToWeight (level : int) = //TODO hardcoded
         ((8.0 - (float level)) * 0.3)
 
 
 
-    let createDomNode     (viewType            : CorrelationPlotViewType)
+    let createDomNode    // (viewType            : CorrelationPlotViewType)
                           (nodeType            : LogNodeType)
                           (size                : V2d)
                           (color               : C4b)
@@ -114,8 +114,8 @@
           
       let (size, position, offset) =
         match secondaryLvlBreadth with
-          | Some b -> (new V2d(b, size.Y), new V2d(0.0, position.Y), 0.0)
-          | None   -> (size, position, offset)
+          | Some b -> (new V2d(b, size.Y), new V2d(0.0, position.Y), position.X)
+          | None   -> (size, position, offset + position.X)
 
       let drawRectangle =  
         let rfun = Svg.drawBorderedRectangle
@@ -157,39 +157,47 @@
       domNode
 
 
-    let getDomNodeFunction  (viewType            : IMod<CorrelationPlotViewType>) 
-                            (styleFun            : float -> IMod<LogNodeStyle>) 
+    let getDomNodeFunction // (viewType            : IMod<CorrelationPlotViewType>) 
+                            (flags               : IMod<LogSvgFlags>)
+                            (options             : SvgOptions) 
+                            (styleFun            : float -> IMod<LogAxisSection>) //TODO rename
                             (selectAction        : LogNodeId -> 'a)
-                            //(selectionCallback : LogNodeId -> list<string> -> 'msg)
-                            mapper //(buttonCallback      : BorderId -> list<string> -> 'msg)
+                            (mapper              : Border.Action -> 'a)
                             (offset              : float) 
                             (model               : MLogNode) =
       adaptive {
-        let! size              =  (model.size)
-        let! s                 = styleFun size.X
-        let! pos              = model.svgPos
-        let size               = new V2d(size.X, size.Y)
-        let color              = s.color
-        let! uBorderColor      = model.uBorder.color
-        let! lBorderColor      = model.lBorder.color
-        let! dottedRBorder     = model.hasDefaultX
-        let! (lvl : int)       = model.level
-        let weight             = (Default.levelToWeight lvl)
-        let! isSelected        = model.isSelected
-        let position           = new V2d(offset, pos.Y)
-        let! lnType            = model.nodeType
-        let! viewType          = viewType
+        let! size          =  (model.svgSize)
+        let! s             = styleFun size.X
+        let! pos           = model.svgPos
+        let size           = new V2d(size.X, size.Y)
+        let color          = s.color
+        let! dottedRBorder = model.hasDefaultX
+        let! (lvl : int)   = model.level
+        let weight         = (Default.levelToWeight lvl)
+        let! isSelected    = model.isSelected
+        let position       = new V2d(offset, pos.Y)
+        let! lnType        = model.nodeType
+        //let! viewType      = viewType
+        let! flags         = flags
 
-        let! ((btnL), (btnU)) = 
-              (Border.Svg.getCorrelationButtons model offset weight)// buttonCallback) //TODO performance
+        let! (uBorderColor, lBorderColor) =
+          match (LogSvgFlags.isSet LogSvgFlags.BorderAnnotationColor flags) with
+            | true ->
+              (model.uBorder.color, model.lBorder.color) //change color to anno/color
+            | false ->
+              (Mod.constant C4b.Black, Mod.constant C4b.Black)
+
+        let! (btnL, btnU) = 
+              (Border.Svg.getCorrelationButtons model (offset + options.secLevelWidth) weight)// buttonCallback) //TODO performance
         let btns = (btnL |> UI.map mapper , btnU |> UI.map mapper)
         let btns = 
-          match viewType with
-            | CorrelationPlotViewType.CorrelationView -> Some btns
-            | _ -> None
+          match (LogSvgFlags.isSet LogSvgFlags.EditCorrelations flags) with
+            | true  -> Some btns
+            | false -> None
         let selCb = (fun lst -> selectAction model.id)
         
-        let f = (createDomNode viewType
+        let f = (
+                  createDomNode //viewType
                                 lnType
                                 size                          
                                 color             
@@ -200,6 +208,7 @@
                                 selCb //(selectionCallback model.id)
                                 btns
                                 isSelected       
-                                position)      
+                                position
+                )      
         return f
       }

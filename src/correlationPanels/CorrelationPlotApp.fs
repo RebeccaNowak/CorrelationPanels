@@ -7,14 +7,13 @@
     open Aardvark.Application
     open Aardvark.UI
     open UtilitiesGUI
-    open Aardvark.UI.Primitives
 
     type Action =
       | CorrelationPlotMessage of CorrelationPlot.Action
+      | AxisMessage of LogAxisApp.Action
       | Clear
 
-    let logOffset (index : int) =
-      float (index * 10 + index * 250)
+
 
     let initial : CorrelationPlotApp  = 
       {
@@ -31,53 +30,73 @@
                         CorrelationPlot.update model.correlationPlot CorrelationPlot.Clear}
         | CorrelationPlotMessage lm -> 
           {model with correlationPlot = CorrelationPlot.update model.correlationPlot lm}
-        
+        | AxisMessage m -> 
+          {model with correlationPlot = CorrelationPlot.update model.correlationPlot (m |> CorrelationPlot.LogAxisAppMessage)} //TODO refactor
 
 
     let viewSvg (model : MCorrelationPlotApp) =
      
       let menu = 
-          let viewSelection = 
-            alist {
-              for sem in model.semanticApp.semanticsList do
-                let! sType = sem.semanticType
-                if sType = SemanticType.Metric then
-                      yield getColourIconButton' sem.style.color.c
-                                                    (fun _ -> CorrelationPlot.ChangeXAxis sem.id)
-            }
-          div [clazz "ui horizontal menu";
+          //let viewSelection = 
+          //  alist {
+          //    for sem in model.semanticApp.semanticsList do
+          //      let! sType = sem.semanticType
+          //      if sType = SemanticType.Metric then
+          //            yield getColourIconButton' sem.style.color.c
+          //                                          (fun _ -> CorrelationPlot.ChangeXAxis sem.id)
+          //  }
+
+          let flagButtons =
+            let names = System.Enum.GetNames(typeof<LogSvgFlags>)
+            seq {
+              for str in names.[1..names.Length-1] do
+                let e = LogSvgFlags.parse str
+                yield (toggleButton str (fun p -> CorrelationPlot.ToggleFlag e)) //|> UI.map CorrelationPlotMessage
+            } |> List.ofSeq
+
+          //let foo = (viewSelection |> AList.map (UI.map CorrelationPlotMessage))
+          let axisSel = ((LogAxisApp.view model.correlationPlot.logAxisApp) |> AList.map (UI.map AxisMessage))
+            
+          div [//clazz "ui horizontal menu";
                style "float:right; vertical-align: top"
-               attribute "position" "fixed"
+               attribute "position" "sticky"
+               attribute "top" "5"
               ]
               [
-                div [clazz "item"]
-                    [button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.ChangeView CorrelationPlotViewType.LineView)] 
-                            [i [clazz "small align left icon"] [] ] |> UtilitiesGUI.wrapToolTip "Line view"];
-                div [clazz "item"]
-                    [button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.ChangeView CorrelationPlotViewType.LogView)] 
-                            [i [clazz "small align left icon"] [] ] |> UtilitiesGUI.wrapToolTip "Log view"];
-                div [clazz "item"]
-                    [button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.ChangeView CorrelationPlotViewType.CorrelationView)] 
-                            [i [clazz "small exchange icon"] [] ] |> UtilitiesGUI.wrapToolTip "edit correlations"];
-                Incremental.div (AttributeMap.ofList [clazz "item"])
-                                viewSelection
-                Incremental.div (AttributeMap.ofList [clazz "item"])
-                                (LogNodeStyleApp.view model.correlationPlot.logNodeStyleApp) |> UI.map CorrelationPlot.LogNodeStyleAppMessage
+                div [style "display:inline"] flagButtons |> UI.map CorrelationPlotMessage
+                    //[div [clazz "ui horizontal buttons"] flagButtons]
                 div []
-                    [Html.SemUi.dropDown' 
-                      (AList.ofList Semantic.levels) 
-                      model.correlationPlot.secondaryLvl 
-                      CorrelationPlot.SetSecondaryLevel 
-                      (fun x -> sprintf "%i" x)]
+                    [
+                      //button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.ChangeView CorrelationPlotViewType.LineView)] 
+                      //       [i [clazz "small align left icon"] [] ] |> UtilitiesGUI.wrapToolTip "Line view" |> UI.map CorrelationPlotMessage
+                      //button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.ChangeView CorrelationPlotViewType.LogView)] 
+                      //       [i [clazz "small align left icon"] [] ] |> UtilitiesGUI.wrapToolTip "Log view" |> UI.map CorrelationPlotMessage
+                      //button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.ChangeView CorrelationPlotViewType.CorrelationView)] 
+                      //       [i [clazz "small exchange icon"] [] ] |> UtilitiesGUI.wrapToolTip "edit correlations" |> UI.map CorrelationPlotMessage
+                      
+
+                      Incremental.div (AttributeMap.ofList [style "display:inline"])
+                                      axisSel
+                                            
+                
+                    
+                      div [style "display:inline"]
+                          [Html.SemUi.dropDown' 
+                            (AList.ofList Semantic.levels) 
+                            model.correlationPlot.secondaryLvl 
+                            CorrelationPlot.SetSecondaryLevel 
+                            (fun x -> sprintf "%i" x)
+                            |> UI.map CorrelationPlotMessage]
+                ];
               ]
               
         
       let domNode = 
-        div [] [
+        div [attribute "overflow-x" "hidden";attribute "overflow-y" "hidden"] [
                 menu
-                CorrelationPlot.viewSvg model.correlationPlot 
+                CorrelationPlot.viewSvg model.correlationPlot |> UI.map CorrelationPlotMessage
                ]
-      domNode |> UI.map CorrelationPlotMessage
+      domNode
 
 
     let view  (model : MCorrelationPlotApp)  =
