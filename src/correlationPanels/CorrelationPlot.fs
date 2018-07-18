@@ -47,6 +47,7 @@
         semanticApp         = SemanticApp.getInitialWithSamples
         annotations         = PList.empty
         yRange              = Rangef.init
+        currrentYMapping    = None
       }
 
 
@@ -227,7 +228,19 @@
                     (model, yToSvg model lr.min)
                   | Some lr, Some pr -> 
                     let newRange = lr.outer(pr)
-                    let model = {model with yRange = newRange}
+                    let model = 
+                      {
+                        model with 
+                          yRange = newRange
+                      }
+                    let model =
+                      {
+                        model with
+                          logs   = model.logs 
+                                    |> PList.map (fun log -> 
+                                                    (GeologicalLog.update log (GeologicalLog.UpdateYOffset (yToSvg model log.range.min))) //TODO refactor
+                                                 ) 
+                      }
                     (model, yToSvg model newRange.min)
 
               let (newLog, mapping) = 
@@ -238,12 +251,20 @@
                     model.semanticApp 
                     xAxis 
                     yOffset
-                    (model.svgOptions.logHeight - yOffset))
-              {model with 
-                creatingNew    = false
-                xAxis          = xAxis
-                logs           = (model.logs.Append newLog)
-                selectedPoints = List<(V3d * Annotation)>.Empty}
+                    (model.svgOptions.logHeight - yOffset)
+                    model.currrentYMapping)
+              let mapping =
+                match model.logs.Count with
+                  | 0 -> Some mapping
+                  | _ -> model.currrentYMapping
+              {
+                model with 
+                  creatingNew      = false
+                  xAxis            = xAxis
+                  logs             = (model.logs.Append newLog)
+                  selectedPoints   = List<(V3d * Annotation)>.Empty
+                  currrentYMapping = mapping
+              }
               //let logYOffset = model.svgOptions.toSvg (lRange.min) allLogsRange
         | DeleteLog, false             -> model
         | LogMessage (id, m), _        -> 

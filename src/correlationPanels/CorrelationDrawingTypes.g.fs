@@ -1283,6 +1283,7 @@ module Mutable =
         let _logAxisApp = MLogAxisApp.Create(__initial.logAxisApp)
         let _xAxis = ResetMod.Create(__initial.xAxis)
         let _semanticApp = MSemanticApp.Create(__initial.semanticApp)
+        let _currrentYMapping = MOption.Create(__initial.currrentYMapping)
         let _yRange = ResetMod.Create(__initial.yRange)
         
         member x.logs = _logs :> alist<_>
@@ -1300,6 +1301,7 @@ module Mutable =
         member x.logAxisApp = _logAxisApp
         member x.xAxis = _xAxis :> IMod<_>
         member x.semanticApp = _semanticApp
+        member x.currrentYMapping = _currrentYMapping :> IMod<_>
         member x.yRange = _yRange :> IMod<_>
         
         member x.Current = __current :> IMod<_>
@@ -1322,6 +1324,7 @@ module Mutable =
                 MLogAxisApp.Update(_logAxisApp, v.logAxisApp)
                 ResetMod.Update(_xAxis,v.xAxis)
                 MSemanticApp.Update(_semanticApp, v.semanticApp)
+                MOption.Update(_currrentYMapping, v.currrentYMapping)
                 ResetMod.Update(_yRange,v.yRange)
                 
         
@@ -1428,6 +1431,12 @@ module Mutable =
                     override x.Get(r) = r.semanticApp
                     override x.Set(r,v) = { r with semanticApp = v }
                     override x.Update(r,f) = { r with semanticApp = f r.semanticApp }
+                }
+            let currrentYMapping =
+                { new Lens<CorrelationDrawing.CorrelationPlot, Microsoft.FSharp.Core.Option<System.Double>>() with
+                    override x.Get(r) = r.currrentYMapping
+                    override x.Set(r,v) = { r with currrentYMapping = v }
+                    override x.Update(r,f) = { r with currrentYMapping = f r.currrentYMapping }
                 }
             let yRange =
                 { new Lens<CorrelationDrawing.CorrelationPlot, CorrelationDrawing.Rangef>() with

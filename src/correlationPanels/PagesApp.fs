@@ -52,18 +52,20 @@ module Pages =
           config {
               content (
                 // element {id "render"; title "Render View"; weight 5}
-                vertical 0.6 [
-                  element { id "controls"; title "Controls"; weight 0.1 }
-                  horizontal 0.5 [
-                    element {id "render"; title "Render View"; weight 0.4}
-                    element {id "semantics"; title "Semantics"; weight 0.6}
-//                      stack 9.0 (Some "render") [dockelement {id "render"; title "Render View"; weight 5};
-//                                                 dockelement { id "semantics"; title "Semantics"; weight 5}]
-                  ]
-                  horizontal 0.5 [
-                    element { id "svg"; title "SVG"; weight 0.5}
-                    element { id "logs"; title "Logs"; weight 0.5}
-                      //dockelement { id "annotations"; title "Annotations"; weight 1.0}
+                horizontal 0.1 [
+                  element { id "controls"; title "Controls"; weight 0.08 }
+                  vertical 0.5 [
+                    horizontal 0.5 [
+                      element {id "render"; title "Render View"; weight 0.4}
+                      element {id "semantics"; title "Semantics"; weight 0.6}
+  //                      stack 9.0 (Some "render") [dockelement {id "render"; title "Render View"; weight 5};
+  //                                                 dockelement { id "semantics"; title "Semantics"; weight 5}]
+                    ]
+                    horizontal 0.5 [
+                      element { id "svg"; title "SVG"; weight 0.5}
+                      element { id "logs"; title "Logs"; weight 0.5}
+                        //dockelement { id "annotations"; title "Annotations"; weight 1.0}
+                    ]
                   ]
                 ]
               )
@@ -251,12 +253,15 @@ module Pages =
                               [text (sprintf "Load %s" (string i.ind))])
                   //iconButton "small folder icon" (string i) (fun _ -> Load i))
 
-        div [clazz "ui simple dropdown item"]
-            [
-              i [clazz "dropdown icon"][]
-              div [clazz "menu"]
-                  inds //[div [clazz "header"][text "load"]]
-            ]
+        div [clazz "left floated item"] [
+            div [clazz "ui simple pointing dropdown top left"]
+              [ 
+                span [clazz "text"][text "Load"]
+                i [clazz "dropdown icon"][]
+                div [clazz "menu";style "margin-top: 0rem"]
+                    inds //[div [clazz "header"][text "load"]]
+              ]
+        ]
             
 
       let menuItems = [
@@ -269,13 +274,11 @@ module Pages =
       ]
 
       body [style "width: 100%; height:100%; background: transparent; overflow: auto"] [
-        div [style "vertical-align: middle"]
-            [div [
-                    clazz "ui horizontal inverted menu";
-                    style "float:middle; vertical-align: middle"
-                 ]
-                 menuItems
+        div [
+              clazz "ui vertical inverted menu"; 
+              //style "float:middle; vertical-align: middle; display: inline-block"
             ]
+            menuItems     
       ]
     
     let renderView = 
@@ -298,7 +301,7 @@ module Pages =
                   (AttributeMap.ofList [
                               onKeyDown (KeyDown)
                               onKeyUp (KeyUp)
-                              attribute "style" "width:70%; height: 100%; float: left;"]
+                              attribute "style" "width:100%; height: 100%; float: left;"]
                   )
 
                   (drawingSgList @ [annoSg; corrSg]

@@ -19,6 +19,7 @@
       | ChangeXAxis               of SemanticId
       | LogNodeMessage            of (LogNodeId * LogNode.Action)
       | SelectLogNode             of LogNodeId
+      | UpdateYOffset             of float
       
 
     module Helpers = 
@@ -46,7 +47,8 @@
             {model with nodes = model.nodes |> PList.map  (LogNode.update m)}
         | SelectLogNode n ->
             {model with nodes = model.nodes |> PList.map  (LogNode.update (LogNode.ToggleSelectNode n))}
-
+        | UpdateYOffset offset ->
+            {model with yOffset = offset}
 
     let generateNonLevelNodes (logId : LogId) (annos : plist<Annotation>) (lp, la) (up, ua) (semApp : SemanticApp) =                   
       annos 
@@ -140,13 +142,13 @@
       match lst with 
         | [] -> PList.empty
         | lst ->
-            let accHeight = lst |> List.sumBy (fun x -> (abs (Rangef.calcRange x.range)))
+            let accHeight = lst |> List.sumBy (fun x -> (abs (Rangef.calcRangeNoInf x.range)))
             let factor = height / accHeight
             let result = 
               lst
                 |> List.map (fun (x : LogNode) -> 
                               {x with svgSize = V2d.OO 
-                                              + V2d.OI * (Rangef.calcRange x.range) * factor
+                                              + V2d.OI * (Rangef.calcRangeNoInf x.range) * factor
                               }
                             )
                 |> List.scan (fun (a : LogNode) (b : LogNode) -> 
@@ -164,24 +166,27 @@
             result
 
 
-    let calcsvgPosY (logHeight : float)  (plst : plist<LogNode>) =
+    let calcsvgPosY (logHeight : float) (optMapper : option<float>) (plst : plist<LogNode>) =
       let lst = PList.toList plst
       match lst with 
-        | [] -> (PList.empty, (fun x -> x))
+        | [] -> (PList.empty, 1.0)
         | lst ->
 
-        let accHeight = lst |> List.sumBy (fun x -> (abs (Rangef.calcRange x.range)))
-        let factor = logHeight / accHeight
+        let accHeight = lst |> List.sumBy (fun x -> (abs (Rangef.calcRangeNoInf x.range)))
+        let factor = 
+          match optMapper with
+            | None -> logHeight / accHeight
+            | Some m -> m
         let result = 
           lst
             |> List.map (fun (x : LogNode) ->
                           {x with svgSize = V2d.OO 
                                              + V2d.OI
-                                             * (Rangef.calcRange x.range) 
+                                             * (Rangef.calcRangeNoInf x.range) 
                                              * factor
                                   nativeSize = V2d.OO 
                                                 + V2d.OI 
-                                                * (Rangef.calcRange x.range) 
+                                                * (Rangef.calcRangeNoInf x.range) 
                                                   
                           }
                         )
@@ -199,8 +204,7 @@
                           }
                         )
             |> PList.ofList
-        let mapping = (fun (posY : float) -> posY * factor)
-        (result, mapping)
+        (result, factor)
         //result
 
     let initial = {
@@ -219,6 +223,12 @@
       yOffset    = 0.0
     }
 
+    let printDebug nodes = 
+      nodes 
+        |> PList.map (fun (x : LogNode) -> LogNode.filterAndCollect x (fun x -> x.nodeType = LogNodeType.Hierarchical))
+        |> List.concat
+        |> List.map LogNode.Debug.print
+
     ///////////////////////////////////////////////////// GENERATE ///////////////////////////////////////////////////////////////////////
     let generate     (index     : int)
                      (lst       : List<V3d * Annotation>) 
@@ -226,7 +236,9 @@
                      (semApp    : SemanticApp)
                      (xAxis     : SemanticId) 
                      (yOffset   : float)
-                     (logHeight : float)  = 
+                     (logHeight : float)
+                     (optMapper : option<float>) = 
+
       let id = LogId.newId()
       let nodes = (generateLevel //TODO make more compact by removing debug stuff
                         id
@@ -240,9 +252,10 @@
         nodes |> PList.map LogNode.replaceInfinity
       let nodes = 
         nodes |> PList.filter LogNode.isInfinityType
-
+      
       let (nodes, yMapper) =
-        nodes |> calcsvgPosY logHeight
+        nodes |> (calcsvgPosY logHeight optMapper)
+      
       let nodes =
         nodes
            |> Helpers.calcXPosition xAxis
@@ -254,9 +267,7 @@
             printf "could not calculate log range" //TODO proper debug output
             Rangef.init
           | Some r -> r
-      //nodes3 |> PList.map (fun (x : LogNode) -> LogNode.filterAndCollect x (fun x -> x.nodeType = LogNodeType.Hierarchical))
-      //       |> List.concat
-      //       |> List.map LogNode.Debug.print
+
       let newLog = 
         {
           id          = id

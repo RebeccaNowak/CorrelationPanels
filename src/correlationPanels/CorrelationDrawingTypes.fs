@@ -56,7 +56,7 @@ module Rangef =
       max     = 0.0
     }
 
-  let calcRange (r : Rangef) =
+  let calcRangeNoInf (r : Rangef) =
     match r.max with 
       | a when a = Operators.infinity -> r.min * 1.01 //TODO HACK
       | _ -> r.max - r.min
@@ -229,7 +229,7 @@ type XAxisFunction           = Average | Minimum | Maximum
 
 [<System.FlagsAttribute>]
 type LogSvgFlags = 
-    None = 0 | BorderAnnotationColor = 1 | RadialDiagrams = 2 | Histograms = 4 | Legend = 8 | NodeLabels = 16 | LogLabels = 32 | XAxis = 64 | YAxis = 128 | EditCorrelations = 256
+    None = 0 | BorderAnnotationColor = 1 | RadialDiagrams = 2 | Histograms = 4 | Legend = 8 | NodeLabels = 16 | LogLabels = 32 | XAxis = 64 | YAxis = 128 | EditCorrelations = 256 //TODO stretchLogs
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module LogSvgFlags =
@@ -387,7 +387,8 @@ type CorrelationPlot = {
    logAxisApp          : LogAxisApp
    xAxis               : SemanticId
    semanticApp         : SemanticApp
-   yRange               : Rangef
+   currrentYMapping    : Option<float>
+   yRange              : Rangef
 }
 
 [<DomainType>]
