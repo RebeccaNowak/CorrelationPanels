@@ -18,7 +18,7 @@
 
         
     let rec createView  (offset        : float)
-                        (secondaryLvl  : int)
+                        (secondaryLvl  : (int * float))
                         (model         : MLogNode) 
                         (viewFunction  : float 
                                         -> MLogNode 
@@ -28,12 +28,12 @@
                                         )>
                         )
                         : alist<DomNode<'msg>> =
-      let breadthSec = 20.0 //TODO hardcoded
+      let (secLvlNr, breadthSec) = secondaryLvl //TODO hardcoded
       let offset =
         adaptive {
           let! lvl = model.level 
           let sLvl = secondaryLvl
-          return match (lvl = sLvl), lvl = 0 with
+          return match (lvl = secLvlNr), lvl = 0 with
                   | true, true  -> offset + breadthSec
                   | false, true -> offset + breadthSec
                   | true, false -> offset
@@ -56,7 +56,7 @@
           let! hasCs = hasChildren model
           let selfView = selfViewFunction os None
           let! lvl = model.level 
-          if lvl = secondaryLvl then
+          if lvl = secLvlNr then
             for v in (selfViewFunction 0.0 (Some breadthSec)) do yield v
           match hasCs with
             | false  -> 

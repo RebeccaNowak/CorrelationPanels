@@ -78,6 +78,62 @@
                 (LogNode.findBorder n borderId)
       (log, node, border)
 
+
+    let logXOffset (model : CorrelationPlot) (i : int) =
+      let offset =
+        match i = 0 with
+          | true ->
+            model.svgOptions.logPadding * 0.2
+          | false ->
+            model.logs
+              |> PList.toList
+              |> List.filter (fun (log : GeologicalLog) -> (log.index < i))
+              |> List.map (fun log -> log.svgMaxX + 2.0 * model.svgOptions.logPadding) //(float log.index) * 
+              |> List.reduce (fun x y -> x + y) //TODO unsafe
+      offset
+
+    let logXOffset' (model : MCorrelationPlot) (i : int) =
+      let offset = 
+        match (i=0) with //TODO assuming log with 0 index exists
+          | true ->
+            adaptive {
+              let! opts = model.svgOptions
+              return (opts.logPadding * 0.2)
+            }
+          | false ->
+            adaptive {
+              let! logs = model.logs.Content
+              let! opt = model.svgOptions
+              //let! smax (log : MGeologicalLog) = 
+              let filtered = 
+                logs
+                  |> PList.toList
+                  |> List.filter (fun (log : MGeologicalLog) -> (log.index < i))
+              let offsets : alist<float> = 
+                alist {
+                  for log in filtered do
+                    let! max = log.svgMaxX
+                    yield max + 2.0 * opt.logPadding //(float log.index) * 
+                }
+              let! offsets = offsets.Content
+              return offsets
+                      |> PList.toList
+                      |> List.reduce (fun x y -> x + y) //TODO unsafe
+            }
+      offset
+      
+    let xAxisXPosition (model : CorrelationPlot) (i : int) =
+      ((logXOffset model i) + 2.0 * model.svgOptions.secLevelWidth)
+
+    let xAxisXPosition' (model : MCorrelationPlot) (i : int) =
+      adaptive {
+        let! opt = model.svgOptions
+        let! offset = (logXOffset' model i)
+        return (offset + 2.0 * opt.secLevelWidth)
+      }
+      //let i = float i
+      //i * this.logPadding + i * this.logMaxWidth //TODO hardcoded log width
+
     let tryCalcAllLogsRange (model : CorrelationPlot) : option<Rangef> =
       match model.logs.IsEmptyOrNull() with
         | true  -> None
@@ -85,11 +141,11 @@
             let logs = model.logs
             let min =
               logs 
-                |> PList.map (fun log -> log.range.min)
+                |> PList.map (fun log -> log.nativeYRange.min)
                 |> PList.tryMinBy (fun x -> x)
             let max =
               logs 
-                |> PList.map (fun log -> log.range.max)
+                |> PList.map (fun log -> log.nativeYRange.max)
                 |> PList.tryMaxBy (fun x -> x)
             Option.map2 (fun min max -> {min = min; max = max}) min max
                
@@ -97,7 +153,23 @@
       adaptive {  
         let! opt =  model.svgOptions
         let! yRange = model.yRange
-        return  opt.logPadding + (y - yRange.min) * (opt.logHeight / yRange.range)
+        match yRange.range with
+          | 0.0 -> printf "Divide by zero: Log range is %.2f-%.2f" yRange.min yRange.max
+          | _ -> ()
+        return opt.logPadding + (yRange.max - y) * (opt.logHeight / yRange.range)
+        //opt.logPadding + (y - yRange.min) * (opt.logHeight / yRange.range)
+      }
+
+    let svgXAxisYOffset (model : MCorrelationPlot) =
+      adaptive {  
+        let! opt =  model.svgOptions
+        let! yRange = model.yRange
+        let! map = model.currrentYMapping
+        return match map with 
+                | None -> 
+                  opt.xAxisYPosition
+                | Some m -> 
+                  yRange.range * m + 2.0 * opt.logPadding
       }
 
     let yToSvg (model : CorrelationPlot) (y : float)  =
@@ -106,16 +178,16 @@
       match yRange.range with
         | 0.0 -> printf "Divide by zero: Log range is %.2f-%.2f" yRange.min yRange.max
         | _ -> ()
-      let foo = opt.logPadding + (y - yRange.min) * (opt.logHeight / yRange.range)
+      let foo = opt.logPadding + (yRange.max - y) * (opt.logHeight / yRange.range)
       foo
 
-    let correlate (model        : CorrelationPlot) 
-                  (newLogId     : LogId)
-                  (newNodeId    : LogNodeId)
-                  (newBorderId  : BorderId)
-                  (newPos       : V2d) =
+    let correlate (model                : CorrelationPlot) 
+                  (newLogId             : LogId)
+                  (newNodeId            : LogNodeId)
+                  (newBorderId          : BorderId)
+                  (newPosLogCoordinates : V2d) =
       //let logXAxisXPos i = (model.svgOptions.xAxisPosition i).X
-      let logOffset i = (model.svgOptions.logXOffset i)
+      let logOffset i = (logXOffset i)
       match model.selectedBorder with
         | Some selectedBorder ->
           match selectedBorder.logId = newLogId, selectedBorder.id = newBorderId with
@@ -131,7 +203,10 @@
                     | Some l ->
                       {
                         model with selectedBorder = // 
-                                     Some ({b with svgPosition = (new V2d (newPos.X + (logOffset l.index), newPos.Y))})
+                                     Some ({b with svgPosition = 
+                                                    (new V2d (newPosLogCoordinates.X + (logOffset model l.index),
+                                                      newPosLogCoordinates.Y + model.svgOptions.logPadding)) //WIP correlation positions are off
+                                          })
                       } //TODO toggleselect Action
             | false, true  -> //TODO debug output: this shouldn't happen
               model
@@ -146,9 +221,9 @@
                           toBorder      = {toBo with svgPosition = 
                                                       (new V2d (
                                                         toNo.svgPos.X 
-                                                          + (logOffset toLo.index) 
+                                                          + (logOffset model toLo.index) 
                                                           + 2.0 *  model.svgOptions.secLevelWidth, //2* so correlation line extends through secondary level
-                                                        newPos.Y)
+                                                        newPosLogCoordinates.Y)
                                                       )
                                           }
                         }
@@ -164,7 +239,7 @@
               | Some lo ->
                 {model with selectedBorder = 
                               (Option.map (fun x -> 
-                                ({x with svgPosition = (new V2d (newPos.X + (logOffset lo.index), newPos.Y))})) b)}
+                                ({x with svgPosition = (new V2d (newPosLogCoordinates.X + (logOffset model lo.index), newPosLogCoordinates.Y))})) b)}
             
 
     let tryCorrelate (model : CorrelationPlot) (a : Action) =
@@ -184,6 +259,65 @@
                   
 
 
+    let createNewLog (model : CorrelationPlot) =
+      let xAxis = 
+        match model.xAxis with
+          | x when  x = SemanticId.invalid -> 
+            let optS = SemanticApp.getMetricId model.semanticApp
+            match optS with
+              | Some o -> o
+              | None   -> SemanticId.invalid
+          | _ -> model.xAxis
+      let yRangeNewLog = AnnotationPoint.tryCalcRange model.annotations //TODO taking all annos in the model > filter?
+      let yRangePrev = (tryCalcAllLogsRange model)
+      let (model, yOffset) = 
+        match yRangeNewLog, yRangePrev with
+          | None, None -> (model, 0.0)
+          | None, Some pr -> 
+            let model = {model with yRange = pr}
+            (model, yToSvg model pr.max)
+          | Some lr, None ->
+            let model = {model with yRange = lr}
+            (model, yToSvg model lr.max)
+          | Some lr, Some pr -> 
+            let newRange = lr.outer(pr)
+            let model = {model with yRange = newRange}
+            let model =
+              {
+                model with
+                  logs   = model.logs 
+                            |> PList.map (fun log -> 
+                                            (GeologicalLog.update log (GeologicalLog.UpdateYOffset (yToSvg model log.nativeYRange.max))) //TODO refactor
+                                          ) 
+              }
+            (model, yToSvg model newRange.max)
+
+      let (newLog, mapping) = 
+        (GeologicalLog.generate 
+            model.logs.Count
+            model.selectedPoints
+            model.annotations  //TODO taking all annos in the system > filter?
+            model.semanticApp 
+            xAxis 
+            yOffset
+            (model.svgOptions.logHeight - yOffset)
+            (model.svgOptions.xAxisScaleFactor)
+            model.currrentYMapping)
+      let mapping =
+        match model.logs.Count with
+          | 0 -> Some mapping
+          | _ -> model.currrentYMapping
+      {
+        model with 
+          creatingNew      = false
+          xAxis            = xAxis
+          logs             = (model.logs.Append newLog)
+          selectedPoints   = List<(V3d * Annotation)>.Empty
+          currrentYMapping = mapping
+      }
+
+
+///////////////////////////////////////////////////////////// UPDATE ////////////////////////////////////////////////////
     let update (model : CorrelationPlot) 
                (action : Action) = 
                
@@ -207,64 +341,8 @@
               printf "no points in list for creating log"
               model
             | working ->
-              let xAxis = 
-                match model.xAxis with
-                  | x when  x = SemanticId.invalid -> 
-                    let optS = SemanticApp.getMetricId model.semanticApp
-                    match optS with
-                     | Some o -> o
-                     | None   -> SemanticId.invalid
-                  | _ -> model.xAxis
-              let yRangeNewLog = AnnotationPoint.tryCalcRange model.annotations //TODO taking all annos in the model > filter?
-              let yRangePrev = (tryCalcAllLogsRange model)
-              let (model, yOffset) = 
-                match yRangeNewLog, yRangePrev with
-                  | None, None -> (model, 0.0)
-                  | None, Some pr -> 
-                    let model = {model with yRange = pr}
-                    (model, yToSvg model pr.min)
-                  | Some lr, None ->
-                    let model = {model with yRange = lr}
-                    (model, yToSvg model lr.min)
-                  | Some lr, Some pr -> 
-                    let newRange = lr.outer(pr)
-                    let model = 
-                      {
-                        model with 
-                          yRange = newRange
-                      }
-                    let model =
-                      {
-                        model with
-                          logs   = model.logs 
-                                    |> PList.map (fun log -> 
-                                                    (GeologicalLog.update log (GeologicalLog.UpdateYOffset (yToSvg model log.range.min))) //TODO refactor
-                                                 ) 
-                      }
-                    (model, yToSvg model newRange.min)
-
-              let (newLog, mapping) = 
-                (GeologicalLog.generate 
-                    model.logs.Count
-                    working
-                    model.annotations  //TODO taking all annos in the system > filter?
-                    model.semanticApp 
-                    xAxis 
-                    yOffset
-                    (model.svgOptions.logHeight - yOffset)
-                    model.currrentYMapping)
-              let mapping =
-                match model.logs.Count with
-                  | 0 -> Some mapping
-                  | _ -> model.currrentYMapping
-              {
-                model with 
-                  creatingNew      = false
-                  xAxis            = xAxis
-                  logs             = (model.logs.Append newLog)
-                  selectedPoints   = List<(V3d * Annotation)>.Empty
-                  currrentYMapping = mapping
-              }
+              createNewLog model
+              
               //let logYOffset = model.svgOptions.toSvg (lRange.min) allLogsRange
         | DeleteLog, false             -> model
         | LogMessage (id, m), _        -> 
@@ -284,7 +362,8 @@
         | ChangeXAxis id, _            -> 
           let updLogs = model.logs 
                           |> PList.map (fun log -> 
-                              GeologicalLog.update log (GeologicalLog.ChangeXAxis id))
+                              GeologicalLog.update log (GeologicalLog.ChangeXAxis (id, model.svgOptions.xAxisScaleFactor))
+                                       )
           {model with xAxis    = id
                       logs     = updLogs
           }
@@ -330,14 +409,15 @@
                 | None    -> false              
             let log = logs.Item i
             let! yOffset = log.yOffset 
-            //let! lRange = log.range
+            let! lRange = log.nativeYRange
+            let! lxo = (logXOffset' model i)
             //let! logYOffset = yToSvg model (lRange.min)
             let attributes =
               match isSelected with
                 | true  -> [style "border: 2px solid yellow";]
                 | false -> []
               @ [
-                  attribute "x" (sprintf "%0.2f" (svgOptions.logXOffset i))
+                  attribute "x" (sprintf "%0.2f" lxo)
                   attribute "y" (sprintf "%0.2f" yOffset)
                 //  onMouseClick (fun _ -> ToggleSelectLog (Some log.id))
                 ]
@@ -353,20 +433,25 @@
                     )   
                     (GeologicalLog.svgView 
                       log model.svgFlags svgOptions model.secondaryLvl 
-                      (LogAxisApp.getStyle model.logAxisApp)
+                      (LogAxisApp.getStyle model.logAxisApp svgOptions.xAxisScaleFactor)
                       
                     ) 
             yield (logView |>  mapper)
-            ///
-
+            let! flags = model.svgFlags
             /// X AXIS
-            let! xAxisSvg = (LogAxisApp.svgXAxis 
-                              model.logAxisApp 
-                              (svgOptions.xAxisPosition i)
-                              svgOptions.logMaxWidth
-                              svgOptions.axisWeight
-                              semLabel) 
-            yield xAxisSvg 
+            if (LogSvgFlags.isSet LogSvgFlags.XAxis flags) then
+              let! svgMaxX = log.svgMaxX
+              let! yPos = (svgXAxisYOffset model)
+              let! xPos = (xAxisXPosition' model i)
+              let! xAxisSvg = (LogAxisApp.svgXAxis 
+                                model.logAxisApp 
+                                (new V2d(xPos, yPos))
+                                svgMaxX
+                                svgOptions.axisWeight
+                                svgOptions.xAxisScaleFactor
+                                semLabel
+                              ) 
+              yield xAxisSvg 
             ///
 
           /// CORRELATIONS

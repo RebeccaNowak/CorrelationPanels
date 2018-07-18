@@ -11,7 +11,7 @@
 
 
     type Action =
-      | ChangeXAxis       of SemanticId
+      | ChangeXAxis       of (SemanticId * float)
       | MouseOver         of LogNodeId
       | ToggleSelectNode  of LogNodeId
       | BorderMessage     of Border.Action
@@ -218,11 +218,21 @@
                       let y = y.point
                       V3d.Distance(x,y)) h t
 
-    let calcSizeX (model : LogNode) (xAxis : SemanticId) = 
+    let calcMetricValue' (n : MLogNode) =
+      let points = n.lBorder.anno.points |> AList.toList
+      let h = List.tryHead points
+      let t = List.tryLast points
+      Option.map2 (fun (x : MAnnotationPoint) (y : MAnnotationPoint) -> 
+                      let x = x.point
+                      let y = y.point
+                      V3d.Distance(x,y)) h t
+   
+
+    let calcSizeX (model : LogNode) (xAxis : SemanticId) (xAxisScaleFactor : float) = 
       let cs (node : LogNode) = 
         let metricNodes = filterAndCollect node (fun n -> n.lBorder.anno.semanticId = xAxis)
         let metricValues = metricNodes |> List.map (fun n -> calcMetricValue n)
-        let sizeX = (metricValues |> List.filterNone |> List.averageOrZero) * 30.0 //TODO hardcoded xAxisScaleFactor
+        let sizeX = (metricValues |> List.filterNone |> List.averageOrZero) * xAxisScaleFactor //TODO hardcoded xAxisScaleFactor
         {node with svgSize = (node.svgSize * V2d.OI) + (V2d.IO) * sizeX}
       apply model cs
 
@@ -239,7 +249,7 @@
     /////////////////////////////////////// UPDATE //////////////////////////////////////////
     let update  (action : Action) (model : LogNode) =
       match action with
-        | ChangeXAxis id -> calcSizeX model id
+        | ChangeXAxis (id, scaleFactor) -> calcSizeX model id scaleFactor
         | MouseOver id -> 
             model //(printf "w = %f h = %f" size.X size.Y)
         | ToggleSelectNode id -> 
@@ -304,8 +314,22 @@
                   | LogNodeType.PosInfinity
                   | LogNodeType.Hierarchical ->
                       model.nodeType |> Mod.map (fun x -> x.ToString())
-                  | LogNodeType.Angular | LogNodeType.Metric ->
-                      model.nodeType |> Mod.map (fun x -> x.ToString())
+                  | LogNodeType.Angular ->
+                      match (calcMetricValue' model) with //TODO angular
+                       | Some v -> 
+                          model.nodeType 
+                            |> Mod.map (fun x -> sprintf "%s: %.2f" (x.ToString()) v)
+                       | None -> 
+                          model.nodeType 
+                            |> Mod.map (fun x -> x.ToString())
+                  | LogNodeType.Metric ->
+                      match (calcMetricValue' model) with
+                       | Some v -> 
+                          model.nodeType 
+                            |> Mod.map (fun x -> sprintf "%s%f" (x.ToString()) v)
+                       | None -> 
+                          model.nodeType 
+                            |> Mod.map (fun x -> x.ToString())
                   | LogNodeType.Empty | LogNodeType.Infinity -> model.nodeType |> Mod.map (fun x -> x.ToString())
               )
       
@@ -347,7 +371,7 @@
                   
         adaptive {
           let! sLvl = secondaryLvl
-          return LogNodeSvg.createView 0.0 sLvl model f          
+          return LogNodeSvg.createView 0.0 (sLvl, options.secLevelWidth) model f          
         }
 
 

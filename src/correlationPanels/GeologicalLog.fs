@@ -16,21 +16,24 @@
 
     type Action =
       | CameraMessage             of ArcBallController.Message    
-      | ChangeXAxis               of SemanticId
+      | ChangeXAxis               of (SemanticId * float)
       | LogNodeMessage            of (LogNodeId * LogNode.Action)
       | SelectLogNode             of LogNodeId
       | UpdateYOffset             of float
       
 
     module Helpers = 
-      let calcXPosition (id : SemanticId) (nodes : plist<LogNode>) = 
-        let nodes = nodes |> PList.map (fun n -> LogNode.update (LogNode.ChangeXAxis id) n) 
-        let avg = nodes
+      let calcSvgXPosition (id : SemanticId) (xAxisScaleFactor : float) (nodes : plist<LogNode>)  : (plist<LogNode> * float) =
+        let nodes = nodes |> PList.map (fun n -> LogNode.update (LogNode.ChangeXAxis (id, xAxisScaleFactor)) n) 
+        let size = nodes
                     |> PList.toList
                     |> List.filter (fun n -> n.svgSize.X <> 0.0) 
                     |> List.map (fun (n : LogNode) -> n.svgSize.X)
-                    |> List.averageOrZero
-        nodes |> PList.map (fun n -> LogNode.defaultIfZero n avg)
+        let avg = size |> List.averageOrZero
+        let max = size |> List.max
+        let newNodes =
+          nodes |> PList.map (fun n -> LogNode.defaultIfZero n avg)
+        (newNodes, max)
 
       let getMinLevel ( model : MGeologicalLog) = 
         model.nodes |> AList.toList
@@ -39,8 +42,12 @@
 
     let update (model : GeologicalLog) (action : Action) =
       match action with
-        | ChangeXAxis id ->
-            {model with nodes = Helpers.calcXPosition id model.nodes} 
+        | ChangeXAxis (id, xAxisScaleFacor) ->
+            let (nodes, svgMaxX) = Helpers.calcSvgXPosition id xAxisScaleFacor model.nodes
+            {
+              model with nodes    = nodes
+                         svgMaxX  = svgMaxX
+            } 
         | CameraMessage m -> 
             {model with camera = ArcBallController.update model.camera m}
         | LogNodeMessage (id, m) -> 
@@ -214,7 +221,8 @@
       label         = "log"
       nodes         = PList.empty
       annoPoints    = []
-      range         = Rangef.init
+      nativeYRange  = Rangef.init
+      svgMaxX       = 0.0
       camera        = 
         {ArcBallController.initial with 
           view = CameraView.lookAt (2.0 * V3d.III) V3d.Zero V3d.OOI}    
@@ -237,6 +245,7 @@
                      (xAxis     : SemanticId) 
                      (yOffset   : float)
                      (logHeight : float)
+                     (xAxisScaleFactor : float)
                      (optMapper : option<float>) = 
 
       let id = LogId.newId()
@@ -256,13 +265,13 @@
       let (nodes, yMapper) =
         nodes |> (calcsvgPosY logHeight optMapper)
       
-      let nodes =
+      let (nodes, svgMaxX) =
         nodes
-           |> Helpers.calcXPosition xAxis
+           |> Helpers.calcSvgXPosition xAxis xAxisScaleFactor
 
-      let range : option<Rangef> = AnnotationPoint.tryCalcRange annos
-      let range = 
-        match range with
+      let yRange : option<Rangef> = AnnotationPoint.tryCalcRange annos
+      let yRange = 
+        match yRange with
           | None ->
             printf "could not calculate log range" //TODO proper debug output
             Rangef.init
@@ -270,19 +279,20 @@
 
       let newLog = 
         {
-          id          = id
-          index       =  index
-          isSelected  = false
-          label       = "log"
-          nodes       = nodes
-          annoPoints  = lst
-          range       = range
-          camera      = //TODO for 3D view
+          id           = id
+          index        = index
+          isSelected   = false
+          label        = "log"
+          nodes        = nodes
+          annoPoints   = lst
+          nativeYRange = yRange
+          svgMaxX      = svgMaxX 
+          camera       = //TODO for 3D view
             {ArcBallController.initial with 
               view = CameraView.lookAt (2.0 * V3d.III) V3d.Zero V3d.OOI}    
-          semanticApp = semApp
-          xAxis       = xAxis
-          yOffset     = yOffset  
+          semanticApp  = semApp
+          xAxis        = xAxis
+          yOffset      = yOffset  
         }
       (newLog, yMapper)
 

@@ -989,7 +989,6 @@ module Mutable =
         member x.id = __current.Value.id
         member x.label = __current.Value.label
         member x.defaultRange = __current.Value.defaultRange
-        member x.metricToSvgSize = __current.Value.metricToSvgSize
         member x.defaultGranularity = __current.Value.defaultGranularity
         member x.styleTemplate = __current.Value.styleTemplate
         
@@ -1031,12 +1030,6 @@ module Mutable =
                     override x.Get(r) = r.defaultRange
                     override x.Set(r,v) = { r with defaultRange = v }
                     override x.Update(r,f) = { r with defaultRange = f r.defaultRange }
-                }
-            let metricToSvgSize =
-                { new Lens<CorrelationDrawing.LogAxisConfig, System.Double>() with
-                    override x.Get(r) = r.metricToSvgSize
-                    override x.Set(r,v) = { r with metricToSvgSize = v }
-                    override x.Update(r,f) = { r with metricToSvgSize = f r.metricToSvgSize }
                 }
             let defaultGranularity =
                 { new Lens<CorrelationDrawing.LogAxisConfig, System.Double>() with
@@ -1103,7 +1096,8 @@ module Mutable =
         let _label = ResetMod.Create(__initial.label)
         let _annoPoints = ResetMod.Create(__initial.annoPoints)
         let _nodes = MList.Create(__initial.nodes, (fun v -> MLogNode.Create(v)), (fun (m,v) -> MLogNode.Update(m, v)), (fun v -> v))
-        let _range = ResetMod.Create(__initial.range)
+        let _nativeYRange = ResetMod.Create(__initial.nativeYRange)
+        let _svgMaxX = ResetMod.Create(__initial.svgMaxX)
         let _camera = Aardvark.UI.Primitives.Mutable.MCameraControllerState.Create(__initial.camera)
         let _semanticApp = MSemanticApp.Create(__initial.semanticApp)
         let _xAxis = ResetMod.Create(__initial.xAxis)
@@ -1115,7 +1109,8 @@ module Mutable =
         member x.label = _label :> IMod<_>
         member x.annoPoints = _annoPoints :> IMod<_>
         member x.nodes = _nodes :> alist<_>
-        member x.range = _range :> IMod<_>
+        member x.nativeYRange = _nativeYRange :> IMod<_>
+        member x.svgMaxX = _svgMaxX :> IMod<_>
         member x.camera = _camera
         member x.semanticApp = _semanticApp
         member x.xAxis = _xAxis :> IMod<_>
@@ -1130,7 +1125,8 @@ module Mutable =
                 ResetMod.Update(_label,v.label)
                 ResetMod.Update(_annoPoints,v.annoPoints)
                 MList.Update(_nodes, v.nodes)
-                ResetMod.Update(_range,v.range)
+                ResetMod.Update(_nativeYRange,v.nativeYRange)
+                ResetMod.Update(_svgMaxX,v.svgMaxX)
                 Aardvark.UI.Primitives.Mutable.MCameraControllerState.Update(_camera, v.camera)
                 MSemanticApp.Update(_semanticApp, v.semanticApp)
                 ResetMod.Update(_xAxis,v.xAxis)
@@ -1187,11 +1183,17 @@ module Mutable =
                     override x.Set(r,v) = { r with nodes = v }
                     override x.Update(r,f) = { r with nodes = f r.nodes }
                 }
-            let range =
+            let nativeYRange =
                 { new Lens<CorrelationDrawing.GeologicalLog, CorrelationDrawing.Rangef>() with
-                    override x.Get(r) = r.range
-                    override x.Set(r,v) = { r with range = v }
-                    override x.Update(r,f) = { r with range = f r.range }
+                    override x.Get(r) = r.nativeYRange
+                    override x.Set(r,v) = { r with nativeYRange = v }
+                    override x.Update(r,f) = { r with nativeYRange = f r.nativeYRange }
+                }
+            let svgMaxX =
+                { new Lens<CorrelationDrawing.GeologicalLog, System.Double>() with
+                    override x.Get(r) = r.svgMaxX
+                    override x.Set(r,v) = { r with svgMaxX = v }
+                    override x.Update(r,f) = { r with svgMaxX = f r.svgMaxX }
                 }
             let camera =
                 { new Lens<CorrelationDrawing.GeologicalLog, Aardvark.UI.Primitives.CameraControllerState>() with

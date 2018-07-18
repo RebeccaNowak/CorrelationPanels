@@ -292,8 +292,8 @@ type LogAxisConfig = { //TODO make dynamic
     label              : string
     [<NonIncremental>]
     defaultRange       : Rangef
-    [<NonIncremental>]
-    metricToSvgSize    : float //TODO put into svgOptions, needs to be able to handle negative numbers!
+    //[<NonIncremental>]
+    //metricToSvgSize    : float //TODO put into svgOptions, needs to be able to handle negative numbers!
     [<NonIncremental>]
     defaultGranularity : float //TODO must be positive and > 0; maybe use uint
     [<NonIncremental>]
@@ -316,16 +316,17 @@ type GeologicalLog = {
     [<NonIncremental>]
     index       : int
 
-    isSelected  : bool
-    label       : string
-    annoPoints  : list<(V3d * Annotation)>
-    nodes       : plist<LogNode>
-    range       : Rangef
-    camera      : CameraControllerState
+    isSelected   : bool
+    label        : string
+    annoPoints   : list<(V3d * Annotation)>
+    nodes        : plist<LogNode>
+    nativeYRange : Rangef
+    svgMaxX      : float
+    camera       : CameraControllerState
 
-    semanticApp : SemanticApp
-    xAxis       : SemanticId
-    yOffset     : float
+    semanticApp  : SemanticApp
+    xAxis        : SemanticId
+    yOffset      : float
 }
 
 [<DomainType>]
@@ -340,17 +341,16 @@ type SvgOptions = {
   logMaxWidth      : float
   cpWidth          : float
   secLevelWidth    : float
-  xAxisYPosition   : float
   xAxisScaleFactor : float
+  xAxisPadding     : float
   axisWeight       : float
 
 } with 
-    member this.xAxisPosition i = 
-            new V2d((this.logXOffset i) + 2.0 * this.secLevelWidth, this.xAxisYPosition)
+    //member this.xAxisXPosition i = 
+    //        ((this.logXOffset i) + 2.0 * this.secLevelWidth)
+    member this.xAxisYPosition =
+            this.logHeight + 2.0 * this.logPadding + this.xAxisPadding
 
-    member this.logXOffset i =
-            let i = float i
-            i * this.logPadding + i * this.logMaxWidth //TODO hardcoded log width
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module SvgOptions = 
@@ -361,8 +361,8 @@ module SvgOptions =
       logMaxWidth      = 250.0
       cpWidth          = 900.0
       secLevelWidth    = 20.0
-      xAxisYPosition   = 330.0 //TODO logHeight + 0.1 *lh
-      xAxisScaleFactor = 30.0 //TODO
+      xAxisScaleFactor = 30.0 //WIP
+      xAxisPadding     = 30.0
       axisWeight       = 2.0
     }
   
