@@ -7,11 +7,21 @@
     open Aardvark.Base.Rendering
     open Aardvark.UI
     open UtilitiesGUI
+
     let initial : Correlation =
       {
         fromBorder    = Border.initialEmpty
         toBorder      = Border.initialEmpty
       }
+
+    let moveDown (by : float) (model : Correlation) =
+      let add p = p + new V2d(0.0, by)
+      let f = {model.fromBorder with 
+                svgPosition = add model.fromBorder.svgPosition}
+      let t = {model.toBorder with 
+                svgPosition = add model.toBorder.svgPosition}
+      {model with fromBorder = f
+                  toBorder   = t}
 
     module Svg =
       let view (model : MCorrelation) = 

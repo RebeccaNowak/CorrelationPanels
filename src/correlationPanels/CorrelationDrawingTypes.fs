@@ -229,18 +229,41 @@ type XAxisFunction           = Average | Minimum | Maximum
 
 [<System.FlagsAttribute>]
 type LogSvgFlags = 
-    None = 0 | BorderAnnotationColor = 1 | RadialDiagrams = 2 | Histograms = 4 | Legend = 8 | NodeLabels = 16 | LogLabels = 32 | XAxis = 64 | YAxis = 128 | EditCorrelations = 256 //TODO stretchLogs
+      | None                  = 0x0000000000UL
+      | BorderAnnotationColor = 0x0000000001UL
+      | RadialDiagrams        = 0x0000000010UL 
+      | Histograms            = 0x0000000100UL 
+      | Legend                = 0x0000001000UL 
+      | NodeLabels            = 0x0000010000UL 
+      | LogLabels             = 0x0000100000UL 
+      | XAxis                 = 0x0001000000UL 
+      | YAxis                 = 0x0010000000UL 
+      | EditCorrelations      = 0x0100000000UL //TODO stretchLogs?
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module LogSvgFlags =
   let isSet (flag : LogSvgFlags) (flags : LogSvgFlags) =
-    ((flags &&& flag) = flag)
+    ((flags ||| flag) = flags)
   let parse str = //TODO make safer and more general
     ((System.Enum.Parse(typeof<LogSvgFlags>, str)) :?> LogSvgFlags)
   let toggle flag flags =
     match (isSet flag flags) with
-      | true  -> flag &&& (~~~flags)
+      | true  -> flags &&& (~~~flag)
       | false -> flag ||| flags
+
+// TEST
+//let flags = LogSvgFlags.YAxis
+//let f1 = LogSvgFlags.toggle LogSvgFlags.BorderAnnotationColor flags
+//let isSet = LogSvgFlags.isSet LogSvgFlags.BorderAnnotationColor f1
+//let f2 = LogSvgFlags.toggle LogSvgFlags.RadialDiagrams f1
+//let isSet1 = LogSvgFlags.isSet LogSvgFlags.BorderAnnotationColor f2
+//let isSet2 = LogSvgFlags.isSet LogSvgFlags.RadialDiagrams f2
+////let foo = f2 &&& (~~~LogSvgFlags.BorderAnnotationColor)
+//let f3 = LogSvgFlags.toggle LogSvgFlags.BorderAnnotationColor f2
+//let isSet3 = LogSvgFlags.isSet LogSvgFlags.BorderAnnotationColor f3
+//let isSet4 = LogSvgFlags.isSet LogSvgFlags.RadialDiagrams f3
+
+
 
 [<DomainType>]
 type LogAxisSection = {

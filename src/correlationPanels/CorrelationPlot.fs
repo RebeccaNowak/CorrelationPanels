@@ -187,7 +187,18 @@
                   (newBorderId          : BorderId)
                   (newPosLogCoordinates : V2d) =
       //let logXAxisXPos i = (model.svgOptions.xAxisPosition i).X
-      let logOffset i = (logXOffset i)
+      let calcSvgPosFrom log = 
+        (new V2d (newPosLogCoordinates.X + (logXOffset model log.index),
+                    newPosLogCoordinates.Y + log.yOffset))
+      let calcSvgPosTo toLog toNode = 
+        (new V2d (toNode.svgPos.X 
+                      + (logXOffset model toLog.index) 
+                      + 2.0 *  model.svgOptions.secLevelWidth, //2* so correlation line extends through secondary level
+                  newPosLogCoordinates.Y 
+                    + toLog.yOffset
+                 )
+        )
+
       match model.selectedBorder with
         | Some selectedBorder ->
           match selectedBorder.logId = newLogId, selectedBorder.id = newBorderId with
@@ -203,10 +214,8 @@
                     | Some l ->
                       {
                         model with selectedBorder = // 
-                                     Some ({b with svgPosition = 
-                                                    (new V2d (newPosLogCoordinates.X + (logOffset model l.index),
-                                                      newPosLogCoordinates.Y + model.svgOptions.logPadding)) //WIP correlation positions are off
-                                          })
+                                     Some ({b with svgPosition = calcSvgPosFrom l}) //WIP correlation positions are off
+                                          
                       } //TODO toggleselect Action
             | false, true  -> //TODO debug output: this shouldn't happen
               model
@@ -218,14 +227,8 @@
                       let newCorrelation : Correlation = 
                         {
                           fromBorder    = selectedBorder
-                          toBorder      = {toBo with svgPosition = 
-                                                      (new V2d (
-                                                        toNo.svgPos.X 
-                                                          + (logOffset model toLo.index) 
-                                                          + 2.0 *  model.svgOptions.secLevelWidth, //2* so correlation line extends through secondary level
-                                                        newPosLogCoordinates.Y)
-                                                      )
-                                          }
+                          toBorder      = 
+                            {toBo with svgPosition = calcSvgPosTo toLo toNo}
                         }
                       {
                         model with correlations   = model.correlations.Append newCorrelation
@@ -238,8 +241,9 @@
               | None -> model
               | Some lo ->
                 {model with selectedBorder = 
-                              (Option.map (fun x -> 
-                                ({x with svgPosition = (new V2d (newPosLogCoordinates.X + (logOffset model lo.index), newPosLogCoordinates.Y))})) b)}
+                              b |> Option.map 
+                                    (fun x -> {x with svgPosition = calcSvgPosFrom lo})
+                }
             
 
     let tryCorrelate (model : CorrelationPlot) (a : Action) =
@@ -281,14 +285,18 @@
             (model, yToSvg model lr.max)
           | Some lr, Some pr -> 
             let newRange = lr.outer(pr)
+            let diff = newRange.max - model.yRange.max
             let model = {model with yRange = newRange}
+            let newYOffset log = (yToSvg model log.nativeYRange.max)
             let model =
               {
                 model with
                   logs   = model.logs 
                             |> PList.map (fun log -> 
-                                            (GeologicalLog.update log (GeologicalLog.UpdateYOffset (yToSvg model log.nativeYRange.max))) //TODO refactor
+                                            (GeologicalLog.update log (GeologicalLog.UpdateYOffset (newYOffset log))) //TODO refactor
                                           ) 
+                  correlations = 
+                    if diff <= 0.0 then model.correlations else model.correlations |> PList.map (Correlation.moveDown (diff * model.currrentYMapping.Value)) //TODO do proper checks before using option.value
               }
             (model, yToSvg model newRange.max)
 
