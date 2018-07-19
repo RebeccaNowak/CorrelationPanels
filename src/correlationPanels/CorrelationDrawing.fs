@@ -156,7 +156,7 @@ module CorrelationDrawing =
                   | None   -> Sg.ofList [])
                 |> Sg.dynamic
             [
-              Mars.Terrain.mars [
+              Mars.Terrain.dummyMars [
                     Sg.onMouseMove (fun p -> (Action.Move p))
                     Sg.onClick(fun p -> Action.AddPoint p)
                     Sg.onLeave (fun _ -> Action.Exit)

@@ -64,9 +64,9 @@ module Rangef =
 /// CORRELATION PANELS
 
 type Projection   = Linear = 0 | Viewpoint = 1 | Sky = 2
-type GeometryType = Point = 0 | Line = 1 | Polyline = 2 | Polygon = 3 | DnS = 4 | Undefined = 5
-type SemanticType = Metric = 0 | Angular = 1 | Hierarchical = 2 | Dummy = 3 | Undefined = 4
-
+type GeometryType = Point = 0  | Line = 1      | Polyline = 2     | Polygon = 3 | DnS = 4       | Undefined = 5
+type SemanticType = Metric = 0 | Angular = 1   | Hierarchical = 2 | Dummy = 3   | Undefined = 4
+type Orientation  = Horizontal | Vertical
 
 
 ///// IDs /////////////
@@ -230,11 +230,11 @@ type XAxisFunction           = Average | Minimum | Maximum
 [<System.FlagsAttribute>]
 type LogSvgFlags = 
       | None                  = 0x0000000000UL
-      | BorderAnnotationColor = 0x0000000001UL
+      | BorderColour          = 0x0000000001UL
       | RadialDiagrams        = 0x0000000010UL 
       | Histograms            = 0x0000000100UL 
-      | Legend                = 0x0000001000UL 
-      | NodeLabels            = 0x0000010000UL 
+      //| EditLogNames          = 0x0000001000UL 
+      //| NodeLabels            = 0x0000010000UL 
       | LogLabels             = 0x0000100000UL 
       | XAxis                 = 0x0001000000UL 
       | YAxis                 = 0x0010000000UL 
@@ -365,27 +365,34 @@ type SvgOptions = {
   cpWidth          : float
   secLevelWidth    : float
   xAxisScaleFactor : float
+  yAxisScaleFactor : float
   xAxisPadding     : float
+  yAxisPadding     : float
+  yAxisStep        : float
   axisWeight       : float
 
 } with 
-    //member this.xAxisXPosition i = 
-    //        ((this.logXOffset i) + 2.0 * this.secLevelWidth)
-    member this.xAxisYPosition =
-            this.logHeight + 2.0 * this.logPadding + this.xAxisPadding
-
+    member this.xAxisYPosition logHeight =
+            logHeight + this.logPadding + this.xAxisPadding
+    member this.firstLogOffset =
+              this.logPadding * 0.5
+    member this.secLogOffset offset = //TODO find problem with 0-1 offset
+              offset + this.logPadding * 0.3
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module SvgOptions = 
   let init : SvgOptions = 
     {
-      logPadding       = 50.0
+      logPadding       = 70.0
       logHeight        = 300.0
       logMaxWidth      = 250.0
       cpWidth          = 900.0
       secLevelWidth    = 20.0
       xAxisScaleFactor = 30.0 //WIP
+      yAxisScaleFactor = 1.0 //WIP
       xAxisPadding     = 30.0
+      yAxisPadding     = 5.0 //WIP
+      yAxisStep        = 1.0
       axisWeight       = 2.0
     }
   

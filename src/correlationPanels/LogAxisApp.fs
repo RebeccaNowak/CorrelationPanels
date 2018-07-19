@@ -6,8 +6,6 @@ module LogAxisApp =
   open Aardvark.UI
   open Aardvark.Base.Incremental
   open UtilitiesGUI
-  open Aardvark.Base
-
 
   type Action = 
     | SetStyle of LogAxisConfigId
@@ -84,32 +82,77 @@ module LogAxisApp =
 
 
   
-  let makeIndexList (a : int) (step: int) (b : int) = 
+  let makeIndexList (a : float) (step: float) (b : float) = 
     seq {a.. step ..b} |> Seq.toList
 
-  let indToPos indList (mapper : float -> float) (step : int) =
-    indList|> List.map (fun x -> (float x) * (mapper (float step)))
+  let indToPos indList (mapper : float -> float) (step : float) =
+    indList|> List.map (fun x -> x * (mapper step))
 
-  let indToText indList (step : int) =
+  let indToText indList (step : float) =
     indList 
-      |> List.map (fun x -> sprintf "%i" (x * step))
+      |> List.map (fun x -> sprintf "%.0f" (x * step))
 
   let centreShift (label : string) =
     -((float label.Length) * 2.8)
 
-  let makeNrLabels' (nrList : list<int>) (txtList : list<string>) (posList : list<float>) (startPoint : V2d) =
+  let makeNrLabels' (txtList    : list<string>) 
+                    (posList    : list<float>) 
+                    (startPoint : V2d)  
+                    (dir        : Orientation) =
     seq {
-      for i in 0..((List.length nrList) - 1) do
+      for i in 0..((List.length posList) - 1) do
         let txt = (txtList.Item i)
         let shift = centreShift txt
-        yield Svg.drawText (new V2d((posList.Item i) + (startPoint.X + shift), (startPoint.Y + 15.0))) txt
+        let pos = 
+          match dir with
+            | Orientation.Horizontal ->
+              (new V2d((posList.Item i) + (startPoint.X + shift), (startPoint.Y + 15.0))) //TODO hardcoded
+            | Orientation.Vertical ->
+              (new V2d((startPoint.X - 10.0), (posList.Item i) + (startPoint.Y + shift)))
+        yield Svg.drawText pos txt dir
     } |> Seq.toList
 
-  let makeNrLabels (a : int) (step : int) (b : int) (mapper: float -> float) (startPoint : V2d) =
-    let nrList = makeIndexList a step b
-    let txtList = indToText nrList step
-    let posList = indToPos nrList mapper step
-    makeNrLabels' nrList txtList posList startPoint
+  let makeNrLabels (a : float) (step : float) (b : float) (mapper: float -> float) (startPoint : V2d) (dir : Orientation) =
+    let nrList  = (makeIndexList a step b) 
+    let (txtList, posList) =
+      match step < 0.0 with
+        | true ->
+            let txtList = (indToText nrList -step) 
+            let posList = indToPos (makeIndexList 0.0 -step (float nrList.Length - 1.0)) mapper -step
+            (txtList, posList)
+        | false ->
+            let nrList = makeIndexList a step b
+            let txtList = indToText nrList step
+            let posList = indToPos (makeIndexList 0.0 step (float nrList.Length - 1.0)) mapper step
+            (txtList, posList)
+    makeNrLabels' txtList.[0..nrList.Length-2] posList.[0..nrList.Length-2] startPoint dir
+   
+
+  let svgYAxis (svgStartPoint : V2d) 
+               (nativeYRange  : Rangef)
+               (weight        : float) 
+               (yMapping      : float) 
+               (nativeStep    : float) //TODO step is truncated to int!!
+               (label         : string) =
+      let domNodes =
+        seq {
+          // AXIS
+          let svgLength = nativeYRange.range * yMapping
+          yield Svg.drawYAxis svgStartPoint svgLength C4b.Black weight (nativeStep * yMapping)
+          let shift = centreShift label
+          // AXIS LABEL
+          yield Svg.drawText (new V2d(svgStartPoint.X - 20.0, svgStartPoint.Y + (svgLength * 0.5) + shift)) label Orientation.Vertical
+          // NR LABELS
+          let nrLabels = 
+            makeNrLabels ((nativeYRange.max + nativeYRange.range * 0.1))
+                         (-nativeStep) 
+                         (nativeYRange.min)
+                         (fun x -> x * yMapping)
+                         svgStartPoint
+                         Orientation.Vertical
+          yield! nrLabels
+        }
+      Svg.toGroup (List.ofSeq domNodes) [attribute "font-size" "10px"]
 
   let svgXAxis (template : MLogAxisApp) (startPoint : V2d) (svgLength : float) (weight : float) (xAxisScaleFactor : float) (label : IMod<string>) = 
     adaptive {
@@ -122,17 +165,13 @@ module LogAxisApp =
         match templateOpt with
           | Some t ->
               let gr = 
-                //let labelIndices = seq { 0..  (int t.defaultGranularity) .. (int (nativeLength + nativeLength * 0.1))} //(int t.defaultRange.max)} //TODO round
-                //                      |> List.ofSeq
-                //let labelPositions = labelIndices |> List.map (fun x -> (float x) * (toSvg t.defaultGranularity))
-                //let labelText = labelIndices |> List.map (fun x -> sprintf "%.0f" ((float x) * t.defaultGranularity))
                 seq {
-                  yield Svg.drawXAxis startPoint svgLength C4b.Black 2.0 (toSvg t.defaultGranularity)
+                  yield Svg.drawXAxis startPoint svgLength C4b.Black weight (toSvg t.defaultGranularity)
                   let shift = centreShift label
-                  // axis label
-                  yield Svg.drawText (new V2d(startPoint.X + (svgLength * 0.5) + shift, startPoint.Y + 45.0)) label
+                  // AXIS LABEL
+                  yield Svg.drawText (new V2d(startPoint.X + (svgLength * 0.5) + shift, startPoint.Y + 45.0)) label Orientation.Horizontal
 
-                  // text labels
+                  // AXIS SECTION LABELS
                   //filter labels: only show relevant labels
                   let visibleLabels = 
                     t.styleTemplate |> List.filter (fun s -> s.range.min < nativeLength)
@@ -140,26 +179,27 @@ module LogAxisApp =
                   for i in 0..((visibleLabels.Length) - 1) do
                     let st = (t.styleTemplate.Item i)
                     let txt = st.label
-                    //let leftShift = ((float txt.Length) * 3.0) //TODO create function
-                          
+
                     let posX = 
-                      match st.range.max, st.range.min with //TODO move into Rangef
+                      match st.range.max, st.range.min with //TODO move into Rangef?
                                     | System.Double.PositiveInfinity, _ -> (startPoint.X + (((st.range.min * 2.0) - st.range.min)) * xAxisScaleFactor) 
                                     | _, System.Double.NegativeInfinity -> startPoint.X
                                     | max,min  -> (startPoint.X + ((max - min)) * xAxisScaleFactor)
-                    yield Svg.drawText (new V2d(posX, startPoint.Y + 30.0)) txt //TODO hardcoded
+                    yield Svg.drawText (new V2d(posX, startPoint.Y + 30.0)) txt Orientation.Horizontal //TODO hardcoded
 
 
-                  //number labels
+                  //NUMBER LABELS
                   let nrLabels = 
-                    makeNrLabels 0 (int t.defaultGranularity) (int (nativeLength + nativeLength * 0.1)) toSvg startPoint
-                  yield (Svg.toGroup nrLabels [])
-                  //for i in 0..((List.length labelIndices) - 1) do
-                  //  let txt = (labelText.Item i)
-                  //  let shift = centreShift txt
-                  //  yield Svg.drawText (new V2d((labelPositions.Item i) + (startPoint.X + shift), (startPoint.Y + 15.0))) txt
+                    makeNrLabels 
+                          0.0 
+                          (t.defaultGranularity) 
+                          ((nativeLength + nativeLength * 0.1)) 
+                          toSvg 
+                          startPoint
+                          Orientation.Horizontal
+                  yield! nrLabels 
                 }
-              Svg.toGroup (List.ofSeq gr) [attribute "font-size" "10px"]
+              Svg.toGroup (List.ofSeq gr) [attribute "font-size" "10px"] //TODO hardcoded font size
           | None -> 
               Svg.drawXAxis startPoint svgLength C4b.Black 2.0 10.0
       return res

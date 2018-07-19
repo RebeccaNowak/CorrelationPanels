@@ -83,13 +83,15 @@
       let offset =
         match i = 0 with
           | true ->
-            model.svgOptions.logPadding * 0.2
+            model.svgOptions.firstLogOffset
           | false ->
-            model.logs
-              |> PList.toList
-              |> List.filter (fun (log : GeologicalLog) -> (log.index < i))
-              |> List.map (fun log -> log.svgMaxX + 2.0 * model.svgOptions.logPadding) //(float log.index) * 
-              |> List.reduce (fun x y -> x + y) //TODO unsafe
+            let offs =
+              model.logs
+                |> PList.toList
+                |> List.filter (fun (log : GeologicalLog) -> (log.index < i))
+                |> List.map (fun log -> log.svgMaxX + 2.0 * model.svgOptions.logPadding) //(float log.index) * 
+                |> List.reduce (fun x y -> x + y) //TODO unsafe
+            if i = 1 then model.svgOptions.secLogOffset offs else offs //TODO find problem with 0 and 1 offset
       offset
 
     let logXOffset' (model : MCorrelationPlot) (i : int) =
@@ -98,7 +100,7 @@
           | true ->
             adaptive {
               let! opts = model.svgOptions
-              return (opts.logPadding * 0.2)
+              return opts.firstLogOffset
             }
           | false ->
             adaptive {
@@ -120,7 +122,10 @@
                       |> PList.toList
                       |> List.reduce (fun x y -> x + y) //TODO unsafe
             }
-      offset
+      offset 
+        |> Mod.map2 (fun (opts : SvgOptions) x -> 
+                      if i = 1 then opts.secLogOffset x else x
+                    ) model.svgOptions
       
     let xAxisXPosition (model : CorrelationPlot) (i : int) =
       ((logXOffset model i) + 2.0 * model.svgOptions.secLevelWidth)
@@ -167,9 +172,9 @@
         let! map = model.currrentYMapping
         return match map with 
                 | None -> 
-                  opt.xAxisYPosition
+                  opt.xAxisYPosition opt.logHeight
                 | Some m -> 
-                  yRange.range * m + 2.0 * opt.logPadding
+                  opt.xAxisYPosition (yRange.range * m )
       }
 
     let yToSvg (model : CorrelationPlot) (y : float)  =
@@ -406,11 +411,11 @@
           let! xAxis    = model.xAxis
           let semLabel  = SemanticApp.getLabel model.semanticApp model.xAxis
           let! svgOptions = model.svgOptions
+          let! flags = model.svgFlags
+          let! sel = model.selectedLog
           /// LOGS
           
           for i in [0..length - 1] do //log in model.logs do
-            let! sel = model.selectedLog
-            
             let isSelected = 
               match sel with
                 | Some s  -> s = (logs.Item i).id
@@ -445,7 +450,7 @@
                       
                     ) 
             yield (logView |>  mapper)
-            let! flags = model.svgFlags
+            
             /// X AXIS
             if (LogSvgFlags.isSet LogSvgFlags.XAxis flags) then
               let! svgMaxX = log.svgMaxX
@@ -462,6 +467,32 @@
               yield xAxisSvg 
             ///
 
+          ///// Y AXIS FOR EACH LOG
+          //if (LogSvgFlags.isSet LogSvgFlags.YAxis flags) then
+          //  let! nativeRange = log.nativeYRange
+          //  let! yMapping = model.currrentYMapping
+          //  yield LogAxisApp.svgYAxis 
+          //          (new V2d(lxo, yOffset))
+          //          nativeRange
+          //          svgOptions.axisWeight
+          //          yMapping.Value //TODO using .Value
+          //          svgOptions.yAxisStep
+          //          "elevation" //TODO hardcoded
+          /////
+
+          if (LogSvgFlags.isSet LogSvgFlags.YAxis flags) then
+            let! nativeRange = model.yRange
+            let! yMapping = model.currrentYMapping
+            
+            yield LogAxisApp.svgYAxis 
+                    (new V2d(svgOptions.firstLogOffset * 0.8, svgOptions.logPadding))
+                    nativeRange
+                    svgOptions.axisWeight
+                    yMapping.Value //TODO using .Value
+                    svgOptions.yAxisStep
+                    "elevation" //TODO hardcoded
+
+
           /// CORRELATIONS
           let correlations = 
             model.correlations |> AList.map (fun x -> Correlation.Svg.view x)
@@ -476,7 +507,6 @@
           (model : MCorrelationPlot)
           (semanticApp : MSemanticApp) 
           (camera : MCameraControllerState) =
-
 
       adaptive {
         let! logIdOpt = model.selectedLog

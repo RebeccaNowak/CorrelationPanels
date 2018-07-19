@@ -79,17 +79,17 @@
       //  DomNode.Void<'msg> ("",(AttributeMap.ofList []))
       let debugOutput (txt : string) (selectionCallback   : list<string> -> 'msg) = 
         Svg.toGroup
-          [Svg.drawText (new V2d(5.0, 5.0)) txt]
+          [Svg.drawText (new V2d(5.0, 5.0)) txt Orientation.Horizontal]
           (Svg.Events.onClickAttribute selectionCallback)
 
       let angularNode (yPos : float) (txt : string) (selectionCallback   : list<string> -> 'msg) = 
         Svg.toGroup
-          [Svg.drawText (new V2d(5.0, 5.0)) txt]
+          [Svg.drawText (new V2d(5.0, 5.0)) txt Orientation.Horizontal]
           (Svg.Events.onClickAttribute selectionCallback)
 
       let metricNode (yPos : float) (txt : string) (selectionCallback   : list<string> -> 'msg) = 
         Svg.toGroup
-          [Svg.drawText (new V2d(5.0, 5.0)) txt]
+          [Svg.drawText (new V2d(5.0, 5.0)) txt Orientation.Horizontal]
           (Svg.Events.onClickAttribute selectionCallback)
 
       let levelToWeight (level : int) = //TODO hardcoded
@@ -181,7 +181,7 @@
         let! flags         = flags
 
         let! (uBorderColor, lBorderColor) =
-          match (LogSvgFlags.isSet LogSvgFlags.BorderAnnotationColor flags) with
+          match (LogSvgFlags.isSet LogSvgFlags.BorderColour flags) with
             | true ->
               (model.uBorder.color, model.lBorder.color) //change color to anno/color
             | false ->

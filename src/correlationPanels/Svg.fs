@@ -28,12 +28,21 @@
 
     
 
-    let drawText (a : V2d) (str : string) =
+    let drawText (a : V2d) (str : string) (orientation : Orientation) =
+      let dir = 
+        match orientation with
+          | Orientation.Vertical ->
+            [ats "glyph-orientation-vertical" "90";
+             ats "writing-mode" "tb"]
+          | Orientation.Horizontal ->
+            [ats "glyph-orientation-horizontal" "auto"]
+        
       Svg.text
-        [
-          atf "x" a.X
-          atf "y" a.Y
-        ] str
+        (dir@[
+              atf "x" a.X
+              atf "y" a.Y
+             ]
+        ) str
 
     let drawLine (a : V2d) (b : V2d) (color : C4b) (strokeWidth : float)=
       Svg.line 
@@ -166,9 +175,6 @@
             points |> List.map (fun x -> curveTo "S" x x)
         | CurveType.Elliptical ->
             points |> List.map (fun x -> curveTo "S" x x)
-
-
-
 
     let drawCircle (centre : V2d) (radius : float) (color : C4b) = 
       Svg.circle

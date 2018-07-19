@@ -5,12 +5,13 @@ open Aardvark.Base.Incremental
 open Aardvark.Base.Rendering
 open Aardvark.SceneGraph
 open Aardvark.UI
+open MBrace.FsPickler
 
 module Terrain = 
     let up = V3d.OIO
     
 
-    let mars events =
+    let dummyMars events =
         Sg.sphere 5 (Mod.constant (new C4b(254,178,76))) (Mod.constant 10.0) 
             |> Sg.shader {
                 do! DefaultSurfaces.trafo
@@ -21,6 +22,8 @@ module Terrain =
             |> Sg.noEvents
             |> Sg.withEvents events
             |> Sg.translate 0.0 10.0 0.0
+
+
 
 //open Aardvark.Opc
 
