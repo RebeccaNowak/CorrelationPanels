@@ -1,25 +1,35 @@
-FSharp.Core
+nuget FSharp.Core                          
 
-Aardvark.Base
-Aardvark.Base.Incremental
-Aardvark.Base.FSharp
+nuget Aardvark.Base                        
+nuget Aardvark.Base.Incremental            
+nuget Aardvark.Base.FSharp                 
+nuget Aardvark.Base.Essentials             
+nuget Aardvark.Service                     
+nuget Aardvark.UI                          
+nuget Aardvark.UI.Primitives               
 
-Aardvark.Base.Rendering
-Aardvark.Application.WinForms.GL
-Aardvark.Application.Slim
-Aardvark.Application.Slim.GL
-Aardvark.SceneGraph
-Aardvark.SceneGraph.IO
-Aardvark.Rendering.Text
+nuget Aardvark.Base.Rendering              
+nuget Aardvark.Application.WinForms.GL     
+nuget Aardvark.SceneGraph                  
+nuget Aardvark.SceneGraph.IO               
+nuget Aardvark.Rendering.Text              
+nuget Aardvark.Rendering.Vulkan            
+nuget Aardvark.GPGPU                       
 
-Another.Unofficial.Xilium.CefGlue
-Another.Unofficial.Xilium.CefGlue.UnpackNativeDependencies
-Another.Unofficial.Xilium.CefGlue.WindowsForms
+nuget Aardvark.Compiler.DomainTypes        
+nuget Aardvark.Compiler.DomainTypes.MSBuild
 
-Suave
+nuget FsPickler                            
+nuget FsPickler.Json                       
 
-Aardvark.Service
-Aardvark.UI
-Aardvark.UI.Primitives
-Aardvark.Compiler.DomainTypes.MSBuild
-Aardium
+nuget TurboJpegWrapper                     
+nuget Suave                                
+
+nuget Aardium                              
+
+nuget Another.Unofficial.Xilium.CefGlue                          
+nuget Another.Unofficial.Xilium.CefGlue.UnpackNativeDependencies 
+nuget Another.Unofficial.Xilium.CefGlue.WindowsForms             
+
+nuget Aardvark.SceneGraph.Opc 
+nuget Aardvark.Application.Slim

@@ -3,13 +3,14 @@ open correlationPanels
 open System
 open Aardvark.Base
 open Aardvark.Application
-open Aardvark.Application.Slim
+//open Aardvark.Application.Slim
 open Aardvark.UI
 open Aardium
 
 open Suave
 open Suave.WebPart
 open CorrelationDrawing
+open Aardvark.Application.WinForms
 
 
 [<EntryPoint; STAThread>]

@@ -5,6 +5,7 @@ open Aardvark.Base.Incremental
 open Aardvark.Base.Rendering
 open Aardvark.SceneGraph
 open Aardvark.UI
+open Aardvark.SceneGraph.Opc
 open MBrace.FsPickler
 
 module Terrain = 
@@ -23,7 +24,9 @@ module Terrain =
             |> Sg.withEvents events
             |> Sg.translate 0.0 10.0 0.0
 
-
+    let pickler = FsPickler.CreateBinarySerializer()
+    let pickle = pickler.Pickle<QTree<Patch>>
+    let unpickle = pickler.UnPickle<QTree<Patch>>
 
 //open Aardvark.Opc
 
