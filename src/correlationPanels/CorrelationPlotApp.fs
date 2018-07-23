@@ -47,10 +47,10 @@
           //  }
 
           let flagButtons =
-            let names = System.Enum.GetNames(typeof<LogSvgFlags>)
+            let names = System.Enum.GetNames(typeof<SvgFlags>)
             seq {
               for str in names.[1..names.Length-1] do
-                let e = LogSvgFlags.parse str
+                let e = Flags.parse str
                 yield (toggleButton str (fun p -> CorrelationPlot.ToggleFlag e)) //|> UI.map CorrelationPlotMessage
             } |> List.ofSeq
 

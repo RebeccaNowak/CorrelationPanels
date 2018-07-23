@@ -26,6 +26,7 @@ module CorrelationDrawing =
         //annotations = plist.Empty
         exportPath = @"."
        // log = GeologicalLog.intial (Guid.NewGuid().ToString()) plist<AnnotationPoint * Annotation>.Empty
+        flags = SgFlags.None
     }
 
     type Action =
@@ -124,8 +125,18 @@ module CorrelationDrawing =
                     model
             | _ -> model
 
- 
+ ///////////// MARS
+    //let sky = Mars.Terrain.up
+    let patchBB = Mars.Terrain.patchBB()
+
+
+
+    //|> Sg.andAlso terrain
+
+ //////////////////
     module Sg =        
+
+        
         let computeScale (view : IMod<CameraView>) (p:IMod<V3d>) (size:float) =
             adaptive {
                 let! p = p
@@ -145,25 +156,36 @@ module CorrelationDrawing =
        
         let view (model         : MCorrelationDrawingModel)
                  (semanticApp   : MSemanticApp) 
-                 (cam           : IMod<CameraView>)  =           
-
-            let sgWorking = 
-              model.working |> Mod.map (fun x ->
-                match x with
-                  | Some a -> (Annotation.Sg.view a cam semanticApp) 
-                                |> ASet.map (fun sg -> sg |> Sg.map AnnotationMessage)
-                                |> Sg.set
-                  | None   -> Sg.ofList [])
-                |> Sg.dynamic
-            [
-              Mars.Terrain.dummyMars [
-                    Sg.onMouseMove (fun p -> (Action.Move p))
-                    Sg.onClick(fun p -> Action.AddPoint p)
-                    Sg.onLeave (fun _ -> Action.Exit)
-                  ]
-              sgWorking
-              makeBrushSg model.hoverPosition (SemanticApp.getColor semanticApp semanticApp.selectedSemantic);
-            ]
+                 (cam           : IMod<CameraView>)  =      
+          let marsSg =
+            //model.flags 
+            //  |> Mod.map 
+            //    (fun flags ->
+                  let events = 
+                    [
+                        Sg.onMouseMove (fun p -> (Action.Move p))
+                        Sg.onClick(fun p -> Action.AddPoint p)
+                        Sg.onLeave (fun _ -> Action.Exit)
+                    ]
+            //      match Flags.isSet SgFlags.TestTerrain flags with
+            //        | true ->
+                  Mars.Terrain.dummyMars events
+                //    | false ->
+                //      Mars.Terrain.getRealMars events
+                //) |> Sg.dynamic
+          let sgWorking = 
+            model.working |> Mod.map (fun x ->
+              match x with
+                | Some a -> (Annotation.Sg.view a cam semanticApp) 
+                              |> ASet.map (fun sg -> sg |> Sg.map AnnotationMessage)
+                              |> Sg.set
+                | None   -> Sg.ofList [])
+              |> Sg.dynamic
+          [
+            marsSg
+            sgWorking
+            makeBrushSg model.hoverPosition (SemanticApp.getColor semanticApp semanticApp.selectedSemantic);
+          ]
             
             
             

@@ -175,31 +175,63 @@
       lst |> PList.maxMapBy (fun p -> p.uBorder) (fun p -> Border.calcElevation p.uBorder)
       
 
-    let rec replaceInfinity (model : LogNode) =
-      match model.children.IsEmpty(), model.nodeType with
-        | true, _ -> model
-        | false, LogNodeType.NegInfinity -> 
-              let children   = model.children |> PList.map (fun c -> replaceInfinity c)   
+    let isBorderInf (n : LogNode) =
+      (n.lBorder.borderType = BorderType.PositiveInfinity)
+      ||
+      (n.lBorder.borderType = BorderType.NegativeInfinity)
+      ||
+      (n.uBorder.borderType = BorderType.NegativeInfinity)
+      ||
+      (n.uBorder.borderType = BorderType.PositiveInfinity)
+
+
+    let isInfinityTypeLeaf (model : LogNode) =
+      let noChildren = (model.children.IsEmpty())
+      let infType = (model.nodeType = LogNodeType.NegInfinity || model.nodeType = LogNodeType.PosInfinity)
+      let notDataNode = (model.nodeType <> LogNodeType.Angular && model.nodeType <> LogNodeType.Metric)
+      let infBorder = isBorderInf model
+      (noChildren && infType && notDataNode)
+        
+      
+
+    let rec replaceInfinity (model : LogNode) : (LogNode) =
+      let (newNode) =
+        match not (isInfinityTypeLeaf model), model.children.IsEmpty(), model.nodeType with
+          | true, true, _  -> model //(model, false)
+          | true, false, LogNodeType.NegInfinity -> 
+            let children   = model.children 
+                               |> PList.filter (fun n -> not (isInfinityTypeLeaf n))
+                               |> PList.map (fun c -> replaceInfinity c)   
+            if children.IsEmpty() then model else
               let lb = findLowestBorder children
               {model with lBorder = {lb with nodeId = model.id}
                           children  = children
                           nodeType  = LogNodeType.Hierarchical
               }
-        | false, LogNodeType.PosInfinity ->
-              let children   = model.children |> PList.map (fun c -> replaceInfinity c)   
+            
+          | true, false, LogNodeType.PosInfinity ->
+            let children   = model.children 
+                              |> PList.filter (fun n -> not (isInfinityTypeLeaf n))
+                              |> PList.map (fun c -> replaceInfinity c)   
+            if children.IsEmpty() then model else
               let ub = findHighestBorder children
               {model with uBorder = {ub with nodeId = model.id}
                           children  = children
                           nodeType  = LogNodeType.Hierarchical
               }
-        | _ , _ -> model
+          | _, _ , _ -> (model)
+      (newNode)
 
+    let replaceInfinity' (nodes : plist<LogNode>) : plist<LogNode> =
+      let nodes1 = 
+        nodes
+          |> PList.map replaceInfinity
+      let nodes2 = 
+        nodes1
+          |> PList.filter (fun n -> not (isInfinityTypeLeaf n))
+      nodes2
+      
 
-    let isInfinityType (model : LogNode) =
-      match model.nodeType with 
-        | LogNodeType.NegInfinity
-        | LogNodeType.PosInfinity -> false
-        | _ -> true
 
     let findBorder (model : LogNode) (id : BorderId) =
       match model.lBorder.id = id, model.uBorder.id = id with
@@ -326,7 +358,7 @@
                       match (calcMetricValue' model) with
                        | Some v -> 
                           model.nodeType 
-                            |> Mod.map (fun x -> sprintf "%s%f" (x.ToString()) v)
+                            |> Mod.map (fun x -> sprintf "%s: %.2f" (x.ToString()) v)
                        | None -> 
                           model.nodeType 
                             |> Mod.map (fun x -> x.ToString())
@@ -361,7 +393,7 @@
       let view  (model        : MLogNode) 
                 (secondaryLvl : IMod<int>)
                 //(viewType     : IMod<CorrelationPlotViewType>)
-                (flags        : IMod<LogSvgFlags>)
+                (flags        : IMod<SvgFlags>)
                 (options      : SvgOptions)
                 (styleFun     : float -> IMod<LogAxisSection>) =
         let f = LogNodeSvg.getDomNodeFunction 

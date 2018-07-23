@@ -29,8 +29,9 @@
                     |> PList.toList
                     |> List.filter (fun n -> n.svgSize.X <> 0.0) 
                     |> List.map (fun (n : LogNode) -> n.svgSize.X)
+        //TODO if list empty
         let avg = size |> List.averageOrZero
-        let max = size |> List.max
+        let max = size |> List.max //TODO Unsafe!
         let newNodes =
           nodes |> PList.map (fun n -> LogNode.defaultIfZero n avg)
         (newNodes, max)
@@ -258,9 +259,10 @@
                         (Border.initPosInf id)
                    )
       let nodes = 
-        nodes |> PList.map LogNode.replaceInfinity
-      let nodes = 
-        nodes |> PList.filter LogNode.isInfinityType
+        nodes 
+          |> LogNode.replaceInfinity'
+      //let nodes = 
+      //  nodes |> PList.filter LogNode.isInfinityTypeLeaf
       
       let (nodes, yMapper) =
         nodes |> (calcsvgPosY logHeight optMapper)
@@ -326,7 +328,7 @@
 
     let svgView (model        : MGeologicalLog) 
                // (viewType     : IMod<CorrelationPlotViewType>) 
-                (flags        : IMod<LogSvgFlags>)
+                (flags        : IMod<SvgFlags>)
                 (svgOptions   : SvgOptions)
                 (secondaryLvl : IMod<int>)
                 (styleFun     : float -> IMod<LogAxisSection>) 

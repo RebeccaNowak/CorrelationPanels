@@ -23,7 +23,7 @@
       | NoMessage              of obj
       | ToggleEditCorrelations
       | SetSecondaryLevel      of int
-      | ToggleFlag             of LogSvgFlags
+      | ToggleFlag             of SvgFlags
 
 
     //let logOffset (index : int) =
@@ -40,7 +40,7 @@
         secondaryLvl        = 1
         creatingNew         = false
         viewType            = CorrelationPlotViewType.LogView
-        svgFlags            = LogSvgFlags.None
+        svgFlags            = SvgFlags.None
         svgOptions          = SvgOptions.init
         logAxisApp          = LogAxisApp.initial
         xAxis               = SemanticId.invalid
@@ -385,7 +385,7 @@
         | SetSecondaryLevel lvl, _    -> 
           {model with secondaryLvl = lvl}
         | ToggleFlag f, _ ->
-          {model with svgFlags = LogSvgFlags.toggle f model.svgFlags}
+          {model with svgFlags = Flags.toggle f model.svgFlags}
         | _,_                         -> model
         
 
@@ -452,7 +452,7 @@
             yield (logView |>  mapper)
             
             /// X AXIS
-            if (LogSvgFlags.isSet LogSvgFlags.XAxis flags) then
+            if (Flags.isSet SvgFlags.XAxis flags) then
               let! svgMaxX = log.svgMaxX
               let! yPos = (svgXAxisYOffset model)
               let! xPos = (xAxisXPosition' model i)
@@ -480,7 +480,7 @@
           //          "elevation" //TODO hardcoded
           /////
 
-          if (LogSvgFlags.isSet LogSvgFlags.YAxis flags) then
+          if (Flags.isSet SvgFlags.YAxis flags) then
             let! nativeRange = model.yRange
             let! yMapping = model.currrentYMapping
             

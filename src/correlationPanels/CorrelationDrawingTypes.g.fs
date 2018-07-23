@@ -1405,7 +1405,7 @@ module Mutable =
                     override x.Update(r,f) = { r with viewType = f r.viewType }
                 }
             let svgFlags =
-                { new Lens<CorrelationDrawing.CorrelationPlot, CorrelationDrawing.LogSvgFlags>() with
+                { new Lens<CorrelationDrawing.CorrelationPlot, CorrelationDrawing.SvgFlags>() with
                     override x.Get(r) = r.svgFlags
                     override x.Set(r,v) = { r with svgFlags = v }
                     override x.Update(r,f) = { r with svgFlags = f r.svgFlags }
@@ -1503,6 +1503,7 @@ module Mutable =
         let _projection = ResetMod.Create(__initial.projection)
         let _geometry = ResetMod.Create(__initial.geometry)
         let _exportPath = ResetMod.Create(__initial.exportPath)
+        let _flags = ResetMod.Create(__initial.flags)
         
         member x.isDrawing = _isDrawing :> IMod<_>
         member x.hoverPosition = _hoverPosition :> IMod<_>
@@ -1510,6 +1511,7 @@ module Mutable =
         member x.projection = _projection :> IMod<_>
         member x.geometry = _geometry :> IMod<_>
         member x.exportPath = _exportPath :> IMod<_>
+        member x.flags = _flags :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : CorrelationDrawing.CorrelationDrawingModel) =
@@ -1522,6 +1524,7 @@ module Mutable =
                 ResetMod.Update(_projection,v.projection)
                 ResetMod.Update(_geometry,v.geometry)
                 ResetMod.Update(_exportPath,v.exportPath)
+                ResetMod.Update(_flags,v.flags)
                 
         
         static member Create(__initial : CorrelationDrawing.CorrelationDrawingModel) : MCorrelationDrawingModel = MCorrelationDrawingModel(__initial)
@@ -1573,6 +1576,12 @@ module Mutable =
                     override x.Get(r) = r.exportPath
                     override x.Set(r,v) = { r with exportPath = v }
                     override x.Update(r,f) = { r with exportPath = f r.exportPath }
+                }
+            let flags =
+                { new Lens<CorrelationDrawing.CorrelationDrawingModel, CorrelationDrawing.SgFlags>() with
+                    override x.Get(r) = r.flags
+                    override x.Set(r,v) = { r with flags = v }
+                    override x.Update(r,f) = { r with flags = f r.flags }
                 }
     
     

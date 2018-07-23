@@ -7,8 +7,11 @@ open Aardvark.UI
 open Aardvark.UI.Primitives
 open Aardvark.SceneGraph
 open Aardvark.Base
+open System
 
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// BEGIN GUI
 
 [<DomainType>]
@@ -31,9 +34,9 @@ type DropdownList<'a> = {
  } 
 
 /// END GUI
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // BEGIN GENERAL
+
 type Rangef = {
   min     : float
   max     : float
@@ -61,7 +64,76 @@ module Rangef =
       | a when a = Operators.infinity -> r.min * 1.01 //TODO HACK
       | _ -> r.max - r.min
 
-/// CORRELATION PANELS
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//FLAGS
+
+type AppFlags =
+  | None                  = 0b0000000000
+  | TestTerrain           = 0b0000000001
+  | ShowDebugView         = 0b0000000010
+  //| Correlations          = 0b0000000100
+
+type SgFlags = 
+  | None                  = 0b0000000000
+  | Logs                  = 0b0000000001
+  | Correlations          = 0b0000000010
+//| Correlations          = 0b0000000100
+//| Correlations          = 0b0000001000
+  
+
+type SvgFlags = 
+  | None                  = 0b0000000000
+  | BorderColour          = 0b0000000001
+  | RadialDiagrams        = 0b0000000010 
+  | Histograms            = 0b0000000100 
+    //| EditLogNames          = 0b0000001000
+  | LogLabels             = 0b0000100000 
+  | XAxis                 = 0b0001000000 
+  | YAxis                 = 0b0010000000 
+  | EditCorrelations      = 0b0100000000 //TODO stretchLogs?
+
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Flags =
+  //let isSet (flag  : 'a when 'a : (static member (|||) : 'a * 'a -> 'a) and 'a : equality)
+  //          (flags : 'a when 'a : (static member (|||) : 'a * 'a -> 'a) and 'a : equality) =
+  let isSet flag flags =
+    let flagVal = Microsoft.FSharp.Core.LanguagePrimitives.EnumToValue(flag)
+    let flagsVal = Microsoft.FSharp.Core.LanguagePrimitives.EnumToValue(flags)
+    (flagsVal ||| flagVal) = flagsVal
+
+  let parse str = //TODO make safer
+    ((System.Enum.Parse(typeof<'a>, str)) :?> 'a)
+
+  let toggle (flag : 'a) (flags : 'a) = //(flag : 'a when 'a:enum<int32>) (flags : 'a when 'a : enum<int32>) : 'a when 'a : enum<int32> =
+    let flagVal = Microsoft.FSharp.Core.LanguagePrimitives.EnumToValue(flag)
+    let flagsVal = Microsoft.FSharp.Core.LanguagePrimitives.EnumToValue(flags)
+
+    let toggled = 
+      match (isSet flag flags) with
+        | true  -> flagsVal &&& (~~~flagVal)
+        | false -> flagVal ||| flagsVal
+    let v : 'a = Microsoft.FSharp.Core.LanguagePrimitives.EnumOfValue toggled
+    v
+
+ ////TEST
+//let flags = LogSvgFlags.YAxis
+//let f1 = Flags.toggle LogSvgFlags.BorderColour flags
+//let isSet = Flags.isSet LogSvgFlags.BorderColour f1
+//let f2 = Flags.toggle LogSvgFlags.RadialDiagrams f1
+//let isSet1 = Flags.isSet LogSvgFlags.BorderColour f2
+//let isSet2 = Flags.isSet LogSvgFlags.RadialDiagrams f2
+//let foo = f2 &&& (~~~LogSvgFlags.BorderColour)
+//let f3 = Flags.toggle LogSvgFlags.BorderColour f2
+//let isSet3 = Flags.isSet LogSvgFlags.BorderColour f3
+//let isSet4 = Flags.isSet LogSvgFlags.RadialDiagrams f3
+//let f4 = SgFlags.ShowLogCorrelations
+//let isSet5 = Flags.isSet SgFlags.ShowLogCorrelations f4
+//let a1 = FSharp.Core.LanguagePrimitives.EnumToValue f4
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type Projection   = Linear = 0 | Viewpoint = 1 | Sky = 2
 type GeometryType = Point = 0  | Line = 1      | Polyline = 2     | Polygon = 3 | DnS = 4       | Undefined = 5
@@ -69,6 +141,7 @@ type SemanticType = Metric = 0 | Angular = 1   | Hierarchical = 2 | Dummy = 3   
 type Orientation  = Horizontal | Vertical
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///// IDs /////////////
 type SemanticId = {
   id        : string 
@@ -108,6 +181,7 @@ module LogNodeId =
     {id = System.Guid.NewGuid().ToString()}
 /////
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 [<DomainType>]
 type Style = {
     color     : ColorInput
@@ -122,13 +196,8 @@ type RenderingParameters = {
 }   
     
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 type SemanticState = New | Edit | Display
-
-
-
-
-
 
 [<DomainType>]
 type Semantic = {
@@ -157,6 +226,8 @@ type Semantic = {
    creatingNew         : bool
  }
 
+
+ ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 [<DomainType>]
 type AnnotationPoint = {
   [<NonIncremental>]
@@ -198,10 +269,8 @@ type AnnotationApp = {
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 type BorderType  = PositiveInfinity | NegativeInfinity | Normal | Invalid
-
-
-
 
 [<DomainType>]
 type Border = {
@@ -226,43 +295,6 @@ type LogNodeType             = Hierarchical | HierarchicalLeaf | Metric | Angula
 type CorrelationPlotViewType = LineView | LogView | CorrelationView
 type LogNodeBoxType          = SimpleBox | TwoColorBox | FancyBox
 type XAxisFunction           = Average | Minimum | Maximum
-
-[<System.FlagsAttribute>]
-type LogSvgFlags = 
-      | None                  = 0x0000000000UL
-      | BorderColour          = 0x0000000001UL
-      | RadialDiagrams        = 0x0000000010UL 
-      | Histograms            = 0x0000000100UL 
-      //| EditLogNames          = 0x0000001000UL 
-      //| NodeLabels            = 0x0000010000UL 
-      | LogLabels             = 0x0000100000UL 
-      | XAxis                 = 0x0001000000UL 
-      | YAxis                 = 0x0010000000UL 
-      | EditCorrelations      = 0x0100000000UL //TODO stretchLogs?
-
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module LogSvgFlags =
-  let isSet (flag : LogSvgFlags) (flags : LogSvgFlags) =
-    ((flags ||| flag) = flags)
-  let parse str = //TODO make safer and more general
-    ((System.Enum.Parse(typeof<LogSvgFlags>, str)) :?> LogSvgFlags)
-  let toggle flag flags =
-    match (isSet flag flags) with
-      | true  -> flags &&& (~~~flag)
-      | false -> flag ||| flags
-
-// TEST
-//let flags = LogSvgFlags.YAxis
-//let f1 = LogSvgFlags.toggle LogSvgFlags.BorderAnnotationColor flags
-//let isSet = LogSvgFlags.isSet LogSvgFlags.BorderAnnotationColor f1
-//let f2 = LogSvgFlags.toggle LogSvgFlags.RadialDiagrams f1
-//let isSet1 = LogSvgFlags.isSet LogSvgFlags.BorderAnnotationColor f2
-//let isSet2 = LogSvgFlags.isSet LogSvgFlags.RadialDiagrams f2
-////let foo = f2 &&& (~~~LogSvgFlags.BorderAnnotationColor)
-//let f3 = LogSvgFlags.toggle LogSvgFlags.BorderAnnotationColor f2
-//let isSet3 = LogSvgFlags.isSet LogSvgFlags.BorderAnnotationColor f3
-//let isSet4 = LogSvgFlags.isSet LogSvgFlags.RadialDiagrams f3
-
 
 
 [<DomainType>]
@@ -395,8 +427,6 @@ module SvgOptions =
       yAxisStep        = 1.0
       axisWeight       = 2.0
     }
-  
-
 
 [<DomainType>]
 type CorrelationPlot = {
@@ -412,7 +442,7 @@ type CorrelationPlot = {
    secondaryLvl        : int
    creatingNew         : bool
    viewType            : CorrelationPlotViewType
-   svgFlags            : LogSvgFlags
+   svgFlags            : SvgFlags
    svgOptions          : SvgOptions
    logAxisApp          : LogAxisApp
    xAxis               : SemanticId
@@ -427,8 +457,8 @@ type CorrelationPlotApp = {
    semanticApp         : SemanticApp
 }
 
-//type AnnotationParameters = {Point:V3d;semanticId:string}
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 [<DomainType>]
 type CorrelationDrawingModel = {
     isDrawing         : bool //maybe change to state selection
@@ -437,6 +467,7 @@ type CorrelationDrawingModel = {
     projection        : Projection 
     geometry          : GeometryType
     exportPath        : string
+    flags             : SgFlags
 }
 
 //[<DomainType>]
@@ -445,6 +476,8 @@ type CorrelationDrawingModel = {
 //    drawing          : CorrelationDrawingModel 
 //}
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 type SaveType = Annotations | Semantics
 type SaveIndex =
   {
@@ -474,17 +507,6 @@ module SaveIndex =
         |> List.map int
         |> List.distinct //TODO only if sem & anno
         |> List.map (fun i -> {ind = i})
-
-
-//  //TEST
-//System.Int32.TryParse "ABC"
-//let lst = ["./001_annotations.save";"./001_semantics.save";"./002_annotations.save";"./002_semantics.save"]
-//SaveIndex.findSavedIndices lst
-//let i1 = SaveIndex.init
-//let i2 = i1.next
-//let i1s = i1.filename SaveType.Annotations
-//let i1a = i1.filename SaveType.Semantics
-//let lst = SaveIndex.findSavedIndices
 
 
 [<DomainType>]

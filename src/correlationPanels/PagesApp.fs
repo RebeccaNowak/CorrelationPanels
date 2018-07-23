@@ -35,9 +35,9 @@ module Pages =
       
 
   let initialCamera = {CameraController.initial with
-                          view = CameraView.lookAt (10.0 * Mars.Terrain.up + V3d.OOI * -20.0) 
-                                                   (10.0 * Mars.Terrain.up) 
-                                                    Mars.Terrain.up}
+                          view = CameraView.lookAt (10.0 * Mars.Terrain.upDummy + V3d.OOI * -20.0) //TODO real mars
+                                                   (10.0 * Mars.Terrain.upDummy) 
+                                                    Mars.Terrain.upDummy}
 
   let initial   = 
     let semApp  = SemanticApp.getInitialWithSamples
