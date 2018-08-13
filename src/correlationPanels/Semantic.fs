@@ -5,7 +5,7 @@ open Aardvark.Base
 open Aardvark.Base.Incremental
 open Aardvark.Base.Rendering
 open Aardvark.UI
-open UtilitiesGUI
+open UI
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Semantic = 

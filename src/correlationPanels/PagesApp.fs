@@ -9,7 +9,7 @@ module Pages =
   open Aardvark.Base
   open Aardvark.Base.Incremental
   open Aardvark.Base.Rendering
-  open UtilitiesGUI
+  open UI
   open Aardvark.Base.MultimethodTest
 
 
@@ -32,6 +32,7 @@ module Pages =
       | SetCullMode                   of CullMode
       | ToggleFill
       | TopLevelEvent
+      | ToggleFlag                    of AppFlags
       
 
   let initialCamera = {CameraController.initial with
@@ -244,6 +245,10 @@ module Pages =
 
 
   let view  (runtime : IRuntime) (model : MPages) =
+    let toggleButtons =
+      Flags.toButtons typeof<AppFlags> ToggleFlag
+
+
     let menu = 
       let menuLoad =
         let inds = 

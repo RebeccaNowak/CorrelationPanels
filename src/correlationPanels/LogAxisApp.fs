@@ -5,7 +5,7 @@ module LogAxisApp =
   open Aardvark.Base
   open Aardvark.UI
   open Aardvark.Base.Incremental
-  open UtilitiesGUI
+  open UI
 
   type Action = 
     | SetStyle of LogAxisConfigId

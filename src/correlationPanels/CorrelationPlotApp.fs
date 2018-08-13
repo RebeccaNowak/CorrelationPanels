@@ -6,7 +6,7 @@
     open Aardvark.Base
     open Aardvark.Application
     open Aardvark.UI
-    open UtilitiesGUI
+    open UI
 
     type Action =
       | CorrelationPlotMessage of CorrelationPlot.Action
@@ -120,11 +120,11 @@
                   ];
               div [clazz "item"]
                   [button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.FinishLog)] 
-                          [i [clazz "small check icon"] [] ] |> UtilitiesGUI.wrapToolTip "done"
+                          [i [clazz "small check icon"] [] ] |> UI.wrapToolTip "done"
                   ];
               div [clazz "item"]
                   [button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.DeleteLog)] 
-                          [i [clazz "small minus icon"] [] ] |> UtilitiesGUI.wrapToolTip "delete"
+                          [i [clazz "small minus icon"] [] ] |> UI.wrapToolTip "delete"
                   ]; 
             ]
 
@@ -143,7 +143,7 @@
                       div [clazz "item"][
                         div [clazz "content"] [
                           div [clazz "header"; style "text-align: center"; onMouseClick (fun _ -> CorrelationPlot.ToggleSelectLog (Some log.id))] [
-                            i [clazz "yellow arrow alternate circle down icon"] [] |> UtilitiesGUI.wrapToolTip "select"
+                            i [clazz "yellow arrow alternate circle down icon"] [] |> UI.wrapToolTip "select"
                           ]
                           div [] 
                               [

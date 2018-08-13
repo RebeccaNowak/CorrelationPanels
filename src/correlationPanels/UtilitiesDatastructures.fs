@@ -25,6 +25,12 @@ module List =
       | [] -> 0.0
       | li -> List.average li
 
+  let maxOrZero (lst : list<float>) = 
+    match lst with
+      | [] -> 0.0
+      | li -> List.max li
+
+
   let contains' (f : 'a -> bool) (lst : List<'a>)  =
     match lst with
       | []  -> false

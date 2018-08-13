@@ -6,7 +6,7 @@ open Aardvark.Base
 open Aardvark.UI
 
 
-module UtilitiesGUI = 
+module UI = 
     // GENERAL
     let colorToHexStr (color : C4b) = 
         let bytes = [| color.R; color.G; color.B |]

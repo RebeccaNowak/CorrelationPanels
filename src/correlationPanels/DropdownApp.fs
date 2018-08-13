@@ -5,7 +5,7 @@ open Aardvark.Base
 open Aardvark.Base.Incremental
 
 open Aardvark.UI
-open UtilitiesGUI
+open UI
 
 // https://semantic-ui.com/modules/dropdown.html
 //TODO use full dropdown markup for more flexible design

@@ -6,7 +6,7 @@ open Aardvark.Base.Rendering
 open Aardvark.Rendering.Text
 open Aardvark.UI
 open Aardvark.SceneGraph
-open UtilitiesGUI
+open UI
 
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]

@@ -6,7 +6,7 @@
     open Aardvark.Base
     open Aardvark.Application
     open Aardvark.UI
-    open UtilitiesGUI
+    open UI
     open Aardvark.UI.Primitives
 
     type Action = 

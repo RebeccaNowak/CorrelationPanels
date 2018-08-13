@@ -38,8 +38,7 @@
 	<Compile Include="NumericExt.fs" />
 	<Compile Include="Utilities.fs" />
 	<Compile Include="UtilitiesDatastructures.fs" />
-	<Compile Include="UI.fs" />
-	<Compile Include="Flags.fs" />
+	<Compile Include="UtilitiesGUI.fs" />
 	<Compile Include="Svg.fs" />
 	<Compile Include="Shaders.fs" />
 	<Compile Include="TextInputApp.fs" />

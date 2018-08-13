@@ -23,15 +23,17 @@
       
 
     module Helpers = 
+      open LogNode
+
       let calcSvgXPosition (id : SemanticId) (xAxisScaleFactor : float) (nodes : plist<LogNode>)  : (plist<LogNode> * float) =
         let nodes = nodes |> PList.map (fun n -> LogNode.update (LogNode.ChangeXAxis (id, xAxisScaleFactor)) n) 
         let size = nodes
                     |> PList.toList
                     |> List.filter (fun n -> n.svgSize.X <> 0.0) 
                     |> List.map (fun (n : LogNode) -> n.svgSize.X)
-        //TODO if list empty
+        if size.Length = 0 then printfn "%s" "calc svg position failed" //TODO if list empty //TODO bug/refactor
         let avg = size |> List.averageOrZero
-        let max = size |> List.max //TODO Unsafe!
+        let max = size |> List.maxOrZero
         let newNodes =
           nodes |> PList.map (fun n -> LogNode.defaultIfZero n avg)
         (newNodes, max)

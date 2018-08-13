@@ -14,7 +14,7 @@ module CorrelationDrawing =
     open Aardvark.UI.Primitives
     open Aardvark.Rendering.Text
     open Annotation
-    open UtilitiesGUI
+    open UI
     open UtilitiesDatastructures
 
     let initial : CorrelationDrawingModel = {
@@ -158,21 +158,21 @@ module CorrelationDrawing =
                  (semanticApp   : MSemanticApp) 
                  (cam           : IMod<CameraView>)  =      
           let marsSg =
-            //model.flags 
-            //  |> Mod.map 
-            //    (fun flags ->
+            model.flags 
+              |> Mod.map 
+                (fun flags ->
                   let events = 
                     [
                         Sg.onMouseMove (fun p -> (Action.Move p))
                         Sg.onClick(fun p -> Action.AddPoint p)
                         Sg.onLeave (fun _ -> Action.Exit)
                     ]
-            //      match Flags.isSet SgFlags.TestTerrain flags with
-            //        | true ->
-                  Mars.Terrain.dummyMars events
-                //    | false ->
-                //      Mars.Terrain.getRealMars events
-                //) |> Sg.dynamic
+                  match Flags.isSet SgFlags.TestTerrain flags with
+                    | true ->
+                      Mars.Terrain.dummyMars events
+                    | false ->
+                      Mars.Terrain.getRealMars events
+                ) |> Sg.dynamic
           let sgWorking = 
             model.working |> Mod.map (fun x ->
               match x with

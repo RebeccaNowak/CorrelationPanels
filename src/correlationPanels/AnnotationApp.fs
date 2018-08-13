@@ -4,7 +4,7 @@ namespace CorrelationDrawing
   open Aardvark.Base.Incremental
   open Aardvark.SceneGraph
   open Aardvark.UI
-  open UtilitiesGUI
+  open UI
 
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]

@@ -5,7 +5,7 @@
 
     open Aardvark.Base
     open Aardvark.UI
-    open UtilitiesGUI
+    open UI
     open Aardvark.Base.Incremental
     open Aardvark.SceneGraph
 

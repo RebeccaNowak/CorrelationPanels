@@ -6,7 +6,7 @@
     open Aardvark.Base.Incremental
     open Aardvark.Base.Rendering
     open Aardvark.UI
-    open UtilitiesGUI
+    open UI
 
     let initial : Correlation =
       {

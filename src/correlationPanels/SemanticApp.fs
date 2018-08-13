@@ -5,7 +5,7 @@ open Aardvark.Base.Incremental
 open Aardvark.Base
 open Aardvark.Application
 open Aardvark.UI
-open UtilitiesGUI
+open UI
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module SemanticApp = 
@@ -257,10 +257,10 @@ module SemanticApp =
            style "width:100%; height: 10%; float:middle; vertical-align: middle"][
         div [clazz "item"]
             [button [clazz "ui small icon button"; onMouseClick (fun _ -> AddSemantic)] 
-                    [i [clazz "small plus icon"] [] ] |> UtilitiesGUI.wrapToolTip "add"];
+                    [i [clazz "small plus icon"] [] ] |> UI.wrapToolTip "add"];
         div [clazz "item"]
             [button [clazz "ui small icon button"; onMouseClick (fun _ -> DeleteSemantic)] 
-                    [i [clazz "small minus icon"] [] ] |> UtilitiesGUI.wrapToolTip "delete"];
+                    [i [clazz "small minus icon"] [] ] |> UI.wrapToolTip "delete"];
         div [clazz "item"] [
           button 
             [clazz "ui small icon button"; style "width: 20ch; text-align: left"; onMouseClick (fun _ -> SortBy;)]
@@ -284,11 +284,11 @@ module SemanticApp =
                   ]
               
             yield tr 
-                    ([clazz "active";style UtilitiesGUI.tinyPadding; onClick (fun str -> SetSemantic (Some mSem.id))])
+                    ([clazz "active";style UI.tinyPadding; onClick (fun str -> SetSemantic (Some mSem.id))])
                     ((List.map (fun x -> x |> UI.map SemanticMessage) domNode))
                   
             yield tr 
-                    [clazz "active"; style UtilitiesGUI.tinyPadding]
+                    [clazz "active"; style UI.tinyPadding]
                     [td [clazz "center aligned"; style lrPadding;attribute "colspan" (sprintf "%i" domNode.Length)][menu]]
                   
           else
@@ -297,7 +297,7 @@ module SemanticApp =
             //let domNode = [td [] [text "foobar"]|> UI.map Semantic.TextInputMessage] // WORKS
             //yield tr [] [text "foobar"] // WORKS
             yield tr 
-                    ([style UtilitiesGUI.tinyPadding; onClick (fun str -> SetSemantic (Some mSem.id))]) 
+                    ([style UI.tinyPadding; onClick (fun str -> SetSemantic (Some mSem.id))]) 
                     (List.map (fun x -> x |> UI.map SemanticMessage) domNode)
 
       } 
