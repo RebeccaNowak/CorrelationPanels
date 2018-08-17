@@ -113,7 +113,11 @@ module UI =
 
     let toggleButton (str : string) (onClick : list<string> -> 'msg) = 
       Incremental.button
-        (AttributeMap.ofList ([clazz "small ui toggle button"]@(Event.toggleAttribute onClick)) )
+        (AttributeMap.ofList (
+                              [clazz "small ui toggle button";
+                               style "margin: 1px 1px 1px 1px"
+                              ]@(Event.toggleAttribute onClick)) 
+                             )
         (AList.ofList [text str])
           
 

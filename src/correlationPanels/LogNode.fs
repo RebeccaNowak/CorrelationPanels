@@ -337,6 +337,8 @@
               ])
 
         let modStr = 
+
+
           model.nodeType 
             |> Mod.bind 
               (fun t -> 
@@ -345,7 +347,14 @@
                   | LogNodeType.NegInfinity
                   | LogNodeType.PosInfinity
                   | LogNodeType.Hierarchical ->
-                      model.nodeType |> Mod.map (fun x -> x.ToString())
+                      adaptive {
+                        let! t = model.nodeType
+                        let! lower = model.lBorder.point
+                        let! upper = model.uBorder.point
+                         //|> Mod.map (fun x -> x.ToString())
+                        return sprintf "%s: %s-%s" (t.ToString ()) (String.fromV3d upper) (String.fromV3d lower)
+                      }
+                      
                   | LogNodeType.Angular ->
                       match (calcMetricValue' model) with //TODO angular
                        | Some v -> 

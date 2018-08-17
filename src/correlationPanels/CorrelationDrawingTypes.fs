@@ -71,8 +71,7 @@ module Rangef =
 
 type AppFlags =
   | None                  = 0b0000000000
-  | TestTerrain           = 0b0000000001
-  | ShowDebugView         = 0b0000000010
+  | ShowDebugView         = 0b0000000001
   
 
 type SgFlags = 
@@ -428,7 +427,7 @@ type CorrelationDrawingModel = {
     projection        : Projection 
     geometry          : GeometryType
     exportPath        : string
-    flags             : SgFlags
+   // flags             : SgFlags
 }
 
 //[<DomainType>]
@@ -479,6 +478,9 @@ type Pages =
 
         [<NonIncremental>]
         future        : Option<Pages>
+
+        appFlags      : AppFlags
+        sgFlags       : SgFlags
 
         camera        : CameraControllerState
         cullMode      : CullMode

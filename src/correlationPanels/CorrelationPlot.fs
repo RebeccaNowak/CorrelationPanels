@@ -336,10 +336,10 @@
                
       match action, model.creatingNew with
         | Clear, _                     ->
-          {model with logs = PList.empty
-                      selectedPoints      = List<(V3d * Annotation)>.Empty
-                      selectedLog         = None
-                      creatingNew         = false
+          {model with logs             = PList.empty
+                      selectedPoints   = List<(V3d * Annotation)>.Empty
+                      selectedLog      = None
+                      creatingNew      = false
           }
         | ToggleSelectLog oStr, false  -> 
           match (oStr = model.selectedLog) with

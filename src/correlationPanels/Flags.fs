@@ -9,8 +9,9 @@
       let flagsVal = Microsoft.FSharp.Core.LanguagePrimitives.EnumToValue(flags)
       (flagsVal ||| flagVal) = flagsVal
 
-    let parse str = //TODO make safer
-      ((System.Enum.Parse(typeof<'a>, str)) :?> 'a)
+    let parse (t : System.Type) str = //TODO make safer
+      //((System.Enum.Parse(typeof<'a>, str)) :?> 'a)
+      ((System.Enum.Parse(t, str)) :?> 'a)
 
     let toggle (flag : 'a) (flags : 'a) = //(flag : 'a when 'a:enum<int32>) (flags : 'a when 'a : enum<int32>) : 'a when 'a : enum<int32> =
       let flagVal = Microsoft.FSharp.Core.LanguagePrimitives.EnumToValue(flag)
@@ -24,10 +25,10 @@
       v
 
     let toButtons (t : System.Type) (toggleAction : 'a -> 'msg) =
-      let names = System.Enum.GetNames(typeof<SvgFlags>)
+      let names = System.Enum.GetNames(t)
       seq {
         for str in names.[1..names.Length-1] do
-          let e = parse str
+          let e = parse t str
           yield (UI.toggleButton str (fun p -> toggleAction e)) //|> UI.map CorrelationPlotMessage
       } |> List.ofSeq
 

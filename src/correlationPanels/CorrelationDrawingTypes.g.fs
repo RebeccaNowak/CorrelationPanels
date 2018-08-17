@@ -1503,7 +1503,6 @@ module Mutable =
         let _projection = ResetMod.Create(__initial.projection)
         let _geometry = ResetMod.Create(__initial.geometry)
         let _exportPath = ResetMod.Create(__initial.exportPath)
-        let _flags = ResetMod.Create(__initial.flags)
         
         member x.isDrawing = _isDrawing :> IMod<_>
         member x.hoverPosition = _hoverPosition :> IMod<_>
@@ -1511,7 +1510,6 @@ module Mutable =
         member x.projection = _projection :> IMod<_>
         member x.geometry = _geometry :> IMod<_>
         member x.exportPath = _exportPath :> IMod<_>
-        member x.flags = _flags :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : CorrelationDrawing.CorrelationDrawingModel) =
@@ -1524,7 +1522,6 @@ module Mutable =
                 ResetMod.Update(_projection,v.projection)
                 ResetMod.Update(_geometry,v.geometry)
                 ResetMod.Update(_exportPath,v.exportPath)
-                ResetMod.Update(_flags,v.flags)
                 
         
         static member Create(__initial : CorrelationDrawing.CorrelationDrawingModel) : MCorrelationDrawingModel = MCorrelationDrawingModel(__initial)
@@ -1577,18 +1574,14 @@ module Mutable =
                     override x.Set(r,v) = { r with exportPath = v }
                     override x.Update(r,f) = { r with exportPath = f r.exportPath }
                 }
-            let flags =
-                { new Lens<CorrelationDrawing.CorrelationDrawingModel, CorrelationDrawing.SgFlags>() with
-                    override x.Get(r) = r.flags
-                    override x.Set(r,v) = { r with flags = v }
-                    override x.Update(r,f) = { r with flags = f r.flags }
-                }
     
     
     type MPages(__initial : CorrelationDrawing.Pages) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.Pages> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.Pages>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.Pages>
         let _saveIndex = ResetMod.Create(__initial.saveIndex)
+        let _appFlags = ResetMod.Create(__initial.appFlags)
+        let _sgFlags = ResetMod.Create(__initial.sgFlags)
         let _camera = Aardvark.UI.Primitives.Mutable.MCameraControllerState.Create(__initial.camera)
         let _cullMode = ResetMod.Create(__initial.cullMode)
         let _fill = ResetMod.Create(__initial.fill)
@@ -1602,6 +1595,8 @@ module Mutable =
         member x.past = __current.Value.past
         member x.saveIndex = _saveIndex :> IMod<_>
         member x.future = __current.Value.future
+        member x.appFlags = _appFlags :> IMod<_>
+        member x.sgFlags = _sgFlags :> IMod<_>
         member x.camera = _camera
         member x.cullMode = _cullMode :> IMod<_>
         member x.fill = _fill :> IMod<_>
@@ -1618,6 +1613,8 @@ module Mutable =
                 __current.Value <- v
                 
                 ResetMod.Update(_saveIndex,v.saveIndex)
+                ResetMod.Update(_appFlags,v.appFlags)
+                ResetMod.Update(_sgFlags,v.sgFlags)
                 Aardvark.UI.Primitives.Mutable.MCameraControllerState.Update(_camera, v.camera)
                 ResetMod.Update(_cullMode,v.cullMode)
                 ResetMod.Update(_fill,v.fill)
@@ -1660,6 +1657,18 @@ module Mutable =
                     override x.Get(r) = r.future
                     override x.Set(r,v) = { r with future = v }
                     override x.Update(r,f) = { r with future = f r.future }
+                }
+            let appFlags =
+                { new Lens<CorrelationDrawing.Pages, CorrelationDrawing.AppFlags>() with
+                    override x.Get(r) = r.appFlags
+                    override x.Set(r,v) = { r with appFlags = v }
+                    override x.Update(r,f) = { r with appFlags = f r.appFlags }
+                }
+            let sgFlags =
+                { new Lens<CorrelationDrawing.Pages, CorrelationDrawing.SgFlags>() with
+                    override x.Get(r) = r.sgFlags
+                    override x.Set(r,v) = { r with sgFlags = v }
+                    override x.Update(r,f) = { r with sgFlags = f r.sgFlags }
                 }
             let camera =
                 { new Lens<CorrelationDrawing.Pages, Aardvark.UI.Primitives.CameraControllerState>() with

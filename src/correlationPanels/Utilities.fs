@@ -26,6 +26,9 @@ open Aardvark.Base.Rendering
 
 
   module String =     
+    let fromV3d (v : V3d) =
+      sprintf "(%.2f,%.2f,%.2f)" v.X v.Y v.Z
+
     let trimSharp (str : string) =
       match (str.StartsWith "#") with 
         | true  -> (str.TrimStart '#')

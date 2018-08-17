@@ -2,14 +2,15 @@
 
 //Author: Martin Riegelnegg
 
-
 open Aardvark.Base
 open Aardvark.Base.Incremental
 open Aardvark.Base.Rendering
 open Aardvark.SceneGraph
 open Aardvark.UI
+open Aardvark.UI.Primitives
 open Aardvark.SceneGraph.Opc
 open MBrace.FsPickler
+
 
 module Shader =
     
@@ -26,11 +27,17 @@ module Shader =
 }
 
 module Terrain = 
-    let upDummy = V3d.OIO
 
+////////////////////////////////////////////////////////////////////////////////////////
+  module Test =
+    let upDummy = V3d.OIO
+    let initialCameraDummy : CameraControllerState = 
+      {CameraController.initial with
+          view = CameraView.lookAt (10.0 * upDummy + V3d.OOI * -20.0) //TODO real mars
+                                    (10.0 * upDummy) 
+                                    upDummy}
 
     let dummyMars events =
-        
         Sg.sphere 5 (Mod.constant (new C4b(254,178,76))) (Mod.constant 10.0) 
             |> Sg.shader {
                 do! DefaultSurfaces.trafo
@@ -42,12 +49,16 @@ module Terrain =
             |> Sg.withEvents events
             |> Sg.translate 0.0 10.0 0.0
 
+
+////////////////////////////////////////////////////////////////////////////////////////
+
+  module CapeDesire =
     let pickler = FsPickler.CreateBinarySerializer()
     let pickle = pickler.Pickle<QTree<Patch>>
     let unpickle = pickler.UnPickle<QTree<Patch>>
 
     let patchHierarchies =
-          System.IO.Directory.GetDirectories(@"..\..\data\mars")
+          System.IO.Directory.GetDirectories(@"..\..\data\mars") //TODO make it scream
           |> Seq.collect System.IO.Directory.GetDirectories
     
     let pHs =
@@ -67,26 +78,47 @@ module Terrain =
             far                   : float
             speed                 : float
         }
-    
+
+    let capeDesireBoundingBox = Box3d.Parse("[[3376372.058677169, -325173.566694686, -121309.194857123], [3376385.170513898, -325152.282144333, -121288.943956908]]") 
+    let localToGlobal = M44d.Parse("[[1.000000000, 0.000000000, 0.000000000, 3376382.720196387], [0.000000000, 1.000000000, 0.000000000, -325150.729992706], [0.000000000, 0.000000000, 1.000000000, -121300.468943038], [0.000000000, 0.000000000, 0.000000000, 1.000000000]]")
     let mars() =
         { 
             useCompressedTextures = true
             preTransform     = Trafo3d.Identity
             patchHierarchies = patchHierarchies
-            boundingBox      = Box3d.Parse("[[3376372.058677169, -325173.566694686, -121309.194857123], [3376385.170513898, -325152.282144333, -121288.943956908]]")
+            boundingBox      = capeDesireBoundingBox
             near             = 0.1
-            far              = 10000.0
-            speed            = 3.0
+            far              = 100000.0
+            speed            = 5.0
             //lodDecider       = DefaultMetrics.mars
         }
     
     let scene = mars()
 
 
-    let upReal = scene.boundingBox.Center.Normalized
+    let upReal = V3d(0.96,0.05,0.28) //scene.boundingBox.Center.Normalized  
+    let transl = Trafo3d.Translation(-3376000.0, 325000.0, 121000.0)
+
+    let initialCamera = 
+      let r = Trafo3d.RotateInto(V3d.OOI, upReal)
+      //let cameraPosition = V3d(3376372.058677169, -325173.566694686, -121309.194857123)
+      let cameraPosition = V3d(383, -161, -308)
+
+        //r.Forward.TransformPos(
+       //   scene.boundingBox. + V3d(20.0, 0.0, 8.0) // - V3d(0.0, capeDesireBoundingBox.RangeY.Size, 0.0)
+      //  )
+      //let center = localToGlobal.TransformPos(V3d(20.0, 0.0, 8.0))
+      
+     // let camPos  = r.Forward.TransformPos( V3d(20.0, 8.0, 8.0) )
+      let center = V3d(381.50,-156.03,-300.49) //(-3376000.0, 325000.0, 121000.0)
+      let camView = CameraView.lookAt cameraPosition center upReal
+      {CameraController.initial with view = camView}
+
     let preTransform =
-        let bb = scene.boundingBox
-        Trafo3d.Translation(-bb.Center) * scene.preTransform
+        ///let bb = scene.boundingBox
+        /// Trafo3d.Translation(-bb.Center) * scene.preTransform
+        transl * scene.preTransform
+        //scene.preTransform
     
     
 
@@ -95,12 +127,6 @@ module Terrain =
         |> Sg.noEvents
         |> Sg.transform preTransform
     
-    //plane sg
-    //let mkISg() =
-    //    Box3d(V3d(-100.0, -100.0, -0.5), V3d(100.0, 100.0, 0.0))
-    //    |> Sg.box' C4b.DarkBlue
-    //    |> Sg.noEvents
-    //    |> Sg.trafo (Trafo3d.RotateInto(V3d.OOI, up) |> Mod.constant)
     
     let defaultEffects =
         [
@@ -109,14 +135,7 @@ module Terrain =
             DefaultSurfaces.diffuseTexture          |> toEffect
         ]
 
-    //plane default effects
-    //let defaultEffects =
-    //    [
-    //        DefaultSurfaces.trafo                   |> toEffect
-    //        DefaultSurfaces.constantColor C4f.White |> toEffect
-    //        DefaultSurfaces.simpleLighting          |> toEffect
-    //    ]
-    
+   
     let simpleLightingEffects =
         let col = C4f(V4d(0.8, 0.5, 0.5, 1.0))
         [
@@ -129,10 +148,9 @@ module Terrain =
     let mutable min     = V3d.III * 50000000.0
     let mutable max     = -V3d.III * 50000000.0
 
+    //let mutable totalBB = Box3d.Unit.Translated(scene.boundingBox.Center)
     let mutable totalBB = Box3d.Unit.Translated(scene.boundingBox.Center)
-    //plane bb
-    //let mutable totalBB = scene.boundingBox
-
+   
     let patchBB() = totalBB.Translated(-scene.boundingBox.Center)
     
     let buildKDTree (g : IndexedGeometry) (local2global : Trafo3d) =
@@ -219,6 +237,8 @@ module Terrain =
       mkISg ()
         |> Sg.effect defaultEffects
         |> Sg.andAlso (pickSg events)
+
+
 
 //open Aardvark.Opc
 

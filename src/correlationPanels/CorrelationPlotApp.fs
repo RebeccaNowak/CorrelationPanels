@@ -47,12 +47,7 @@
           //  }
 
           let flagButtons =
-            let names = System.Enum.GetNames(typeof<SvgFlags>)
-            seq {
-              for str in names.[1..names.Length-1] do
-                let e = Flags.parse str
-                yield (toggleButton str (fun p -> CorrelationPlot.ToggleFlag e)) //|> UI.map CorrelationPlotMessage
-            } |> List.ofSeq
+            Flags.toButtons typeof<SvgFlags> CorrelationPlot.ToggleFlag
 
           //let foo = (viewSelection |> AList.map (UI.map CorrelationPlotMessage))
           let axisSel = ((LogAxisApp.view model.correlationPlot.logAxisApp) |> AList.map (UI.map AxisMessage))

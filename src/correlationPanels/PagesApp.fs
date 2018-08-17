@@ -10,7 +10,6 @@ module Pages =
   open Aardvark.Base.Incremental
   open Aardvark.Base.Rendering
   open UI
-  open Aardvark.Base.MultimethodTest
 
 
   type Action =
@@ -32,22 +31,29 @@ module Pages =
       | SetCullMode                   of CullMode
       | ToggleFill
       | TopLevelEvent
-      | ToggleFlag                    of AppFlags
+      | ToggleAppFlag                 of AppFlags
+      | ToggleSgFlag                  of SgFlags
       
 
-  let initialCamera = {CameraController.initial with
-                          view = CameraView.lookAt (10.0 * Mars.Terrain.upDummy + V3d.OOI * -20.0) //TODO real mars
-                                                   (10.0 * Mars.Terrain.upDummy) 
-                                                    Mars.Terrain.upDummy}
+
+
+
+  //let initialCameraMars = 
+  //  let r = Trafo3d.RotateInto(V3d.OOI, Mars.Terrain.upReal)
+  //  let camPos  = r.Forward.TransformPos( V3d(8.0, 8.0, 6.0) )
+  //  let camView = CameraView.lookAt camPos V3d.OOO Mars.Terrain.upReal
+  //  {CameraController.initial with view = camView}
 
   let initial   = 
     let semApp  = SemanticApp.getInitialWithSamples
     {   
       past        = None
       future      = None
-      camera      = initialCamera
+      camera      = Mars.Terrain.CapeDesire.initialCamera
       cullMode    = CullMode.None
       fill        = true
+      appFlags    = AppFlags.None
+      sgFlags     = SgFlags.None
       rendering   = RenderingPars.initial
       dockConfig  =
           config {
@@ -83,6 +89,8 @@ module Pages =
   let tmpDebug =
     printf "%s" "PagesAppAction"
 
+
+
   let update (model : Pages) (msg : Action) = //TODO model always last?
     let updateDrawingApp =
       CorrelationDrawing.update model.drawingApp model.semanticApp
@@ -113,6 +121,19 @@ module Pages =
               annotationApp = annoApp
               corrPlotApp   = updCPA
       }
+
+    let clear model = 
+      { model with  annotationApp = updateAnnotationApp (AnnotationApp.Clear)
+                    drawingApp    = updateDrawingApp (CorrelationDrawing.Clear)
+                    corrPlotApp   = updatePlot (CorrelationPlotApp.Clear) 
+      } 
+    let centerScene model =
+      match Flags.isSet SgFlags.TestTerrain model.sgFlags with
+        | true ->
+          { model with camera = Mars.Terrain.Test.initialCameraDummy }
+        | false ->
+          { model with camera = Mars.Terrain.CapeDesire.initialCamera }
+
     match msg, model.corrPlotApp.correlationPlot.creatingNew, model.drawingApp.isDrawing with
       | KeyDown Keys.Enter, _, true ->                          
         match model.drawingApp.working with
@@ -127,6 +148,15 @@ module Pages =
             }
 
       | KeyDown k, _, _       -> 
+        match k with
+          | Keys.C -> 
+             printfn "Camera Position: %s" 
+                     (String.fromV3d model.camera.view.Location)
+             printfn "Up: %s" 
+                     (String.fromV3d model.camera.view.Up)
+             printfn "Forward: %s" 
+                     (String.fromV3d model.camera.view.Forward)
+          | _ -> ()
         {
           model with 
             drawingApp = updateDrawingApp (CorrelationDrawing.KeyDown k)
@@ -187,7 +217,7 @@ module Pages =
         {model with corrPlotApp = corrPlotApp}
 
       | CenterScene, _, _ -> 
-          { model with camera = initialCamera }
+        centerScene model
 
       | UpdateConfig cfg, _,_->
           { model with dockConfig = cfg; past = Some model }
@@ -197,6 +227,18 @@ module Pages =
 
       | ToggleFill, _,_ ->
           { model with fill = not model.fill; past = Some model }
+
+      | ToggleAppFlag f, _,_ ->
+          {model with appFlags = Flags.toggle f model.appFlags}
+
+      | ToggleSgFlag f, _,_ ->
+          let model = 
+            {model with sgFlags = Flags.toggle f model.sgFlags}
+          match (f.Equals SgFlags.TestTerrain) with
+            | true  -> model 
+                        |> clear
+                        |> centerScene
+            | false -> model
 
       | Save, false, false -> 
           let newSaveInd = model.saveIndex.next
@@ -210,10 +252,7 @@ module Pages =
           |> loadAnnotations ind
 //                  
       | Clear, _,_ -> 
-        { model with  annotationApp = updateAnnotationApp (AnnotationApp.Clear)
-                      drawingApp    = updateDrawingApp (CorrelationDrawing.Clear)
-                      corrPlotApp   = updatePlot (CorrelationPlotApp.Clear) 
-        }            
+        clear model
 
         | Undo,_,_ ->
             match model.past with
@@ -246,7 +285,7 @@ module Pages =
 
   let view  (runtime : IRuntime) (model : MPages) =
     let toggleButtons =
-      Flags.toButtons typeof<AppFlags> ToggleFlag
+      Flags.toButtons typeof<AppFlags> ToggleAppFlag
 
 
     let menu = 
@@ -269,14 +308,18 @@ module Pages =
         ]
             
 
-      let menuItems = [
-        menuLoad
-        iconButton "small save icon"          "save"    (fun _ -> Save)
-        iconButton "small file outline icon"  "clear"   (fun _ -> Clear)
-        iconButton "small external icon"      "export"  (fun _ -> Export)
-        iconButton "small arrow left icon"    "undo"    (fun _ -> Undo)
-        iconButton "small arrow right icon"   "redo"    (fun _ -> Redo)
-      ]
+      let menuItems = 
+        [
+          menuLoad
+          iconButton "small save icon"          "save"    (fun _ -> Save)
+          iconButton "small file outline icon"  "clear"   (fun _ -> Clear)
+          iconButton "small external icon"      "export"  (fun _ -> Export)
+          iconButton "small arrow left icon"    "undo"    (fun _ -> Undo)
+          iconButton "small arrow right icon"   "redo"    (fun _ -> Redo)
+          iconButton "small bullseye icon"      "centre"  (fun _ -> CenterScene)
+          div [style "padding: 2px 2px 2px 2px"] (Flags.toButtons typeof<AppFlags> ToggleAppFlag) //TODO css
+          div [style "padding: 2px 2px 2px 2px"] (Flags.toButtons typeof<SgFlags> ToggleSgFlag)
+        ] 
 
       body [style "width: 100%; height:100%; background: transparent; overflow: auto"] [
         div [
@@ -287,12 +330,24 @@ module Pages =
       ]
     
     let renderView = 
-      let annoSg         = AnnotationApp.Sg.view model.annotationApp model.semanticApp model.camera.view 
-                                       |> Sg.map AnnotationAppMessage                
-      let drawingSgList  = CorrelationDrawing.Sg.view model.drawingApp model.semanticApp model.camera.view
-                              |> List.map (fun x -> x |> Sg.map CorrelationDrawingMessage) 
-      let corrSg         = CorrelationPlot.getLogConnectionSgs model.corrPlotApp.correlationPlot model.semanticApp model.camera
-                              |> Sg.map CorrPlotMessage
+      let annoSg = 
+        (AnnotationApp.Sg.view 
+          model.annotationApp 
+          model.semanticApp 
+          model.camera.view) |> Sg.map AnnotationAppMessage   
+          
+      let drawingSgList  = 
+        (CorrelationDrawing.Sg.view 
+          model.drawingApp 
+          model.semanticApp 
+          model.camera.view 
+          model.sgFlags) |> List.map (fun x -> x |> Sg.map CorrelationDrawingMessage) 
+
+      let corrSg = 
+        (CorrelationPlot.getLogConnectionSgs 
+          model.corrPlotApp.correlationPlot 
+          model.semanticApp 
+          model.camera) |> Sg.map CorrPlotMessage
       let frustum = Mod.constant (Frustum.perspective 60.0 0.1 100.0 1.0)
       
       require (myCss) (

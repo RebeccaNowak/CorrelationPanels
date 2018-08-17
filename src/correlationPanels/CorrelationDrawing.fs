@@ -26,7 +26,7 @@ module CorrelationDrawing =
         //annotations = plist.Empty
         exportPath = @"."
        // log = GeologicalLog.intial (Guid.NewGuid().ToString()) plist<AnnotationPoint * Annotation>.Empty
-        flags = SgFlags.None
+        //flags = SgFlags.None
     }
 
     type Action =
@@ -127,7 +127,7 @@ module CorrelationDrawing =
 
  ///////////// MARS
     //let sky = Mars.Terrain.up
-    let patchBB = Mars.Terrain.patchBB()
+    //let patchBB = Mars.Terrain.CapeDesire.patchBB()
 
 
 
@@ -156,9 +156,10 @@ module CorrelationDrawing =
        
         let view (model         : MCorrelationDrawingModel)
                  (semanticApp   : MSemanticApp) 
-                 (cam           : IMod<CameraView>)  =      
+                 (cam           : IMod<CameraView>) 
+                 (sgFlags       : IMod<SgFlags>) =      
           let marsSg =
-            model.flags 
+            sgFlags 
               |> Mod.map 
                 (fun flags ->
                   let events = 
@@ -169,9 +170,9 @@ module CorrelationDrawing =
                     ]
                   match Flags.isSet SgFlags.TestTerrain flags with
                     | true ->
-                      Mars.Terrain.dummyMars events
+                      Mars.Terrain.Test.dummyMars events
                     | false ->
-                      Mars.Terrain.getRealMars events
+                      Mars.Terrain.CapeDesire.getRealMars events
                 ) |> Sg.dynamic
           let sgWorking = 
             model.working |> Mod.map (fun x ->
