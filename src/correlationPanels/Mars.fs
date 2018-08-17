@@ -97,12 +97,14 @@ module Terrain =
 
 
     let upReal = V3d(0.96,0.05,0.28) //scene.boundingBox.Center.Normalized  
-    let transl = Trafo3d.Translation(-3376000.0, 325000.0, 121000.0)
+    //let transl = Trafo3d.Translation(-3376000.0, 325000.0, 121000.0) //WORKS I
+    let transl = Trafo3d.Translation(-3376000.0, 325500.0, 121500.0)
 
     let initialCamera = 
       let r = Trafo3d.RotateInto(V3d.OOI, upReal)
       //let cameraPosition = V3d(3376372.058677169, -325173.566694686, -121309.194857123)
-      let cameraPosition = V3d(383, -161, -308)
+      //let cameraPosition = V3d(383, -161, -308) //WORKS I
+      let cameraPosition = V3d(383.0, 339.0, 192.0) //WORKS I
 
         //r.Forward.TransformPos(
        //   scene.boundingBox. + V3d(20.0, 0.0, 8.0) // - V3d(0.0, capeDesireBoundingBox.RangeY.Size, 0.0)
@@ -110,7 +112,8 @@ module Terrain =
       //let center = localToGlobal.TransformPos(V3d(20.0, 0.0, 8.0))
       
      // let camPos  = r.Forward.TransformPos( V3d(20.0, 8.0, 8.0) )
-      let center = V3d(381.50,-156.03,-300.49) //(-3376000.0, 325000.0, 121000.0)
+      //let center = V3d(381.50, 344.0, 200.0) //WORKS I
+      let center = V3d(381.50, 344.0, 200.0) //WORKS I
       let camView = CameraView.lookAt cameraPosition center upReal
       {CameraController.initial with view = camView}
 
