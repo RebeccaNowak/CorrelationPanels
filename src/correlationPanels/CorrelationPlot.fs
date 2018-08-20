@@ -35,19 +35,26 @@
         correlations        = PList.empty
         selectedBorder      = None
         editCorrelations    = false
+
         selectedPoints      = List<(V3d * Annotation)>.Empty
         selectedLog         = None
         secondaryLvl        = 1
+
         creatingNew         = false
         viewType            = CorrelationPlotViewType.LogView
+
         svgFlags            = SvgFlags.None
         svgOptions          = SvgOptions.init
+        svgOffset           = V2d.OO
+        svgZoom             = SvgZoom.defaultZoom
+
         logAxisApp          = LogAxisApp.initial
         xAxis               = SemanticId.invalid
         semanticApp         = SemanticApp.getInitialWithSamples
         annotations         = PList.empty
         yRange              = Rangef.init
         currrentYMapping    = None
+
       }
 
 
@@ -391,18 +398,25 @@
 
 
     let viewSvg (model : MCorrelationPlot) = //TODO refactor
-      let atts = 
-        AttributeMap.ofList 
-          [
-            clazz "svgRoot"
-            style "border: 1px solid black"
-            //attribute "viewBox" "0 0 600 400"
-            attribute "preserveAspectRatio" "xMinYMin meet"
-            attribute "height" "100%"
-            attribute "width" "100%"
+      let attsRoot = 
+        [
+          clazz "svgRoot"
+          style "border: 1px solid black"
+          //attribute "viewBox" "0 0 600 400"
+          attribute "preserveAspectRatio" "xMinYMin meet"
+          attribute "height" "100%"
+          attribute "width" "100%"
+        ]
 
-          ]
-      
+      let attsGroup =
+        amap {
+          let! offset = model.svgOffset
+          let! zoom   = model.svgZoom
+          let transform = sprintf "scale(%f) translate(%f %f)" zoom.zoomFactor offset.X offset.Y
+          yield attribute "transform" transform
+          
+
+        }
 
       let logSvgList =
         alist {          //TODO more elegant
@@ -501,8 +515,14 @@
             yield c
          ///
         } 
-      Incremental.Svg.svg atts logSvgList
+     //////////////////////
 
+      Svg.svg attsRoot [(Incremental.Svg.g (AttributeMap.ofAMap attsGroup) logSvgList)]
+
+                                        
+                           
+
+    //////////////////////
     let getLogConnectionSgs 
           (model : MCorrelationPlot)
           (semanticApp : MSemanticApp) 

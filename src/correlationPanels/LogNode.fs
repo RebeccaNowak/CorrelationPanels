@@ -264,7 +264,7 @@
       let cs (node : LogNode) = 
         let metricNodes = filterAndCollect node (fun n -> n.lBorder.anno.semanticId = xAxis)
         let metricValues = metricNodes |> List.map (fun n -> calcMetricValue n)
-        let sizeX = (metricValues |> List.filterNone |> List.averageOrZero) * xAxisScaleFactor //TODO hardcoded xAxisScaleFactor
+        let sizeX = (metricValues |> List.filterNone |> List.maxOrZero) * xAxisScaleFactor
         {node with svgSize = (node.svgSize * V2d.OI) + (V2d.IO) * sizeX}
       apply model cs
 

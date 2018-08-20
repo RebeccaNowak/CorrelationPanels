@@ -1,12 +1,12 @@
 ﻿namespace CorrelationDrawing
 
-  open Aardvark.UI
-  //open Aardvark.UI.Incremental.Svg
-  open Aardvark.Base
-  open Aardvark.Base.Incremental
+
 
 
   module Svg =
+    open Aardvark.UI
+    open Aardvark.Base
+    open Aardvark.Base.Incremental
 
     let margin = 5.0
     let sw = "3"
@@ -23,7 +23,7 @@
 
 
     let toGroup (content : List<DomNode<'a>>) (atts : List<Attribute<'a>>) =
-      Aardvark.UI.Incremental.Svg.g ([clazz "g"] @ atts) 
+      Aardvark.UI.Svg.g ([clazz "g"] @ atts) 
                                     content
 
     

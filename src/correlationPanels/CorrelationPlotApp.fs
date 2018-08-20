@@ -9,22 +9,74 @@
     open UI
 
     type Action =
+      | MouseDown of (MouseButtons * V2i)
+      | MouseUp of (MouseButtons * V2i)
+      | MouseMove of V2i
       | CorrelationPlotMessage of CorrelationPlot.Action
       | AxisMessage of LogAxisApp.Action
       | Clear
 
-
+    let defaultZoomFactor = 1.0
+    let defaultOffset     = V2d.OO
 
     let initial : CorrelationPlotApp  = 
       {
         correlationPlot     = CorrelationPlot.initial
         semanticApp         = SemanticApp.initial
+        zooming             = false
+        dragging            = false
+        lastMousePos        = V2i.OO
       }
 
     let update (model : CorrelationPlotApp)
                (action : Action) = 
                
       match action with
+        | MouseDown (b,p) ->
+          match b with
+            | MouseButtons.Right -> {model with dragging = true
+                                                lastMousePos = p}
+            | MouseButtons.Middle -> {model with zooming = true
+                                                 lastMousePos = p}
+            | _ -> model
+          
+        | MouseUp (b,p) -> 
+          match b with
+            | MouseButtons.Right -> {model with dragging = false
+                                                lastMousePos = p}
+            | MouseButtons.Middle -> {model with zooming = false
+                                                 lastMousePos = p}
+              
+            | _ -> model
+        | MouseMove p ->
+          match model.dragging, model.zooming with
+            | true, false ->
+              {model with 
+                correlationPlot = 
+                  {model.correlationPlot with
+                            svgOffset = model.correlationPlot.svgOffset + V2d(p - model.lastMousePos)
+                  }
+                lastMousePos = p
+              }            
+            | false, true  -> 
+              let diff = (V2d(p - model.lastMousePos))
+              let factor = diff.Length * 0.01 //TODO hardcoded zoom speed
+              let signum =
+                match diff.Y with
+                  | a when a <= 0.0  -> -1.0
+                  | b when b >  0.0  -> 1.0
+                  | _                -> 1.0
+              let deltaZoom = factor * signum
+              {model with 
+                correlationPlot = 
+                  {model.correlationPlot with //vector richtung ausrechnen
+                            svgZoom = (model.correlationPlot.svgZoom + deltaZoom)
+                  }
+                lastMousePos = p
+              }
+            | true, true -> {model with dragging = false
+                                        zooming  = false}
+            | false, false -> model
         | Clear -> 
           {model with correlationPlot =
                         CorrelationPlot.update model.correlationPlot CorrelationPlot.Clear}
@@ -46,49 +98,29 @@
           //                                          (fun _ -> CorrelationPlot.ChangeXAxis sem.id)
           //  }
 
-          let flagButtons =
-            Flags.toButtons typeof<SvgFlags> CorrelationPlot.ToggleFlag
 
-          //let foo = (viewSelection |> AList.map (UI.map CorrelationPlotMessage))
           let axisSel = ((LogAxisApp.view model.correlationPlot.logAxisApp) |> AList.map (UI.map AxisMessage))
             
-          div [//clazz "ui horizontal menu";
+          div [
                style "float:right; vertical-align: top"
                attribute "position" "sticky"
                attribute "top" "5"
               ]
               [
-                div [style "display:inline"] flagButtons |> UI.map CorrelationPlotMessage
-                    //[div [clazz "ui horizontal buttons"] flagButtons]
                 div []
                     [
-                      //button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.ChangeView CorrelationPlotViewType.LineView)] 
-                      //       [i [clazz "small align left icon"] [] ] |> UtilitiesGUI.wrapToolTip "Line view" |> UI.map CorrelationPlotMessage
-                      //button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.ChangeView CorrelationPlotViewType.LogView)] 
-                      //       [i [clazz "small align left icon"] [] ] |> UtilitiesGUI.wrapToolTip "Log view" |> UI.map CorrelationPlotMessage
-                      //button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.ChangeView CorrelationPlotViewType.CorrelationView)] 
-                      //       [i [clazz "small exchange icon"] [] ] |> UtilitiesGUI.wrapToolTip "edit correlations" |> UI.map CorrelationPlotMessage
-                      
 
                       Incremental.div (AttributeMap.ofList [style "display:inline"])
                                       axisSel
                                             
-                
-                    
-                      div [style "display:inline"]
-                          [Html.SemUi.dropDown' 
-                            (AList.ofList Semantic.levels) 
-                            model.correlationPlot.secondaryLvl 
-                            CorrelationPlot.SetSecondaryLevel 
-                            (fun x -> sprintf "%i" x)
-                            |> UI.map CorrelationPlotMessage]
+
                 ];
               ]
               
         
       let domNode = 
         div [attribute "overflow-x" "hidden";attribute "overflow-y" "hidden"] [
-                menu
+                //menu
                 CorrelationPlot.viewSvg model.correlationPlot |> UI.map CorrelationPlotMessage
                ]
       domNode
@@ -160,14 +192,14 @@
         require (myCss) (
           body [] [
             div [] [
-              menu
+              menu |> UI.map CorrelationPlotMessage
               Incremental.div (AttributeMap.ofList [clazz "ui inverted segment"])
-                              domList
+                              domList |> UI.map CorrelationPlotMessage
             ]
           ]
         )
 
-      domNode |> UI.map CorrelationPlotMessage
+      domNode
     
 
 

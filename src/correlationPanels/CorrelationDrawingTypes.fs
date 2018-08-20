@@ -388,6 +388,47 @@ module SvgOptions =
       axisWeight       = 2.0
     }
 
+type SvgZoom = {
+  zoomFactor : float
+} with 
+    static member (+) (a,b) : SvgZoom =
+      let newZoom = (a.zoomFactor + b.zoomFactor)
+      let checkedZoom =
+        match newZoom with
+          | a when a <= 0.1 -> 0.1
+          | b when b >= 10.0 -> 10.0
+          | _ -> newZoom
+      {zoomFactor = checkedZoom}
+
+    static member (+) (a : SvgZoom, b : float) : SvgZoom =
+      let newZoom = (a.zoomFactor + b)
+      let checkedZoom =
+        match newZoom with
+          | a when a <= 0.1 -> 0.1
+          | b when b >= 10.0 -> 10.0
+          | _ -> newZoom
+      {zoomFactor = checkedZoom}
+
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module SvgZoom =
+  let defaultZoom = {zoomFactor = 1.0}
+
+  let init d : SvgZoom = 
+    let z =
+      match d with
+        | a when a <= 0.1 -> 0.1
+        | b when b >= 10.0 -> 10.0
+        | _ -> d
+    {zoomFactor = z}
+
+  let add (z : SvgZoom) (d : float) : SvgZoom =
+    init (z.zoomFactor + d)
+
+     
+
+
+
 [<DomainType>]
 type CorrelationPlot = {
    logs                : plist<GeologicalLog>
@@ -404,6 +445,8 @@ type CorrelationPlot = {
    viewType            : CorrelationPlotViewType
    svgFlags            : SvgFlags
    svgOptions          : SvgOptions
+   svgOffset           : V2d //TODO might want to put into svgOptions
+   svgZoom             : SvgZoom //TODO might want to put into svgOptions
    logAxisApp          : LogAxisApp
    xAxis               : SemanticId
    semanticApp         : SemanticApp
@@ -415,6 +458,10 @@ type CorrelationPlot = {
 type CorrelationPlotApp = {
    correlationPlot     : CorrelationPlot
    semanticApp         : SemanticApp
+   zooming             : bool
+   dragging            : bool
+   lastMousePos        : V2i
+   
 }
 
 

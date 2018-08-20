@@ -14,6 +14,9 @@ module Pages =
 
   type Action =
       | CameraMessage                 of CameraController.Message
+      | MouseDown                     of (MouseButtons * V2i)
+      | MouseUp                       of (MouseButtons * V2i)
+      | MouseMove                     of V2i
       | KeyDown                       of key : Keys
       | KeyUp                         of key : Keys     
       | CorrPlotMessage               of CorrelationPlotApp.Action
@@ -32,11 +35,7 @@ module Pages =
       | ToggleFill
       | TopLevelEvent
       | ToggleAppFlag                 of AppFlags
-      | ToggleSgFlag                  of SgFlags
-      
-
-
-
+      | ToggleSgFlag                  of SgFlags    
 
   //let initialCameraMars = 
   //  let r = Trafo3d.RotateInto(V3d.OOI, Mars.Terrain.upReal)
@@ -69,8 +68,8 @@ module Pages =
   //                                                 dockelement { id "semantics"; title "Semantics"; weight 5}]
                     ]
                     horizontal 0.5 [
-                      element { id "svg"; title "SVG"; weight 0.5}
-                      element { id "logs"; title "Logs"; weight 0.5}
+                      element { id "svg"; title "Correlation Panel"; weight 0.5}
+                      element { id "logs"; title "Logs: Debug"; weight 0.5}
                         //dockelement { id "annotations"; title "Annotations"; weight 1.0}
                     ]
                   ]
@@ -135,6 +134,24 @@ module Pages =
           { model with camera = Mars.Terrain.CapeDesire.initialCamera }
 
     match msg, model.corrPlotApp.correlationPlot.creatingNew, model.drawingApp.isDrawing with
+      | MouseDown bp,_,_ ->
+        {model with 
+          corrPlotApp = 
+           CorrelationPlotApp.update model.corrPlotApp 
+                                     (CorrelationPlotApp.Action.MouseDown bp)
+        }
+      | MouseUp bp,_,_ -> 
+        {model with 
+          corrPlotApp = 
+           CorrelationPlotApp.update model.corrPlotApp 
+                                     (CorrelationPlotApp.Action.MouseUp bp)
+        }
+      | MouseMove p,_,_ -> 
+        {model with 
+          corrPlotApp = 
+           CorrelationPlotApp.update model.corrPlotApp 
+                                     (CorrelationPlotApp.Action.MouseMove p)
+        }
       | KeyDown Keys.Enter, _, true ->                          
         match model.drawingApp.working with
           | None   -> model
@@ -239,7 +256,6 @@ module Pages =
                         |> clear
                         |> centerScene
             | false -> model
-
       | Save, false, false -> 
           let newSaveInd = model.saveIndex.next
           ignore (SemanticApp.save model.semanticApp (newSaveInd.filename SaveType.Semantics))
@@ -319,6 +335,24 @@ module Pages =
           iconButton "small bullseye icon"      "centre"  (fun _ -> CenterScene)
           div [style "padding: 2px 2px 2px 2px"] (Flags.toButtons typeof<AppFlags> ToggleAppFlag) //TODO css
           div [style "padding: 2px 2px 2px 2px"] (Flags.toButtons typeof<SgFlags> ToggleSgFlag)
+          (
+            div [style "padding: 2px 2px 2px 2px"] 
+              (Flags.toButtons typeof<SvgFlags> CorrelationPlot.ToggleFlag)
+          ) |> UI.map CorrelationPlotApp.CorrelationPlotMessage 
+            |> UI.map Action.CorrPlotMessage
+          //div [] //[style "display:inline"]
+          //    [
+          div[clazz "ui label"] 
+              [
+                text "SecondaryLevel"
+                div[clazz "detail"] [Html.SemUi.dropDown' 
+                        (AList.ofList Semantic.levels) 
+                        model.corrPlotApp.correlationPlot.secondaryLvl 
+                        CorrelationPlot.SetSecondaryLevel 
+                        (fun x -> sprintf "%i" x)
+                        |> UI.map CorrelationPlotApp.Action.CorrelationPlotMessage
+                        |> UI.map CorrPlotMessage]
+              ]
         ] 
 
       body [style "width: 100%; height:100%; background: transparent; overflow: auto"] [
@@ -397,8 +431,14 @@ module Pages =
                       )
                   | Some "svg" -> 
                     require (myCss) (
-                      body [attribute "overflow-x" "hidden";attribute "overflow-y" "hidden"] [
-                          CorrelationPlotApp.viewSvg model.corrPlotApp |> (UI.map CorrPlotMessage)
+                      body [attribute "overflow-x" "hidden";
+                            attribute "overflow-y" "hidden"; 
+                            (onMouseDown (fun b p -> MouseDown (b,p)))
+                            (onMouseUp (fun b p -> MouseUp (b,p)))
+                            (onMouseMove (fun p -> MouseMove p))
+                           ] [
+                            CorrelationPlotApp.viewSvg model.corrPlotApp 
+                              |> (UI.map CorrPlotMessage)
                       ]
                     )
 

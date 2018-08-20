@@ -21,7 +21,9 @@
         ] 
 
   module Svg =
-    
+    let inline g x = elemNS "g" Incremental.Svg.svgNS x
+
+
     module Events =
       let inline onEvent (eventType : string) (args : list<string>) (cb : list<string> -> 'msg) : Attribute<'msg> = 
         eventType, AttributeValue.Event(Event.ofDynamicArgs args (cb >> Seq.singleton))

@@ -1282,6 +1282,8 @@ module Mutable =
         let _viewType = ResetMod.Create(__initial.viewType)
         let _svgFlags = ResetMod.Create(__initial.svgFlags)
         let _svgOptions = ResetMod.Create(__initial.svgOptions)
+        let _svgOffset = ResetMod.Create(__initial.svgOffset)
+        let _svgZoom = ResetMod.Create(__initial.svgZoom)
         let _logAxisApp = MLogAxisApp.Create(__initial.logAxisApp)
         let _xAxis = ResetMod.Create(__initial.xAxis)
         let _semanticApp = MSemanticApp.Create(__initial.semanticApp)
@@ -1300,6 +1302,8 @@ module Mutable =
         member x.viewType = _viewType :> IMod<_>
         member x.svgFlags = _svgFlags :> IMod<_>
         member x.svgOptions = _svgOptions :> IMod<_>
+        member x.svgOffset = _svgOffset :> IMod<_>
+        member x.svgZoom = _svgZoom :> IMod<_>
         member x.logAxisApp = _logAxisApp
         member x.xAxis = _xAxis :> IMod<_>
         member x.semanticApp = _semanticApp
@@ -1323,6 +1327,8 @@ module Mutable =
                 ResetMod.Update(_viewType,v.viewType)
                 ResetMod.Update(_svgFlags,v.svgFlags)
                 ResetMod.Update(_svgOptions,v.svgOptions)
+                ResetMod.Update(_svgOffset,v.svgOffset)
+                ResetMod.Update(_svgZoom,v.svgZoom)
                 MLogAxisApp.Update(_logAxisApp, v.logAxisApp)
                 ResetMod.Update(_xAxis,v.xAxis)
                 MSemanticApp.Update(_semanticApp, v.semanticApp)
@@ -1416,6 +1422,18 @@ module Mutable =
                     override x.Set(r,v) = { r with svgOptions = v }
                     override x.Update(r,f) = { r with svgOptions = f r.svgOptions }
                 }
+            let svgOffset =
+                { new Lens<CorrelationDrawing.CorrelationPlot, Aardvark.Base.V2d>() with
+                    override x.Get(r) = r.svgOffset
+                    override x.Set(r,v) = { r with svgOffset = v }
+                    override x.Update(r,f) = { r with svgOffset = f r.svgOffset }
+                }
+            let svgZoom =
+                { new Lens<CorrelationDrawing.CorrelationPlot, CorrelationDrawing.SvgZoom>() with
+                    override x.Get(r) = r.svgZoom
+                    override x.Set(r,v) = { r with svgZoom = v }
+                    override x.Update(r,f) = { r with svgZoom = f r.svgZoom }
+                }
             let logAxisApp =
                 { new Lens<CorrelationDrawing.CorrelationPlot, CorrelationDrawing.LogAxisApp>() with
                     override x.Get(r) = r.logAxisApp
@@ -1453,9 +1471,15 @@ module Mutable =
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlotApp> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.CorrelationPlotApp>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlotApp>
         let _correlationPlot = MCorrelationPlot.Create(__initial.correlationPlot)
         let _semanticApp = MSemanticApp.Create(__initial.semanticApp)
+        let _zooming = ResetMod.Create(__initial.zooming)
+        let _dragging = ResetMod.Create(__initial.dragging)
+        let _lastMousePos = ResetMod.Create(__initial.lastMousePos)
         
         member x.correlationPlot = _correlationPlot
         member x.semanticApp = _semanticApp
+        member x.zooming = _zooming :> IMod<_>
+        member x.dragging = _dragging :> IMod<_>
+        member x.lastMousePos = _lastMousePos :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : CorrelationDrawing.CorrelationPlotApp) =
@@ -1464,6 +1488,9 @@ module Mutable =
                 
                 MCorrelationPlot.Update(_correlationPlot, v.correlationPlot)
                 MSemanticApp.Update(_semanticApp, v.semanticApp)
+                ResetMod.Update(_zooming,v.zooming)
+                ResetMod.Update(_dragging,v.dragging)
+                ResetMod.Update(_lastMousePos,v.lastMousePos)
                 
         
         static member Create(__initial : CorrelationDrawing.CorrelationPlotApp) : MCorrelationPlotApp = MCorrelationPlotApp(__initial)
@@ -1491,6 +1518,24 @@ module Mutable =
                     override x.Get(r) = r.semanticApp
                     override x.Set(r,v) = { r with semanticApp = v }
                     override x.Update(r,f) = { r with semanticApp = f r.semanticApp }
+                }
+            let zooming =
+                { new Lens<CorrelationDrawing.CorrelationPlotApp, System.Boolean>() with
+                    override x.Get(r) = r.zooming
+                    override x.Set(r,v) = { r with zooming = v }
+                    override x.Update(r,f) = { r with zooming = f r.zooming }
+                }
+            let dragging =
+                { new Lens<CorrelationDrawing.CorrelationPlotApp, System.Boolean>() with
+                    override x.Get(r) = r.dragging
+                    override x.Set(r,v) = { r with dragging = v }
+                    override x.Update(r,f) = { r with dragging = f r.dragging }
+                }
+            let lastMousePos =
+                { new Lens<CorrelationDrawing.CorrelationPlotApp, Aardvark.Base.V2i>() with
+                    override x.Get(r) = r.lastMousePos
+                    override x.Set(r,v) = { r with lastMousePos = v }
+                    override x.Update(r,f) = { r with lastMousePos = f r.lastMousePos }
                 }
     
     
