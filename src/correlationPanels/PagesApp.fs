@@ -133,26 +133,26 @@ module Pages =
         | false ->
           { model with camera = Mars.Terrain.CapeDesire.initialCamera }
 
-    match msg, model.corrPlotApp.correlationPlot.creatingNew, model.drawingApp.isDrawing with
-      | MouseDown bp,_,_ ->
+    match msg, model.drawingApp.isDrawing with
+      | MouseDown bp,_ ->
         {model with 
           corrPlotApp = 
            CorrelationPlotApp.update model.corrPlotApp 
                                      (CorrelationPlotApp.Action.MouseDown bp)
         }
-      | MouseUp bp,_,_ -> 
+      | MouseUp bp,_ -> 
         {model with 
           corrPlotApp = 
            CorrelationPlotApp.update model.corrPlotApp 
                                      (CorrelationPlotApp.Action.MouseUp bp)
         }
-      | MouseMove p,_,_ -> 
+      | MouseMove p,_ -> 
         {model with 
           corrPlotApp = 
            CorrelationPlotApp.update model.corrPlotApp 
                                      (CorrelationPlotApp.Action.MouseMove p)
         }
-      | KeyDown Keys.Enter, _, true ->                          
+      | KeyDown Keys.Enter, true ->                          
         match model.drawingApp.working with
           | None   -> model
           | Some w ->
@@ -164,7 +164,7 @@ module Pages =
                                   (AnnotationApp.AddAnnotation w)
             }
 
-      | KeyDown k, _, _       -> 
+      | KeyDown k, _       -> 
         match k with
           | Keys.C -> 
              printfn "Camera Position: %s" 
@@ -180,20 +180,20 @@ module Pages =
             camera     = updateCamera (CameraController.Message.KeyDown k)
         }
 
-      | KeyUp k, _, _         -> 
+      | KeyUp k, _         -> 
         {  
           model with 
             drawingApp = updateDrawingApp (CorrelationDrawing.KeyUp k)
             camera     = updateCamera (CameraController.Message.KeyUp k)
         }
 
-      | SemanticAppMessage m, false, false ->
+      | SemanticAppMessage m, false ->
         updateSemantics m model
 
-      | AnnotationAppMessage m, _, _ -> 
+      | AnnotationAppMessage m, _ -> 
         {model with annotationApp = updateAnnotationApp m}
 
-      | CorrelationDrawingMessage m, _, _ ->
+      | CorrelationDrawingMessage m, _ ->
         let (corrApp, drawingApp, annoApp) =               
             match m with
               | CorrelationDrawing.AddPoint p -> 
@@ -221,7 +221,7 @@ module Pages =
                     corrPlotApp   = corrApp
                     annotationApp = annoApp}
 
-      | CorrPlotMessage m, _, false -> // TODO refactor
+      | CorrPlotMessage m, false -> // TODO refactor
         let corrPlotApp = 
           let sel      = AnnotationApp.getSelectedPoints' model.annotationApp
           let updModel = //TODO refactor
@@ -233,22 +233,22 @@ module Pages =
                 //model.semanticApp m
         {model with corrPlotApp = corrPlotApp}
 
-      | CenterScene, _, _ -> 
+      | CenterScene,  _ -> 
         centerScene model
 
-      | UpdateConfig cfg, _,_->
+      | UpdateConfig cfg, _->
           { model with dockConfig = cfg; past = Some model }
 
-      | SetCullMode mode, _,_ ->
+      | SetCullMode mode, _ ->
           { model with cullMode = mode; past = Some model }
 
-      | ToggleFill, _,_ ->
+      | ToggleFill, _ ->
           { model with fill = not model.fill; past = Some model }
 
-      | ToggleAppFlag f, _,_ ->
+      | ToggleAppFlag f, _ ->
           {model with appFlags = Flags.toggle f model.appFlags}
 
-      | ToggleSgFlag f, _,_ ->
+      | ToggleSgFlag f, _ ->
           let model = 
             {model with sgFlags = Flags.toggle f model.sgFlags}
           match (f.Equals SgFlags.TestTerrain) with
@@ -256,34 +256,34 @@ module Pages =
                         |> clear
                         |> centerScene
             | false -> model
-      | Save, false, false -> 
+      | Save,  false -> 
           let newSaveInd = model.saveIndex.next
           ignore (SemanticApp.save model.semanticApp (newSaveInd.filename SaveType.Semantics))
           ignore (AnnotationApp.save model.annotationApp (newSaveInd.filename SaveType.Annotations))
           {model with saveIndex = newSaveInd}
 
-      | Load ind, false, false -> 
+      | Load ind, false -> 
         model
           |> loadSemantics ind
           |> loadAnnotations ind
 //                  
-      | Clear, _,_ -> 
+      | Clear, _ -> 
         clear model
 
-        | Undo,_,_ ->
+        | Undo,_ ->
             match model.past with
                 | Some p -> { p with future = Some model; camera = model.camera }
                 | None -> model
 
-        | Redo,_,_ ->
+        | Redo,_ ->
             match model.future with
                 | Some f -> { f with past = Some model; camera = model.camera }
                 | None -> model
 
-        | CameraMessage m, _,_ -> 
+        | CameraMessage m,_ -> 
               { model with camera = updateCamera m }   
 
-        | TopLevelEvent, _ , _ -> 
+        | TopLevelEvent, _ -> 
               model
         | _   -> model
         
@@ -327,6 +327,13 @@ module Pages =
       let menuItems = 
         [
           menuLoad
+          (
+            button [clazz "ui button"; 
+                  (onMouseClick (fun _ -> CorrelationPlot.Action.FinishLog)) 
+                 ] 
+                 [text "New Log"]
+          ) |> UI.map CorrelationPlotApp.CorrelationPlotMessage 
+            |> UI.map Action.CorrPlotMessage
           iconButton "small save icon"          "save"    (fun _ -> Save)
           iconButton "small file outline icon"  "clear"   (fun _ -> Clear)
           iconButton "small external icon"      "export"  (fun _ -> Export)

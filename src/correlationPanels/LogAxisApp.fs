@@ -31,14 +31,13 @@ module LogAxisApp =
       id                  = {id = System.Guid.NewGuid().ToString()}
       label               = "grainsize"
       defaultRange        = {min = 0.0; max = 3000.0}
-      defaultGranularity  = 500.0
-      //metricToSvgSize     = 0.2 //TODO needs to be logarithmic
+      defaultGranularity  = 10.0
       styleTemplate       = 
         [
-          {label = "clay";  color = new C4b(99,99,99);    range = {min = 0.0 ;    max = 2.0}}
-          {label = "silt";  color = new C4b(255,247,188); range = {min = 2.0 ;    max = 100.0}}
-          {label = "sand";  color = new C4b(254,196,79);  range = {min = 100.0 ;  max = 2000.0}}
-          {label = "gravel";color = new C4b(217,95,14);   range = {min = 2000.0 ; max = System.Double.PositiveInfinity}}
+          {label = "clay";  color = new C4b(99,99,99);    range = {min = 0.0 ;    max = 1.0}}
+          {label = "silt";  color = new C4b(255,247,188); range = {min = 1.0 ;    max = 10.0}}
+          {label = "sand";  color = new C4b(254,196,79);  range = {min = 10.0 ;  max = 100.0}}
+          {label = "gravel";color = new C4b(217,95,14);   range = {min = 100.0 ; max = System.Double.PositiveInfinity}}
         ]
     }
 
@@ -47,8 +46,7 @@ module LogAxisApp =
       id                  = {id = System.Guid.NewGuid().ToString()}
       label               = "grainsize2"
       defaultRange        = {min = 0.0; max = 10.0}
-      defaultGranularity  = 1.0 //TODO can't be < 1.0
-      //metricToSvgSize     = 30.0
+      defaultGranularity  = 1.0
       styleTemplate       = 
         [
           {label = "clay";  color = new C4b(99,99,99);    range = {min = System.Double.NegativeInfinity ;    max = 1.0}}
@@ -93,7 +91,7 @@ module LogAxisApp =
       |> List.map (fun x -> sprintf "%.0f" (x * step))
 
   let centreShift (label : string) =
-    -((float label.Length) * 2.8)
+    -((float label.Length) * 2.8) //TODO hardcoded
 
   let makeNrLabels' (txtList    : list<string>) 
                     (posList    : list<float>) 
@@ -109,7 +107,7 @@ module LogAxisApp =
               (new V2d((posList.Item i) + (startPoint.X + shift), (startPoint.Y + 15.0))) //TODO hardcoded
             | Orientation.Vertical ->
               (new V2d((startPoint.X - 10.0), (posList.Item i) + (startPoint.Y + shift)))
-        yield Svg.drawText pos txt dir
+        yield Svg.drawText' pos txt dir // could rotate labels with Svg.drawText
     } |> Seq.toList
 
   let makeNrLabels (a : float) (step : float) (b : float) (mapper: float -> float) (startPoint : V2d) (dir : Orientation) =
@@ -132,7 +130,7 @@ module LogAxisApp =
                (nativeYRange  : Rangef)
                (weight        : float) 
                (yMapping      : float) 
-               (nativeStep    : float) //TODO step is truncated to int!!
+               (nativeStep    : float)
                (label         : string) =
       let domNodes =
         seq {
@@ -140,8 +138,9 @@ module LogAxisApp =
           let svgLength = nativeYRange.range * yMapping
           yield Svg.drawYAxis svgStartPoint svgLength C4b.Black weight (nativeStep * yMapping)
           let shift = centreShift label
-          // AXIS LABEL
-          yield Svg.drawText (new V2d(svgStartPoint.X - 20.0, svgStartPoint.Y + (svgLength * 0.5) + shift)) label Orientation.Vertical
+          //TODO calc number label width first to determine required padding
+          // AXIS LABEL //TODO hardcoded padding
+          yield Svg.drawText (new V2d(svgStartPoint.X - 25.0, svgStartPoint.Y + (svgLength * 0.5) + shift)) label Orientation.Vertical
           // NR LABELS
           let nrLabels = 
             makeNrLabels ((nativeYRange.max + nativeYRange.range * 0.1))

@@ -23,7 +23,6 @@
       
 
     module Helpers = 
-      open LogNode
 
       let calcSvgXPosition (id : SemanticId) (xAxisScaleFactor : float) (nodes : plist<LogNode>)  : (plist<LogNode> * float) =
         let nodes = nodes |> PList.map (fun n -> LogNode.update (LogNode.ChangeXAxis (id, xAxisScaleFactor)) n) 
@@ -59,6 +58,7 @@
             {model with nodes = model.nodes |> PList.map  (LogNode.update (LogNode.ToggleSelectNode n))}
         | UpdateYOffset offset ->
             {model with yOffset = offset}
+
 
     let generateNonLevelNodes (logId : LogId) (annos : plist<Annotation>) (lp, la) (up, ua) (semApp : SemanticApp) =                   
       annos 

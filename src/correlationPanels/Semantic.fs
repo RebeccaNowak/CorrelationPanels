@@ -246,11 +246,9 @@ module Semantic =
         thNode 
           |> UI.map ChangeThickness
           |> intoTd
-        //ColorPicker.view model.style.color
-        //  |> UI.map ColorPickerMessage
-
-        domNodeColor
-
+        ColorPicker.view model.style.color
+          |> intoTd
+          |> UI.map ColorPickerMessage
         Html.SemUi.dropDown' (AList.ofList levels) model.level SetLevel (fun x -> sprintf "%i" x)
           |> intoTd
         domNodeSemanticType

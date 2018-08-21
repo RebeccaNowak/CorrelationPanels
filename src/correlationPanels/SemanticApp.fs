@@ -309,7 +309,7 @@ module SemanticApp =
             ]
 
     require (myCss) (
-      body [clazz "ui"; style "background: #1B1C1E;position:fixed;width:100%"] [
+      body [clazz "ui"; style "background: #1B1C1E;position:fixed;width:100%;overflow: auto;"] [
         div [] [
           menu
           table

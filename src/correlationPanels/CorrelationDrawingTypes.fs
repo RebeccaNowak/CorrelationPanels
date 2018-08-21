@@ -76,9 +76,9 @@ type AppFlags =
 
 type SgFlags = 
   | None                  = 0b0000000000
-  | Logs                  = 0b0000000001
-  | Correlations          = 0b0000000010
-  | TestTerrain           = 0b0000000100
+  | TestTerrain           = 0b0000000001
+  //| Correlations          = 0b0000000010
+  //| TestTerrain           = 0b0000000100
   
 
 type SvgFlags = 
@@ -441,7 +441,7 @@ type CorrelationPlot = {
    annotations         : plist<Annotation>
    selectedLog         : option<LogId>
    secondaryLvl        : int
-   creatingNew         : bool
+   //creatingNew         : bool
    viewType            : CorrelationPlotViewType
    svgFlags            : SvgFlags
    svgOptions          : SvgOptions

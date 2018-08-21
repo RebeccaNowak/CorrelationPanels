@@ -1278,7 +1278,6 @@ module Mutable =
         let _annotations = MList.Create(__initial.annotations, (fun v -> MAnnotation.Create(v)), (fun (m,v) -> MAnnotation.Update(m, v)), (fun v -> v))
         let _selectedLog = MOption.Create(__initial.selectedLog)
         let _secondaryLvl = ResetMod.Create(__initial.secondaryLvl)
-        let _creatingNew = ResetMod.Create(__initial.creatingNew)
         let _viewType = ResetMod.Create(__initial.viewType)
         let _svgFlags = ResetMod.Create(__initial.svgFlags)
         let _svgOptions = ResetMod.Create(__initial.svgOptions)
@@ -1298,7 +1297,6 @@ module Mutable =
         member x.annotations = _annotations :> alist<_>
         member x.selectedLog = _selectedLog :> IMod<_>
         member x.secondaryLvl = _secondaryLvl :> IMod<_>
-        member x.creatingNew = _creatingNew :> IMod<_>
         member x.viewType = _viewType :> IMod<_>
         member x.svgFlags = _svgFlags :> IMod<_>
         member x.svgOptions = _svgOptions :> IMod<_>
@@ -1323,7 +1321,6 @@ module Mutable =
                 MList.Update(_annotations, v.annotations)
                 MOption.Update(_selectedLog, v.selectedLog)
                 ResetMod.Update(_secondaryLvl,v.secondaryLvl)
-                ResetMod.Update(_creatingNew,v.creatingNew)
                 ResetMod.Update(_viewType,v.viewType)
                 ResetMod.Update(_svgFlags,v.svgFlags)
                 ResetMod.Update(_svgOptions,v.svgOptions)
@@ -1397,12 +1394,6 @@ module Mutable =
                     override x.Get(r) = r.secondaryLvl
                     override x.Set(r,v) = { r with secondaryLvl = v }
                     override x.Update(r,f) = { r with secondaryLvl = f r.secondaryLvl }
-                }
-            let creatingNew =
-                { new Lens<CorrelationDrawing.CorrelationPlot, System.Boolean>() with
-                    override x.Get(r) = r.creatingNew
-                    override x.Set(r,v) = { r with creatingNew = v }
-                    override x.Update(r,f) = { r with creatingNew = f r.creatingNew }
                 }
             let viewType =
                 { new Lens<CorrelationDrawing.CorrelationPlot, CorrelationDrawing.CorrelationPlotViewType>() with

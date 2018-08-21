@@ -60,7 +60,7 @@
               }            
             | false, true  -> 
               let diff = (V2d(p - model.lastMousePos))
-              let factor = diff.Length * 0.01 //TODO hardcoded zoom speed
+              let factor = diff.OY.Length * 0.01 //TODO hardcoded zoom speed
               let signum =
                 match diff.Y with
                   | a when a <= 0.0  -> -1.0
@@ -79,7 +79,8 @@
             | false, false -> model
         | Clear -> 
           {model with correlationPlot =
-                        CorrelationPlot.update model.correlationPlot CorrelationPlot.Clear}
+                        CorrelationPlot.update model.correlationPlot CorrelationPlot.Clear
+          }
         | CorrelationPlotMessage lm -> 
           {model with correlationPlot = CorrelationPlot.update model.correlationPlot lm}
         | AxisMessage m -> 
@@ -109,11 +110,8 @@
               [
                 div []
                     [
-
                       Incremental.div (AttributeMap.ofList [style "display:inline"])
                                       axisSel
-                                            
-
                 ];
               ]
               
@@ -125,35 +123,35 @@
                ]
       domNode
 
-
+    // Log Debug View
     let view  (model : MCorrelationPlotApp)  =
-      let menu =
-        let icon =
-          alist {
-            let! ic =
-              (model.correlationPlot.creatingNew |> Mod.map (fun n -> 
-                                              match n with
-                                                | true  -> i [clazz "small yellow plus icon"] [] 
-                                                | false -> i [clazz "small plus icon"] []
-                                            ))
-            yield ic
-          }
-        div [clazz "ui horizontal inverted menu";
-              style "float:top"]
-            [
-              div [clazz "item"]
-                  [Incremental.button (AttributeMap.ofList [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.NewLog)]) 
-                                        icon
-                  ];
-              div [clazz "item"]
-                  [button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.FinishLog)] 
-                          [i [clazz "small check icon"] [] ] |> UI.wrapToolTip "done"
-                  ];
-              div [clazz "item"]
-                  [button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.DeleteLog)] 
-                          [i [clazz "small minus icon"] [] ] |> UI.wrapToolTip "delete"
-                  ]; 
-            ]
+      //let menu =
+      //  let icon =
+      //    alist {
+      //      let! ic =
+      //        (model.correlationPlot.creatingNew |> Mod.map (fun n -> 
+      //                                        match n with
+      //                                          | true  -> i [clazz "small yellow plus icon"] [] 
+      //                                          | false -> i [clazz "small plus icon"] []
+      //                                      ))
+      //      yield ic
+      //    }
+      //  div [clazz "ui horizontal inverted menu";
+      //        style "float:top"]
+      //      [
+      //        div [clazz "item"]
+      //            [Incremental.button (AttributeMap.ofList [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.NewLog)]) 
+      //                                  icon
+      //            ];
+      //        div [clazz "item"]
+      //            [button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.FinishLog)] 
+      //                    [i [clazz "small check icon"] [] ] |> UI.wrapToolTip "done"
+      //            ];
+      //        div [clazz "item"]
+      //            [button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.DeleteLog)] 
+      //                    [i [clazz "small minus icon"] [] ] |> UI.wrapToolTip "delete"
+      //            ]; 
+      //      ]
 
 
       let domList =
@@ -190,9 +188,9 @@
 
       let domNode =
         require (myCss) (
-          body [] [
+          body [style "overflow: auto"] [
             div [] [
-              menu |> UI.map CorrelationPlotMessage
+             // menu |> UI.map CorrelationPlotMessage
               Incremental.div (AttributeMap.ofList [clazz "ui inverted segment"])
                               domList |> UI.map CorrelationPlotMessage
             ]

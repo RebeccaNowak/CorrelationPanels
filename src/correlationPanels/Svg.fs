@@ -44,6 +44,22 @@
              ]
         ) str
 
+    let drawText' (a : V2d) (str : string) (orientation : Orientation) = //TODO hack; need to change padding according to label lengh
+      let dir = 
+        [ats "glyph-orientation-horizontal" "auto"]
+      let a =
+        match orientation with
+          | Orientation.Vertical -> a - V2d(float str.Length * 3.0, 0.0)
+          | Orientation.Horizontal -> a
+            
+        
+      Svg.text
+        (dir@[
+              atf "x" a.X
+              atf "y" a.Y
+             ]
+        ) str
+
     let drawLine (a : V2d) (b : V2d) (color : C4b) (strokeWidth : float)=
       Svg.line 
         [

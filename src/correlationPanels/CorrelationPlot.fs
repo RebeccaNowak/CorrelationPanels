@@ -12,7 +12,7 @@
     type Action = 
       | Clear
       | ToggleSelectLog        of option<LogId>
-      | NewLog                 
+      //| NewLog                 
       | TogglePoint            of (V3d * Annotation)
       | FinishLog              
       | DeleteLog              
@@ -40,7 +40,7 @@
         selectedLog         = None
         secondaryLvl        = 1
 
-        creatingNew         = false
+        //creatingNew         = false
         viewType            = CorrelationPlotViewType.LogView
 
         svgFlags            = SvgFlags.None
@@ -329,7 +329,7 @@
           | _ -> model.currrentYMapping
       {
         model with 
-          creatingNew      = false
+          //creatingNew      = false
           xAxis            = xAxis
           logs             = (model.logs.Append newLog)
           selectedPoints   = List<(V3d * Annotation)>.Empty
@@ -341,21 +341,21 @@
     let update (model : CorrelationPlot) 
                (action : Action) = 
                
-      match action, model.creatingNew with
-        | Clear, _                     ->
+      match action with
+        | Clear                    ->
           {model with logs             = PList.empty
                       selectedPoints   = List<(V3d * Annotation)>.Empty
                       selectedLog      = None
-                      creatingNew      = false
+                      //creatingNew      = false
           }
-        | ToggleSelectLog oStr, false  -> 
+        | ToggleSelectLog oStr -> 
           match (oStr = model.selectedLog) with
             | true  -> {model with selectedLog = None}
             | false -> {model with selectedLog = oStr}
-        | NewLog, false                -> 
-          {model with creatingNew     = true
-                      selectedPoints  = List<(V3d * Annotation)>.Empty}
-        | FinishLog ,  true              ->
+        //| NewLog             -> 
+        //  {model with creatingNew     = true
+        //              selectedPoints  = List<(V3d * Annotation)>.Empty}
+        | FinishLog         ->
           match model.selectedPoints with
             | []      -> 
               printf "no points in list for creating log"
@@ -364,8 +364,8 @@
               createNewLog model
               
               //let logYOffset = model.svgOptions.toSvg (lRange.min) allLogsRange
-        | DeleteLog, false             -> model
-        | LogMessage (id, m), _        -> 
+        | DeleteLog         -> model
+        | LogMessage (id, m)    -> 
             let ind = model.logs.FirstIndexOf (fun (x : GeologicalLog) -> x.id = id)
             let log = (model.logs.TryGet ind)
             match log with
@@ -376,10 +376,10 @@
                   tryCorrelate updatedModel action
               | None -> model
 
-        | LogAxisAppMessage m, _  -> 
+        | LogAxisAppMessage m -> 
           {model with logAxisApp  = (LogAxisApp.update model.logAxisApp m)}
-        | ChangeView m, _              -> {model with viewType = m}
-        | ChangeXAxis id, _            -> 
+        | ChangeView m          -> {model with viewType = m}
+        | ChangeXAxis id          -> 
           let updLogs = model.logs 
                           |> PList.map (fun log -> 
                               GeologicalLog.update log (GeologicalLog.ChangeXAxis (id, model.svgOptions.xAxisScaleFactor))
@@ -387,13 +387,13 @@
           {model with xAxis    = id
                       logs     = updLogs
           }
-        | ToggleEditCorrelations, _   -> 
+        | ToggleEditCorrelations  -> 
           {model with editCorrelations = not model.editCorrelations}
-        | SetSecondaryLevel lvl, _    -> 
+        | SetSecondaryLevel lvl  -> 
           {model with secondaryLvl = lvl}
-        | ToggleFlag f, _ ->
+        | ToggleFlag f ->
           {model with svgFlags = Flags.toggle f model.svgFlags}
-        | _,_                         -> model
+        | _                         -> model
         
 
 
@@ -428,92 +428,94 @@
           let! flags = model.svgFlags
           let! sel = model.selectedLog
           /// LOGS
-          
-          for i in [0..length - 1] do //log in model.logs do
-            let isSelected = 
-              match sel with
-                | Some s  -> s = (logs.Item i).id
-                | None    -> false              
-            let log = logs.Item i
-            let! yOffset = log.yOffset 
-            let! lRange = log.nativeYRange
-            let! lxo = (logXOffset' model i)
-            //let! logYOffset = yToSvg model (lRange.min)
-            let attributes =
-              match isSelected with
-                | true  -> [style "border: 2px solid yellow";]
-                | false -> []
-              @ [
-                  attribute "x" (sprintf "%0.2f" lxo)
-                  attribute "y" (sprintf "%0.2f" yOffset)
-                //  onMouseClick (fun _ -> ToggleSelectLog (Some log.id))
-                ]
-              |> AttributeMap.ofList 
+          match length with
+           | le when le = 0 -> ()
+           | _ ->
+            for i in [0..length - 1] do //log in model.logs do
+              let isSelected = 
+                match sel with
+                  | Some s  -> s = (logs.Item i).id
+                  | None    -> false              
+              let log = logs.Item i
+              let! yOffset = log.yOffset 
+              let! lRange = log.nativeYRange
+              let! lxo = (logXOffset' model i)
+              //let! logYOffset = yToSvg model (lRange.min)
+              let attributes =
+                match isSelected with
+                  | true  -> [style "border: 2px solid yellow";]
+                  | false -> []
+                @ [
+                    attribute "x" (sprintf "%0.2f" lxo)
+                    attribute "y" (sprintf "%0.2f" yOffset)
+                  //  onMouseClick (fun _ -> ToggleSelectLog (Some log.id))
+                  ]
+                |> AttributeMap.ofList 
 
-            let mapper (a : DomNode<GeologicalLog.Action>) =
-              a |> UI.map (fun m -> LogMessage (log.id, m))
+              let mapper (a : DomNode<GeologicalLog.Action>) =
+                a |> UI.map (fun m -> LogMessage (log.id, m))
             
-            let logView =
-              Incremental.Svg.svg 
-                    (
-                      attributes
-                    )   
-                    (GeologicalLog.svgView 
-                      log model.svgFlags svgOptions model.secondaryLvl 
-                      (LogAxisApp.getStyle model.logAxisApp svgOptions.xAxisScaleFactor)
+              let logView =
+                Incremental.Svg.svg 
+                      (
+                        attributes
+                      )   
+                      (GeologicalLog.svgView 
+                        log model.svgFlags svgOptions model.secondaryLvl 
+                        (LogAxisApp.getStyle model.logAxisApp svgOptions.xAxisScaleFactor)
                       
-                    ) 
-            yield (logView |>  mapper)
+                      ) 
+              yield (logView |>  mapper)
             
-            /// X AXIS
-            if (Flags.isSet SvgFlags.XAxis flags) then
-              let! svgMaxX = log.svgMaxX
-              let! yPos = (svgXAxisYOffset model)
-              let! xPos = (xAxisXPosition' model i)
-              let! xAxisSvg = (LogAxisApp.svgXAxis 
-                                model.logAxisApp 
-                                (new V2d(xPos, yPos))
-                                svgMaxX
-                                svgOptions.axisWeight
-                                svgOptions.xAxisScaleFactor
-                                semLabel
-                              ) 
-              yield xAxisSvg 
-            ///
+              /// X AXIS
+              if (Flags.isSet SvgFlags.XAxis flags) then
+                let! svgMaxX = log.svgMaxX
+                let! yPos = (svgXAxisYOffset model)
+                let! xPos = (xAxisXPosition' model i)
+                let! xAxisSvg = (LogAxisApp.svgXAxis 
+                                  model.logAxisApp 
+                                  (new V2d(xPos, yPos))
+                                  svgMaxX
+                                  svgOptions.axisWeight
+                                  svgOptions.xAxisScaleFactor
+                                  semLabel
+                                ) 
+                yield xAxisSvg 
+              ///
 
-          ///// Y AXIS FOR EACH LOG
-          //if (LogSvgFlags.isSet LogSvgFlags.YAxis flags) then
-          //  let! nativeRange = log.nativeYRange
-          //  let! yMapping = model.currrentYMapping
-          //  yield LogAxisApp.svgYAxis 
-          //          (new V2d(lxo, yOffset))
-          //          nativeRange
-          //          svgOptions.axisWeight
-          //          yMapping.Value //TODO using .Value
-          //          svgOptions.yAxisStep
-          //          "elevation" //TODO hardcoded
-          /////
+            ///// Y AXIS FOR EACH LOG
+            //if (LogSvgFlags.isSet LogSvgFlags.YAxis flags) then
+            //  let! nativeRange = log.nativeYRange
+            //  let! yMapping = model.currrentYMapping
+            //  yield LogAxisApp.svgYAxis 
+            //          (new V2d(lxo, yOffset))
+            //          nativeRange
+            //          svgOptions.axisWeight
+            //          yMapping.Value //TODO using .Value
+            //          svgOptions.yAxisStep
+            //          "elevation" //TODO hardcoded
+            /////
 
-          if (Flags.isSet SvgFlags.YAxis flags) then
-            let! nativeRange = model.yRange
-            let! yMapping = model.currrentYMapping
+            if (Flags.isSet SvgFlags.YAxis flags) then
+              let! nativeRange = model.yRange
+              let! yMapping = model.currrentYMapping
             
-            yield LogAxisApp.svgYAxis 
-                    (new V2d(svgOptions.firstLogOffset * 0.8, svgOptions.logPadding))
-                    nativeRange
-                    svgOptions.axisWeight
-                    yMapping.Value //TODO using .Value
-                    svgOptions.yAxisStep
-                    "elevation" //TODO hardcoded
+              yield LogAxisApp.svgYAxis 
+                      (new V2d(svgOptions.firstLogOffset * 0.8, svgOptions.logPadding))
+                      nativeRange
+                      svgOptions.axisWeight
+                      yMapping.Value //TODO using .Value
+                      svgOptions.yAxisStep
+                      "elevation" //TODO hardcoded
 
 
-          /// CORRELATIONS
-          let correlations = 
-            model.correlations |> AList.map (fun x -> Correlation.Svg.view x)
-          for c in correlations do
-            let! c = c
-            yield c
-         ///
+            /// CORRELATIONS
+            let correlations = 
+              model.correlations |> AList.map (fun x -> Correlation.Svg.view x)
+            for c in correlations do
+              let! c = c
+              yield c
+           ///
         } 
      //////////////////////
 
