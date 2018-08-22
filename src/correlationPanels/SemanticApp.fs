@@ -34,6 +34,9 @@ module SemanticApp =
 
   ///// convenience functions Semantics
 
+  let getSelectedSemantic (app : SemanticApp) =
+    HMap.find app.selectedSemantic app.semantics
+
   let getSemantic (app : SemanticApp) (semanticId : SemanticId) =
     HMap.tryFind semanticId app.semantics
 
@@ -249,7 +252,7 @@ module SemanticApp =
           update upd (Action.SetSemantic ((upd.semanticsList.TryGet 0) |> Option.map (fun s -> s.id)))
     newModel
                     
-  ///// VIEW //TODO modules
+  ///////////////////////////////// VIEW ///////////////////
 
   let viewSemantics (model : MSemanticApp) = 
     let menu = 
@@ -272,7 +275,7 @@ module SemanticApp =
       alist {                 
         for mSem in model.semanticsList do
           let! state = mSem.state
-          let! c = model.creatingNew
+         // let! c = model.creatingNew
           if state = SemanticState.New then 
             let! domNode = Semantic.view mSem
             let menu =
@@ -284,22 +287,26 @@ module SemanticApp =
                   ]
               
             yield tr 
-                    ([clazz "active";style UI.tinyPadding; onClick (fun str -> SetSemantic (Some mSem.id))])
+                    ([clazz "active"; onClick (fun str -> SetSemantic (Some mSem.id))]) //style UI.tinyPadding;
                     ((List.map (fun x -> x |> UI.map SemanticMessage) domNode))
                   
             yield tr 
-                    [clazz "active"; style UI.tinyPadding]
+                    [clazz "active"] // style UI.tinyPadding
                     [td [clazz "center aligned"; style lrPadding;attribute "colspan" (sprintf "%i" domNode.Length)][menu]]
                   
-          else
-            
-            let! domNode = Semantic.view mSem // DOESN'T WORK             
-            //let domNode = [td [] [text "foobar"]|> UI.map Semantic.TextInputMessage] // WORKS
-            //yield tr [] [text "foobar"] // WORKS
+          else if state = SemanticState.Edit then
+            let! domNode = Semantic.view mSem    
+            let! col = mSem.style.color.c
+            let st = style (sprintf "background: %s" (colorToHexStr col))
             yield tr 
-                    ([style UI.tinyPadding; onClick (fun str -> SetSemantic (Some mSem.id))]) 
+                    ([st; onClick (fun str -> SetSemantic (Some mSem.id))]) 
                     (List.map (fun x -> x |> UI.map SemanticMessage) domNode)
-
+          else 
+           // let st = style (sprintf "%s" "border: none")
+            let! domNode = Semantic.view mSem           
+            yield tr 
+                    ([onClick (fun str -> SetSemantic (Some mSem.id))]) 
+                    (List.map (fun x -> x |> UI.map SemanticMessage) domNode)
       } 
 
     let myCss = [
@@ -313,14 +320,17 @@ module SemanticApp =
         div [] [
           menu
           table
-            ([clazz "ui celled striped selectable inverted table unstackable";
-                                  style "padding: 1px 5px 1px 5px"]) (
+            ([clazz "ui celled striped inverted table unstackable";
+                                  style "padding: 1px 5px 2px 5px"]) (
                 [
-                  thead [][tr[][th[][text "Label"];
-                                th[][text "Weight"];
-                                th[][text "Colour"];
-                                th[][text "Level"];
-                                th[][text "Semantic Type"]]];
+                  thead [][tr[][th[][text "Label"]
+                                th[][text "Weight"]
+                                th[][text "Colour"]
+                                th[][text "Level"]
+                                th[][text "Semantic Type"]
+                                th[][text "Geomtry"]
+                               ]
+                          ];
 
                   Incremental.tbody  (AttributeMap.ofList []) domList
                 ]

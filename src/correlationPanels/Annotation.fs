@@ -11,11 +11,11 @@ open UI
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Annotation =
-  let initial (id : string) = 
+  let initial (id : string) (t : GeometryType)= 
       {     
           id              = id
           semanticType    = SemanticType.Hierarchical
-          geometry        = GeometryType.Line
+          geometry        = t
           semanticId      = SemanticId.invalid
           points          = plist<AnnotationPoint>.Empty
           segments        = plist.Empty

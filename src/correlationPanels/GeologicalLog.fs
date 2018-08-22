@@ -387,8 +387,6 @@
       Incremental.div attributes nodeViews  
 
     
-
-
     let getLogConnectionSg //TODO connections wrong
           (model : MGeologicalLog) 
           (semanticApp : MSemanticApp) 

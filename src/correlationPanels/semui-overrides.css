@@ -12,5 +12,11 @@ body {
     width: 5rem
 }
 
+.ui.table td {
+    padding: .3em;
+    text-align: inherit;
+}
+
+
 
 

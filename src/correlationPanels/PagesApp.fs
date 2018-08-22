@@ -198,7 +198,7 @@ module Pages =
             match m with
               | CorrelationDrawing.AddPoint p -> 
                 let (drawingApp, annoApp) =
-                  match CorrelationDrawing.isDone model.drawingApp with
+                  match CorrelationDrawing.isDone model.drawingApp model.semanticApp with
                     | true  -> 
                       let da = CorrelationDrawing.addPoint model.drawingApp model.semanticApp p
                       let aa = updateAnnotationApp (AnnotationApp.AddAnnotation da.working.Value) //TODO safe but  maybe do this differently

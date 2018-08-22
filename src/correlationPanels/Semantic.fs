@@ -39,6 +39,7 @@ module Semantic =
               }
           }
         semanticType  = SemanticType.Metric
+        geometryType  = GeometryType.Line
         level         = 0
     }
 
@@ -137,6 +138,7 @@ module Semantic =
         | TextInputMessage    of TextInput.Action
         | SetLevel            of int
         | SetSemanticType     of SemanticType
+        | SetGeometryType     of GeometryType
         | Save
         | Cancel
 
@@ -163,20 +165,22 @@ module Semantic =
                 {model with level = i}
             | SetSemanticType st ->
                 {model with semanticType = st}
+            | SetGeometryType gt ->
+                {model with geometryType = gt}
             | _ -> model
 
     ////// HELPER FUNCTIONS
     let intoTd (x) = 
-      td [clazz "center aligned"; style lrPadding] [x]
+      td [clazz "center aligned"] [x]
       
 
     ////// VIEW
-    //let viewNew (model : MSemantic) =
-    //   [td [] [text "foobar"]|> UI.map TextInputMessage] // WORKS
+//    let viewNew (model : MSemantic) =
+//        [td [] [text "foobar"]|> UI.map TextInputMessage] // WORKS
 //      let thNode = Numeric.view'' 
-//                     NumericInputType.InputBox 
-//                     model.style.thickness
-//                     (AttributeMap.ofList 
+//                      NumericInputType.InputBox 
+//                      model.style.thickness
+//                      (AttributeMap.ofList 
 //                        [style "margin:auto; color:black; max-width:60px"])
 
 //      let labelNode = 
@@ -197,16 +201,14 @@ module Semantic =
 //          |> intoTd
 //        Html.SemUi.dropDown' (AList.ofList levels) model.level SetLevel (fun x -> sprintf "%i" x)
 //          |> intoTd
-////        Html.SemUi.dropDown model.geometry SetGeometry
-////          |> intoTd
+
 //        Html.SemUi.dropDown model.semanticType SetSemanticType
 //          |> intoTd
 
 //      ]
 
-
-    let viewEdit (model : MSemantic) =
-      
+////////////////////////////////// VIEW NEW ///////////////////////////////////////     
+    let viewNew (model : MSemantic) =
       let thNode = Numeric.view'' 
                      NumericInputType.InputBox 
                      model.style.thickness
@@ -251,11 +253,77 @@ module Semantic =
           |> UI.map ColorPickerMessage
         Html.SemUi.dropDown' (AList.ofList levels) model.level SetLevel (fun x -> sprintf "%i" x)
           |> intoTd
+        Html.SemUi.dropDown model.semanticType SetSemanticType
+          |> intoTd
+        Html.SemUi.dropDown model.geometryType SetGeometryType
+          |> intoTd
+      //[td [] [text "foobar"]|> UI.map TextInputMessage] // WORKS
+      ]
+
+
+
+
+ ////////////////////////////////////// EDIT ////////////////////////////////////////////
+    let viewEdit (model : MSemantic) =
+      
+      let thNode = Numeric.view'' 
+                     NumericInputType.InputBox 
+                     model.style.thickness
+                     (AttributeMap.ofList 
+                        [style "margin:auto; color:black; max-width:60px"])
+
+      let labelNode = 
+        (TextInput.view'' 
+          "box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.1) inset"
+          model.label)
+          
+
+      //let domNodeSemanticType =  
+      //  intoTd <|
+      //    label [clazz "ui horizontal label"]
+      //          [Incremental.text (Mod.map(fun x -> x.ToString()) model.semanticType)]
+
+      let domNodeSemanticType =  
+        intoTd <|
+                Incremental.text (Mod.map(fun x -> x.ToString()) model.semanticType)
+
+      let domNodeGeometryType =  
+        intoTd <|
+                Incremental.text (Mod.map(fun x -> x.ToString()) model.geometryType) 
+
+      let domNodeColor = 
+        let iconAttr =
+          amap {
+            yield clazz "circle icon"
+            let! c = model.style.color.c
+            yield style (sprintf "color:%s" (colorToHexStr c))
+          }  
+
+        intoTd <|
+          div[] [
+            Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
+            Incremental.text (Mod.map(fun (x : C4b) -> colorToHexStr x) model.style.color.c)
+          ]//  |> intoTd
+
+
+      [
+        labelNode
+          |> intoTd
+          |> UI.map Action.TextInputMessage
+        thNode 
+          |> UI.map ChangeThickness
+          |> intoTd
+        ColorPicker.view model.style.color
+          |> intoTd
+          |> UI.map ColorPickerMessage
+        Html.SemUi.dropDown' (AList.ofList levels) model.level SetLevel (fun x -> sprintf "%i" x)
+          |> intoTd
         domNodeSemanticType
+        domNodeGeometryType
       //[td [] [text "foobar"]|> UI.map TextInputMessage] // WORKS
       ]
        
-    let viewDisplay (s : MSemantic) = 
+    let viewDisplay (model : MSemantic) = 
       //[text "foobar" |> intoTd |> UI.map Action.TextInputMessage]
         
       let domNodeLbl =
@@ -263,14 +331,14 @@ module Semantic =
           Incremental.label 
             (AttributeMap.union 
                (AttributeMap.ofList [clazz "ui horizontal label"]) 
-               (AttributeMap.ofAMap (incrBgColorAMap s.style.color.c)))
-            (AList.ofList [Incremental.text (s.label.text)])
-        
+               (AttributeMap.ofAMap (incrBgColorAMap model.style.color.c)))
+            (AList.ofList [Incremental.text (model.label.text)])
+          |> intoTd
 
       let domNodeThickness = 
         intoTd <|
           label [clazz "ui horizontal label"] [
-            Incremental.text (Mod.map(fun x -> sprintf "%.1f" x) s.style.thickness.value)
+            Incremental.text (Mod.map(fun x -> sprintf "%.1f" x) model.style.thickness.value)
           ]
         
 
@@ -278,33 +346,37 @@ module Semantic =
         let iconAttr =
           amap {
             yield clazz "circle icon"
-            let! c = s.style.color.c
+            let! c = model.style.color.c
             yield style (sprintf "color:%s" (colorToHexStr c))
           }  
         intoTd <|
           div[] [
             Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
-            Incremental.text (Mod.map(fun (x : C4b) -> colorToHexStr x) s.style.color.c)
+            Incremental.text (Mod.map(fun (x : C4b) -> colorToHexStr x) model.style.color.c)
           ]
            
 
       let domNodeLevel = 
         intoTd <| 
-                Incremental.text (Mod.map(fun x -> sprintf "%i" x) s.level)
+                Incremental.text (Mod.map(fun x -> sprintf "%i" x) model.level)
             
 
 
       let domNodeSemanticType =  
         intoTd <|
-                Incremental.text (Mod.map(fun x -> x.ToString()) s.semanticType)
-           
+                Incremental.text (Mod.map(fun x -> x.ToString()) model.semanticType)
+
+      let domNodeGeometryType =  
+        intoTd <|
+                Incremental.text (Mod.map(fun x -> x.ToString()) model.geometryType)           
                  
       [
-        domNodeLbl;
-        domNodeThickness;
-        domNodeColor;
-        domNodeLevel;
+        domNodeLbl
+        domNodeThickness
+        domNodeColor
+        domNodeLevel
         domNodeSemanticType
+        domNodeGeometryType
       ]
       
 
@@ -318,6 +390,6 @@ module Semantic =
                         
                           | SemanticState.Display  -> viewDisplay model // [td [] [text "foobar"]|> UI.map TextInputMessage] WORKS
                           | SemanticState.Edit     -> viewEdit model
-                          | SemanticState.New      -> viewEdit model //TODO probably not necessary
+                          | SemanticState.New      -> viewNew model //TODO probably not necessary
                      ) 
           

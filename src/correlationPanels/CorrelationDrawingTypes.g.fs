@@ -282,6 +282,7 @@ module Mutable =
         let _size = ResetMod.Create(__initial.size)
         let _style = MStyle.Create(__initial.style)
         let _semanticType = ResetMod.Create(__initial.semanticType)
+        let _geometryType = ResetMod.Create(__initial.geometryType)
         let _level = ResetMod.Create(__initial.level)
         
         member x.id = __current.Value.id
@@ -291,6 +292,7 @@ module Mutable =
         member x.size = _size :> IMod<_>
         member x.style = _style
         member x.semanticType = _semanticType :> IMod<_>
+        member x.geometryType = _geometryType :> IMod<_>
         member x.level = _level :> IMod<_>
         
         member x.Current = __current :> IMod<_>
@@ -303,6 +305,7 @@ module Mutable =
                 ResetMod.Update(_size,v.size)
                 MStyle.Update(_style, v.style)
                 ResetMod.Update(_semanticType,v.semanticType)
+                ResetMod.Update(_geometryType,v.geometryType)
                 ResetMod.Update(_level,v.level)
                 
         
@@ -361,6 +364,12 @@ module Mutable =
                     override x.Get(r) = r.semanticType
                     override x.Set(r,v) = { r with semanticType = v }
                     override x.Update(r,f) = { r with semanticType = f r.semanticType }
+                }
+            let geometryType =
+                { new Lens<CorrelationDrawing.Semantic, CorrelationDrawing.GeometryType>() with
+                    override x.Get(r) = r.geometryType
+                    override x.Set(r,v) = { r with geometryType = v }
+                    override x.Update(r,f) = { r with geometryType = f r.geometryType }
                 }
             let level =
                 { new Lens<CorrelationDrawing.Semantic, System.Int32>() with
@@ -1546,14 +1555,12 @@ module Mutable =
         let _hoverPosition = MOption.Create(__initial.hoverPosition)
         let _working = MOption.Create(__initial.working, (fun v -> MAnnotation.Create(v)), (fun (m,v) -> MAnnotation.Update(m, v)), (fun v -> v))
         let _projection = ResetMod.Create(__initial.projection)
-        let _geometry = ResetMod.Create(__initial.geometry)
         let _exportPath = ResetMod.Create(__initial.exportPath)
         
         member x.isDrawing = _isDrawing :> IMod<_>
         member x.hoverPosition = _hoverPosition :> IMod<_>
         member x.working = _working :> IMod<_>
         member x.projection = _projection :> IMod<_>
-        member x.geometry = _geometry :> IMod<_>
         member x.exportPath = _exportPath :> IMod<_>
         
         member x.Current = __current :> IMod<_>
@@ -1565,7 +1572,6 @@ module Mutable =
                 MOption.Update(_hoverPosition, v.hoverPosition)
                 MOption.Update(_working, v.working)
                 ResetMod.Update(_projection,v.projection)
-                ResetMod.Update(_geometry,v.geometry)
                 ResetMod.Update(_exportPath,v.exportPath)
                 
         
@@ -1606,12 +1612,6 @@ module Mutable =
                     override x.Get(r) = r.projection
                     override x.Set(r,v) = { r with projection = v }
                     override x.Update(r,f) = { r with projection = f r.projection }
-                }
-            let geometry =
-                { new Lens<CorrelationDrawing.CorrelationDrawingModel, CorrelationDrawing.GeometryType>() with
-                    override x.Get(r) = r.geometry
-                    override x.Set(r,v) = { r with geometry = v }
-                    override x.Update(r,f) = { r with geometry = f r.geometry }
                 }
             let exportPath =
                 { new Lens<CorrelationDrawing.CorrelationDrawingModel, System.String>() with

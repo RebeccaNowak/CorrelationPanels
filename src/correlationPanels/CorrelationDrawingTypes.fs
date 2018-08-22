@@ -172,6 +172,7 @@ type Semantic = {
    size              : double
    style             : Style
    semanticType      : SemanticType
+   geometryType      : GeometryType
    level             : int
  }
 
@@ -493,7 +494,7 @@ type CorrelationDrawingModel = {
     hoverPosition     : option<Trafo3d>
     working           : option<Annotation>
     projection        : Projection 
-    geometry          : GeometryType
+    //geometry          : GeometryType
     exportPath        : string
    // flags             : SgFlags
 }

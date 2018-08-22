@@ -22,7 +22,7 @@ module CorrelationDrawing =
         hoverPosition = None
         working = None
         projection = Projection.Viewpoint
-        geometry = GeometryType.Line
+        //geometry = GeometryType.Line
         //annotations = plist.Empty
         exportPath = @"."
        // log = GeologicalLog.intial (Guid.NewGuid().ToString()) plist<AnnotationPoint * Annotation>.Empty
@@ -46,18 +46,23 @@ module CorrelationDrawing =
         | KeyUp                   of key : Keys      
         | Export
            
-    let isDone (model : CorrelationDrawingModel) =
+    let isDone (model : CorrelationDrawingModel) (semApp : SemanticApp) =
+      let selSem = SemanticApp.getSelectedSemantic semApp
       match model.working with
         | Some w -> 
-          match (w.geometry, (w.points |> PList.count)) with
+          match (selSem.geometryType, (w.points |> PList.count)) with
                                   | GeometryType.Point, 0 ->  true
                                   | GeometryType.Line,  1 ->  true
                                   | _                     ->  false
-        | None -> false
+        | None -> 
+          match selSem.geometryType with
+            | GeometryType.Point -> true
+            | _ -> false
 
     let addPoint  (model : CorrelationDrawingModel) 
                   (semanticApp : SemanticApp)
                   (point : V3d) =
+      let geometryType = (SemanticApp.getSelectedSemantic semanticApp).geometryType
       let working = 
         match model.working with
           | Some w  ->                                     
@@ -65,16 +70,19 @@ module CorrelationDrawing =
                 {w with points = w.points 
                                   |> PList.append {AnnotationPoint.initial with point = point
                                                                                 selected = false} 
+                        geometry = geometryType
                 }
               newAnno
           | None    -> 
-              let id      = Guid.NewGuid().ToString()                                     
-              let newAnno = {Annotation.initial id with
+              let id = Guid.NewGuid().ToString()     
+              
+              let newAnno = {Annotation.initial id geometryType with
                               points        = PList.ofList [{AnnotationPoint.initial with point = point
                                                                                           selected = false}];  
                               semanticId    = semanticApp.selectedSemantic
-                              geometry      = model.geometry
-                              projection    = model.projection}//add annotation states
+                              //geometry      = model.geometry
+                              projection    = model.projection
+                            }//add annotation states
               newAnno
 
       {model with working  = Some working}
@@ -96,10 +104,10 @@ module CorrelationDrawing =
             | Move p, true -> 
                 { model with hoverPosition = Some (Trafo3d.Translation p) }
             | AddPoint m, true         -> 
-                match isDone model with
+                match isDone model semanticApp with
                   | true               -> 
                     let model = addPoint model semanticApp m
-                    {model with working  = None
+                    {model with working       = None
                                 isDrawing     = false}
                   | false  -> addPoint model semanticApp m             
             | KeyDown Keys.Enter, _   -> 
@@ -110,8 +118,8 @@ module CorrelationDrawing =
                     | None   -> model
             | Exit, _                 -> 
                     { model with hoverPosition = None }
-            | SetGeometry mode, _     ->
-                    { model with geometry = mode }
+            | SetGeometry mode, _     -> model
+                    //{ model with geometry = mode }
             | SetProjection mode, _   ->
                     { model with projection = mode }        
             | SetExportPath s, _      ->
