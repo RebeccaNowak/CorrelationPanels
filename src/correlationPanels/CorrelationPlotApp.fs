@@ -184,7 +184,7 @@
                           ]
                           div [] 
                               [
-                                (GeologicalLog.view 
+                                (GeologicalLog.View.debug 
                                   log 
                                 )
                               ]        

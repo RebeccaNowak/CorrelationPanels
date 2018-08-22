@@ -187,10 +187,36 @@ module UI =
     let noPadding  = "padding: 0px 0px 0px 0px"
     let tinyPadding  = "padding: 1px 1px 1px 1px"
     let lrPadding = "padding: 1px 4px 1px 4px"
+     
+  module Table =
+    let intoTd (x) = 
+      td [clazz "center aligned"] [x]
 
+    let toTableView (menu : DomNode<'msg>) 
+                    (rows : alist<DomNode<'msg>>) 
+                    (columnNames : list<string>) = 
+      let myCss = [
+                { kind = Stylesheet;  name = "semui";           url = "https://cdn.jsdelivr.net/semantic-ui/2.2.6/semantic.min.css" }
+                { kind = Stylesheet;  name = "semui-overrides"; url = "semui-overrides.css" }
+                { kind = Script;      name = "semui";           url = "https://cdn.jsdelivr.net/semantic-ui/2.2.6/semantic.min.js" }
+              ]
 
+      let header = 
+        columnNames
+          |> List.map (fun str -> th[] [text str])
 
-
-
-        // GUI ELEMENTS
-
+      require (myCss) (
+        body [clazz "ui"; style "background: #1B1C1E;position:fixed;width:100%;overflow: auto;"] [
+          div [] [
+            menu
+            table
+              ([clazz "ui celled striped inverted table unstackable";
+                                    style "padding: 1px 5px 2px 5px"]) (
+                  [
+                    thead [][tr[] header]
+                    Incremental.tbody  (AttributeMap.ofList []) rows
+                  ]
+              )
+          ]
+        ]
+      )

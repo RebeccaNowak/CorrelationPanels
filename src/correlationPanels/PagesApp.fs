@@ -449,7 +449,8 @@ module Pages =
                       ]
                     )
 
-                  | Some "logs" ->
+                  | Some "logs" -> //DEBUG
+                      //GeologicalLog.View.list model.corrPlotApp.correlationPlot.
                       CorrelationPlotApp.view model.corrPlotApp
                         |> UI.map CorrPlotMessage
 

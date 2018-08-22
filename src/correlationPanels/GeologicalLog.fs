@@ -354,37 +354,53 @@
         }
       nodeViews  
 
-    let view (model       : MGeologicalLog) =
-      let minLvl = Helpers.getMinLevel model
-      let minLvlNodes =
-        model.nodes
-          |> AList.filter (fun n -> Mod.force n.level = minLvl)
-          |> AList.toSeq
-          |> Seq.sortByDescending (fun n -> Mod.force (LogNode.elevation' n))
+    module View = 
+      let list (model : MGeologicalLog) = 
+        let domNodeLbl =
+          label 
+               [clazz "ui horizontal label"]
+               [Incremental.text (model.label)]
+            |> Table.intoTd
+        
+        Table.toTableView (div [] []) (alist {yield domNodeLbl}) ["Label"]
+
+
+
+
+      let debug (model       : MGeologicalLog) =
+        let minLvl = Helpers.getMinLevel model
+        let minLvlNodes =
+          model.nodes
+            |> AList.filter (fun n -> Mod.force n.level = minLvl)
+            |> AList.toSeq
+            |> Seq.sortByDescending (fun n -> Mod.force (LogNode.elevation' n))
      
 
-      let nodeViews =
-        alist {
-          for n in minLvlNodes do
-            yield 
-                Incremental.ul ([clazz  "ui inverted list"] |> AttributeMap.ofList) 
-                          (alist {
-                            let! v = (LogNode.Debug.debugView n model.semanticApp)
-                            for it in v do
-                              yield it
-                          })                      
-        }
+        let nodeViews =
+          alist {
+            for n in minLvlNodes do
+              yield 
+                  Incremental.ul ([clazz  "ui inverted list"] |> AttributeMap.ofList) 
+                            (alist {
+                              let! v = (LogNode.Debug.debugView n model.semanticApp)
+                              for it in v do
+                                yield it
+                            })                      
+          }
 
-      let attributes = 
-        amap {
-          let! sel = model.isSelected
-          match sel with
-            | true  -> yield style "border: 2px solid orange"
-            | false -> yield style "border: 2px solid black"
-        }
-        |> AttributeMap.ofAMap
+        let attributes = 
+          amap {
+            let! sel = model.isSelected
+            match sel with
+              | true  -> yield style "border: 2px solid orange"
+              | false -> yield style "border: 2px solid black"
+          }
+          |> AttributeMap.ofAMap
 
-      Incremental.div attributes nodeViews  
+        Incremental.div attributes nodeViews  
+
+       
+    
 
     
     let getLogConnectionSg //TODO connections wrong
@@ -453,6 +469,6 @@
           threads = threads
           initial = initial
           update = update
-          view = view
+          view = View.debug
       }
 
