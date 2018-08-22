@@ -7,6 +7,7 @@
     open Aardvark.Application
     open Aardvark.UI
     open UI
+    open System
 
     type Action =
       | MouseDown of (MouseButtons * V2i)
@@ -67,10 +68,21 @@
                   | b when b >  0.0  -> 1.0
                   | _                -> 1.0
               let deltaZoom = factor * signum
+              let zoom = (model.correlationPlot.svgZoom + deltaZoom)
+              //let deltaFontSIze = int -signum
+              let fontSize = 
+                match (zoom.zoomFactor) with
+                  | z when z < 1.0 -> 
+                    FontSize.defaultSize.fontSize + (int (Math.Round ((1.0 - z) * 10.0)))
+                  | z when z > 1.0 -> 
+                    FontSize.defaultSize.fontSize - int (Math.Round z)
+                  | _ -> FontSize.defaultSize.fontSize
               {model with 
                 correlationPlot = 
                   {model.correlationPlot with //vector richtung ausrechnen
-                            svgZoom = (model.correlationPlot.svgZoom + deltaZoom)
+                            svgZoom = zoom
+                            svgFontSize = FontSize.init fontSize
+                              //(model.correlationPlot.svgFontSize + deltaFontSize)
                   }
                 lastMousePos = p
               }

@@ -23,199 +23,198 @@
       
 
     module Helpers = 
-
-      let calcSvgXPosition (id : SemanticId) (xAxisScaleFactor : float) (nodes : plist<LogNode>)  : (plist<LogNode> * float) =
-        let nodes = nodes |> PList.map (fun n -> LogNode.update (LogNode.ChangeXAxis (id, xAxisScaleFactor)) n) 
-        let size = nodes
-                    |> PList.toList
-                    |> List.filter (fun n -> n.svgSize.X <> 0.0) 
-                    |> List.map (fun (n : LogNode) -> n.svgSize.X)
-        if size.Length = 0 then printfn "%s" "calc svg position failed" //TODO if list empty //TODO bug/refactor
-        let avg = size |> List.averageOrZero
-        let max = size |> List.maxOrZero
-        let newNodes =
-          nodes |> PList.map (fun n -> LogNode.defaultIfZero n avg)
-        (newNodes, max)
-
       let getMinLevel ( model : MGeologicalLog) = 
         model.nodes |> AList.toList
                     |> List.map (fun (n : MLogNode) -> Mod.force n.level)
                     |> List.min 
 
-    let update (model : GeologicalLog) (action : Action) =
-      match action with
-        | ChangeXAxis (id, xAxisScaleFacor) ->
-            let (nodes, svgMaxX) = Helpers.calcSvgXPosition id xAxisScaleFacor model.nodes
-            {
-              model with nodes    = nodes
-                         svgMaxX  = svgMaxX
-            } 
-        | CameraMessage m -> 
-            {model with camera = ArcBallController.update model.camera m}
-        | LogNodeMessage (id, m) -> 
-            {model with nodes = model.nodes |> PList.map  (LogNode.update m)}
-        | SelectLogNode n ->
-            {model with nodes = model.nodes |> PList.map  (LogNode.update (LogNode.ToggleSelectNode n))}
-        | UpdateYOffset offset ->
-            {model with yOffset = offset}
+
+    module Calculate = 
+      let svgXPosAndSize (id : SemanticId) (xAxisScaleFactor : float) (nodes : plist<LogNode>)  : (plist<LogNode> * float) =
+        let updNodes = 
+          nodes 
+            |> PList.map (fun n -> LogNode.update (LogNode.ChangeXAxis (id, xAxisScaleFactor)) n) 
+
+        // nodes without grainsize/Annotations of x-Axis semantic type get avg
+        let size = updNodes
+                    |> PList.toList
+                    |> List.filter (fun n -> n.svgSize.X <> 0.0) 
+                    |> List.map (fun (n : LogNode) -> n.svgSize.X)
+        if size.Length = 0 then printfn "%s" "calc svg x position/size failed" //TODO if list empty //TODO bug/refactor
+        //let avg = size |> List.averageOrZero
+        let avg = 
+           match (size |> List.averageOrZero) with
+            | n when n = 0.0 -> 10.0 //TODO hardcoded size if no grain size annotations in log
+            | n -> n
+
+        let updNodes =
+          updNodes |> PList.map (fun n -> LogNode.defaultIfZero n avg)
+        (updNodes, avg)
 
 
-    let generateNonLevelNodes (logId : LogId) (annos : plist<Annotation>) (lp, la) (up, ua) (semApp : SemanticApp) =                   
-      annos 
-        |> PList.map 
-          (fun a ->     
-            let lnId : LogNodeId =  {id = System.Guid.NewGuid().ToString()}
-            match (Annotation.getType semApp a) with
-             | SemanticType.Hierarchical -> LogNode.initialHierarchicalLeaf logId a lp up
-             | SemanticType.Angular -> LogNode.intialAngular logId a
-             | SemanticType.Metric -> LogNode.intialMetric logId a
-             | SemanticType.Undefined -> LogNode.initialEmpty //TODO something useful
-             | _ -> LogNode.initialEmpty //TODO something useful
-          )
 
-    let rec generateLevel (logId          : LogId)
-                          (selectedPoints : List<V3d * Annotation>) 
-                          (annos          : plist<Annotation>) 
-                          (semApp         : SemanticApp) 
-                          (lowerBorder    : Border) //TODO could pass point and anno
-                          (upperBorder    : Border) =
-      
-      match selectedPoints with
-        | [] -> plist.Empty
-        | lst ->
-          let currentLevel =
+      let svgYPosAndSize (logHeight : float) (optMapper : option<float>) (plst : plist<LogNode>) =
+
+        let rec calcRecYPosSize (height : float) (startAt : float) (plst : plist<LogNode>) =
+          let lst = PList.toList plst
+          match lst with 
+            | [] -> PList.empty
+            | lst ->
+                let accHeight = lst |> List.sumBy (fun x -> (abs (Rangef.calcRangeNoInf x.range)))
+                let factor = height / accHeight
+                let result = 
+                  lst
+                    |> List.map (fun (x : LogNode) -> 
+                                  {x with svgSize = V2d.OO 
+                                                  + V2d.OI * (Rangef.calcRangeNoInf x.range) * factor
+                                  }
+                                )
+                    |> List.scan (fun (a : LogNode) (b : LogNode) -> 
+                                      {b with svgPos   = V2d(0.0, a.svgPos.Y + a.svgSize.Y)}
+                                  ) {LogNode.initialEmpty with svgPos = V2d(0.0, startAt)}
+                    |> List.tail  
+                    |> List.map (fun (x : LogNode) ->
+                                  {x with children = calcRecYPosSize 
+                                                      x.svgSize.Y
+                                                      x.svgPos.Y
+                                                      x.children
+                                  }
+                  )
+                    |> PList.ofList
+                result
+
+
+
+
+        let lst = PList.toList plst
+        match lst with 
+          | [] -> (PList.empty, 1.0)
+          | lst ->
+
+          let accHeight = lst |> List.sumBy (fun x -> (abs (Rangef.calcRangeNoInf x.range)))
+          let factor = 
+            match optMapper with
+              | None -> logHeight / accHeight
+              | Some m -> m
+          let result = 
             lst
-              |> List.map (fun (p,a) -> Annotation.getLevel semApp a)
-              |> List.min
-
-          let onlyCurrentLevel = 
-            lst 
-              |> List.filter (fun (p, a) -> (Annotation.getLevel semApp a) = currentLevel)
-              |> List.sortBy (fun (p, a) -> (p.Length))
-        
-          let listWithBorders = 
-            List.concat 
-                  [
-                    [(lowerBorder.point, lowerBorder.anno)]
-                    onlyCurrentLevel;
-                    [(upperBorder.point, upperBorder.anno)]
-                  ]
-            |> List.sortBy (fun (p, a) -> (p.Length))
-
-        
-          let pairwiseWithBorders =
-            listWithBorders
-              |> List.pairwise
-
-          let restAnnos =
-            annos
-              |> PList.filter (fun a -> (Annotation.getLevel semApp a) <> currentLevel)
-
-          let restSelPoints =
-            lst 
-              |> List.filter (fun (p, a) -> (Annotation.getLevel semApp a) <> currentLevel)
-       
-          let nodesInCurrentLevel =
-            seq {
-              for ((p1, a1), (p2, a2)) in pairwiseWithBorders do
-                let ((lp,la),(up,ua)) = Annotation.sortByElevation (p1, a1) (p2, a2)
-                let nodeId = LogNodeId.newId()
-                let nodeChildren = 
-                  let childrenAnnos = 
-                    restAnnos // only take Annotations with elevations within the current node borders
-                      |> PList.filter (Annotation.isElevationBetween lp.Length up.Length)
-                  let childrenSelectedPoints = 
-                    restSelPoints // only take selected points with elevations within the current node borders
-                      |> List.filter (
-                        fun (p, a) -> 
-                          (lp.Length < p.Length && (up.Length > p.Length)))
-
-                  match childrenSelectedPoints with
-                    | []    -> generateNonLevelNodes logId childrenAnnos (lp, la) (up, ua) semApp
-                    | cLst  -> 
-                      match childrenAnnos with
-                        | lst when lst.IsEmpty() -> PList.empty
-                        | _ -> 
-                          let lBorder = Border.initial la lp nodeId logId
-                          let uBorder = Border.initial ua up nodeId logId
-                          generateLevel logId cLst childrenAnnos semApp lBorder uBorder
-                yield LogNode.initialTLWithId nodeId logId
-                        (up, ua) (lp, la) nodeChildren currentLevel        
-            }
-
-          nodesInCurrentLevel
-            |> Seq.sortByDescending (fun x -> LogNode.elevation x)
-            |> PList.ofSeq
-        
-    let rec calcLogPosChildren (height : float) (startAt : float) (plst : plist<LogNode>) =
-      let lst = PList.toList plst
-      match lst with 
-        | [] -> PList.empty
-        | lst ->
-            let accHeight = lst |> List.sumBy (fun x -> (abs (Rangef.calcRangeNoInf x.range)))
-            let factor = height / accHeight
-            let result = 
-              lst
-                |> List.map (fun (x : LogNode) -> 
-                              {x with svgSize = V2d.OO 
-                                              + V2d.OI * (Rangef.calcRangeNoInf x.range) * factor
-                              }
-                            )
-                |> List.scan (fun (a : LogNode) (b : LogNode) -> 
-                                  {b with svgPos   = V2d(0.0, a.svgPos.Y + a.svgSize.Y)}
-                              ) {LogNode.initialEmpty with svgPos = V2d(0.0, startAt)}
-                |> List.tail  
-                |> List.map (fun (x : LogNode) ->
-                              {x with children = calcLogPosChildren 
-                                                  x.svgSize.Y
-                                                  x.svgPos.Y
-                                                  x.children
-                              }
-              )
-                |> PList.ofList
-            result
-
-
-    let calcsvgPosY (logHeight : float) (optMapper : option<float>) (plst : plist<LogNode>) =
-      let lst = PList.toList plst
-      match lst with 
-        | [] -> (PList.empty, 1.0)
-        | lst ->
-
-        let accHeight = lst |> List.sumBy (fun x -> (abs (Rangef.calcRangeNoInf x.range)))
-        let factor = 
-          match optMapper with
-            | None -> logHeight / accHeight
-            | Some m -> m
-        let result = 
-          lst
-            |> List.map (fun (x : LogNode) ->
-                          {x with svgSize = V2d.OO 
-                                             + V2d.OI
-                                             * (Rangef.calcRangeNoInf x.range) 
-                                             * factor
-                                  nativeSize = V2d.OO 
-                                                + V2d.OI 
-                                                * (Rangef.calcRangeNoInf x.range) 
+              |> List.map (fun (n : LogNode) ->
+                            {n with svgSize = V2d.OO 
+                                               + V2d.OI
+                                               * (Rangef.calcRangeNoInf n.range) 
+                                               * factor
+                                    nativeSize = V2d.OO 
+                                                  + V2d.OI 
+                                                  * (Rangef.calcRangeNoInf n.range) 
                                                   
-                          }
-                        )
-            |> List.scan (fun (x : LogNode) (y : LogNode) -> 
-                              {y with svgPos    = V2d(y.svgPos.X, x.svgPos.Y + x.svgSize.Y)
-                                      nativePos = V2d(y.nativePos.X, x.nativePos.Y + x.nativeSize.Y)
-                              }
-                          ) (LogNode.initialEmpty) 
-            |> List.tail  
-            |> List.map (fun (x : LogNode) ->
-                          {x with children = calcLogPosChildren 
-                                              x.svgSize.Y
-                                              x.svgPos.Y
-                                              x.children
-                          }
-                        )
-            |> PList.ofList
-        (result, factor)
-        //result
+                            }
+                          )
+              |> List.scan (fun (a : LogNode) (b : LogNode) -> 
+                                {b with svgPos    = V2d(b.svgPos.X, a.svgPos.Y + a.svgSize.Y)
+                                        nativePos = V2d(b.nativePos.X, a.nativePos.Y + a.nativeSize.Y)
+                                }
+                            ) (LogNode.initialEmpty) 
+              |> List.tail  
+              |> List.map (fun (x : LogNode) ->
+                            {x with children = calcRecYPosSize 
+                                                x.svgSize.Y
+                                                x.svgPos.Y
+                                                x.children
+                            }
+                          )
+              |> PList.ofList
+          (result, factor)
+
+
+    module Generate = 
+      let generateNonLevelNodes (logId : LogId) (annos : plist<Annotation>) (lp, la) (up, ua) (semApp : SemanticApp) =                   
+        annos 
+          |> PList.map 
+            (fun a ->     
+              let lnId : LogNodeId =  {id = System.Guid.NewGuid().ToString()}
+              match (Annotation.getType semApp a) with
+               | SemanticType.Hierarchical -> LogNode.initialHierarchicalLeaf logId a lp up
+               | SemanticType.Angular -> LogNode.intialAngular logId a
+               | SemanticType.Metric -> LogNode.intialMetric logId a
+               | SemanticType.Undefined -> LogNode.initialEmpty //TODO something useful
+               | _ -> LogNode.initialEmpty //TODO something useful
+            )
+
+      let rec generateLevel (logId          : LogId)
+                            (selectedPoints : List<V3d * Annotation>) 
+                            (annos          : plist<Annotation>) 
+                            (semApp         : SemanticApp) 
+                            (lowerBorder    : Border) //TODO could pass point and anno
+                            (upperBorder    : Border) =
+      
+        match selectedPoints with
+          | [] -> plist.Empty
+          | lst ->
+            let currentLevel =
+              lst
+                |> List.map (fun (p,a) -> Annotation.getLevel semApp a)
+                |> List.min
+
+            let onlyCurrentLevel = 
+              lst 
+                |> List.filter (fun (p, a) -> (Annotation.getLevel semApp a) = currentLevel)
+                |> List.sortBy (fun (p, a) -> (p.Length))
+        
+            let listWithBorders = 
+              List.concat 
+                    [
+                      [(lowerBorder.point, lowerBorder.anno)]
+                      onlyCurrentLevel;
+                      [(upperBorder.point, upperBorder.anno)]
+                    ]
+              |> List.sortBy (fun (p, a) -> (p.Length))
+
+        
+            let pairwiseWithBorders =
+              listWithBorders
+                |> List.pairwise
+
+            let restAnnos =
+              annos
+                |> PList.filter (fun a -> (Annotation.getLevel semApp a) <> currentLevel)
+
+            let restSelPoints =
+              lst 
+                |> List.filter (fun (p, a) -> (Annotation.getLevel semApp a) <> currentLevel)
+       
+            let nodesInCurrentLevel =
+              seq {
+                for ((p1, a1), (p2, a2)) in pairwiseWithBorders do
+                  let ((lp,la),(up,ua)) = Annotation.sortByElevation (p1, a1) (p2, a2)
+                  let nodeId = LogNodeId.newId()
+                  let nodeChildren = 
+                    let childrenAnnos = 
+                      restAnnos // only take Annotations with elevations within the current node borders
+                        |> PList.filter (Annotation.isElevationBetween lp.Length up.Length)
+                    let childrenSelectedPoints = 
+                      restSelPoints // only take selected points with elevations within the current node borders
+                        |> List.filter (
+                          fun (p, a) -> 
+                            (lp.Length < p.Length && (up.Length > p.Length)))
+
+                    match childrenSelectedPoints with
+                      | []    -> generateNonLevelNodes logId childrenAnnos (lp, la) (up, ua) semApp
+                      | cLst  -> 
+                        match childrenAnnos with
+                          | lst when lst.IsEmpty() -> PList.empty
+                          | _ -> 
+                            let lBorder = Border.initial la lp nodeId logId
+                            let uBorder = Border.initial ua up nodeId logId
+                            generateLevel logId cLst childrenAnnos semApp lBorder uBorder
+                  yield LogNode.initialTLWithId nodeId logId
+                          (up, ua) (lp, la) nodeChildren currentLevel        
+              }
+
+            nodesInCurrentLevel
+              |> Seq.sortByDescending (fun x -> LogNode.elevation x)
+              |> PList.ofSeq
+        
+
 
     let initial = {
       id            = LogId.invalid
@@ -252,7 +251,7 @@
                      (optMapper : option<float>) = 
 
       let id = LogId.newId()
-      let nodes = (generateLevel //TODO make more compact by removing debug stuff
+      let nodes = (Generate.generateLevel //TODO make more compact by removing debug stuff
                         id
                         lst 
                         annos
@@ -267,11 +266,11 @@
       //  nodes |> PList.filter LogNode.isInfinityTypeLeaf
       
       let (nodes, yMapper) =
-        nodes |> (calcsvgPosY logHeight optMapper)
+        nodes |> (Calculate.svgYPosAndSize logHeight optMapper)
       
       let (nodes, svgMaxX) =
         nodes
-           |> Helpers.calcSvgXPosition xAxis xAxisScaleFactor
+           |> Calculate.svgXPosAndSize xAxis xAxisScaleFactor
 
       let yRange : option<Rangef> = AnnotationPoint.tryCalcRange annos
       let yRange = 
@@ -429,6 +428,23 @@
               |> Sg.pass (RenderPass.after "lines" RenderPassOrder.Arbitrary RenderPass.main)
               |> Sg.depthTest (Mod.constant DepthTestMode.None)
 
+
+    let update (model : GeologicalLog) (action : Action) =
+      match action with
+        | ChangeXAxis (id, xAxisScaleFacor) ->
+            let (nodes, svgMaxX) = Calculate.svgXPosAndSize id xAxisScaleFacor model.nodes
+            {
+              model with nodes    = nodes
+                         svgMaxX  = svgMaxX
+            } 
+        | CameraMessage m -> 
+            {model with camera = ArcBallController.update model.camera m}
+        | LogNodeMessage (id, m) -> 
+            {model with nodes = model.nodes |> PList.map  (LogNode.update m)}
+        | SelectLogNode n ->
+            {model with nodes = model.nodes |> PList.map  (LogNode.update (LogNode.ToggleSelectNode n))}
+        | UpdateYOffset offset ->
+            {model with yOffset = offset}
 
     let threads (model : GeologicalLog) =
       ThreadPool.empty

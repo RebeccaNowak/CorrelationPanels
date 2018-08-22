@@ -1283,6 +1283,7 @@ module Mutable =
         let _svgOptions = ResetMod.Create(__initial.svgOptions)
         let _svgOffset = ResetMod.Create(__initial.svgOffset)
         let _svgZoom = ResetMod.Create(__initial.svgZoom)
+        let _svgFontSize = ResetMod.Create(__initial.svgFontSize)
         let _logAxisApp = MLogAxisApp.Create(__initial.logAxisApp)
         let _xAxis = ResetMod.Create(__initial.xAxis)
         let _semanticApp = MSemanticApp.Create(__initial.semanticApp)
@@ -1302,6 +1303,7 @@ module Mutable =
         member x.svgOptions = _svgOptions :> IMod<_>
         member x.svgOffset = _svgOffset :> IMod<_>
         member x.svgZoom = _svgZoom :> IMod<_>
+        member x.svgFontSize = _svgFontSize :> IMod<_>
         member x.logAxisApp = _logAxisApp
         member x.xAxis = _xAxis :> IMod<_>
         member x.semanticApp = _semanticApp
@@ -1326,6 +1328,7 @@ module Mutable =
                 ResetMod.Update(_svgOptions,v.svgOptions)
                 ResetMod.Update(_svgOffset,v.svgOffset)
                 ResetMod.Update(_svgZoom,v.svgZoom)
+                ResetMod.Update(_svgFontSize,v.svgFontSize)
                 MLogAxisApp.Update(_logAxisApp, v.logAxisApp)
                 ResetMod.Update(_xAxis,v.xAxis)
                 MSemanticApp.Update(_semanticApp, v.semanticApp)
@@ -1424,6 +1427,12 @@ module Mutable =
                     override x.Get(r) = r.svgZoom
                     override x.Set(r,v) = { r with svgZoom = v }
                     override x.Update(r,f) = { r with svgZoom = f r.svgZoom }
+                }
+            let svgFontSize =
+                { new Lens<CorrelationDrawing.CorrelationPlot, CorrelationDrawing.FontSize>() with
+                    override x.Get(r) = r.svgFontSize
+                    override x.Set(r,v) = { r with svgFontSize = v }
+                    override x.Update(r,f) = { r with svgFontSize = f r.svgFontSize }
                 }
             let logAxisApp =
                 { new Lens<CorrelationDrawing.CorrelationPlot, CorrelationDrawing.LogAxisApp>() with

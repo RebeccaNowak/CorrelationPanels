@@ -47,6 +47,7 @@
         svgOptions          = SvgOptions.init
         svgOffset           = V2d.OO
         svgZoom             = SvgZoom.defaultZoom
+        svgFontSize         = FontSize.defaultSize
 
         logAxisApp          = LogAxisApp.initial
         xAxis               = SemanticId.invalid
@@ -304,8 +305,8 @@
               {
                 model with
                   logs   = model.logs 
-                            |> PList.map (fun log -> 
-                                            (GeologicalLog.update log (GeologicalLog.UpdateYOffset (newYOffset log))) //TODO refactor
+                            |> PList.map (fun log ->  ////////////////TODO BUG
+                                            (GeologicalLog.update log (GeologicalLog.UpdateYOffset ((newYOffset log)))) //TODO refactor
                                           ) 
                   correlations = 
                     if diff <= 0.0 then model.correlations else model.correlations |> PList.map (Correlation.moveDown (diff * model.currrentYMapping.Value)) //TODO do proper checks before using option.value
@@ -346,7 +347,10 @@
           {model with logs             = PList.empty
                       selectedPoints   = List<(V3d * Annotation)>.Empty
                       selectedLog      = None
-                      //creatingNew      = false
+                      correlations     = plist.Empty
+                      annotations      = plist.Empty
+                      currrentYMapping = None
+                      selectedBorder   = None
           }
         | ToggleSelectLog oStr -> 
           match (oStr = model.selectedLog) with
@@ -406,15 +410,17 @@
           attribute "preserveAspectRatio" "xMinYMin meet"
           attribute "height" "100%"
           attribute "width" "100%"
+          
         ]
 
       let attsGroup =
         amap {
           let! offset = model.svgOffset
           let! zoom   = model.svgZoom
+          let! fontSize = model.svgFontSize
           let transform = sprintf "scale(%f) translate(%f %f)" zoom.zoomFactor offset.X offset.Y
           yield attribute "transform" transform
-          
+          yield attribute "font-size" (sprintf "%ipx" fontSize.fontSize)
 
         }
 
@@ -472,12 +478,14 @@
                 let! svgMaxX = log.svgMaxX
                 let! yPos = (svgXAxisYOffset model)
                 let! xPos = (xAxisXPosition' model i)
+                let! fontSize = model.svgFontSize
                 let! xAxisSvg = (LogAxisApp.svgXAxis 
                                   model.logAxisApp 
                                   (new V2d(xPos, yPos))
                                   svgMaxX
                                   svgOptions.axisWeight
                                   svgOptions.xAxisScaleFactor
+                                  fontSize.fontSize
                                   semLabel
                                 ) 
                 yield xAxisSvg 
@@ -499,13 +507,14 @@
             if (Flags.isSet SvgFlags.YAxis flags) then
               let! nativeRange = model.yRange
               let! yMapping = model.currrentYMapping
-            
+              let! fontSize = model.svgFontSize
               yield LogAxisApp.svgYAxis 
                       (new V2d(svgOptions.firstLogOffset * 0.8, svgOptions.logPadding))
                       nativeRange
                       svgOptions.axisWeight
                       yMapping.Value //TODO using .Value
                       svgOptions.yAxisStep
+                      fontSize.fontSize
                       "elevation" //TODO hardcoded
 
 

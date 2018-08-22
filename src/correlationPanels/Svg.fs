@@ -26,7 +26,22 @@
       Aardvark.UI.Svg.g ([clazz "g"] @ atts) 
                                     content
 
-    
+    let drawBoldText (a : V2d) (str : string) (orientation : Orientation) = //TODO refactor
+      let dir = 
+        match orientation with
+          | Orientation.Vertical ->
+            [ats "glyph-orientation-vertical" "90";
+             ats "writing-mode" "tb"]
+          | Orientation.Horizontal ->
+            [ats "glyph-orientation-horizontal" "auto"]
+        
+      Svg.text
+        (dir@[
+              atf "x" a.X
+              atf "y" a.Y
+              ats "font-weight" "bold"
+             ]
+        ) str
 
     let drawText (a : V2d) (str : string) (orientation : Orientation) =
       let dir = 

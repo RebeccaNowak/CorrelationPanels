@@ -219,6 +219,7 @@
                           children  = children
                           nodeType  = LogNodeType.Hierarchical
               }
+            
           | _, _ , _ -> (model)
       (newNode)
 
@@ -226,10 +227,19 @@
       let nodes1 = 
         nodes
           |> PList.map replaceInfinity
-      let nodes2 = 
-        nodes1
-          |> PList.filter (fun n -> not (isInfinityTypeLeaf n))
-      nodes2
+
+      //let nodes2 =
+      nodes1
+        |> PList.filter (fun n -> not (isInfinityTypeLeaf n))
+      //match nodes.Count > 1 with //
+      //  | true -> 
+      //    let n = nodes2
+      //    match n.children.Count = 0 with
+      //      | true  -> if n.level = 0 then nodes2  else (nodes2.Update (0, (fun (n : LogNode) -> n.children.Item 0)))
+      //      | false -> if n.level = 0 then nodes2 else nodes2.RemoveAt 0    
+      //  | false   -> nodes2
+      
+      
       
 
 
@@ -377,25 +387,27 @@
         createDomNode modStr model.isSelected
 
       let rec debugView (model : MLogNode) (semApp : MSemanticApp) =
-        let childrenView = 
-          alist {
-            for c in model.children do
-              let! (v : alist<DomNode<'a>>) = (debugView c semApp)
-              for it in v do
-                yield it
-          }
+
     
         let rval =
           adaptive {
             let isEmpty = AList.isEmpty model.children
             let! (b : bool) = isEmpty
+            //let! level = model.level
             match b with
-              | true  -> 
-                  return AList.ofList [li [attribute "value" ">"] [(description model semApp)]]
+              | true -> 
+                return AList.ofList [li [attribute "value" ">"] [(description model semApp)]]
               | false ->                
-                  return AList.ofList [li [attribute "value" "-"] [(description model semApp)];
-                          ul [] [Incremental.li (AttributeMap.ofList [attribute "value" "-"]) childrenView]]
-          }
+                let childrenView = 
+                  alist {
+                    for c in model.children do
+                      let! (v : alist<DomNode<'a>>) = (debugView c semApp)
+                      for it in v do
+                        yield it
+                  }
+                return AList.ofList [li [attribute "value" "-"] [(description model semApp)];
+                        ul [] [Incremental.li (AttributeMap.ofList [attribute "value" "-"]) childrenView]]
+        }
         rval
 
     module Svg =

@@ -390,6 +390,7 @@ module SvgOptions =
 
 type SvgZoom = {
   zoomFactor : float
+  //TODO min max
 } with 
     static member (+) (a,b) : SvgZoom =
       let newZoom = (a.zoomFactor + b.zoomFactor)
@@ -425,9 +426,26 @@ module SvgZoom =
   let add (z : SvgZoom) (d : float) : SvgZoom =
     init (z.zoomFactor + d)
 
-     
+type FontSize = {
+  fontSize : int 
+}
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module FontSize =
+  let defaultSize = {fontSize = 12}
+  let min = 10
+  let max = 30
 
+  let init d : FontSize = 
+    let s =
+      match d with
+        | a when a <= min -> min
+        | b when b >= max -> max
+        | _ -> d
+    {fontSize = s}
+
+  let add (s : FontSize) (d : int) : FontSize =
+    init (s.fontSize + d)
 
 [<DomainType>]
 type CorrelationPlot = {
@@ -443,10 +461,13 @@ type CorrelationPlot = {
    secondaryLvl        : int
    //creatingNew         : bool
    viewType            : CorrelationPlotViewType
+
    svgFlags            : SvgFlags
    svgOptions          : SvgOptions
    svgOffset           : V2d //TODO might want to put into svgOptions
    svgZoom             : SvgZoom //TODO might want to put into svgOptions
+   svgFontSize         : FontSize
+
    logAxisApp          : LogAxisApp
    xAxis               : SemanticId
    semanticApp         : SemanticApp
