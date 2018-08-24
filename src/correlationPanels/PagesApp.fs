@@ -391,7 +391,7 @@ module Pages =
           model.camera) |> Sg.map CorrPlotMessage
       let frustum = Mod.constant (Frustum.perspective 60.0 0.1 100.0 1.0)
       
-      require (myCss) (
+      require (UI.Semui.myCss) (
         (
           body [clazz "ui"; style "background: #1B1C1E; width: 100%; height:100%; overflow: auto;"] [
             div [] [
@@ -437,7 +437,7 @@ module Pages =
                           menu
                       )
                   | Some "svg" -> 
-                    require (myCss) (
+                    require (UI.Semui.myCss) (
                       body [attribute "overflow-x" "hidden";
                             attribute "overflow-y" "hidden"; 
                             (onMouseDown (fun b p -> MouseDown (b,p)))
@@ -450,16 +450,17 @@ module Pages =
                     )
 
                   | Some "logs" -> //DEBUG
-                      //GeologicalLog.View.list model.corrPlotApp.correlationPlot.
-                      CorrelationPlotApp.view model.corrPlotApp
+                      CorrelationPlotApp.View.logList model.corrPlotApp
                         |> UI.map CorrPlotMessage
+                      //CorrelationPlotApp.view model.corrPlotApp
+                      //  |> UI.map CorrPlotMessage
 
                   | Some "semantics" ->
                       SemanticApp.viewSemantics model.semanticApp 
                         |> UI.map SemanticAppMessage
              
                   | Some "annotations" ->
-                    require (myCss) (
+                    require (UI.Semui.myCss) (
                       body [] [
                         AnnotationApp.view model.annotationApp model.semanticApp |> UI.map AnnotationAppMessage
                       ]

@@ -8,6 +8,7 @@ open Aardvark.UI.Primitives
 open Aardvark.SceneGraph
 open Aardvark.Base
 open System
+open Aardvark.Base.IL.Serializer
 
 
 
@@ -155,9 +156,9 @@ type RenderingParameters = {
     cullMode : CullMode
 }   
     
-
+type State = New | Edit | Display
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-type SemanticState = New | Edit | Display
+
 
 [<DomainType>]
 type Semantic = {
@@ -167,7 +168,7 @@ type Semantic = {
    [<NonIncremental>]
    timestamp         : string
 
-   state             : SemanticState
+   state             : State
    label             : TextInput
    size              : double
    style             : Style
@@ -324,16 +325,20 @@ type LogAxisApp = {
     selectedTemplate : LogAxisConfigId
 }
 
+
+
 [<DomainType>]
 type GeologicalLog = {
     [<NonIncremental;PrimaryKey>]
     id          : LogId
 
-    [<NonIncremental>]
     index       : int
 
+    state        : State
+    isVisible    : bool
+
     isSelected   : bool
-    label        : string
+    label        : TextInput
     annoPoints   : list<(V3d * Annotation)>
     nodes        : plist<LogNode>
     nativeYRange : Rangef

@@ -136,80 +136,88 @@
       domNode
 
     // Log Debug View
-    let view  (model : MCorrelationPlotApp)  =
-      //let menu =
-      //  let icon =
-      //    alist {
-      //      let! ic =
-      //        (model.correlationPlot.creatingNew |> Mod.map (fun n -> 
-      //                                        match n with
-      //                                          | true  -> i [clazz "small yellow plus icon"] [] 
-      //                                          | false -> i [clazz "small plus icon"] []
-      //                                      ))
-      //      yield ic
-      //    }
-      //  div [clazz "ui horizontal inverted menu";
-      //        style "float:top"]
-      //      [
-      //        div [clazz "item"]
-      //            [Incremental.button (AttributeMap.ofList [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.NewLog)]) 
-      //                                  icon
-      //            ];
-      //        div [clazz "item"]
-      //            [button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.FinishLog)] 
-      //                    [i [clazz "small check icon"] [] ] |> UI.wrapToolTip "done"
-      //            ];
-      //        div [clazz "item"]
-      //            [button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.DeleteLog)] 
-      //                    [i [clazz "small minus icon"] [] ] |> UI.wrapToolTip "delete"
-      //            ]; 
-      //      ]
+    module View =
+      let logList (model : MCorrelationPlotApp) =
+        let rows = 
+          alist {
+            for log in model.correlationPlot.logs do
+              let! tmp = GeologicalLog.View.view log
+              yield tmp |> UI.map (fun m -> (CorrelationPlot.LogMessage (log.id, m)))
+                        |> UI.map CorrelationPlotMessage
+          }
+
+        Table.toTableView (div[][]) rows ["Label";"Order"]
 
 
-      let domList =
-        alist {            
-          let! xAxis = model.correlationPlot.xAxis
-          for log in model.correlationPlot.logs do
-            let! sel = model.correlationPlot.selectedLog
-            let isSelected = 
-              match sel with
-                | Some s  -> s = log.id
-                | None    -> false
+      let view  (model : MCorrelationPlotApp)  =
+        //let menu =
+        //  let icon =
+        //    alist {
+        //      let! ic =
+        //        (model.correlationPlot.creatingNew |> Mod.map (fun n -> 
+        //                                        match n with
+        //                                          | true  -> i [clazz "small yellow plus icon"] [] 
+        //                                          | false -> i [clazz "small plus icon"] []
+        //                                      ))
+        //      yield ic
+        //    }
+        //  div [clazz "ui horizontal inverted menu";
+        //        style "float:top"]
+        //      [
+        //        div [clazz "item"]
+        //            [Incremental.button (AttributeMap.ofList [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.NewLog)]) 
+        //                                  icon
+        //            ];
+        //        div [clazz "item"]
+        //            [button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.FinishLog)] 
+        //                    [i [clazz "small check icon"] [] ] |> UI.wrapToolTip "done"
+        //            ];
+        //        div [clazz "item"]
+        //            [button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.DeleteLog)] 
+        //                    [i [clazz "small minus icon"] [] ] |> UI.wrapToolTip "delete"
+        //            ]; 
+        //      ]
+
+
+        let domList =
+          alist {            
+            let! xAxis = model.correlationPlot.xAxis
+            for log in model.correlationPlot.logs do
+              let! sel = model.correlationPlot.selectedLog
+              let isSelected = 
+                match sel with
+                  | Some s  -> s = log.id
+                  | None    -> false
               
-            yield
-                      div [clazz "item"][
-                        div [clazz "content"] [
-                          div [clazz "header"; style "text-align: center"; onMouseClick (fun _ -> CorrelationPlot.ToggleSelectLog (Some log.id))] [
-                            i [clazz "yellow arrow alternate circle down icon"] [] |> UI.wrapToolTip "select"
+              yield
+                        div [clazz "item"][
+                          div [clazz "content"] [
+                            div [clazz "header"; style "text-align: center"; onMouseClick (fun _ -> CorrelationPlot.ToggleSelectLog (Some log.id))] [
+                              i [clazz "yellow arrow alternate circle down icon"] [] |> UI.ToolTips.wrapToolTip "select"
+                            ]
+                            div [] 
+                                [
+                                  (GeologicalLog.View.debug 
+                                    log 
+                                  )
+                                ]        
                           ]
-                          div [] 
-                              [
-                                (GeologicalLog.View.debug 
-                                  log 
-                                )
-                              ]        
                         ]
-                      ]
-        }   
+          }   
 
-      let myCss = [
-          { kind = Stylesheet;  name = "semui";           url = "https://cdn.jsdelivr.net/semantic-ui/2.2.6/semantic.min.css" }
-          { kind = Stylesheet;  name = "semui-overrides"; url = "semui-overrides.css" }
-          { kind = Script;      name = "semui";           url = "https://cdn.jsdelivr.net/semantic-ui/2.2.6/semantic.min.js" }
-        ]
 
-      let domNode =
-        require (myCss) (
-          body [style "overflow: auto"] [
-            div [] [
-             // menu |> UI.map CorrelationPlotMessage
-              Incremental.div (AttributeMap.ofList [clazz "ui inverted segment"])
-                              domList |> UI.map CorrelationPlotMessage
+        let domNode =
+          require (UI.Semui.myCss) (
+            body [style "overflow: auto"] [
+              div [] [
+               // menu |> UI.map CorrelationPlotMessage
+                Incremental.div (AttributeMap.ofList [clazz "ui inverted segment"])
+                                domList |> UI.map CorrelationPlotMessage
+              ]
             ]
-          ]
-        )
+          )
 
-      domNode
+        domNode
     
 
 

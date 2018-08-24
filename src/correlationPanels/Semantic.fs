@@ -23,7 +23,7 @@ module Semantic =
     let initial id = {
         id            = {id = id}
         timestamp     = Time.getTimestamp
-        state         = SemanticState.New
+        state         = State.New
         label         = TextInput.init
         size          = 0.0
         style         = 
@@ -132,7 +132,7 @@ module Semantic =
     
     ////// ACTIONS
     type Action = 
-        | SetState            of SemanticState
+        | SetState            of State
         | ColorPickerMessage  of ColorPicker.Action
         | ChangeThickness     of Numeric.Action
         | TextInputMessage    of TextInput.Action
@@ -231,13 +231,13 @@ module Semantic =
           amap {
             yield clazz "circle icon"
             let! c = model.style.color.c
-            yield style (sprintf "color:%s" (colorToHexStr c))
+            yield style (sprintf "color:%s" (Color.colorToHexStr c))
           }  
 
         intoTd <|
           div[] [
             Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
-            Incremental.text (Mod.map(fun (x : C4b) -> colorToHexStr x) model.style.color.c)
+            Incremental.text (Mod.map(fun (x : C4b) -> Color.colorToHexStr x) model.style.color.c)
           ]//  |> intoTd
 
 
@@ -296,13 +296,13 @@ module Semantic =
           amap {
             yield clazz "circle icon"
             let! c = model.style.color.c
-            yield style (sprintf "color:%s" (colorToHexStr c))
+            yield style (sprintf "color:%s" (Color.colorToHexStr c))
           }  
 
         intoTd <|
           div[] [
             Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
-            Incremental.text (Mod.map(fun (x : C4b) -> colorToHexStr x) model.style.color.c)
+            Incremental.text (Mod.map(fun (x : C4b) -> Color.colorToHexStr x) model.style.color.c)
           ]//  |> intoTd
 
 
@@ -347,12 +347,12 @@ module Semantic =
           amap {
             yield clazz "circle icon"
             let! c = model.style.color.c
-            yield style (sprintf "color:%s" (colorToHexStr c))
+            yield style (sprintf "color:%s" (Color.colorToHexStr c))
           }  
         intoTd <|
           div[] [
             Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
-            Incremental.text (Mod.map(fun (x : C4b) -> colorToHexStr x) model.style.color.c)
+            Incremental.text (Mod.map(fun (x : C4b) -> Color.colorToHexStr x) model.style.color.c)
           ]
            
 
@@ -388,8 +388,8 @@ module Semantic =
           |> Mod.map (fun state -> 
                         match state with
                         
-                          | SemanticState.Display  -> viewDisplay model // [td [] [text "foobar"]|> UI.map TextInputMessage] WORKS
-                          | SemanticState.Edit     -> viewEdit model
-                          | SemanticState.New      -> viewNew model //TODO probably not necessary
+                          | State.Display  -> viewDisplay model // [td [] [text "foobar"]|> UI.map TextInputMessage] WORKS
+                          | State.Edit     -> viewEdit model
+                          | State.New      -> viewNew model //TODO probably not necessary
                      ) 
           

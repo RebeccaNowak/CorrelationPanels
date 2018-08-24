@@ -15,11 +15,18 @@
     open Aardvark.Application
 
     type Action =
+      | SetState                  of State
       | CameraMessage             of ArcBallController.Message    
       | ChangeXAxis               of (SemanticId * float)
       | LogNodeMessage            of (LogNodeId * LogNode.Action)
       | SelectLogNode             of LogNodeId
       | UpdateYOffset             of float
+      | TextInputMessage          of TextInput.Action
+      | SetVisibility             of bool
+      | MoveUp                    of LogId
+      | MoveDown                  of LogId
+
+      
       
 
     module Helpers = 
@@ -219,8 +226,10 @@
     let initial = {
       id            = LogId.invalid
       index         = 0
+      state         = State.New
+      isVisible       = true
       isSelected    = false
-      label         = "log"
+      label         = {TextInput.init with text = "log"}
       nodes         = PList.empty
       annoPoints    = []
       nativeYRange  = Rangef.init
@@ -284,8 +293,10 @@
         {
           id           = id
           index        = index
+          state        = State.New
+          isVisible    = true
           isSelected   = false
-          label        = "log"
+          label        = {TextInput.init with text =  "log"}
           nodes        = nodes
           annoPoints   = lst
           nativeYRange = yRange
@@ -355,14 +366,76 @@
       nodeViews  
 
     module View = 
-      let list (model : MGeologicalLog) = 
-        let domNodeLbl =
-          label 
-               [clazz "ui horizontal label"]
-               [Incremental.text (model.label)]
-            |> Table.intoTd
+      open UI
+
+
+
+
+
+      let view (model : MGeologicalLog) =
+        let labelEditNode textInput = 
+          (TextInput.view'' 
+            "box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.1) inset"
+            textInput)
+
+        let moveUpDown =
+          div [clazz "ui small vertical buttons"]
+            [
+              UI.iconButton' "angle up icon" "move up" (fun _ -> MoveUp model.id)  (style "padding: 0px 2px 0px 2px")
+              div[style "padding: 1px 0px 1px 0px"][]
+              UI.iconButton' "angle down icon" "move down" (fun _ -> MoveDown model.id) (style "padding: 0px 2px 0px 2px")
+            ]
+
+        let indexNode =
+            Incremental.text (Mod.map(fun x -> sprintf("%i") x) model.index) 
+          
+
+        let viewNew (model : MGeologicalLog) =
+            [
+              (labelEditNode model.label) |> UI.map Action.TextInputMessage
+                |> Table.intoTd
+              moveUpDown |> Table.intoTd
+              indexNode  |> Table.intoTd
+            ]
+                |> Table.intoTr
         
-        Table.toTableView (div [] []) (alist {yield domNodeLbl}) ["Label"]
+
+        let viewEdit (model : MGeologicalLog) =
+            [
+              (labelEditNode model.label) |> UI.map Action.TextInputMessage
+                |> Table.intoTd
+              moveUpDown |> Table.intoTd
+
+            ]
+                    |> Table.intoTr
+        
+
+        let viewDisplay (model : MGeologicalLog) =
+            [
+              label [clazz "ui horizontal label"]
+                    [Incremental.text (model.label.text)]
+                |> Table.intoTd
+              moveUpDown |> Table.intoTd
+            ]
+                  
+                    |> Table.intoTr
+
+        model.state 
+          |> Mod.map (fun state -> 
+                        match state with
+                          | State.Display  -> viewDisplay model // [td [] [text "foobar"]|> UI.map TextInputMessage] WORKS
+                          | State.Edit     -> viewEdit model
+                          | State.New      -> viewNew model //TODO probably not necessary
+                     ) 
+
+ 
+
+        
+
+
+
+
+
 
 
 
@@ -459,6 +532,12 @@
             {model with nodes = model.nodes |> PList.map  (LogNode.update (LogNode.ToggleSelectNode n))}
         | UpdateYOffset offset ->
             {model with yOffset = offset}
+        | TextInputMessage m -> 
+            {model with label = TextInput.update model.label m}
+        | SetVisibility b -> {model with isVisible = b}
+        | MoveUp id   -> {model with index = model.index - 1}
+        | MoveDown id -> {model with index = model.index + 1}
+        | SetState state -> {model with state = state}
 
     let threads (model : GeologicalLog) =
       ThreadPool.empty

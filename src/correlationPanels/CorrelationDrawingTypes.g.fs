@@ -336,7 +336,7 @@ module Mutable =
                     override x.Update(r,f) = { r with timestamp = f r.timestamp }
                 }
             let state =
-                { new Lens<CorrelationDrawing.Semantic, CorrelationDrawing.SemanticState>() with
+                { new Lens<CorrelationDrawing.Semantic, CorrelationDrawing.State>() with
                     override x.Get(r) = r.state
                     override x.Set(r,v) = { r with state = v }
                     override x.Update(r,f) = { r with state = f r.state }
@@ -1101,8 +1101,11 @@ module Mutable =
     type MGeologicalLog(__initial : CorrelationDrawing.GeologicalLog) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.GeologicalLog> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.GeologicalLog>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.GeologicalLog>
+        let _index = ResetMod.Create(__initial.index)
+        let _state = ResetMod.Create(__initial.state)
+        let _isVisible = ResetMod.Create(__initial.isVisible)
         let _isSelected = ResetMod.Create(__initial.isSelected)
-        let _label = ResetMod.Create(__initial.label)
+        let _label = MTextInput.Create(__initial.label)
         let _annoPoints = ResetMod.Create(__initial.annoPoints)
         let _nodes = MList.Create(__initial.nodes, (fun v -> MLogNode.Create(v)), (fun (m,v) -> MLogNode.Update(m, v)), (fun v -> v))
         let _nativeYRange = ResetMod.Create(__initial.nativeYRange)
@@ -1113,9 +1116,11 @@ module Mutable =
         let _yOffset = ResetMod.Create(__initial.yOffset)
         
         member x.id = __current.Value.id
-        member x.index = __current.Value.index
+        member x.index = _index :> IMod<_>
+        member x.state = _state :> IMod<_>
+        member x.isVisible = _isVisible :> IMod<_>
         member x.isSelected = _isSelected :> IMod<_>
-        member x.label = _label :> IMod<_>
+        member x.label = _label
         member x.annoPoints = _annoPoints :> IMod<_>
         member x.nodes = _nodes :> alist<_>
         member x.nativeYRange = _nativeYRange :> IMod<_>
@@ -1130,8 +1135,11 @@ module Mutable =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
+                ResetMod.Update(_index,v.index)
+                ResetMod.Update(_state,v.state)
+                ResetMod.Update(_isVisible,v.isVisible)
                 ResetMod.Update(_isSelected,v.isSelected)
-                ResetMod.Update(_label,v.label)
+                MTextInput.Update(_label, v.label)
                 ResetMod.Update(_annoPoints,v.annoPoints)
                 MList.Update(_nodes, v.nodes)
                 ResetMod.Update(_nativeYRange,v.nativeYRange)
@@ -1168,6 +1176,18 @@ module Mutable =
                     override x.Set(r,v) = { r with index = v }
                     override x.Update(r,f) = { r with index = f r.index }
                 }
+            let state =
+                { new Lens<CorrelationDrawing.GeologicalLog, CorrelationDrawing.State>() with
+                    override x.Get(r) = r.state
+                    override x.Set(r,v) = { r with state = v }
+                    override x.Update(r,f) = { r with state = f r.state }
+                }
+            let isVisible =
+                { new Lens<CorrelationDrawing.GeologicalLog, System.Boolean>() with
+                    override x.Get(r) = r.isVisible
+                    override x.Set(r,v) = { r with isVisible = v }
+                    override x.Update(r,f) = { r with isVisible = f r.isVisible }
+                }
             let isSelected =
                 { new Lens<CorrelationDrawing.GeologicalLog, System.Boolean>() with
                     override x.Get(r) = r.isSelected
@@ -1175,7 +1195,7 @@ module Mutable =
                     override x.Update(r,f) = { r with isSelected = f r.isSelected }
                 }
             let label =
-                { new Lens<CorrelationDrawing.GeologicalLog, System.String>() with
+                { new Lens<CorrelationDrawing.GeologicalLog, CorrelationDrawing.TextInput>() with
                     override x.Get(r) = r.label
                     override x.Set(r,v) = { r with label = v }
                     override x.Update(r,f) = { r with label = f r.label }

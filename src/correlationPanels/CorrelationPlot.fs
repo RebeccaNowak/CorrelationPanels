@@ -19,11 +19,12 @@
       | LogMessage             of (LogId * GeologicalLog.Action)
       | ChangeView             of CorrelationPlotViewType
       | ChangeXAxis            of SemanticId
-      | LogAxisAppMessage of LogAxisApp.Action
+      | LogAxisAppMessage      of LogAxisApp.Action
       | NoMessage              of obj
       | ToggleEditCorrelations
       | SetSecondaryLevel      of int
       | ToggleFlag             of SvgFlags
+
 
 
     //let logOffset (index : int) =
@@ -114,11 +115,10 @@
             adaptive {
               let! logs = model.logs.Content
               let! opt = model.svgOptions
-              //let! smax (log : MGeologicalLog) = 
               let filtered = 
                 logs
                   |> PList.toList
-                  |> List.filter (fun (log : MGeologicalLog) -> (log.index < i))
+                  |> List.filter (fun (log : MGeologicalLog) -> (Mod.force log.index < i))
               let offsets : alist<float> = 
                 alist {
                   for log in filtered do
@@ -339,6 +339,55 @@
 
 
 ///////////////////////////////////////////////////////////// UPDATE ////////////////////////////////////////////////////
+    let indexOf (logs : plist<GeologicalLog>) id =
+      logs.FirstIndexOf (fun (x : GeologicalLog) -> x.id = id)
+
+    let tryGetLog (logs : plist<GeologicalLog>) id =
+      let ind = logs.FirstIndexOf (fun (x : GeologicalLog) -> x.id = id)
+      (ind, logs.TryGet ind)
+
+    let updateLog id message logs =
+      let (ind, opt) = tryGetLog logs id
+      match opt with
+        | Some log ->
+          logs.Update (ind, (fun x -> GeologicalLog.update x message))
+        | None    -> logs
+
+    let updateLog' message index (logs : plist<GeologicalLog>) =
+       logs.Update (index, (fun x -> GeologicalLog.update x message))
+
+    let moveUp (logs : plist<GeologicalLog>) id =
+      let (ind, log) = tryGetLog logs id
+      match (ind > 0) with 
+        | true  -> 
+          let above = logs.Item (ind-1)
+          let updLogs =
+            logs
+              |> updateLog' (GeologicalLog.MoveUp id) ind
+              |> updateLog' (GeologicalLog.MoveDown above.id) (ind-1)
+          let above = logs.Item (ind-1)
+          let current = logs.Item ind
+          let updLogs = updLogs.Update (ind,(fun x -> above))
+          let updLogs = updLogs.Update (ind-1,(fun x -> current))
+          updLogs
+        | false -> logs
+
+    let moveDown (logs : plist<GeologicalLog>) id =
+      let (ind, log) = tryGetLog logs id
+      match (ind < (logs.Count - 1)) with 
+        | true  -> 
+          let below = logs.Item (ind+1)
+          let updLogs =
+            logs
+              |> updateLog' (GeologicalLog.MoveDown id) ind
+              |> updateLog' (GeologicalLog.MoveUp below.id) (ind+1)
+          let below = logs.Item (ind+1)
+          let current = logs.Item ind
+          let updLogs = updLogs.Update (ind,(fun x -> below))
+          let updLogs = updLogs.Update (ind+1,(fun x -> current))
+          updLogs
+        | false -> logs
+
     let update (model : CorrelationPlot) 
                (action : Action) = 
                
@@ -370,15 +419,18 @@
               //let logYOffset = model.svgOptions.toSvg (lRange.min) allLogsRange
         | DeleteLog         -> model
         | LogMessage (id, m)    -> 
-            let ind = model.logs.FirstIndexOf (fun (x : GeologicalLog) -> x.id = id)
-            let log = (model.logs.TryGet ind)
-            match log with
-              | Some lo ->
-                  let upd (l) = GeologicalLog.update l m
-                  let updatedModel = 
-                    {model with logs = model.logs.Update (ind, (fun x -> upd x))}
-                  tryCorrelate updatedModel action
-              | None -> model
+          let logs =
+            match m with
+              | GeologicalLog.Action.MoveUp id ->
+                moveUp model.logs id
+                
+              | GeologicalLog.Action.MoveDown id ->
+                moveDown model.logs id
+              | _ ->
+                model.logs |> updateLog id m
+          let updatedModel = 
+            {model with logs = logs}
+          tryCorrelate updatedModel action
 
         | LogAxisAppMessage m -> 
           {model with logAxisApp  = (LogAxisApp.update model.logAxisApp m)}

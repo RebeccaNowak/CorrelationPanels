@@ -90,17 +90,17 @@ module SemanticApp =
     let eInt = int e
     enum<SemanticsSortingOption>(plusOneMod eInt 6) // hardcoded :(
 
-  let setState (state : SemanticState) (s : option<Semantic>)  = 
+  let setState (state : State) (s : option<Semantic>)  = 
     (Option.map (fun x -> Semantic.update x (Semantic.SetState state)) s)
 
   let enableSemantic (s : option<Semantic>) = 
-    (Option.map (fun x -> Semantic.update x (Semantic.SetState SemanticState.Edit)) s)
+    (Option.map (fun x -> Semantic.update x (Semantic.SetState State.Edit)) s)
 
   let disableSemantic (s : option<Semantic>) = 
-    (Option.map (fun x -> Semantic.update x (Semantic.SetState SemanticState.Display)) s)
+    (Option.map (fun x -> Semantic.update x (Semantic.SetState State.Display)) s)
 
   let disableSemantic' (s : Semantic) =
-    Semantic.update s (Semantic.SetState SemanticState.Display) 
+    Semantic.update s (Semantic.SetState State.Display) 
 
 
   let sortFunction (sortBy : SemanticsSortingOption) = 
@@ -135,7 +135,7 @@ module SemanticApp =
           }
         | None   -> model
 
-  let insertSemantic (s : Semantic) (state : SemanticState) (model : SemanticApp) = 
+  let insertSemantic (s : Semantic) (state : State) (model : SemanticApp) = 
     let newSemantics = (model.semantics.Add(s.id, s)
         |> HMap.alter model.selectedSemantic disableSemantic
         |> HMap.alter s.id (setState state))
@@ -150,18 +150,18 @@ module SemanticApp =
     let id = System.Guid.NewGuid().ToString()
     let newSemantic = Semantic.Lens._labelText.Set(
                         (Semantic.initial id),"NewSemantic")
-    insertSemantic newSemantic SemanticState.New model
+    insertSemantic newSemantic State.New model
 
   let getInitialWithSamples =
       initial
-        |> insertSemantic (Semantic.initialHorizon0   (System.Guid.NewGuid().ToString())) SemanticState.Display
-        |> insertSemantic (Semantic.initialHorizon1   (System.Guid.NewGuid().ToString())) SemanticState.Display
-        |> insertSemantic (Semantic.initialHorizon2   (System.Guid.NewGuid().ToString())) SemanticState.Display
-        |> insertSemantic (Semantic.initialHorizon3   (System.Guid.NewGuid().ToString())) SemanticState.Display
-        |> insertSemantic (Semantic.initialHorizon4   (System.Guid.NewGuid().ToString())) SemanticState.Display
-        |> insertSemantic (Semantic.initialCrossbed   (System.Guid.NewGuid().ToString())) SemanticState.Display
-        |> insertSemantic (Semantic.initialGrainSize  (System.Guid.NewGuid().ToString())) SemanticState.Display
-        |> insertSemantic (Semantic.initialGrainSize2 (System.Guid.NewGuid().ToString())) SemanticState.Edit
+        |> insertSemantic (Semantic.initialHorizon0   (System.Guid.NewGuid().ToString())) State.Display
+        |> insertSemantic (Semantic.initialHorizon1   (System.Guid.NewGuid().ToString())) State.Display
+        |> insertSemantic (Semantic.initialHorizon2   (System.Guid.NewGuid().ToString())) State.Display
+        |> insertSemantic (Semantic.initialHorizon3   (System.Guid.NewGuid().ToString())) State.Display
+        |> insertSemantic (Semantic.initialHorizon4   (System.Guid.NewGuid().ToString())) State.Display
+        |> insertSemantic (Semantic.initialCrossbed   (System.Guid.NewGuid().ToString())) State.Display
+        |> insertSemantic (Semantic.initialGrainSize  (System.Guid.NewGuid().ToString())) State.Display
+        |> insertSemantic (Semantic.initialGrainSize2 (System.Guid.NewGuid().ToString())) State.Edit
 
   let deselectAllSemantics (semantics : hmap<SemanticId, Semantic>) =
     semantics |> HMap.map (fun k s -> disableSemantic' s)
@@ -260,10 +260,10 @@ module SemanticApp =
            style "width:100%; height: 10%; float:middle; vertical-align: middle"][
         div [clazz "item"]
             [button [clazz "ui small icon button"; onMouseClick (fun _ -> AddSemantic)] 
-                    [i [clazz "small plus icon"] [] ] |> UI.wrapToolTip "add"];
+                    [i [clazz "small plus icon"] [] ] |> UI.ToolTips.wrapToolTip "add"];
         div [clazz "item"]
             [button [clazz "ui small icon button"; onMouseClick (fun _ -> DeleteSemantic)] 
-                    [i [clazz "small minus icon"] [] ] |> UI.wrapToolTip "delete"];
+                    [i [clazz "small minus icon"] [] ] |> UI.ToolTips.wrapToolTip "delete"];
         div [clazz "item"] [
           button 
             [clazz "ui small icon button"; style "width: 20ch; text-align: left"; onMouseClick (fun _ -> SortBy;)]
@@ -275,8 +275,7 @@ module SemanticApp =
       alist {                 
         for mSem in model.semanticsList do
           let! state = mSem.state
-         // let! c = model.creatingNew
-          if state = SemanticState.New then 
+          if state = State.New then 
             let! domNode = Semantic.view mSem
             let menu =
               div [clazz "ui buttons"; style "vertical-align: top; horizontal-align: middle"]
@@ -285,59 +284,28 @@ module SemanticApp =
                     div    [clazz "or"][];
                     button [clazz "compact ui button"; onMouseClick (fun _ -> CancelNew)][text "Cancel"]
                   ]
-              
-            yield tr 
-                    ([clazz "active"; onClick (fun str -> SetSemantic (Some mSem.id))]) //style UI.tinyPadding;
-                    ((List.map (fun x -> x |> UI.map SemanticMessage) domNode))
+
+            yield Table.intoTr'' 
+                    (domNode |> List.map (fun x -> x |> UI.map SemanticMessage)) 
+                    (SetSemantic (Some mSem.id)) 
+            yield Table.intoTr [(Table.intoTd' menu domNode.Length)]   
                   
-            yield tr 
-                    [clazz "active"] // style UI.tinyPadding
-                    [td [clazz "center aligned"; style lrPadding;attribute "colspan" (sprintf "%i" domNode.Length)][menu]]
-                  
-          else if state = SemanticState.Edit then
+          else if state = State.Edit then
             let! domNode = Semantic.view mSem    
             let! col = mSem.style.color.c
-            let st = style (sprintf "background: %s" (colorToHexStr col))
+            let textCol = Table.textColorFromBackground col
+            let st = style (sprintf "background: %s;%s" (Color.colorToHexStr col) textCol)
             yield tr 
                     ([st; onClick (fun str -> SetSemantic (Some mSem.id))]) 
                     (List.map (fun x -> x |> UI.map SemanticMessage) domNode)
           else 
-           // let st = style (sprintf "%s" "border: none")
             let! domNode = Semantic.view mSem           
             yield tr 
                     ([onClick (fun str -> SetSemantic (Some mSem.id))]) 
                     (List.map (fun x -> x |> UI.map SemanticMessage) domNode)
       } 
 
-    let myCss = [
-              { kind = Stylesheet;  name = "semui";           url = "https://cdn.jsdelivr.net/semantic-ui/2.2.6/semantic.min.css" }
-              { kind = Stylesheet;  name = "semui-overrides"; url = "semui-overrides.css" }
-              { kind = Script;      name = "semui";           url = "https://cdn.jsdelivr.net/semantic-ui/2.2.6/semantic.min.js" }
-            ]
-
-    require (myCss) (
-      body [clazz "ui"; style "background: #1B1C1E;position:fixed;width:100%;overflow: auto;"] [
-        div [] [
-          menu
-          table
-            ([clazz "ui celled striped inverted table unstackable";
-                                  style "padding: 1px 5px 2px 5px"]) (
-                [
-                  thead [][tr[][th[][text "Label"]
-                                th[][text "Weight"]
-                                th[][text "Colour"]
-                                th[][text "Level"]
-                                th[][text "Semantic Type"]
-                                th[][text "Geomtry"]
-                               ]
-                          ];
-
-                  Incremental.tbody  (AttributeMap.ofList []) domList
-                ]
-            )
-        ]
-      ]
-    )
+    Table.toTableView menu domList ["Label";"Weight";"Colour";"Level";"Semantic Type";"Geometry"]
 
   let app : App<SemanticApp, MSemanticApp, Action> =
       {

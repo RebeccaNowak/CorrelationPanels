@@ -148,7 +148,7 @@ module Annotation =
         amap {
           yield clazz "circle icon"
           let! c = getConstColor model semanticApp false
-          yield style (sprintf "color:%s" (colorToHexStr c))
+          yield style (sprintf "color:%s" (Color.colorToHexStr c))
         }      
       Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
 
@@ -158,7 +158,7 @@ module Annotation =
           amap {
             yield clazz "circle outline icon"
             let! c = SemanticApp.getColor semanticApp model.semanticId
-            yield style (sprintf "color:%s" (colorToHexStr c))
+            yield style (sprintf "color:%s" (Color.colorToHexStr c))
           }      
         td [clazz "center aligned"; style lrPadding] 
            [
@@ -190,7 +190,7 @@ module Annotation =
           amap {
             yield clazz "circle icon"
             let! c = SemanticApp.getColor semanticApp model.semanticId
-            yield style (sprintf "color:%s" (colorToHexStr c))
+            yield style (sprintf "color:%s" (Color.colorToHexStr c))
   //          yield attribute "color" "blue"
           }      
         td [clazz "center aligned"; style lrPadding] 
