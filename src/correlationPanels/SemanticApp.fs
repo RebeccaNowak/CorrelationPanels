@@ -160,7 +160,7 @@ module SemanticApp =
         |> insertSemantic (Semantic.initialHorizon3   (System.Guid.NewGuid().ToString())) State.Display
         |> insertSemantic (Semantic.initialHorizon4   (System.Guid.NewGuid().ToString())) State.Display
         |> insertSemantic (Semantic.initialCrossbed   (System.Guid.NewGuid().ToString())) State.Display
-        |> insertSemantic (Semantic.initialGrainSize  (System.Guid.NewGuid().ToString())) State.Display
+        //|> insertSemantic (Semantic.initialGrainSize  (System.Guid.NewGuid().ToString())) State.Display
         |> insertSemantic (Semantic.initialGrainSize2 (System.Guid.NewGuid().ToString())) State.Edit
 
   let deselectAllSemantics (semantics : hmap<SemanticId, Semantic>) =

@@ -228,6 +228,7 @@ module Annotation =
   module Sg =
     let view (model : MAnnotation) (cam : IMod<CameraView>) (semApp : MSemanticApp) =
       let annoPointToSg (point : MAnnotationPoint) (color : IMod<C4b>) (weight : IMod<float>) =  
+        let weight = weight |> Mod.map (fun w -> w * 0.5)
         let trafo = (Mod.constant (Trafo3d.Translation(point.point))) //TODO dynamic
         let pickSg = 
            Sg.sphereWithEvents (Mod.constant C4b.White) weight 

@@ -64,11 +64,11 @@ module Pages =
                     horizontal 0.5 [
                       element {id "render"; title "Render View"; weight 0.4}
                       element {id "semantics"; title "Semantics"; weight 0.6}
-  //                      stack 9.0 (Some "render") [dockelement {id "render"; title "Render View"; weight 5};
-  //                                                 dockelement { id "semantics"; title "Semantics"; weight 5}]
                     ]
                     horizontal 0.5 [
                       element { id "svg"; title "Correlation Panel"; weight 0.5}
+                      //stack 1.0 (Some "render") [dockelement {id "logs"; title "Logs"; weight 5};
+                      //                           dockelement {id "debug"; title "Debug"; weight 1}]
                       element { id "logs"; title "Logs: Debug"; weight 0.5}
                         //dockelement { id "annotations"; title "Annotations"; weight 1.0}
                     ]
@@ -454,7 +454,9 @@ module Pages =
                         |> UI.map CorrPlotMessage
                       //CorrelationPlotApp.view model.corrPlotApp
                       //  |> UI.map CorrPlotMessage
-
+                  | Some "Debug" ->
+                      CorrelationPlotApp.View.view model.corrPlotApp
+                        |> UI.map CorrPlotMessage
                   | Some "semantics" ->
                       SemanticApp.viewSemantics model.semanticApp 
                         |> UI.map SemanticAppMessage

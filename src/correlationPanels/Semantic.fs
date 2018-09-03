@@ -39,7 +39,7 @@ module Semantic =
               }
           }
         semanticType  = SemanticType.Metric
-        geometryType  = GeometryType.Line
+        geometryType  = GeometryType.Polyline
         level         = 0
     }
 
@@ -105,7 +105,7 @@ module Semantic =
 
     let initialGrainSize2 id = {
       initial id with 
-        label         = {TextInput.init with text = "Grainsize2"}
+        label         = {TextInput.init with text = "Grainsize"}
         style         = {Style.color      = {c = new C4b(247,252,185)}
                          Style.thickness  = {Numeric.init with value = 1.0}}
         semanticType  = SemanticType.Metric

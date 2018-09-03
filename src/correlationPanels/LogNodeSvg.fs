@@ -137,16 +137,16 @@
 
       let domNode = 
         match nodeType with
-            | LogNodeType.Angular -> 
-              [
-                Svg.drawCircleButton 
-                  (new V2d(offset + size.X, (position.Y + size.Y) * 0.5))
-                  2.0 C4b.Black false 0.5 selectionCallback
-              ]
-            | LogNodeType.Metric  -> 
-              [Svg.drawCircleButton 
-                (new V2d(offset + size.X, (position.Y + size.Y) * 0.5))
-                2.0 C4b.Black false 0.5 selectionCallback]
+            | LogNodeType.Angular -> []
+              //[
+              //  Svg.drawCircleButton 
+              //    (new V2d(offset + size.X, (position.Y + size.Y) * 0.5))
+              //    2.0 C4b.Black false 0.5 selectionCallback
+              //]
+            | LogNodeType.Metric  -> []
+              //[Svg.drawCircleButton 
+              //  (new V2d(offset + size.X, (position.Y + size.Y) * 0.5))
+              //  2.0 C4b.Black false 0.5 selectionCallback]
             | LogNodeType.Hierarchical -> [drawRectangle]@btns
             | LogNodeType.HierarchicalLeaf -> [drawRectangle]@btns
             | LogNodeType.PosInfinity
