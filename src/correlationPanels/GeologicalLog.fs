@@ -348,7 +348,7 @@
       let svgView (model        : MGeologicalLog) 
                  // (viewType     : IMod<CorrelationPlotViewType>) 
                   (flags        : IMod<SvgFlags>)
-                  (svgOptions   : SvgOptions)
+                  (svgOptions   : MSvgOptions)
                   (secondaryLvl : IMod<int>)
                   (styleFun     : float -> IMod<LogAxisSection>) 
                    =

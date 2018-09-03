@@ -156,16 +156,46 @@ module LogAxisApp =
         }
       Svg.toGroup (List.ofSeq domNodes) []//[attribute "font-size" "10px"]
 
+  let svgYAxis' (opt : MSvgOptions)
+                (nativeRange : IMod<Rangef>)
+                (yMapping    : IMod<Option<float>>)
+                (label       : IMod<string>) =
+    adaptive {
+      let! weight = opt.axisWeight
+      let! step = opt.yAxisStep
+      let! fontSize = opt.fontSize
+      let! firstOffset = SvgOptions.firstLogOffset' opt
+      let! padding = opt.logPadding
+      let! nativeRange = nativeRange
+      let! yMapping = yMapping
+      let! label = label
+
+      let startPoint = 
+        (new V2d(firstOffset * 0.8, padding))
+
+      return svgYAxis 
+                      startPoint
+                      nativeRange
+                      weight
+                      yMapping.Value //TODO using .Value
+                      step
+                      fontSize.fontSize
+                      label //TODO hardcoded
+    }
+
+
+
   let svgXAxis (template          : MLogAxisApp) 
                (startPoint        : V2d) 
+               (opt               : MSvgOptions)
                (svgLength         : float) 
-               (weight            : float) 
-               (xAxisScaleFactor  : float) 
-               (fontSize          : int)
                (label             : IMod<string>) = 
     adaptive {
       let! templateId = template.selectedTemplate
       let! label = label
+      let! xAxisScaleFactor = opt.xAxisScaleFactor
+      let! weight = opt.axisWeight
+      let! fontSize = opt.fontSize
       let templateOpt = template.templates |> List.tryFind (fun x -> x.id = templateId)
       let nativeLength = svgLength / xAxisScaleFactor
       let toSvg (x : float) = x * xAxisScaleFactor
@@ -175,7 +205,7 @@ module LogAxisApp =
               let gr = 
                 seq {
                   yield Svg.drawXAxis startPoint svgLength C4b.Black weight (toSvg t.defaultGranularity)
-                  let shift = centreShift label fontSize
+                  let shift = centreShift label fontSize.fontSize
                   // AXIS LABEL
                   yield Svg.drawBoldText (new V2d(startPoint.X + (svgLength * 0.5) + shift, startPoint.Y + 45.0)) label Orientation.Horizontal
 
@@ -207,7 +237,7 @@ module LogAxisApp =
                           toSvg 
                           startPoint
                           Orientation.Horizontal
-                          fontSize
+                          fontSize.fontSize
                   yield! nrLabels 
                 }
               Svg.toGroup (List.ofSeq gr) [] //[attribute "font-size" "10px"] //TODO hardcoded font size

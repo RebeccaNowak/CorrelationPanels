@@ -389,7 +389,7 @@ module Pages =
               [
                 text "SecondaryLevel"
                 div[clazz "detail"] [Html.SemUi.dropDown' 
-                        (AList.ofList Semantic.levels) 
+                        (AList.ofList Semantic.LEVELS) 
                         model.corrPlotApp.correlationPlot.secondaryLvl 
                         CorrelationPlot.SetSecondaryLevel 
                         (fun x -> sprintf "%i" x)
@@ -494,7 +494,7 @@ module Pages =
                       CorrelationPlotApp.View.view model.corrPlotApp
                         |> UI.map CorrPlotMessage
                   | Some "semantics" ->
-                      SemanticApp.viewSemantics model.semanticApp 
+                      SemanticApp.View.expertGUI model.semanticApp 
                         |> UI.map SemanticAppMessage
              
                   | Some "annotations" ->

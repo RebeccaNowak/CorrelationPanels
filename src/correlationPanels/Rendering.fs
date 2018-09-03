@@ -6,6 +6,36 @@
   open Aardvark.SceneGraph
 
   module Sg = 
+    module Incremental =
+      let path (close : bool) (points : alist<V3d>) = 
+        adaptive {
+          let! points = points.Content
+          let points = points |> PList.toList
+          let head = points  |> List.tryHead
+          return 
+            match head with
+              | Some h -> 
+                  if close then points @ [h] else points
+                    |> List.pairwise
+                    |> List.map (fun (a,b) -> new Line3d(a, b))
+                    |> List.toArray
+              | None -> [||]     
+        }
+
+      let polyline (points : alist<V3d>) (color : IMod<C4b>) (weight : IMod<float>) =
+        (path false points)
+          |> Sg.lines color
+          |> Sg.effect [
+              toEffect DefaultSurfaces.trafo
+              toEffect DefaultSurfaces.vertexColor
+              toEffect DefaultSurfaces.thickLine                                
+              ] 
+          |> Sg.noEvents
+          |> Sg.uniform "LineWidth" weight
+          |> Sg.pass (RenderPass.after "lines" RenderPassOrder.Arbitrary RenderPass.main)
+          |> Sg.depthTest (Mod.constant DepthTestMode.None)  
+
+
     let sphereDyn (color : IMod<C4b>) (size : IMod<float>) =
       Sg.sphere 3 color size 
         |> Sg.shader {

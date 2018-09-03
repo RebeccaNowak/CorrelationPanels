@@ -5,69 +5,8 @@ open Aardvark.Base
 open Aardvark.Base.Incremental
 open Aardvark.Base.Rendering
 
-  module Seq =
-    let properPairwiseOpt (f : 'a -> 'a -> 'b) (neutral : 'b) (s : seq<Option<'a>>) =
-      s
-        |> Seq.chunkBySize 2
-        |> Seq.map 
-          (fun arr -> match arr with
-                        | [| a;b |] -> match a, b with
-                                        | Some c, Some d -> Some (f c d)
-                                        | _ -> None
-                        | _ -> None)
-
-    let properPairwise (f : 'a -> 'a -> 'b) (neutral : 'b) (s : seq<'a>) =
-      s
-        |> Seq.chunkBySize 2
-        |> Seq.map 
-          (fun arr -> match arr with
-                        | [| a;b |] -> (f a b)
-                        | _ -> neutral)
 
 
-  module String =     
-    let fromV3d (v : V3d) =
-      sprintf "(%.2f,%.2f,%.2f)" v.X v.Y v.Z
-
-    let trimSharp (str : string) =
-      match (str.StartsWith "#") with 
-        | true  -> (str.TrimStart '#')
-        | false -> str
-  
-    let hexToInt (hex : char) =
-      match hex with
-        | c when hex >= '0' && hex <= '9'  -> Some ((int hex) - (int '0'))
-        | c when hex >= 'A' && hex <= 'F'  -> Some ((int c) - (int 'A') + 10)
-        | c when hex >= 'a' && hex <= 'f'  -> Some ((int c) - (int 'a') + 10)
-        | _ -> None
-
-    let explode (str : string) =
-      seq {
-        for i in 0..(str.Length - 1) do
-          yield str.Chars i
-      }
-
-
-    let hex2StrToInt (str : string) =
-      let hexSeq =
-        str
-          |> trimSharp
-          |> explode
-          |> (Seq.map hexToInt)
-      
-      let check =
-        hexSeq
-          |> Seq.map (fun x-> x.IsSome)
-          |> Seq.reduce (fun x y -> x && y)
-
-      let ans = 
-        match check with
-          | true  -> (hexSeq
-                        |> Seq.filter (fun x -> x.IsSome)
-                        |> Seq.map (fun x -> x.Value)
-                        |> Seq.properPairwise (fun x y -> x + y) 0)  
-          | false -> Seq.empty
-      ans
 
 
     

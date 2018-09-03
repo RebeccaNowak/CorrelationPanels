@@ -15,7 +15,6 @@ module CorrelationDrawing =
     open Aardvark.Rendering.Text
     open Annotation
     open UI
-    open UtilitiesDatastructures
 
     let initial : CorrelationDrawingModel = {
         isDrawing = false
@@ -166,6 +165,7 @@ module CorrelationDrawing =
                  (semanticApp   : MSemanticApp) 
                  (cam           : IMod<CameraView>) 
                  (sgFlags       : IMod<SgFlags>) =      
+
           let marsSg =
             sgFlags 
               |> Mod.map 

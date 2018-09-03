@@ -159,7 +159,7 @@
 
     let getDomNodeFunction // (viewType            : IMod<CorrelationPlotViewType>) 
                             (flags               : IMod<SvgFlags>)
-                            (options             : SvgOptions) 
+                            (options             : MSvgOptions) 
                             (styleFun            : float -> IMod<LogAxisSection>) //TODO rename
                             (selectAction        : LogNodeId -> 'a)
                             (mapper              : Border.Action -> 'a)
@@ -186,9 +186,9 @@
               (model.uBorder.color, model.lBorder.color) //change color to anno/color
             | false ->
               (Mod.constant C4b.Black, Mod.constant C4b.Black)
-
+        let! sLvlWidth = options.secLevelWidth
         let! (btnL, btnU) = 
-              (Border.Svg.getCorrelationButtons model (offset + options.secLevelWidth) weight)// buttonCallback) //TODO performance
+              (Border.Svg.getCorrelationButtons model (offset + sLvlWidth) weight)// buttonCallback) //TODO performance
         let btns = (btnL |> UI.map mapper , btnU |> UI.map mapper)
         let btns = 
           match (Flags.isSet SvgFlags.EditCorrelations flags) with

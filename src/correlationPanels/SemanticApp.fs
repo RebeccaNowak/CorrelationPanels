@@ -115,7 +115,7 @@ module SemanticApp =
 
   let getSortedList (list    : hmap<SemanticId, Semantic>) 
                     (sortBy  : SemanticsSortingOption) =
-    UtilitiesDatastructures.sortedPlistFromHmap list (sortFunction sortBy)
+    HMap.toSortedPlist list (sortFunction sortBy)
 
   let deleteSemantic (model : SemanticApp)=
       let getAKey (m : hmap<SemanticId, 'a>) =
@@ -253,54 +253,54 @@ module SemanticApp =
     newModel
                     
   ///////////////////////////////// VIEW ///////////////////
-
-  let viewSemantics (model : MSemanticApp) = 
-    let menu = 
-      div [clazz "ui horizontal inverted menu";
-           style "width:100%; height: 10%; float:middle; vertical-align: middle"][
-        div [clazz "item"]
-            [button [clazz "ui small icon button"; onMouseClick (fun _ -> AddSemantic)] 
-                    [i [clazz "small plus icon"] [] ] |> UI.ToolTips.wrapToolTip "add"];
-        div [clazz "item"]
-            [button [clazz "ui small icon button"; onMouseClick (fun _ -> DeleteSemantic)] 
-                    [i [clazz "small minus icon"] [] ] |> UI.ToolTips.wrapToolTip "delete"];
-        div [clazz "item"] [
-          button 
-            [clazz "ui small icon button"; style "width: 20ch; text-align: left"; onMouseClick (fun _ -> SortBy;)]
-            [Incremental.text (Mod.map (fun x -> sprintf "sort: %s" (string x)) model.sortBy)]
-        ]  
-      ]
+  module View = 
+    let expertGUI (model : MSemanticApp) = 
+      let menu = 
+        div [clazz "ui horizontal inverted menu";
+             style "width:100%; height: 10%; float:middle; vertical-align: middle"][
+          div [clazz "item"]
+              [button [clazz "ui small icon button"; onMouseClick (fun _ -> AddSemantic)] 
+                      [i [clazz "small plus icon"] [] ] |> UI.ToolTips.wrapToolTip "add"];
+          div [clazz "item"]
+              [button [clazz "ui small icon button"; onMouseClick (fun _ -> DeleteSemantic)] 
+                      [i [clazz "small minus icon"] [] ] |> UI.ToolTips.wrapToolTip "delete"];
+          div [clazz "item"] [
+            button 
+              [clazz "ui small icon button"; style "width: 20ch; text-align: left"; onMouseClick (fun _ -> SortBy;)]
+              [Incremental.text (Mod.map (fun x -> sprintf "sort: %s" (string x)) model.sortBy)]
+          ]  
+        ]
     
-    let domList = 
-      alist {                 
-        for mSem in model.semanticsList do
-          let! state = mSem.state
-          if state = State.New then 
-            let! domNode = Semantic.view mSem
-            let menu = Menus.saveCancelMenu SaveNew CancelNew
+      let domList = 
+        alist {                 
+          for mSem in model.semanticsList do
+            let! state = mSem.state
+            if state = State.New then 
+              let! domNode = Semantic.View.view mSem
+              let menu = Menus.saveCancelMenu SaveNew CancelNew
 
-            yield Table.intoActiveTr 
-                    (SetSemantic (Some mSem.id))
-                    (domNode |> List.map (fun x -> x |> UI.map SemanticMessage)) 
+              yield Table.intoActiveTr 
+                      (SetSemantic (Some mSem.id))
+                      (domNode |> List.map (fun x -> x |> UI.map SemanticMessage)) 
                      
-            yield Table.intoTr [(Table.intoTd' menu domNode.Length)]   
+              yield Table.intoTr [(Table.intoTd' menu domNode.Length)]   
                   
-          else if state = State.Edit then
-            let! domNode = Semantic.view mSem    
-            let! col = mSem.style.color.c
-            let textCol = Table.textColorFromBackground col
-            let st = style (sprintf "background: %s;%s" (Color.colorToHexStr col) textCol)
-            yield tr 
-                    ([st; onClick (fun str -> SetSemantic (Some mSem.id))]) 
-                    (List.map (fun x -> x |> UI.map SemanticMessage) domNode)
-          else 
-            let! domNode = Semantic.view mSem           
-            yield tr 
-                    ([onClick (fun str -> SetSemantic (Some mSem.id))]) 
-                    (List.map (fun x -> x |> UI.map SemanticMessage) domNode)
-      } 
+            else if state = State.Edit then
+              let! domNode = Semantic.View.view mSem    
+              let! col = mSem.style.color.c
+              let textCol = Table.textColorFromBackground col
+              let st = style (sprintf "background: %s;%s" (Color.colorToHexStr col) textCol)
+              yield tr 
+                      ([st; onClick (fun str -> SetSemantic (Some mSem.id))]) 
+                      (List.map (fun x -> x |> UI.map SemanticMessage) domNode)
+            else 
+              let! domNode = Semantic.View.view mSem           
+              yield tr 
+                      ([onClick (fun str -> SetSemantic (Some mSem.id))]) 
+                      (List.map (fun x -> x |> UI.map SemanticMessage) domNode)
+        } 
 
-    Table.toTableView menu domList ["Label";"Weight";"Colour";"Level";"Semantic Type";"Geometry"]
+      Table.toTableView menu domList ["Label";"Weight";"Colour";"Level";"Semantic Type";"Geometry"]
 
   let app : App<SemanticApp, MSemanticApp, Action> =
       {
@@ -308,7 +308,7 @@ module SemanticApp =
           threads   = fun _ -> ThreadPool.empty
           initial   = getInitialWithSamples
           update    = update
-          view      = viewSemantics
+          view      = View.expertGUI
       }
 
   let start () = App.start app

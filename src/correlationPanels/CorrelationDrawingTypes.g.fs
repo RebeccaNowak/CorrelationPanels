@@ -1296,6 +1296,160 @@ module Mutable =
                 }
     
     
+    type MSvgOptions(__initial : CorrelationDrawing.SvgOptions) =
+        inherit obj()
+        let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.SvgOptions> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.SvgOptions>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.SvgOptions>
+        let _logPadding = ResetMod.Create(__initial.logPadding)
+        let _logHeight = ResetMod.Create(__initial.logHeight)
+        let _logMaxWidth = ResetMod.Create(__initial.logMaxWidth)
+        let _cpWidth = ResetMod.Create(__initial.cpWidth)
+        let _secLevelWidth = ResetMod.Create(__initial.secLevelWidth)
+        let _xAxisScaleFactor = ResetMod.Create(__initial.xAxisScaleFactor)
+        let _yAxisScaleFactor = ResetMod.Create(__initial.yAxisScaleFactor)
+        let _xAxisPadding = ResetMod.Create(__initial.xAxisPadding)
+        let _yAxisPadding = ResetMod.Create(__initial.yAxisPadding)
+        let _yAxisStep = ResetMod.Create(__initial.yAxisStep)
+        let _axisWeight = ResetMod.Create(__initial.axisWeight)
+        let _offset = ResetMod.Create(__initial.offset)
+        let _zoom = ResetMod.Create(__initial.zoom)
+        let _fontSize = ResetMod.Create(__initial.fontSize)
+        
+        member x.logPadding = _logPadding :> IMod<_>
+        member x.logHeight = _logHeight :> IMod<_>
+        member x.logMaxWidth = _logMaxWidth :> IMod<_>
+        member x.cpWidth = _cpWidth :> IMod<_>
+        member x.secLevelWidth = _secLevelWidth :> IMod<_>
+        member x.xAxisScaleFactor = _xAxisScaleFactor :> IMod<_>
+        member x.yAxisScaleFactor = _yAxisScaleFactor :> IMod<_>
+        member x.xAxisPadding = _xAxisPadding :> IMod<_>
+        member x.yAxisPadding = _yAxisPadding :> IMod<_>
+        member x.yAxisStep = _yAxisStep :> IMod<_>
+        member x.axisWeight = _axisWeight :> IMod<_>
+        member x.offset = _offset :> IMod<_>
+        member x.zoom = _zoom :> IMod<_>
+        member x.fontSize = _fontSize :> IMod<_>
+        
+        member x.Current = __current :> IMod<_>
+        member x.Update(v : CorrelationDrawing.SvgOptions) =
+            if not (System.Object.ReferenceEquals(__current.Value, v)) then
+                __current.Value <- v
+                
+                ResetMod.Update(_logPadding,v.logPadding)
+                ResetMod.Update(_logHeight,v.logHeight)
+                ResetMod.Update(_logMaxWidth,v.logMaxWidth)
+                ResetMod.Update(_cpWidth,v.cpWidth)
+                ResetMod.Update(_secLevelWidth,v.secLevelWidth)
+                ResetMod.Update(_xAxisScaleFactor,v.xAxisScaleFactor)
+                ResetMod.Update(_yAxisScaleFactor,v.yAxisScaleFactor)
+                ResetMod.Update(_xAxisPadding,v.xAxisPadding)
+                ResetMod.Update(_yAxisPadding,v.yAxisPadding)
+                ResetMod.Update(_yAxisStep,v.yAxisStep)
+                ResetMod.Update(_axisWeight,v.axisWeight)
+                ResetMod.Update(_offset,v.offset)
+                ResetMod.Update(_zoom,v.zoom)
+                ResetMod.Update(_fontSize,v.fontSize)
+                
+        
+        static member Create(__initial : CorrelationDrawing.SvgOptions) : MSvgOptions = MSvgOptions(__initial)
+        static member Update(m : MSvgOptions, v : CorrelationDrawing.SvgOptions) = m.Update(v)
+        
+        override x.ToString() = __current.Value.ToString()
+        member x.AsString = sprintf "%A" __current.Value
+        interface IUpdatable<CorrelationDrawing.SvgOptions> with
+            member x.Update v = x.Update v
+    
+    
+    
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module SvgOptions =
+        [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+        module Lens =
+            let logPadding =
+                { new Lens<CorrelationDrawing.SvgOptions, System.Double>() with
+                    override x.Get(r) = r.logPadding
+                    override x.Set(r,v) = { r with logPadding = v }
+                    override x.Update(r,f) = { r with logPadding = f r.logPadding }
+                }
+            let logHeight =
+                { new Lens<CorrelationDrawing.SvgOptions, System.Double>() with
+                    override x.Get(r) = r.logHeight
+                    override x.Set(r,v) = { r with logHeight = v }
+                    override x.Update(r,f) = { r with logHeight = f r.logHeight }
+                }
+            let logMaxWidth =
+                { new Lens<CorrelationDrawing.SvgOptions, System.Double>() with
+                    override x.Get(r) = r.logMaxWidth
+                    override x.Set(r,v) = { r with logMaxWidth = v }
+                    override x.Update(r,f) = { r with logMaxWidth = f r.logMaxWidth }
+                }
+            let cpWidth =
+                { new Lens<CorrelationDrawing.SvgOptions, System.Double>() with
+                    override x.Get(r) = r.cpWidth
+                    override x.Set(r,v) = { r with cpWidth = v }
+                    override x.Update(r,f) = { r with cpWidth = f r.cpWidth }
+                }
+            let secLevelWidth =
+                { new Lens<CorrelationDrawing.SvgOptions, System.Double>() with
+                    override x.Get(r) = r.secLevelWidth
+                    override x.Set(r,v) = { r with secLevelWidth = v }
+                    override x.Update(r,f) = { r with secLevelWidth = f r.secLevelWidth }
+                }
+            let xAxisScaleFactor =
+                { new Lens<CorrelationDrawing.SvgOptions, System.Double>() with
+                    override x.Get(r) = r.xAxisScaleFactor
+                    override x.Set(r,v) = { r with xAxisScaleFactor = v }
+                    override x.Update(r,f) = { r with xAxisScaleFactor = f r.xAxisScaleFactor }
+                }
+            let yAxisScaleFactor =
+                { new Lens<CorrelationDrawing.SvgOptions, System.Double>() with
+                    override x.Get(r) = r.yAxisScaleFactor
+                    override x.Set(r,v) = { r with yAxisScaleFactor = v }
+                    override x.Update(r,f) = { r with yAxisScaleFactor = f r.yAxisScaleFactor }
+                }
+            let xAxisPadding =
+                { new Lens<CorrelationDrawing.SvgOptions, System.Double>() with
+                    override x.Get(r) = r.xAxisPadding
+                    override x.Set(r,v) = { r with xAxisPadding = v }
+                    override x.Update(r,f) = { r with xAxisPadding = f r.xAxisPadding }
+                }
+            let yAxisPadding =
+                { new Lens<CorrelationDrawing.SvgOptions, System.Double>() with
+                    override x.Get(r) = r.yAxisPadding
+                    override x.Set(r,v) = { r with yAxisPadding = v }
+                    override x.Update(r,f) = { r with yAxisPadding = f r.yAxisPadding }
+                }
+            let yAxisStep =
+                { new Lens<CorrelationDrawing.SvgOptions, System.Double>() with
+                    override x.Get(r) = r.yAxisStep
+                    override x.Set(r,v) = { r with yAxisStep = v }
+                    override x.Update(r,f) = { r with yAxisStep = f r.yAxisStep }
+                }
+            let axisWeight =
+                { new Lens<CorrelationDrawing.SvgOptions, System.Double>() with
+                    override x.Get(r) = r.axisWeight
+                    override x.Set(r,v) = { r with axisWeight = v }
+                    override x.Update(r,f) = { r with axisWeight = f r.axisWeight }
+                }
+            let offset =
+                { new Lens<CorrelationDrawing.SvgOptions, Aardvark.Base.V2d>() with
+                    override x.Get(r) = r.offset
+                    override x.Set(r,v) = { r with offset = v }
+                    override x.Update(r,f) = { r with offset = f r.offset }
+                }
+            let zoom =
+                { new Lens<CorrelationDrawing.SvgOptions, CorrelationDrawing.SvgZoom>() with
+                    override x.Get(r) = r.zoom
+                    override x.Set(r,v) = { r with zoom = v }
+                    override x.Update(r,f) = { r with zoom = f r.zoom }
+                }
+            let fontSize =
+                { new Lens<CorrelationDrawing.SvgOptions, CorrelationDrawing.FontSize>() with
+                    override x.Get(r) = r.fontSize
+                    override x.Set(r,v) = { r with fontSize = v }
+                    override x.Update(r,f) = { r with fontSize = f r.fontSize }
+                }
+    
+    
     type MCorrelationPlot(__initial : CorrelationDrawing.CorrelationPlot) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlot> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.CorrelationPlot>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlot>
@@ -1309,10 +1463,7 @@ module Mutable =
         let _secondaryLvl = ResetMod.Create(__initial.secondaryLvl)
         let _viewType = ResetMod.Create(__initial.viewType)
         let _svgFlags = ResetMod.Create(__initial.svgFlags)
-        let _svgOptions = ResetMod.Create(__initial.svgOptions)
-        let _svgOffset = ResetMod.Create(__initial.svgOffset)
-        let _svgZoom = ResetMod.Create(__initial.svgZoom)
-        let _svgFontSize = ResetMod.Create(__initial.svgFontSize)
+        let _svgOptions = MSvgOptions.Create(__initial.svgOptions)
         let _logAxisApp = MLogAxisApp.Create(__initial.logAxisApp)
         let _xAxis = ResetMod.Create(__initial.xAxis)
         let _semanticApp = MSemanticApp.Create(__initial.semanticApp)
@@ -1329,10 +1480,7 @@ module Mutable =
         member x.secondaryLvl = _secondaryLvl :> IMod<_>
         member x.viewType = _viewType :> IMod<_>
         member x.svgFlags = _svgFlags :> IMod<_>
-        member x.svgOptions = _svgOptions :> IMod<_>
-        member x.svgOffset = _svgOffset :> IMod<_>
-        member x.svgZoom = _svgZoom :> IMod<_>
-        member x.svgFontSize = _svgFontSize :> IMod<_>
+        member x.svgOptions = _svgOptions
         member x.logAxisApp = _logAxisApp
         member x.xAxis = _xAxis :> IMod<_>
         member x.semanticApp = _semanticApp
@@ -1354,10 +1502,7 @@ module Mutable =
                 ResetMod.Update(_secondaryLvl,v.secondaryLvl)
                 ResetMod.Update(_viewType,v.viewType)
                 ResetMod.Update(_svgFlags,v.svgFlags)
-                ResetMod.Update(_svgOptions,v.svgOptions)
-                ResetMod.Update(_svgOffset,v.svgOffset)
-                ResetMod.Update(_svgZoom,v.svgZoom)
-                ResetMod.Update(_svgFontSize,v.svgFontSize)
+                MSvgOptions.Update(_svgOptions, v.svgOptions)
                 MLogAxisApp.Update(_logAxisApp, v.logAxisApp)
                 ResetMod.Update(_xAxis,v.xAxis)
                 MSemanticApp.Update(_semanticApp, v.semanticApp)
@@ -1444,24 +1589,6 @@ module Mutable =
                     override x.Get(r) = r.svgOptions
                     override x.Set(r,v) = { r with svgOptions = v }
                     override x.Update(r,f) = { r with svgOptions = f r.svgOptions }
-                }
-            let svgOffset =
-                { new Lens<CorrelationDrawing.CorrelationPlot, Aardvark.Base.V2d>() with
-                    override x.Get(r) = r.svgOffset
-                    override x.Set(r,v) = { r with svgOffset = v }
-                    override x.Update(r,f) = { r with svgOffset = f r.svgOffset }
-                }
-            let svgZoom =
-                { new Lens<CorrelationDrawing.CorrelationPlot, CorrelationDrawing.SvgZoom>() with
-                    override x.Get(r) = r.svgZoom
-                    override x.Set(r,v) = { r with svgZoom = v }
-                    override x.Update(r,f) = { r with svgZoom = f r.svgZoom }
-                }
-            let svgFontSize =
-                { new Lens<CorrelationDrawing.CorrelationPlot, CorrelationDrawing.FontSize>() with
-                    override x.Get(r) = r.svgFontSize
-                    override x.Set(r,v) = { r with svgFontSize = v }
-                    override x.Update(r,f) = { r with svgFontSize = f r.svgFontSize }
                 }
             let logAxisApp =
                 { new Lens<CorrelationDrawing.CorrelationPlot, CorrelationDrawing.LogAxisApp>() with

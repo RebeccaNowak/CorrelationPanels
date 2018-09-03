@@ -48,9 +48,7 @@
 
         svgFlags            = SvgFlags.None
         svgOptions          = SvgOptions.init
-        svgOffset           = V2d.OO
-        svgZoom             = SvgZoom.defaultZoom
-        svgFontSize         = FontSize.defaultSize
+
 
         logAxisApp          = LogAxisApp.initial
         xAxis               = SemanticId.invalid
@@ -103,7 +101,7 @@
       let offset =
         match i = 0 with
           | true ->
-            model.svgOptions.firstLogOffset
+            SvgOptions.firstLogOffset model.svgOptions
           | false ->
             let offs =
               model.logs
@@ -111,21 +109,20 @@
                 |> List.filter (fun (log : GeologicalLog) -> (log.index < i))
                 |> List.map (fun log -> log.svgMaxX + 2.0 * model.svgOptions.logPadding) //(float log.index) * 
                 |> List.reduce (fun x y -> x + y) //TODO unsafe
-            if i = 1 then model.svgOptions.secLogOffset offs else offs //TODO find problem with 0 and 1 offset
+            if i = 1 then 
+              SvgOptions.secLogOffset model.svgOptions offs 
+              else offs //TODO find problem with 0 and 1 offset
       offset
 
     let logXOffset' (model : MCorrelationPlot) (i : int) =
       let offset = 
         match (i=0) with //TODO assuming log with 0 index exists
           | true ->
-            adaptive {
-              let! opts = model.svgOptions
-              return opts.firstLogOffset
-            }
+            SvgOptions.firstLogOffset' model.svgOptions
           | false ->
             adaptive {
               let! logs = model.logs.Content
-              let! opt = model.svgOptions
+              let opt = model.svgOptions
               let filtered = 
                 logs
                   |> PList.toList
@@ -134,26 +131,25 @@
                 alist {
                   for log in filtered do
                     let! max = log.svgMaxX
-                    yield max + 2.0 * opt.logPadding //(float log.index) * 
+                    let! p = opt.logPadding
+                    yield max + 2.0 * p //(float log.index) * 
                 }
               let! offsets = offsets.Content
               return offsets
                       |> PList.toList
                       |> List.reduce (fun x y -> x + y) //TODO unsafe
             }
-      offset 
-        |> Mod.map2 (fun (opts : SvgOptions) x -> 
-                      if i = 1 then opts.secLogOffset x else x
-                    ) model.svgOptions
+
+      SvgOptions.secLogOffset' model.svgOptions offset
       
     let xAxisXPosition (model : CorrelationPlot) (i : int) =
       ((logXOffset model i) + 2.0 * model.svgOptions.secLevelWidth)
 
     let xAxisXPosition' (model : MCorrelationPlot) (i : int) =
       adaptive {
-        let! opt = model.svgOptions
+        let! sw = model.svgOptions.secLevelWidth
         let! offset = (logXOffset' model i)
-        return (offset + 2.0 * opt.secLevelWidth)
+        return (offset + 2.0 * sw)
       }
       //let i = float i
       //i * this.logPadding + i * this.logMaxWidth //TODO hardcoded log width
@@ -175,25 +171,30 @@
                
     let yToSvg' (model : MCorrelationPlot) (y : float)  =
       adaptive {  
-        let! opt =  model.svgOptions
+        let! lp =  model.svgOptions.logPadding
+        let! lh = model.svgOptions.logHeight
         let! yRange = model.yRange
         match yRange.range with
           | 0.0 -> printf "Divide by zero: Log range is %.2f-%.2f" yRange.min yRange.max
           | _ -> ()
-        return opt.logPadding + (yRange.max - y) * (opt.logHeight / yRange.range)
+        return lp + (yRange.max - y) * (lh / yRange.range)
         //opt.logPadding + (y - yRange.min) * (opt.logHeight / yRange.range)
       }
 
-    let svgXAxisYOffset (model : MCorrelationPlot) =
+    let svgXAxisYOffset (model : MCorrelationPlot) = //TODO refactor
+      let ypos' logHeight = SvgOptions.xAxisYPosition' model.svgOptions logHeight
+      let ypos (logHeight : float) (opt : SvgOptions) = SvgOptions.xAxisYPosition opt logHeight
+
       adaptive {  
-        let! opt =  model.svgOptions
         let! yRange = model.yRange
         let! map = model.currrentYMapping
+        let! opt = model.svgOptions.Current
+        let! h = model.svgOptions.logHeight
         return match map with 
                 | None -> 
-                  opt.xAxisYPosition opt.logHeight
+                  ypos h opt
                 | Some m -> 
-                  opt.xAxisYPosition (yRange.range * m )
+                  ypos (yRange.range * m ) opt
       }
 
     let yToSvg (model : CorrelationPlot) (y : float)  =
@@ -530,13 +531,12 @@
 
       let attsGroup =
         amap {
-          let! offset = model.svgOffset
-          let! zoom   = model.svgZoom
-          let! fontSize = model.svgFontSize
-          let transform = sprintf "scale(%f) translate(%f %f)" zoom.zoomFactor offset.X offset.Y
+          let! zf = model.svgOptions.zoom
+          let! offset = model.svgOptions.offset
+          let! fs = model.svgOptions.fontSize
+          let transform = sprintf "scale(%f) translate(%f %f)" zf.zoomFactor offset.X offset.Y
           yield attribute "transform" transform
-          yield attribute "font-size" (sprintf "%ipx" fontSize.fontSize)
-
+          yield attribute "font-size" (sprintf "%ipx" fs.fontSize)
         }
 
       let logSvgList =
@@ -545,7 +545,6 @@
           let! logs     = model.logs.Content
           let! xAxis    = model.xAxis
           let semLabel  = SemanticApp.getLabel model.semanticApp model.xAxis
-          let! svgOptions = model.svgOptions
           let! flags = model.svgFlags
           let! sel = model.selectedLog
           /// LOGS
@@ -575,11 +574,11 @@
 
               let mapper (a : DomNode<GeologicalLog.Action>) =
                 a |> UI.map (fun m -> LogMessage (log.id, m))
-
+              let! xAxisScaleFactor = model.svgOptions.xAxisScaleFactor
               let logDomNode =
                 (GeologicalLog.View.svgView 
-                                log model.svgFlags svgOptions model.secondaryLvl 
-                                (LogAxisApp.getStyle model.logAxisApp svgOptions.xAxisScaleFactor)
+                                log model.svgFlags model.svgOptions model.secondaryLvl 
+                                (LogAxisApp.getStyle model.logAxisApp xAxisScaleFactor)
                 ) |> AList.map mapper
               let logView =
                 Incremental.Svg.svg 
@@ -595,14 +594,11 @@
                 let! svgMaxX = log.svgMaxX
                 let! yPos = (svgXAxisYOffset model)
                 let! xPos = (xAxisXPosition' model i)
-                let! fontSize = model.svgFontSize
                 let! xAxisSvg = (LogAxisApp.svgXAxis 
                                   model.logAxisApp 
                                   (new V2d(xPos, yPos))
+                                  model.svgOptions
                                   svgMaxX
-                                  svgOptions.axisWeight
-                                  svgOptions.xAxisScaleFactor
-                                  fontSize.fontSize
                                   semLabel
                                 ) 
                 yield xAxisSvg 
@@ -622,17 +618,23 @@
             /////
 
             if (Flags.isSet SvgFlags.YAxis flags) then
-              let! nativeRange = model.yRange
-              let! yMapping = model.currrentYMapping
-              let! fontSize = model.svgFontSize
-              yield LogAxisApp.svgYAxis 
-                      (new V2d(svgOptions.firstLogOffset * 0.8, svgOptions.logPadding))
-                      nativeRange
-                      svgOptions.axisWeight
-                      yMapping.Value //TODO using .Value
-                      svgOptions.yAxisStep
-                      fontSize.fontSize
-                      "elevation" //TODO hardcoded
+              let! yAxis =
+                LogAxisApp.svgYAxis' model.svgOptions
+                                      model.yRange
+                                      model.currrentYMapping
+                                      (Mod.constant "elevation")
+              yield yAxis
+                                     
+              //let! nativeRange = model.yRange
+              //let! yMapping = model.currrentYMapping
+              //yield LogAxisApp.svgYAxis 
+              //        (new V2d((SvgOptions.firstLogOffset svgOptions) * 0.8, svgOptions.logPadding))
+              //        nativeRange
+              //        svgOptions.axisWeight
+              //        yMapping.Value //TODO using .Value
+              //        svgOptions.yAxisStep
+              //        svgOptions.fontSize.fontSize
+              //        "elevation" //TODO hardcoded
 
 
             /// CORRELATIONS

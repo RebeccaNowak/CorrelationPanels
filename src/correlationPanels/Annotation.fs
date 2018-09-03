@@ -252,23 +252,14 @@ module Annotation =
           |> Sg.andAlso pickSg
 
 
-      let makeLinesSg (model : MAnnotation) (color : IMod<C4b>) (width : IMod<float>) = 
-          Mod.constant (Sg.pathDyn false (model.points //TODO dynamic
-                              |> AList.toList 
-                              |> List.map (fun ap -> ap.point)))
-              |> Sg.lines color
-              |> Sg.effect [
-                  toEffect DefaultSurfaces.trafo
-                  toEffect DefaultSurfaces.vertexColor
-                  toEffect DefaultSurfaces.thickLine                                
-                  ] 
-              |> Sg.noEvents
-              |> Sg.uniform "LineWidth" width
-              |> Sg.pass (RenderPass.after "lines" RenderPassOrder.Arbitrary RenderPass.main)
-              |> Sg.depthTest (Mod.constant DepthTestMode.None)  
-
       let color = getColor' model semApp
       let thickness = SemanticApp.getThickness semApp model.semanticId
+      let lines = 
+          Sg.Incremental.polyline 
+            (AList.map (fun (ap : MAnnotationPoint) -> ap.point) model.points)
+            color
+            thickness
+
       let dots =       
         aset {
           for p in model.points |> ASet.ofAList do
@@ -280,7 +271,7 @@ module Annotation =
         |> Sg.set
 
       [
-       Sg.noEvents <| makeLinesSg model color thickness;
+       Sg.noEvents <| lines
        Sg.noEvents <| dots
       ] |> ASet.ofList
 

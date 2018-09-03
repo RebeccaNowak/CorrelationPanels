@@ -4,20 +4,25 @@ open System
 open Aardvark.Base.Incremental
 open Aardvark.Base
 
-module UtilitiesDatastructures =
 
-  let alistFromAMap (input : amap<_,'a>) : alist<'a> = input |> AMap.toASet |> AList.ofASet |> AList.map snd 
+module Seq =
+  let properPairwiseOpt (f : 'a -> 'a -> 'b) (neutral : 'b) (s : seq<Option<'a>>) =
+    s
+      |> Seq.chunkBySize 2
+      |> Seq.map 
+        (fun arr -> match arr with
+                      | [| a;b |] -> match a, b with
+                                      | Some c, Some d -> Some (f c d)
+                                      | _ -> None
+                      | _ -> None)
 
-
-  let plistFromHMap (input : hmap<_,'a>) : plist<'a> = input |> HMap.toSeq |> PList.ofSeq |> PList.map snd 
-
-  let sortedPlistFromHmap (input : hmap<_,'a>) (projection : ('a -> 'b)) : plist<'a> =
-      input 
-          |> HMap.toSeq 
-          |> Seq.map snd
-          |> Seq.sortBy projection
-          |> PList.ofSeq 
-
+  let properPairwise (f : 'a -> 'a -> 'b) (neutral : 'b) (s : seq<'a>) =
+    s
+      |> Seq.chunkBySize 2
+      |> Seq.map 
+        (fun arr -> match arr with
+                      | [| a;b |] -> (f a b)
+                      | _ -> neutral)
 
 module List =
   let averageOrZero (lst : list<float>) = 
@@ -63,6 +68,9 @@ module List =
       |> List.map (fun el -> el.Value)
 
 module PList =
+  let fromHMap (input : hmap<_,'a>) : plist<'a> = 
+    input |> HMap.toSeq |> PList.ofSeq |> PList.map snd 
+
   let contains (f : 'a -> bool) (lst : plist<'a>) =
     let filtered = 
       lst 
@@ -131,28 +139,10 @@ module PList =
 
   
 
-  //type foo = {
-  //  bar : string
-  //  foo : float
-  //}
-
-  // let minBy (f : 'a -> 'b) (alst : list<'a>) =
-  //    alst
-  //      |> List.reduce (fun x y -> if (f x) < (f y) then x else y)
-  // let foobar = [{foo = 1.0;bar = "2"}
-  //               {foo = 1.0;bar = "4"}
-  //               {foo = 1.0;bar = "1"}]
-  // let res = minBy (fun f -> f.foo) foobar
-
-
-  //let (lst : List<option<string>>) = []                                     
-  //let lst2 = lst |> List.filter (fun el -> 
-  //                                match el with
-  //                                  | Some el -> true
-  //                                  | None    -> false) 
-  //let lst3 = lst2 |> List.map (fun el -> el.Value)
-
 module AList =
+  let fromAMap (input : amap<_,'a>) : alist<'a> = 
+    input |> AMap.toASet |> AList.ofASet |> AList.map snd 
+
   let isEmpty (alst: alist<'a>) =
     alst.Content 
       |> Mod.map (fun x -> (x.Count < 1))
@@ -203,4 +193,10 @@ module AList =
 
     sum / (float lst.Length)
 
- 
+module HMap =
+  let toSortedPlist (input : hmap<_,'a>) (projection : ('a -> 'b)) : plist<'a> =
+    input 
+        |> HMap.toSeq 
+        |> Seq.map snd
+        |> Seq.sortBy projection
+        |> PList.ofSeq

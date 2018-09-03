@@ -415,7 +415,7 @@
                 (secondaryLvl : IMod<int>)
                 //(viewType     : IMod<CorrelationPlotViewType>)
                 (flags        : IMod<SvgFlags>)
-                (options      : SvgOptions)
+                (options      : MSvgOptions)
                 (styleFun     : float -> IMod<LogAxisSection>) =
         let f = LogNodeSvg.getDomNodeFunction 
                   flags options styleFun 
@@ -424,7 +424,8 @@
                   
         adaptive {
           let! sLvl = secondaryLvl
-          return LogNodeSvg.createView 0.0 (sLvl, options.secLevelWidth) model f          
+          let! sLevelWidth = options.secLevelWidth
+          return LogNodeSvg.createView 0.0 (sLvl, sLevelWidth) model f          
         }
 
 

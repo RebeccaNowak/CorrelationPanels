@@ -157,6 +157,65 @@ type RenderingParameters = {
 }   
     
 type State = New | Edit | Display
+
+type SvgZoom = {
+  zoomFactor : float
+  //TODO min max
+} with 
+    static member (+) (a,b) : SvgZoom =
+      let newZoom = (a.zoomFactor + b.zoomFactor)
+      let checkedZoom =
+        match newZoom with
+          | a when a <= 0.1 -> 0.1
+          | b when b >= 10.0 -> 10.0
+          | _ -> newZoom
+      {zoomFactor = checkedZoom}
+
+    static member (+) (a : SvgZoom, b : float) : SvgZoom =
+      let newZoom = (a.zoomFactor + b)
+      let checkedZoom =
+        match newZoom with
+          | a when a <= 0.1 -> 0.1
+          | b when b >= 10.0 -> 10.0
+          | _ -> newZoom
+      {zoomFactor = checkedZoom}
+
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module SvgZoom =
+  let defaultZoom = {zoomFactor = 1.0}
+
+  let init d : SvgZoom = 
+    let z =
+      match d with
+        | a when a <= 0.1 -> 0.1
+        | b when b >= 10.0 -> 10.0
+        | _ -> d
+    {zoomFactor = z}
+
+  let add (z : SvgZoom) (d : float) : SvgZoom =
+    init (z.zoomFactor + d)
+
+type FontSize = {
+  fontSize : int 
+}
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module FontSize =
+  let defaultSize = {fontSize = 12}
+  let min = 10
+  let max = 30
+
+  let init d : FontSize = 
+    let s =
+      match d with
+        | a when a <= min -> min
+        | b when b >= max -> max
+        | _ -> d
+    {fontSize = s}
+
+  let add (s : FontSize) (d : int) : FontSize =
+    init (s.fontSize + d)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -356,6 +415,7 @@ type Correlation = {
   toBorder      : Border
 }
 
+[<DomainType>]
 type SvgOptions = {
   logPadding       : float
   logHeight        : float
@@ -369,89 +429,12 @@ type SvgOptions = {
   yAxisStep        : float
   axisWeight       : float
 
-} with 
-    member this.xAxisYPosition logHeight =
-            logHeight + this.logPadding + this.xAxisPadding
-    member this.firstLogOffset =
-              this.logPadding * 0.5
-    member this.secLogOffset offset = //TODO find problem with 0-1 offset
-              offset + this.logPadding * 0.3
+  offset           : V2d //TODO might want to put into svgOptions
+  zoom             : SvgZoom //TODO might want to put into svgOptions
+  fontSize         : FontSize
 
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module SvgOptions = 
-  let init : SvgOptions = 
-    {
-      logPadding       = 70.0
-      logHeight        = 300.0
-      logMaxWidth      = 250.0
-      cpWidth          = 900.0
-      secLevelWidth    = 20.0
-      xAxisScaleFactor = 30.0 //WIP
-      yAxisScaleFactor = 1.0 //WIP
-      xAxisPadding     = 30.0
-      yAxisPadding     = 5.0 //WIP
-      yAxisStep        = 1.0
-      axisWeight       = 2.0
-    }
-
-type SvgZoom = {
-  zoomFactor : float
-  //TODO min max
-} with 
-    static member (+) (a,b) : SvgZoom =
-      let newZoom = (a.zoomFactor + b.zoomFactor)
-      let checkedZoom =
-        match newZoom with
-          | a when a <= 0.1 -> 0.1
-          | b when b >= 10.0 -> 10.0
-          | _ -> newZoom
-      {zoomFactor = checkedZoom}
-
-    static member (+) (a : SvgZoom, b : float) : SvgZoom =
-      let newZoom = (a.zoomFactor + b)
-      let checkedZoom =
-        match newZoom with
-          | a when a <= 0.1 -> 0.1
-          | b when b >= 10.0 -> 10.0
-          | _ -> newZoom
-      {zoomFactor = checkedZoom}
-
-
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module SvgZoom =
-  let defaultZoom = {zoomFactor = 1.0}
-
-  let init d : SvgZoom = 
-    let z =
-      match d with
-        | a when a <= 0.1 -> 0.1
-        | b when b >= 10.0 -> 10.0
-        | _ -> d
-    {zoomFactor = z}
-
-  let add (z : SvgZoom) (d : float) : SvgZoom =
-    init (z.zoomFactor + d)
-
-type FontSize = {
-  fontSize : int 
 }
 
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module FontSize =
-  let defaultSize = {fontSize = 12}
-  let min = 10
-  let max = 30
-
-  let init d : FontSize = 
-    let s =
-      match d with
-        | a when a <= min -> min
-        | b when b >= max -> max
-        | _ -> d
-    {fontSize = s}
-
-  let add (s : FontSize) (d : int) : FontSize =
-    init (s.fontSize + d)
 
 [<DomainType>]
 type CorrelationPlot = {
@@ -470,9 +453,7 @@ type CorrelationPlot = {
 
    svgFlags            : SvgFlags
    svgOptions          : SvgOptions
-   svgOffset           : V2d //TODO might want to put into svgOptions
-   svgZoom             : SvgZoom //TODO might want to put into svgOptions
-   svgFontSize         : FontSize
+
 
    logAxisApp          : LogAxisApp
    xAxis               : SemanticId
