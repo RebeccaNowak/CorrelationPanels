@@ -338,41 +338,45 @@
               |> List.reduce (fun l1 l2 -> l1@l2)
               |> List.tryHead
 
-    let svgView (model        : MGeologicalLog) 
-               // (viewType     : IMod<CorrelationPlotViewType>) 
-                (flags        : IMod<SvgFlags>)
-                (svgOptions   : SvgOptions)
-                (secondaryLvl : IMod<int>)
-                (styleFun     : float -> IMod<LogAxisSection>) 
-                 =
-                
-      let minLvl = Helpers.getMinLevel model
-      let minLvlNodes =
-        model.nodes
-          |> AList.filter (fun n -> Mod.force n.level = minLvl)
-          |> AList.toSeq // TODO check if OK
-          |> Seq.sortByDescending (fun n -> Mod.force (LogNode.elevation' n))
 
-      let nodeViews =
-        alist {
-          for n in minLvlNodes do
-            let mapper (a : DomNode<LogNode.Action>) =
-              a |> UI.map (fun m -> LogNodeMessage (n.id, m))
-            let! v = (LogNode.Svg.view n secondaryLvl flags svgOptions styleFun) 
-                      //|> AList.map (UI.map LogNodeMessage)
-            for it in v do
-              yield (mapper it)
-        }
-      nodeViews  
+
+    ///////////////////////////////////////// SVG VIEW ///////////////////////////////////////////
+
+
 
     module View = 
+      let svgView (model        : MGeologicalLog) 
+                 // (viewType     : IMod<CorrelationPlotViewType>) 
+                  (flags        : IMod<SvgFlags>)
+                  (svgOptions   : SvgOptions)
+                  (secondaryLvl : IMod<int>)
+                  (styleFun     : float -> IMod<LogAxisSection>) 
+                   =
+                
+        let minLvl = Helpers.getMinLevel model
+        let minLvlNodes =
+          model.nodes
+            |> AList.filter (fun n -> Mod.force n.level = minLvl)
+            |> AList.toSeq // TODO check if OK
+            |> Seq.sortByDescending (fun n -> Mod.force (LogNode.elevation' n))
+
+        let nodeViews =
+          alist {
+
+            for n in minLvlNodes do
+              let mapper (a : DomNode<LogNode.Action>) =
+                a |> UI.map (fun m -> LogNodeMessage (n.id, m))
+              let! v = (LogNode.Svg.view n secondaryLvl flags svgOptions styleFun) 
+                        //|> AList.map (UI.map LogNodeMessage)
+              for it in v do
+                yield (mapper it)
+          }
+        nodeViews  
+
       open UI
-
-
-
-
-
-      let view (model : MGeologicalLog) =
+      let view (model : MGeologicalLog) 
+               (rowOnClick : 'msg) 
+               (mapper : Action -> 'msg)   =
         let labelEditNode textInput = 
           (TextInput.view'' 
             "box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.1) inset"
@@ -381,44 +385,55 @@
         let moveUpDown =
           div [clazz "ui small vertical buttons"]
             [
-              UI.iconButton' "angle up icon" "move up" (fun _ -> MoveUp model.id)  (style "padding: 0px 2px 0px 2px")
+              UI.Buttons.iconButton' "angle up icon" "move up" 
+                                     (fun _ -> MoveUp model.id)  
+                                     (style "padding: 0px 2px 0px 2px")
               div[style "padding: 1px 0px 1px 0px"][]
-              UI.iconButton' "angle down icon" "move down" (fun _ -> MoveDown model.id) (style "padding: 0px 2px 0px 2px")
+              UI.Buttons.iconButton' "angle down icon" "move down" 
+                                     (fun _ -> MoveDown model.id) 
+                                     (style "padding: 0px 2px 0px 2px")
             ]
 
         let indexNode =
             Incremental.text (Mod.map(fun x -> sprintf("%i") x) model.index) 
           
 
-        let viewNew (model : MGeologicalLog) =
+        let viewNew (model : MGeologicalLog) : list<DomNode<'msg>> =
             [
-              (labelEditNode model.label) |> UI.map Action.TextInputMessage
-                |> Table.intoTd
-              moveUpDown |> Table.intoTd
-              indexNode  |> Table.intoTd
-            ]
-                |> Table.intoTr
-        
-
-        let viewEdit (model : MGeologicalLog) =
-            [
-              (labelEditNode model.label) |> UI.map Action.TextInputMessage
-                |> Table.intoTd
-              moveUpDown |> Table.intoTd
+              [
+                (labelEditNode model.label) 
+                  |> UI.map Action.TextInputMessage 
+                  |> UI.map mapper
+                  |> Table.intoTd
+                //moveUpDown |> Table.intoTd
+              ] |> Table.intoActiveTr rowOnClick
+                     
 
             ]
-                    |> Table.intoTr
+            
+              
         
 
-        let viewDisplay (model : MGeologicalLog) =
+        let viewEdit (model : MGeologicalLog)  : list<DomNode<'msg>> =
+          [
+            [
+              (labelEditNode model.label) |> UI.map Action.TextInputMessage |> UI.map mapper
+                |> Table.intoTd
+              moveUpDown |> Table.intoTd  |> UI.map mapper
+
+            ] |> Table.intoActiveTr rowOnClick
+          ]          
+        
+
+        let viewDisplay (model : MGeologicalLog)  : list<DomNode<'msg>>  =
+          [
             [
               label [clazz "ui horizontal label"]
-                    [Incremental.text (model.label.text)]
+                    [Incremental.text (model.label.text)] |> UI.map mapper
                 |> Table.intoTd
-              moveUpDown |> Table.intoTd
-            ]
-                  
-                    |> Table.intoTr
+              moveUpDown |> Table.intoTd |> UI.map mapper
+            ] |> Table.intoTrOnClick rowOnClick
+          ] 
 
         model.state 
           |> Mod.map (fun state -> 
@@ -427,17 +442,6 @@
                           | State.Edit     -> viewEdit model
                           | State.New      -> viewNew model //TODO probably not necessary
                      ) 
-
- 
-
-        
-
-
-
-
-
-
-
 
 
       let debug (model       : MGeologicalLog) =
@@ -471,22 +475,18 @@
           |> AttributeMap.ofAMap
 
         Incremental.div attributes nodeViews  
-
-       
-    
-
     
     let getLogConnectionSg //TODO connections wrong
           (model : MGeologicalLog) 
           (semanticApp : MSemanticApp) 
           (isSelected : bool) //TODO performance: IMod<bool>
           (camera : MCameraControllerState) =
-
+            
       match isSelected with
         | false -> Sg.empty
         | true  ->
           let color = Mod.constant C4b.Yellow
-          let width = Mod.constant 1.0 
+          let width = Mod.constant 3.0 
           let lines =
             adaptive {
               let! aps = model.annoPoints

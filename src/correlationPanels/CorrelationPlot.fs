@@ -12,10 +12,12 @@
     type Action = 
       | Clear
       | ToggleSelectLog        of option<LogId>
+      | SelectLog              of LogId
       //| NewLog                 
       | TogglePoint            of (V3d * Annotation)
-      | FinishLog              
-      | DeleteLog              
+      | FinishLog         
+      | SaveLog                of LogId              
+      | DeleteLog              of LogId
       | LogMessage             of (LogId * GeologicalLog.Action)
       | ChangeView             of CorrelationPlotViewType
       | ChangeXAxis            of SemanticId
@@ -59,6 +61,15 @@
 
       }
 
+    let getPointsOfLog  (model : CorrelationPlot) 
+                        (logId : LogId) =
+      let optLog =
+        model.logs
+          |> PList.toList
+          |> List.tryFind (fun x -> x.id = logId)
+      match optLog with
+        | Some log -> log.annoPoints
+        | None     -> []
 
 
     let findBorder (model : CorrelationPlot) 
@@ -339,6 +350,15 @@
 
 
 ///////////////////////////////////////////////////////////// UPDATE ////////////////////////////////////////////////////
+    let deleteCorrelations (logId : LogId) (model : CorrelationPlot) =
+      let f (x : Correlation) =
+        (x.fromBorder.logId = logId) 
+          || (x.toBorder.logId = logId)
+      let updCorr = 
+        model.correlations
+          |> PList.deleteAll f
+      {model with correlations = updCorr}
+
     let indexOf (logs : plist<GeologicalLog>) id =
       logs.FirstIndexOf (fun (x : GeologicalLog) -> x.id = id)
 
@@ -352,6 +372,21 @@
         | Some log ->
           logs.Update (ind, (fun x -> GeologicalLog.update x message))
         | None    -> logs
+
+    
+    
+    
+    let deleteLog id model =
+      let del id model = 
+        let ind = indexOf model.logs id
+        model.logs.RemoveAt ind
+      let updLogs =
+        model
+          |> deleteCorrelations id
+          |> del id
+      {model with logs = updLogs}
+
+      
 
     let updateLog' message index (logs : plist<GeologicalLog>) =
        logs.Update (index, (fun x -> GeologicalLog.update x message))
@@ -405,19 +440,47 @@
           match (oStr = model.selectedLog) with
             | true  -> {model with selectedLog = None}
             | false -> {model with selectedLog = oStr}
+
+        | SelectLog id ->
+          let hasNew = model.logs |> PList.contains (fun x -> x.state = State.New)
+          if hasNew then
+            model
+          else
+            let updLogs =
+                  model.logs
+                      |> PList.map (fun log -> {log with state = State.Display})
+                      |> updateLog id (GeologicalLog.Action.SetState State.Edit)
+            {model with logs = updLogs}
+          
+          
         //| NewLog             -> 
         //  {model with creatingNew     = true
         //              selectedPoints  = List<(V3d * Annotation)>.Empty}
-        | FinishLog         ->
+        | FinishLog ->
           match model.selectedPoints with
             | []      -> 
               printf "no points in list for creating log"
-              model
+              model //TODO create empty log
             | working ->
-              createNewLog model
+              let updLogs =
+                model.logs
+                  |> PList.map (fun log -> {log with state = State.Display})
+              (createNewLog {model with logs = updLogs})
+
+        | SaveLog   id      ->
+          let ind = indexOf model.logs id
+          let updLogs = model.logs.Update (ind, (fun x -> {x with state = State.Display}))
+          {model with logs = updLogs}
+          //match model.selectedPoints with
+          //  | []      -> 
+          //    printf "no points in list for creating log"
+          //    model
+          //  | working ->
+          //    createNewLog model
               
               //let logYOffset = model.svgOptions.toSvg (lRange.min) allLogsRange
-        | DeleteLog         -> model
+        | DeleteLog id        -> deleteLog id model
+          
         | LogMessage (id, m)    -> 
           let logs =
             match m with
@@ -512,18 +575,20 @@
 
               let mapper (a : DomNode<GeologicalLog.Action>) =
                 a |> UI.map (fun m -> LogMessage (log.id, m))
-            
+
+              let logDomNode =
+                (GeologicalLog.View.svgView 
+                                log model.svgFlags svgOptions model.secondaryLvl 
+                                (LogAxisApp.getStyle model.logAxisApp svgOptions.xAxisScaleFactor)
+                ) |> AList.map mapper
               let logView =
                 Incremental.Svg.svg 
                       (
                         attributes
                       )   
-                      (GeologicalLog.svgView 
-                        log model.svgFlags svgOptions model.secondaryLvl 
-                        (LogAxisApp.getStyle model.logAxisApp svgOptions.xAxisScaleFactor)
-                      
-                      ) 
-              yield (logView |>  mapper)
+                      logDomNode
+                              
+              yield logView
             
               /// X AXIS
               if (Flags.isSet SvgFlags.XAxis flags) then
@@ -579,8 +644,19 @@
            ///
         } 
      //////////////////////
+      //let labelDomNode =
+      //  alist {
+      //    for log in model.logs do
+      //      let! label = log.label.text
+      //      let! maxX = log.svgMaxX
+      //      let! opt = model.svgOptions
+      //      let! fontSize = model.svgFontSize
+      //      yield (Svg.drawText (V2d (log., opt.logPadding - float fontSize.fontSize)) label Orientation.Horizontal)
+      //  }
 
-      Svg.svg attsRoot [(Incremental.Svg.g (AttributeMap.ofAMap attsGroup) logSvgList)]
+      Svg.svg attsRoot [
+        (Incremental.Svg.g (AttributeMap.ofAMap attsGroup) logSvgList)
+      ]
 
                                         
                            

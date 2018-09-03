@@ -29,7 +29,7 @@
       seq {
         for str in names.[1..names.Length-1] do
           let e = parse t str
-          yield (UI.toggleButton str (fun p -> toggleAction e)) //|> UI.map CorrelationPlotMessage
+          yield (UI.Buttons.toggleButton str (fun p -> toggleAction e)) //|> UI.map CorrelationPlotMessage
       } |> List.ofSeq
 
       ////WIP 

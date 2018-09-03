@@ -277,17 +277,12 @@ module SemanticApp =
           let! state = mSem.state
           if state = State.New then 
             let! domNode = Semantic.view mSem
-            let menu =
-              div [clazz "ui buttons"; style "vertical-align: top; horizontal-align: middle"]
-                  [
-                    button [clazz "compact ui button"; onMouseClick (fun _ -> SaveNew)][text "Save"];
-                    div    [clazz "or"][];
-                    button [clazz "compact ui button"; onMouseClick (fun _ -> CancelNew)][text "Cancel"]
-                  ]
+            let menu = Menus.saveCancelMenu SaveNew CancelNew
 
-            yield Table.intoTr'' 
+            yield Table.intoActiveTr 
+                    (SetSemantic (Some mSem.id))
                     (domNode |> List.map (fun x -> x |> UI.map SemanticMessage)) 
-                    (SetSemantic (Some mSem.id)) 
+                     
             yield Table.intoTr [(Table.intoTd' menu domNode.Length)]   
                   
           else if state = State.Edit then

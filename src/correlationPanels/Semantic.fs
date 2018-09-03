@@ -54,6 +54,7 @@ module Semantic =
         style         = {Style.color      = {c = new C4b(37,52,148)}
                          Style.thickness  = {Numeric.init with value = 6.0}}
         semanticType  = SemanticType.Hierarchical
+        geometryType  = GeometryType.Polyline
         level         = 0
       }
 
@@ -63,6 +64,7 @@ module Semantic =
         style         = {Style.color      = {c = new C4b(44,127,184)}
                          Style.thickness  = {Numeric.init with value = 5.0}}
         semanticType  = SemanticType.Hierarchical
+        geometryType  = GeometryType.Polyline
         level         = 1
       }
 
@@ -72,6 +74,7 @@ module Semantic =
         style         = {Style.color      = {c = new C4b(65,182,196)}
                          Style.thickness  = {Numeric.init with value = 4.0}}
         semanticType  = SemanticType.Hierarchical
+        geometryType  = GeometryType.Polyline
         level         = 2
       }
 
@@ -81,6 +84,7 @@ module Semantic =
         style         = {Style.color      = {c = new C4b(127,205,187)}
                          Style.thickness  = {Numeric.init with value = 3.0}}
         semanticType  = SemanticType.Hierarchical
+        geometryType  = GeometryType.Polyline
         level         = 3
       }
 
@@ -90,6 +94,7 @@ module Semantic =
         style         = {Style.color      = {c = new C4b(199,233,180)}
                          Style.thickness  = {Numeric.init with value = 2.0}}
         semanticType  = SemanticType.Hierarchical
+        geometryType  = GeometryType.Polyline
         level         = 4
       }
 

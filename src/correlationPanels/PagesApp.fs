@@ -165,18 +165,25 @@ module Pages =
             }
 
       | KeyDown k, _       -> 
-        match k with
-          | Keys.C -> 
-             printfn "Camera Position: %s" 
-                     (String.fromV3d model.camera.view.Location)
-             printfn "Up: %s" 
-                     (String.fromV3d model.camera.view.Up)
-             printfn "Forward: %s" 
-                     (String.fromV3d model.camera.view.Forward)
-          | _ -> ()
+        let annoApp = 
+          match k with
+            | Keys.C -> 
+               printfn "Camera Position: %s" 
+                       (String.fromV3d model.camera.view.Location)
+               printfn "Up: %s" 
+                       (String.fromV3d model.camera.view.Up)
+               printfn "Forward: %s" 
+                       (String.fromV3d model.camera.view.Forward)
+               model.annotationApp
+            | Keys.Enter -> 
+              match model.drawingApp.working with
+                | Some anno -> AnnotationApp.update model.annotationApp (AnnotationApp.AddAnnotation anno)
+                | None  -> model.annotationApp
+            | _ -> model.annotationApp
         {
           model with 
             drawingApp = updateDrawingApp (CorrelationDrawing.KeyDown k)
+            annotationApp = annoApp
             camera     = updateCamera (CameraController.Message.KeyDown k)
         }
 
@@ -191,7 +198,15 @@ module Pages =
         updateSemantics m model
 
       | AnnotationAppMessage m, _ -> 
-        {model with annotationApp = updateAnnotationApp m}
+        let updAnnoApp = updateAnnotationApp m
+        let updCorrPlotApp m = 
+          let sel      = AnnotationApp.getSelectedPoints' model.annotationApp
+          {model.corrPlotApp with 
+            correlationPlot = {model.corrPlotApp.correlationPlot with selectedPoints = sel
+                                                                      annotations    = model.annotationApp.annotations}}
+
+        {model with annotationApp = updAnnoApp
+                    corrPlotApp   = updCorrPlotApp m}
 
       | CorrelationDrawingMessage m, _ ->
         let (corrApp, drawingApp, annoApp) =               
@@ -222,16 +237,37 @@ module Pages =
                     annotationApp = annoApp}
 
       | CorrPlotMessage m, false -> // TODO refactor
-        let corrPlotApp = 
+        let updCorrPlotApp m = 
           let sel      = AnnotationApp.getSelectedPoints' model.annotationApp
           let updModel = //TODO refactor
             {model.corrPlotApp with 
               correlationPlot = {model.corrPlotApp.correlationPlot with selectedPoints = sel
                                                                         annotations    = model.annotationApp.annotations}}
           CorrelationPlotApp.update updModel m
+
+        let (annoApp, corrPlotApp) =
+          match m with 
+            | CorrelationPlotApp.CorrelationPlotMessage cpa ->
+              match cpa with
+                | CorrelationPlot.SelectLog id ->
+                  let selPoints = CorrelationPlot.getPointsOfLog model.corrPlotApp.correlationPlot id
+                  let upd =
+                    AnnotationApp.update model.annotationApp AnnotationApp.DeselectAllPoints
+                  let selPoints =
+                    selPoints
+                      |> List.map (fun ((p : V3d),(a : Annotation)) -> (p, a.id))
+                  let annoApp = 
+                    AnnotationApp.update upd (AnnotationApp.SelectPoints selPoints)
+                  let cPlot =
+                    CorrelationPlot.update model.corrPlotApp.correlationPlot (CorrelationPlot.SelectLog id)
+                  (annoApp, {model.corrPlotApp with correlationPlot = cPlot})
+                | _ -> (model.annotationApp, updCorrPlotApp m)
+            | _ -> (model.annotationApp, updCorrPlotApp m)
+        
                 //model.annotationApp.annotations
                 //model.semanticApp m
-        {model with corrPlotApp = corrPlotApp}
+        {model with corrPlotApp = corrPlotApp
+                    annotationApp = annoApp}
 
       | CenterScene,  _ -> 
         centerScene model
@@ -334,12 +370,12 @@ module Pages =
                  [text "New Log"]
           ) |> UI.map CorrelationPlotApp.CorrelationPlotMessage 
             |> UI.map Action.CorrPlotMessage
-          iconButton "small save icon"          "save"    (fun _ -> Save)
-          iconButton "small file outline icon"  "clear"   (fun _ -> Clear)
-          iconButton "small external icon"      "export"  (fun _ -> Export)
-          iconButton "small arrow left icon"    "undo"    (fun _ -> Undo)
-          iconButton "small arrow right icon"   "redo"    (fun _ -> Redo)
-          iconButton "small bullseye icon"      "centre"  (fun _ -> CenterScene)
+          Buttons.iconButton "small save icon"          "save"    (fun _ -> Save)
+          Buttons.iconButton "small file outline icon"  "clear"   (fun _ -> Clear)
+          Buttons.iconButton "small external icon"      "export"  (fun _ -> Export)
+          Buttons.iconButton "small arrow left icon"    "undo"    (fun _ -> Undo)
+          Buttons.iconButton "small arrow right icon"   "redo"    (fun _ -> Redo)
+          Buttons.iconButton "small bullseye icon"      "centre"  (fun _ -> CenterScene)
           div [style "padding: 2px 2px 2px 2px"] (Flags.toButtons typeof<AppFlags> ToggleAppFlag) //TODO css
           div [style "padding: 2px 2px 2px 2px"] (Flags.toButtons typeof<SgFlags> ToggleSgFlag)
           (

@@ -63,6 +63,12 @@ module List =
       |> List.map (fun el -> el.Value)
 
 module PList =
+  let contains (f : 'a -> bool) (lst : plist<'a>) =
+    let filtered = 
+      lst 
+        |> PList.filter f
+    not (filtered.IsEmpty ())  
+
   let mapiInt (lst : plist<'a>) =
     let i = ref 0
     seq {
@@ -71,6 +77,17 @@ module PList =
         i := !i + 1
     }
     |> PList.ofSeq
+
+  let deleteFirst (lst : plist<'a>) (f : 'a -> bool) =
+    match lst.FirstIndexOf f with
+      | ind when ind = -1 -> (false, lst)
+      | ind -> (true, lst.RemoveAt ind)
+
+
+  let rec deleteAll (f : 'a -> bool) (lst : plist<'a>) =
+    match deleteFirst lst f with
+      | (true, li)  -> deleteAll f li
+      | (false, li) -> li
 
   let filterNone (lst : plist<option<'a>>) =
     lst

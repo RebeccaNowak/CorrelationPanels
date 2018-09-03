@@ -137,13 +137,32 @@
 
     // Log Debug View
     module View =
+      let mapper (log : MGeologicalLog) = (fun a -> CorrelationPlot.LogMessage (log.id, a))
       let logList (model : MCorrelationPlotApp) =
         let rows = 
           alist {
             for log in model.correlationPlot.logs do
-              let! tmp = GeologicalLog.View.view log
-              yield tmp |> UI.map (fun m -> (CorrelationPlot.LogMessage (log.id, m)))
-                        |> UI.map CorrelationPlotMessage
+              let! tmp = 
+                GeologicalLog.View.view log (CorrelationPlot.Action.SelectLog log.id) 
+                                            (mapper log)
+              let tmp = tmp
+                          |> List.map (UI.map (fun a -> Action.CorrelationPlotMessage a))
+                                                      
+              let! state = log.state
+              for row in tmp do
+                let dNodeRow = 
+                  row
+                    //|> UI.map (fun m -> (CorrelationPlot.LogMessage (log.id, m)))
+                    //|> UI.map CorrelationPlotMessage
+                yield dNodeRow
+                if state = State.New then
+                  let menu = 
+                    (UI.Menus.saveCancelMenu 
+                      (CorrelationPlot.Action.SaveLog log.id)
+                      (CorrelationPlot.Action.DeleteLog log.id) 
+                       |> UI.map CorrelationPlotMessage)
+                  yield Table.intoTr [(Table.intoTd' menu tmp.Length)]
+                                  
           }
 
         Table.toTableView (div[][]) rows ["Label";"Order"]

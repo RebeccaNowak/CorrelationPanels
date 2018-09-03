@@ -26,7 +26,7 @@ module LogAxisApp =
         [{label = "Invalid";color = new C4b(255,0,0);   range = {min = 0.0 ; max = 0.0}}]
     }
 
-  let grainsizeStyle : LogAxisConfig =
+  let grainsizeStyle2 : LogAxisConfig =
     {
       id                  = {id = System.Guid.NewGuid().ToString()}
       label               = "grainsize"
@@ -41,7 +41,7 @@ module LogAxisApp =
         ]
     }
 
-  let grainsizeStyle2 : LogAxisConfig =
+  let grainsizeStyle : LogAxisConfig =
     {
       id                  = {id = System.Guid.NewGuid().ToString()}
       label               = "grainsize2"
@@ -57,8 +57,8 @@ module LogAxisApp =
     }
 
   let initial : LogAxisApp = {
-    templates = [grainsizeStyle;grainsizeStyle2]
-    selectedTemplate = grainsizeStyle2.id
+    templates = [grainsizeStyle;grainsizeStyle]
+    selectedTemplate = grainsizeStyle.id
   }
 
   let selectedTemplateOrDefault (model : LogAxisApp) =
@@ -223,11 +223,11 @@ module LogAxisApp =
       for styleTemplate in model.templates do
         match styleTemplate.id with
           | id when id = selId ->
-              yield Incremental.iconButton 
+              yield Incremental.Buttons.iconButton 
                       "small yellow arrow left icon" 
                       (fun _ -> SetStyle styleTemplate.id)
           | _ ->
-              yield Incremental.iconButton 
+              yield Incremental.Buttons.iconButton 
                       "small arrow left icon" 
                       (fun _ -> SetStyle styleTemplate.id)
 
