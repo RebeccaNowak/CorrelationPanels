@@ -236,13 +236,13 @@ module Semantic =
           amap {
             yield clazz "circle icon"
             let! c = model.style.color.c
-            yield style (sprintf "color:%s" (Color.colorToHexStr c))
+            yield style (sprintf "color:%s" (CSS.colorToHexStr c))
           }  
 
         intoTd <|
           div[] [
             Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
-            Incremental.text (Mod.map(fun (x : C4b) -> Color.colorToHexStr x) model.style.color.c)
+            Incremental.text (Mod.map(fun (x : C4b) -> CSS.colorToHexStr x) model.style.color.c)
           ]//  |> intoTd
 
 
@@ -301,13 +301,13 @@ module Semantic =
           amap {
             yield clazz "circle icon"
             let! c = model.style.color.c
-            yield style (sprintf "color:%s" (Color.colorToHexStr c))
+            yield style (sprintf "color:%s" (CSS.colorToHexStr c))
           }  
 
         intoTd <|
           div[] [
             Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
-            Incremental.text (Mod.map(fun (x : C4b) -> Color.colorToHexStr x) model.style.color.c)
+            Incremental.text (Mod.map(fun (x : C4b) -> CSS.colorToHexStr x) model.style.color.c)
           ]//  |> intoTd
 
 
@@ -336,7 +336,7 @@ module Semantic =
           Incremental.label 
             (AttributeMap.union 
                (AttributeMap.ofList [clazz "ui horizontal label"]) 
-               (AttributeMap.ofAMap (incrBgColorAMap model.style.color.c)))
+               (AttributeMap.ofAMap (UI.CSS.incrBgColorAMap model.style.color.c)))
             (AList.ofList [Incremental.text (model.label.text)])
           |> intoTd
 
@@ -352,12 +352,12 @@ module Semantic =
           amap {
             yield clazz "circle icon"
             let! c = model.style.color.c
-            yield style (sprintf "color:%s" (Color.colorToHexStr c))
+            yield style (sprintf "color:%s" (CSS.colorToHexStr c))
           }  
         intoTd <|
           div[] [
             Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
-            Incremental.text (Mod.map(fun (x : C4b) -> Color.colorToHexStr x) model.style.color.c)
+            Incremental.text (Mod.map(fun (x : C4b) -> CSS.colorToHexStr x) model.style.color.c)
           ]
            
 

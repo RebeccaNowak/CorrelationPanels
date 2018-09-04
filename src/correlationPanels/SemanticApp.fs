@@ -289,7 +289,7 @@ module SemanticApp =
               let! domNode = Semantic.View.view mSem    
               let! col = mSem.style.color.c
               let textCol = Table.textColorFromBackground col
-              let st = style (sprintf "background: %s;%s" (Color.colorToHexStr col) textCol)
+              let st = style (sprintf "background: %s;%s" (CSS.colorToHexStr col) textCol)
               yield tr 
                       ([st; onClick (fun str -> SetSemantic (Some mSem.id))]) 
                       (List.map (fun x -> x |> UI.map SemanticMessage) domNode)

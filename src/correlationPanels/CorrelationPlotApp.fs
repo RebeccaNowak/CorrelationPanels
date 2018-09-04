@@ -107,16 +107,6 @@
     let viewSvg (model : MCorrelationPlotApp) =
      
       let menu = 
-          //let viewSelection = 
-          //  alist {
-          //    for sem in model.semanticApp.semanticsList do
-          //      let! sType = sem.semanticType
-          //      if sType = SemanticType.Metric then
-          //            yield getColourIconButton' sem.style.color.c
-          //                                          (fun _ -> CorrelationPlot.ChangeXAxis sem.id)
-          //  }
-
-
           let axisSel = ((LogAxisApp.view model.correlationPlot.logAxisApp) |> AList.map (UI.map AxisMessage))
             
           div [
@@ -174,33 +164,7 @@
 
 
       let view  (model : MCorrelationPlotApp)  =
-        //let menu =
-        //  let icon =
-        //    alist {
-        //      let! ic =
-        //        (model.correlationPlot.creatingNew |> Mod.map (fun n -> 
-        //                                        match n with
-        //                                          | true  -> i [clazz "small yellow plus icon"] [] 
-        //                                          | false -> i [clazz "small plus icon"] []
-        //                                      ))
-        //      yield ic
-        //    }
-        //  div [clazz "ui horizontal inverted menu";
-        //        style "float:top"]
-        //      [
-        //        div [clazz "item"]
-        //            [Incremental.button (AttributeMap.ofList [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.NewLog)]) 
-        //                                  icon
-        //            ];
-        //        div [clazz "item"]
-        //            [button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.FinishLog)] 
-        //                    [i [clazz "small check icon"] [] ] |> UI.wrapToolTip "done"
-        //            ];
-        //        div [clazz "item"]
-        //            [button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.DeleteLog)] 
-        //                    [i [clazz "small minus icon"] [] ] |> UI.wrapToolTip "delete"
-        //            ]; 
-        //      ]
+
 
 
         let domList =
@@ -231,7 +195,7 @@
 
 
         let domNode =
-          require (UI.Semui.myCss) (
+          require (UI.CSS.myCss) (
             body [style "overflow: auto"] [
               div [] [
                // menu |> UI.map CorrelationPlotMessage
@@ -261,3 +225,48 @@
           }
 
     let start = App.start app
+
+
+
+
+
+
+
+
+
+            //let menu =
+        //  let icon =
+        //    alist {
+        //      let! ic =
+        //        (model.correlationPlot.creatingNew |> Mod.map (fun n -> 
+        //                                        match n with
+        //                                          | true  -> i [clazz "small yellow plus icon"] [] 
+        //                                          | false -> i [clazz "small plus icon"] []
+        //                                      ))
+        //      yield ic
+        //    }
+        //  div [clazz "ui horizontal inverted menu";
+        //        style "float:top"]
+        //      [
+        //        div [clazz "item"]
+        //            [Incremental.button (AttributeMap.ofList [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.NewLog)]) 
+        //                                  icon
+        //            ];
+        //        div [clazz "item"]
+        //            [button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.FinishLog)] 
+        //                    [i [clazz "small check icon"] [] ] |> UI.wrapToolTip "done"
+        //            ];
+        //        div [clazz "item"]
+        //            [button [clazz "ui small icon button"; onMouseClick (fun _ -> CorrelationPlot.DeleteLog)] 
+        //                    [i [clazz "small minus icon"] [] ] |> UI.wrapToolTip "delete"
+        //            ]; 
+        //      ]
+
+                  //let viewSelection = 
+          //  alist {
+          //    for sem in model.semanticApp.semanticsList do
+          //      let! sType = sem.semanticType
+          //      if sType = SemanticType.Metric then
+          //            yield getColourIconButton' sem.style.color.c
+          //                                          (fun _ -> CorrelationPlot.ChangeXAxis sem.id)
+          //  }

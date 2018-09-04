@@ -1,8 +1,5 @@
 ﻿namespace CorrelationDrawing
 
-
-
-
   module Svg =
     open Aardvark.UI
     open Aardvark.Base

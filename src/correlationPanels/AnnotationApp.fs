@@ -107,7 +107,7 @@ namespace CorrelationDrawing
             
             )
             yield (tr 
-              ([style tinyPadding])
+              ([style UI.CSS.tinyPadding])
               (List.map (fun x -> x |> UI.map AnnotationMessage) annoView)
             )
         }  

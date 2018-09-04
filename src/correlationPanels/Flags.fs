@@ -24,13 +24,9 @@
       let v : 'a = Microsoft.FSharp.Core.LanguagePrimitives.EnumOfValue toggled
       v
 
-    let toButtons (t : System.Type) (toggleAction : 'a -> 'msg) =
-      let names = System.Enum.GetNames(t)
-      seq {
-        for str in names.[1..names.Length-1] do
-          let e = parse t str
-          yield (UI.Buttons.toggleButton str (fun p -> toggleAction e)) //|> UI.map CorrelationPlotMessage
-      } |> List.ofSeq
+
+
+
 
       ////WIP 
  ////TEST

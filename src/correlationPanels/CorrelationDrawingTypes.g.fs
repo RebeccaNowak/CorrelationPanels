@@ -1771,7 +1771,7 @@ module Mutable =
     type MPages(__initial : CorrelationDrawing.Pages) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.Pages> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.Pages>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.Pages>
-        let _saveIndex = ResetMod.Create(__initial.saveIndex)
+        let _saveIndices = ResetMod.Create(__initial.saveIndices)
         let _appFlags = ResetMod.Create(__initial.appFlags)
         let _sgFlags = ResetMod.Create(__initial.sgFlags)
         let _camera = Aardvark.UI.Primitives.Mutable.MCameraControllerState.Create(__initial.camera)
@@ -1785,7 +1785,7 @@ module Mutable =
         let _corrPlotApp = MCorrelationPlotApp.Create(__initial.corrPlotApp)
         
         member x.past = __current.Value.past
-        member x.saveIndex = _saveIndex :> IMod<_>
+        member x.saveIndices = _saveIndices :> IMod<_>
         member x.future = __current.Value.future
         member x.appFlags = _appFlags :> IMod<_>
         member x.sgFlags = _sgFlags :> IMod<_>
@@ -1804,7 +1804,7 @@ module Mutable =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
-                ResetMod.Update(_saveIndex,v.saveIndex)
+                ResetMod.Update(_saveIndices,v.saveIndices)
                 ResetMod.Update(_appFlags,v.appFlags)
                 ResetMod.Update(_sgFlags,v.sgFlags)
                 Aardvark.UI.Primitives.Mutable.MCameraControllerState.Update(_camera, v.camera)
@@ -1838,11 +1838,11 @@ module Mutable =
                     override x.Set(r,v) = { r with past = v }
                     override x.Update(r,f) = { r with past = f r.past }
                 }
-            let saveIndex =
-                { new Lens<CorrelationDrawing.Pages, CorrelationDrawing.SaveIndex>() with
-                    override x.Get(r) = r.saveIndex
-                    override x.Set(r,v) = { r with saveIndex = v }
-                    override x.Update(r,f) = { r with saveIndex = f r.saveIndex }
+            let saveIndices =
+                { new Lens<CorrelationDrawing.Pages, Microsoft.FSharp.Collections.List<CorrelationDrawing.SaveIndex>>() with
+                    override x.Get(r) = r.saveIndices
+                    override x.Set(r,v) = { r with saveIndices = v }
+                    override x.Update(r,f) = { r with saveIndices = f r.saveIndices }
                 }
             let future =
                 { new Lens<CorrelationDrawing.Pages, Microsoft.FSharp.Core.Option<CorrelationDrawing.Pages>>() with

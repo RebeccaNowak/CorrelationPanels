@@ -52,7 +52,7 @@ module DropdownList =
 
     let alistAttr  = 
       amap {
-        let! attr = modColorToColorAttr mDropdown.color
+        let! attr = UI.CSS.modColorToColorAttr mDropdown.color
         yield attr
         let! lst = (mDropdown.valueList.Content) 
         let callback (i : int) = lst

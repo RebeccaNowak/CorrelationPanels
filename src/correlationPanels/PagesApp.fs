@@ -82,7 +82,7 @@ module Pages =
       semanticApp   = semApp
       drawingApp    = CorrelationDrawing.initial 
       corrPlotApp   = CorrelationPlotApp.initial
-      saveIndex     = SaveIndex.init
+      saveIndices   = SaveIndex.findSavedIndices ()
     }
 
   let tmpDebug =
@@ -293,13 +293,13 @@ module Pages =
                         |> centerScene
             | false -> model
       | Save,  false -> 
-          let newSaveInd = model.saveIndex.next
+          let newSaveInd = SaveIndex.nextAvaible ()
           ignore (SemanticApp.save model.semanticApp (newSaveInd.filename SaveType.Semantics))
           ignore (AnnotationApp.save model.annotationApp (newSaveInd.filename SaveType.Annotations))
-          {model with saveIndex = newSaveInd}
+          {model with saveIndices = SaveIndex.findSavedIndices ()}
 
       | Load ind, false -> 
-        model
+        (clear model)
           |> loadSemantics ind
           |> loadAnnotations ind
 //                  
@@ -336,33 +336,30 @@ module Pages =
 
 
   let view  (runtime : IRuntime) (model : MPages) =
-    let toggleButtons =
-      Flags.toButtons typeof<AppFlags> ToggleAppFlag
-
-
     let menu = 
-      let menuLoad =
-        let inds = 
-          SaveIndex.findSavedIndices
-            |> List.map (fun i -> 
-                          div [clazz "item"; onClick (fun _ -> Load i)]
-                              [text (sprintf "Load %s" (string i.ind))])
-                  //iconButton "small folder icon" (string i) (fun _ -> Load i))
+      let loadMenu = // TODO overkill
+        let indexToMenuItem (ind : SaveIndex) =
+          let label = 
+            sprintf "Load %s" (string ind.ind)
+          UI.Menus.toMenuItem label (Load ind) 
 
-        div [clazz "left floated item"] [
-            div [clazz "ui simple pointing dropdown top left"]
-              [ 
-                span [clazz "text"][text "Load"]
-                i [clazz "dropdown icon"][]
-                div [clazz "menu";style "margin-top: 0rem"]
-                    inds //[div [clazz "header"][text "load"]]
-              ]
-        ]
-            
+        let items = 
+          model.saveIndices
+            |> Mod.map (fun lst ->
+                          lst 
+                            |> List.map indexToMenuItem
+                       )
+                              
+        let lst =
+          alist { 
+            let! lst = items
+            for item in lst do
+              yield item
+          }
+        lst |> UI.Menus.Incremental.toMouseOverMenu
+        
 
-      let menuItems = 
-        [
-          menuLoad
+      let newLogButton = 
           (
             button [clazz "ui button"; 
                   (onMouseClick (fun _ -> CorrelationPlot.Action.FinishLog)) 
@@ -370,21 +367,23 @@ module Pages =
                  [text "New Log"]
           ) |> UI.map CorrelationPlotApp.CorrelationPlotMessage 
             |> UI.map Action.CorrPlotMessage
+
+      let menuItems = 
+        [
+          loadMenu
+          newLogButton
           Buttons.iconButton "small save icon"          "save"    (fun _ -> Save)
           Buttons.iconButton "small file outline icon"  "clear"   (fun _ -> Clear)
           Buttons.iconButton "small external icon"      "export"  (fun _ -> Export)
           Buttons.iconButton "small arrow left icon"    "undo"    (fun _ -> Undo)
           Buttons.iconButton "small arrow right icon"   "redo"    (fun _ -> Redo)
           Buttons.iconButton "small bullseye icon"      "centre"  (fun _ -> CenterScene)
-          div [style "padding: 2px 2px 2px 2px"] (Flags.toButtons typeof<AppFlags> ToggleAppFlag) //TODO css
-          div [style "padding: 2px 2px 2px 2px"] (Flags.toButtons typeof<SgFlags> ToggleSgFlag)
-          (
-            div [style "padding: 2px 2px 2px 2px"] 
-              (Flags.toButtons typeof<SvgFlags> CorrelationPlot.ToggleFlag)
-          ) |> UI.map CorrelationPlotApp.CorrelationPlotMessage 
+          Flags.toButtonGroup typeof<AppFlags> ToggleAppFlag //TODO css
+          Flags.toButtonGroup typeof<SgFlags> ToggleSgFlag
+          (Flags.toButtonGroup typeof<SvgFlags> CorrelationPlot.ToggleFlag) 
+            |> UI.map CorrelationPlotApp.CorrelationPlotMessage 
             |> UI.map Action.CorrPlotMessage
-          //div [] //[style "display:inline"]
-          //    [
+
           div[clazz "ui label"] 
               [
                 text "SecondaryLevel"
@@ -427,7 +426,7 @@ module Pages =
           model.camera) |> Sg.map CorrPlotMessage
       let frustum = Mod.constant (Frustum.perspective 60.0 0.1 100.0 1.0)
       
-      require (UI.Semui.myCss) (
+      require (UI.CSS.myCss) (
         (
           body [clazz "ui"; style "background: #1B1C1E; width: 100%; height:100%; overflow: auto;"] [
             div [] [
@@ -473,7 +472,7 @@ module Pages =
                           menu
                       )
                   | Some "svg" -> 
-                    require (UI.Semui.myCss) (
+                    require (UI.CSS.myCss) (
                       body [attribute "overflow-x" "hidden";
                             attribute "overflow-y" "hidden"; 
                             (onMouseDown (fun b p -> MouseDown (b,p)))
@@ -498,7 +497,7 @@ module Pages =
                         |> UI.map SemanticAppMessage
              
                   | Some "annotations" ->
-                    require (UI.Semui.myCss) (
+                    require (UI.CSS.myCss) (
                       body [] [
                         AnnotationApp.view model.annotationApp model.semanticApp |> UI.map AnnotationAppMessage
                       ]

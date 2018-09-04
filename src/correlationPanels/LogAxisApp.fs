@@ -253,11 +253,11 @@ module LogAxisApp =
       for styleTemplate in model.templates do
         match styleTemplate.id with
           | id when id = selId ->
-              yield Incremental.Buttons.iconButton 
+              yield Buttons.Incremental.iconButton 
                       "small yellow arrow left icon" 
                       (fun _ -> SetStyle styleTemplate.id)
           | _ ->
-              yield Incremental.Buttons.iconButton 
+              yield Buttons.Incremental.iconButton 
                       "small arrow left icon" 
                       (fun _ -> SetStyle styleTemplate.id)
 

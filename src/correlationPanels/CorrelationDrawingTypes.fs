@@ -8,8 +8,6 @@ open Aardvark.UI.Primitives
 open Aardvark.SceneGraph
 open Aardvark.Base
 open System
-open Aardvark.Base.IL.Serializer
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -511,7 +509,7 @@ type SaveIndex =
 module SaveIndex =
   let init : SaveIndex =
     {ind = 0}
-  let findSavedIndices =
+  let findSavedIndices () =
       System.IO.Directory.GetFiles( "./", "*.save")
         |> Array.toList
         |> List.filter (fun (str : string) ->
@@ -523,13 +521,22 @@ module SaveIndex =
         |> List.distinct //TODO only if sem & anno
         |> List.map (fun i -> {ind = i})
 
+  let nextAvaible () =
+    let si = findSavedIndices ()
+    let max = 
+      si |> List.map (fun i -> i.ind)
+         |> List.max
+    {ind = max}.next
+      
 
 [<DomainType>]
 type Pages = 
     {
         [<NonIncremental>]
         past          : Option<Pages>
-        saveIndex     : SaveIndex
+
+        saveIndices   : list<SaveIndex>
+        
 
         [<NonIncremental>]
         future        : Option<Pages>
