@@ -2,7 +2,6 @@
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Pages =
-  open System.Windows.Forms
   open Aardvark.UI
   open Aardvark.UI.Primitives
   open Aardvark.Application
@@ -85,12 +84,16 @@ module Pages =
       saveIndices   = SaveIndex.findSavedIndices ()
     }
 
-  let tmpDebug =
-    printf "%s" "PagesAppAction"
-
-
 
   let update (model : Pages) (msg : Action) = //TODO model always last?
+    let printCameraDebugInformation () =
+      printfn "Camera Position: %s" 
+              (String.fromV3d model.camera.view.Location)
+      printfn "Up: %s" 
+              (String.fromV3d model.camera.view.Up)
+      printfn "Forward: %s" 
+              (String.fromV3d model.camera.view.Forward)
+
     let updateDrawingApp =
       CorrelationDrawing.update model.drawingApp model.semanticApp
     let updateAnnotationApp =
@@ -168,12 +171,7 @@ module Pages =
         let annoApp = 
           match k with
             | Keys.C -> 
-               printfn "Camera Position: %s" 
-                       (String.fromV3d model.camera.view.Location)
-               printfn "Up: %s" 
-                       (String.fromV3d model.camera.view.Up)
-               printfn "Forward: %s" 
-                       (String.fromV3d model.camera.view.Forward)
+               printCameraDebugInformation ()
                model.annotationApp
             | Keys.Enter -> 
               match model.drawingApp.working with
@@ -324,16 +322,6 @@ module Pages =
         | _   -> model
         
 
-  let viewScene (model : MPages) =
-      Sg.box (Mod.constant C4b.Green) (Mod.constant Box3d.Unit)
-      |> Sg.shader {
-          do! DefaultSurfaces.trafo
-          do! DefaultSurfaces.vertexColor
-          do! DefaultSurfaces.simpleLighting
-      }
-      |> Sg.cullMode model.cullMode
-      |> Sg.fillMode (model.fill |> Mod.map (function true -> FillMode.Fill | false -> FillMode.Line))
-
 
   let view  (runtime : IRuntime) (model : MPages) =
     let menu = 
@@ -428,33 +416,32 @@ module Pages =
       
       require (UI.CSS.myCss) (
         (
-          body [clazz "ui"; style "background: #1B1C1E; width: 100%; height:100%; overflow: auto;"] [
-            div [] [
-              CameraController.controlledControl 
-                  model.camera
-                  CameraMessage 
-                  frustum
-                  (AttributeMap.ofList [
-                              onKeyDown (KeyDown)
-                              onKeyUp (KeyUp)
-                              attribute "style" "width:100%; height: 100%; float: left;"]
-                  )
+          body [clazz "ui"
+                style "background: #1B1C1E; width: 100%; height:100%; overflow: auto;"
+                onLayoutChanged UpdateConfig
+               ] [
+                  div [] [
+                    CameraController.controlledControl 
+                        model.camera
+                        CameraMessage 
+                        frustum
+                        (AttributeMap.ofList [
+                                    onKeyDown (KeyDown)
+                                    onKeyUp (KeyUp)
+                                    attribute "style" "width:100%; height: 100%; float: left;"]
+                        )
 
-                  (drawingSgList @ [annoSg; corrSg]
-                    |> Sg.ofList 
-                    |> Sg.fillMode (model.rendering.fillMode)     
-                    |> Sg.cullMode (model.rendering.cullMode))                                                                                                             
-            ]
-          ]
+                        (drawingSgList @ [annoSg; corrSg]
+                          |> Sg.ofList 
+                          |> Sg.fillMode (model.rendering.fillMode)     
+                          |> Sg.cullMode (model.rendering.cullMode))                                                                                                             
+                  ]
+               ]
         )
       ) 
 
     page (fun request -> 
       let qu = request.queryParams
-      //for q in qu do //DEBUG
-      //  printf "%s=%s" q.Key q.Value
-        //require [
-        //  { kind = Stylesheet; name = "docking"; url = "docking.css" }
           
       // override stylesheet for docking layout
       onBoot "$('head').append('<link rel=\"stylesheet\" type=\"text/css\" href=\"docking.css\">');" (
@@ -471,6 +458,7 @@ module Pages =
                       require Html.semui (
                           menu
                       )
+
                   | Some "svg" -> 
                     require (UI.CSS.myCss) (
                       body [attribute "overflow-x" "hidden";
@@ -478,6 +466,7 @@ module Pages =
                             (onMouseDown (fun b p -> MouseDown (b,p)))
                             (onMouseUp (fun b p -> MouseUp (b,p)))
                             (onMouseMove (fun p -> MouseMove p))
+                            onLayoutChanged UpdateConfig
                            ] [
                             CorrelationPlotApp.viewSvg model.corrPlotApp 
                               |> (UI.map CorrPlotMessage)

@@ -30,6 +30,7 @@
 	<Content Include="semui-overrides.css">
 	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	</Content>
+	<Compile Include="Math.fs" />
 	<Compile Include="UtilitiesDatastructures.fs" />
 	<Compile Include="String.fs" />
 	<Compile Include="Rendering.fs" />

@@ -4,6 +4,8 @@
     open Aardvark.UI
     open Aardvark.Base
     open Aardvark.Base.Incremental
+    open System
+    open Math
 
     let margin = 5.0
     let sw = "3"
@@ -204,6 +206,14 @@
         | CurveType.Elliptical ->
             points |> List.map (fun x -> curveTo "S" x x)
 
+
+    //let drawCircleSegment (start      : V2d)    (radius   : float) 
+    //                  (fromAngle  : Angle)  (toAngle  : Angle) 
+    //                  (color      : C4b)    (weight   : float) =
+      // WIP!!!!
+      
+
+
     let drawCircle (centre : V2d) (radius : float) (color : C4b) = 
       Svg.circle
         [
@@ -214,6 +224,44 @@
           ats "stroke-width" "1.0"
           atc "fill" color
         ]
+
+    let drawConcentricCircles (centre : V2d) (radius : float) (color : C4b) (nrCircles : int) =
+        let dist = radius / (float nrCircles)
+        [1..nrCircles]
+          |> List.map (fun i -> (float i) * dist)
+          |> List.map (fun r -> drawCircle centre radius color)
+
+    let drawLineFromAngle (start : V2d) (angle : Angle) (length : float) (color : C4b) (width : float)=
+      let endX = start.X + Math.Cos(angle.radians) * length
+      let endY = start.Y + Math.Sin(angle.radians) * length
+      drawLine start (new V2d(endX, endY)) color width
+
+    let draw16StarLines (start : V2d) (radius : float) (color : C4b) (weight : float) =
+      [1..16]
+        |> List.map (fun i ->
+                        let angle = Angle.quarterPi * (float i)
+                        drawLineFromAngle start angle radius color weight
+                      )
+
+
+    let drawRoseDiagram (centre : V2d) (radius : float) (color : C4b) (nrCircles : int) (weight : float) =
+      let circles = drawConcentricCircles centre radius color nrCircles
+      let lines = draw16StarLines centre radius color weight
+      circles@lines |> toGroup
+
+
+
+
+            
+        
+        
+        
+      
+      
+        
+      
+
+
 
     let drawCircleButton (centre : V2d) (radius : float)
                          (color : C4b) (filled : bool) 
@@ -332,6 +380,14 @@
         (elements @ [rBorder])
         (Svg.Events.onClickAttribute (selectionCallback))
 
+    let drawLogarithmicXAxis (leftUpper : V2d) (length : float) (color : C4b) (weight : float) (granularity : float) =
+      //TODO
+      toGroup
+        [
+          drawHorizontalLine  (new V2d(leftUpper.X, leftUpper.Y + weight * 0.5)) length color weight
+          drawHorizontalDottedLine (new V2d(leftUpper.X, leftUpper.Y + weight)) length color (weight * 3.0) 1.0 (granularity - 1.0)
+        ]
+        [] 
 
      
     let drawXAxis (leftUpper : V2d) (length : float) (color : C4b) (weight : float) (granularity : float) =
