@@ -342,8 +342,6 @@
 
     ///////////////////////////////////////// SVG VIEW ///////////////////////////////////////////
 
-
-
     module View = 
       let svgView (model        : MGeologicalLog) 
                  // (viewType     : IMod<CorrelationPlotViewType>) 
@@ -352,7 +350,27 @@
                   (secondaryLvl : IMod<int>)
                   (styleFun     : float -> IMod<LogAxisSection>) 
                    =
-                
+
+        let roseDiagrams = 
+          let secondaryLvlNodes = 
+            alist {
+              let! flags = flags
+              let flag = Flags.isSet SvgFlags.RadialDiagrams flags
+              if flag then 
+                let! lvl = secondaryLvl
+                let lvlFilter =
+                  fun (n : MLogNode) -> (Mod.map (fun a -> a = lvl) n.level)
+                for n in model.nodes do
+                  yield! LogNode.collectAndFilterAll' n lvlFilter
+            }          
+          alist {
+            for n in secondaryLvlNodes do
+              let! pos = n.svgPos
+              let! size = n.svgSize
+              let shift = new V2d (size.X, size.Y * 0.5)
+              yield Svg.drawRoseDiagram (pos + shift) 15.0 C4b.Black 6 1.0
+          }
+
         let minLvl = Helpers.getMinLevel model
         let minLvlNodes =
           model.nodes
@@ -362,7 +380,6 @@
 
         let nodeViews =
           alist {
-
             for n in minLvlNodes do
               let mapper (a : DomNode<LogNode.Action>) =
                 a |> UI.map (fun m -> LogNodeMessage (n.id, m))
@@ -371,12 +388,12 @@
               for it in v do
                 yield (mapper it)
           }
-        nodeViews  
+        AList.append nodeViews roseDiagrams
 
       open UI
-      let view (model : MGeologicalLog) 
-               (rowOnClick : 'msg) 
-               (mapper : Action -> 'msg)   =
+      let listView (model : MGeologicalLog) 
+                   (rowOnClick : 'msg) 
+                   (mapper : Action -> 'msg)   =
         let labelEditNode textInput = 
           (TextInput.view'' 
             "box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.1) inset"

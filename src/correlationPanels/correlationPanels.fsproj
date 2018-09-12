@@ -48,6 +48,8 @@
 	<Compile Include="UI.Table.fs" />
 	<Compile Include="UI.Buttons.fs" />
 	<Compile Include="UI.Flags.fs" />
+	<Compile Include="Svg.Attributes.fs" />
+	<Compile Include="Svg.Paths.fs" />
 	<Compile Include="Svg.fs" />
 	<Compile Include="Shaders.fs" />
 	<Compile Include="TextInputApp.fs" />

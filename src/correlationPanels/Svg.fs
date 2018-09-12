@@ -1,29 +1,17 @@
-﻿namespace CorrelationDrawing
+﻿namespace CorrelationDrawing.Svg
 
-  module Svg =
+  module Base =
     open Aardvark.UI
     open Aardvark.Base
-    open Aardvark.Base.Incremental
     open System
-    open Math
+    open CorrelationDrawing.Math
+    open CorrelationDrawing.Svg.Attributes
+    open CorrelationDrawing.Svg.Paths
+    open CorrelationDrawing
 
     let margin = 5.0
     let sw = "3"
 
-    let inline atf (attributeName : string) (value : float) =
-      attribute attributeName (sprintf "%.2f" value)
-
-    let inline ats (attributeName : string) (value : string) =
-      attribute attributeName value
-
-    let inline atc (attributeName : string) (value : C4b) =
-      attribute attributeName (Html.ofC4b value)
-    
-
-
-    let toGroup (content : List<DomNode<'a>>) (atts : List<Attribute<'a>>) =
-      Aardvark.UI.Svg.g ([clazz "g"] @ atts) 
-                                    content
 
     let drawBoldText (a : V2d) (str : string) (orientation : Orientation) = //TODO refactor
       let dir = 
@@ -152,89 +140,66 @@
 
 
 
-    /////// PATHS
-    let inline (>>) (x : string) (y : string) =
-      sprintf "%s %s" x y
-
-    let move (a : V2d) =
-      sprintf "M%.2f %.2f" a.X a.Y
-
-    let lineTo (a : V2d)  =
-      sprintf "L%.2f %.2f" a.X a.Y
-
-    let curveTo (letter : string) (b : V2d) (c : V2d) =
-      sprintf "Q %.2f %.2f %.2f %.2f" b.X b.Y c.X c.Y
-
-    let endLine = "Z"
-
-    let buildPath (str : string) (color : C4b) =
-      let col = Html.ofC4b color
-      Svg.path
-        [
-          attribute "d" str
-          attribute "stroke" col
-          attribute "stroke-witdth" sw
-          attribute "fill" "none"
-        ]
-
-    type CurveType = SmoothCurve | BezierCurve | Elliptical
-      
-    let drawLinePath (points : List<V2d>) (color : C4b) =
-      let col = Html.ofC4b color
-      let d =
-        move points.Head 
-          >> (points 
-              |> List.map (fun x -> lineTo x)
-              |> List.tail
-              |> List.reduce (fun a b -> a >> b)
-             )
-      Svg.path 
-        [
-          attribute "d" d
-          attribute "stroke" col
-          attribute "stroke-width" sw
-          attribute "fill" "none"
-        ]
-                   
-
-    let drawCurvedPath (points : List<V2d>) (curveType : CurveType) =
-      match curveType with
-        | CurveType.SmoothCurve ->
-            points |> List.map (fun x -> curveTo "S" x x) //TODO control points
-        | CurveType.BezierCurve ->
-            points |> List.map (fun x -> curveTo "S" x x)
-        | CurveType.Elliptical ->
-            points |> List.map (fun x -> curveTo "S" x x)
+   
 
 
-    //let drawCircleSegment (start      : V2d)    (radius   : float) 
-    //                  (fromAngle  : Angle)  (toAngle  : Angle) 
-    //                  (color      : C4b)    (weight   : float) =
-      // WIP!!!!
-      
+    
+    
 
-
-    let drawCircle (centre : V2d) (radius : float) (color : C4b) = 
+    let drawCircle (upperLeft : V2d) (radius : float) (color : C4b) (stroke : float) (fill : bool) = 
+      let fillAttr =
+        match fill with
+          | true -> [atc "fill" color]
+          | false -> [ats "fill" "none"]
       Svg.circle
-        [
-          atf "cx" (centre.X - radius + margin)
-          atf "cy" (centre.Y - radius + margin)
+        ([
+          atf "cx" (upperLeft.X - radius)
+          atf "cy" (upperLeft.Y - radius)
           atf "r" radius
           atc "stroke" C4b.Black //Performance
-          ats "stroke-width" "1.0"
-          atc "fill" color
-        ]
+          atf "stroke-width" stroke
+        ]@fillAttr)
 
-    let drawConcentricCircles (centre : V2d) (radius : float) (color : C4b) (nrCircles : int) =
+    let drawCircle' (centre : V2d) (radius : float) (color : C4b) (stroke : float) (fill : bool) = 
+      let upperLeft = centre + (new V2d (radius))
+      drawCircle upperLeft radius color stroke fill
+
+    let drawConcentricCircles (upperLeft : V2d) (radius : float) (color : C4b) (nrCircles : int) (weight : float) =
+        let centre = upperLeft - (new V2d (radius))
         let dist = radius / (float nrCircles)
-        [1..nrCircles]
-          |> List.map (fun i -> (float i) * dist)
-          |> List.map (fun r -> drawCircle centre radius color)
+        let radii = 
+          [1..nrCircles]
+            |> List.map (fun i -> (float i) * dist)
+        let circles =
+          radii
+            |> List.map (fun r -> drawCircle' centre r color weight false)
+        circles
 
-    let drawLineFromAngle (start : V2d) (angle : Angle) (length : float) (color : C4b) (width : float)=
+    let pointFromAngle (start : V2d) (angle : Angle) (length : float) =
       let endX = start.X + Math.Cos(angle.radians) * length
       let endY = start.Y + Math.Sin(angle.radians) * length
-      drawLine start (new V2d(endX, endY)) color width
+      new V2d (endX, endY)
+
+    
+    let drawCircleSegment (centre : V2d) (radius : float) 
+                          (fromPoint : V2d) (toPoint : V2d)
+                          (color : C4b) =
+      let pathStr = 
+        move centre 
+          >> lineTo fromPoint 
+          >> (circleSegmentTo radius fromPoint toPoint color)
+      buildPath pathStr color 1.0 true
+
+    let drawCircleSegment' (start : V2d) (angleFrom : Angle) (angleTo : Angle) 
+                           (radius : float) (color : C4b) =
+      let end1 = pointFromAngle start angleFrom radius
+      let end2 = pointFromAngle start angleTo radius
+      drawCircleSegment start radius  end1 end2 color
+
+
+    let drawLineFromAngle (start : V2d) (angle : Angle) (length : float) (color : C4b) (width : float)=
+      let endPoint = pointFromAngle start angle length
+      drawLine start endPoint color width
 
     let draw16StarLines (start : V2d) (radius : float) (color : C4b) (weight : float) =
       [1..16]
@@ -244,10 +209,11 @@
                       )
 
 
-    let drawRoseDiagram (centre : V2d) (radius : float) (color : C4b) (nrCircles : int) (weight : float) =
-      let circles = drawConcentricCircles centre radius color nrCircles
+    let drawRoseDiagram (leftUpper : V2d) (radius : float) (color : C4b) (nrCircles : int) (weight : float) =
+      let centre = (leftUpper - (new V2d (radius)))
+      let circles = drawConcentricCircles leftUpper radius color nrCircles weight
       let lines = draw16StarLines centre radius color weight
-      circles@lines |> toGroup
+      toGroup (circles@lines) []
 
 
 

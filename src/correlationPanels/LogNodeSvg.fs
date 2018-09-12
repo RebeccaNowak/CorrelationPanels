@@ -117,7 +117,7 @@
           | Some b -> (new V2d(b, size.Y), new V2d(0.0, position.Y), position.X)
           | None   -> (size, position, offset + position.X)
 
-      let drawRectangle =  
+      let drawRectangle () =  
         let rfun = Svg.drawBorderedRectangle
                     (new V2d(offset, position.Y))
                     size.X size.Y
@@ -138,6 +138,7 @@
       let domNode = 
         match nodeType with
             | LogNodeType.Angular -> []
+              
               //[
               //  Svg.drawCircleButton 
               //    (new V2d(offset + size.X, (position.Y + size.Y) * 0.5))
@@ -147,8 +148,8 @@
               //[Svg.drawCircleButton 
               //  (new V2d(offset + size.X, (position.Y + size.Y) * 0.5))
               //  2.0 C4b.Black false 0.5 selectionCallback]
-            | LogNodeType.Hierarchical -> [drawRectangle]@btns
-            | LogNodeType.HierarchicalLeaf -> [drawRectangle]@btns
+            | LogNodeType.Hierarchical -> [drawRectangle ()]@btns
+            | LogNodeType.HierarchicalLeaf -> [drawRectangle ()]@btns
             | LogNodeType.PosInfinity
             | LogNodeType.NegInfinity ->
                 [Default.debugOutput "LogNode neg or pos infinity" selectionCallback]

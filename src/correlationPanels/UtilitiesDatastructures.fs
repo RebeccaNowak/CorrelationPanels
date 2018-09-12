@@ -193,6 +193,13 @@ module AList =
 
     sum / (float lst.Length)
 
+  let filter' (f : 'a -> IMod<bool>) (alst : alist<'a>) =
+    alist {
+      for el in alst do
+        let! fil = f el
+        if fil then yield el
+    }
+
 module HMap =
   let toSortedPlist (input : hmap<_,'a>) (projection : ('a -> 'b)) : plist<'a> =
     input 

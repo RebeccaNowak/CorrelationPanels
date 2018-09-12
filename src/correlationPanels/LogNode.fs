@@ -8,6 +8,7 @@
     open UI
     open Aardvark.Base.Incremental
     open Aardvark.SceneGraph
+    open Aardvark.Base.Incremental
 
 
     type Action =
@@ -114,6 +115,48 @@
         lBorder    = Border.initial anno (Annotation.lowestPoint anno).point nodeId logId
         uBorder    = Border.initial anno (Annotation.highestPoint anno).point nodeId logId}
     /////////////////////
+    let rec collect (n : LogNode) =
+      match PList.count n.children with
+        | 0      -> [n]
+        | other  -> 
+          [n] @ 
+            (n.children 
+                  |> PList.toList
+                  |> List.collect (fun (x : LogNode) -> collect x)
+            )
+
+    let rec collect' (n : MLogNode) =
+      alist {
+        let! nr = AList.count n.children 
+        match nr with
+          | 0      -> yield n
+          | other  -> 
+            yield n
+            let children = n.children
+            for c in children do
+              yield! collect' c
+      }
+
+    let filter' (lst: alist<MLogNode>) (f : MLogNode -> IMod<bool>) =
+      alist {
+        for el in lst do
+          let! b = f el
+          if b = true then yield el
+      }
+
+    let rec collectAndFilterAll' (n : MLogNode) (f : MLogNode -> IMod<bool>) =
+      alist {
+        let! nr = AList.count n.children 
+        match nr with
+          | 0      -> 
+            yield! (filter' (AList.single n) f)
+          | other  -> 
+            yield! (filter' (AList.single n) f)
+            let children = n.children
+            for c in children do
+              yield! collectAndFilterAll' c f
+      }
+
     let rec mapAndCollect (n : LogNode) (f : LogNode -> 'a) =
       match PList.count n.children with
       | 0      -> [f n]
@@ -122,6 +165,17 @@
           (n.children 
                 |> PList.toList
                 |> List.collect (fun (x : LogNode) -> mapAndCollect x f))
+
+
+
+    let rec collectAll (lst : alist<MLogNode>) =
+      alist {
+        for el in lst do 
+          yield! (collect' el)
+      }
+
+        
+
 
     let rec apply (n : LogNode) (f : LogNode -> LogNode) =
       match PList.count n.children with
@@ -144,19 +198,7 @@
                 |> PList.toList
                 |> List.collect (fun (x : LogNode) -> filterAndCollect x f))
   
-    let rec filterAndCollect' (n : MLogNode) (f : MLogNode -> bool) =
-      match PList.count (Mod.force n.children.Content), f n with //TODO evil
-      | 0, true      -> [n]
-      | 0, false     -> []
-      | other, true  -> 
-        [n] @ 
-          (n.children 
-                |> AList.toList
-                |> List.collect (fun (x : MLogNode) -> filterAndCollect' x f))
-      | other, false -> 
-        [] @  (n.children 
-                |> AList.toList
-                |> List.collect (fun (x : MLogNode) -> filterAndCollect' x f))
+
 
     let elevation  (model : LogNode) = //TODO function in Border
       (Annotation.elevation model.lBorder.anno) 
@@ -268,6 +310,15 @@
                       let x = x.point
                       let y = y.point
                       V3d.Distance(x,y)) h t
+
+    let calcAngularValue' (n : MLogNode) = //TODO DUMMY VALUES!!!
+      let points = n.lBorder.anno.points |> AList.toList
+      let h = List.tryHead points
+      let t = List.tryLast points
+      Option.map2 (fun (x : MAnnotationPoint) (y : MAnnotationPoint) -> 
+                      let x = x.point
+                      let y = y.point
+                      Math.Angle.init (V3d.Distance (x,y))) h t
    
 
     let calcSizeX (model : LogNode) (xAxis : SemanticId) (xAxisScaleFactor : float) = 
@@ -366,10 +417,10 @@
                       }
                       
                   | LogNodeType.Angular ->
-                      match (calcMetricValue' model) with //TODO angular
+                      match (calcAngularValue' model) with //TODO angular
                        | Some v -> 
                           model.nodeType 
-                            |> Mod.map (fun x -> sprintf "%s: %.2f" (x.ToString()) v)
+                            |> Mod.map (fun x -> sprintf "%s: %.2f" (x.ToString()) v.radians)
                        | None -> 
                           model.nodeType 
                             |> Mod.map (fun x -> x.ToString())

@@ -138,7 +138,7 @@
           alist {
             for log in model.correlationPlot.logs do
               let! tmp = 
-                GeologicalLog.View.view log (CorrelationPlot.Action.SelectLog log.id) 
+                GeologicalLog.View.listView log (CorrelationPlot.Action.SelectLog log.id) 
                                             (mapper log)
               let tmp = tmp
                           |> List.map (UI.map (fun a -> Action.CorrelationPlotMessage a))
