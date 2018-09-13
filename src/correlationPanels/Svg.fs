@@ -201,32 +201,78 @@
       let endPoint = pointFromAngle start angle length
       drawLine start endPoint color width
 
-    let draw16StarLines (start : V2d) (radius : float) (color : C4b) (weight : float) =
-      [1..16]
-        |> List.map (fun i ->
-                        let angle = Angle.quarterPi * (float i)
-                        drawLineFromAngle start angle radius color weight
+    let starAngles16 =
+        [1..16]
+          |> List.map (fun i ->
+                          let angle = Angle.eigthPi * (float i)
+                          angle
                       )
 
+    let mapToBin (angle : Angle) =
+      let isInBin =
+        [Angle.init 0.0]@starAngles16
+          |> List.pairwise
+          |> List.map (fun (lower,upper) -> lower.radians <= angle.radians && angle.radians <= upper.radians) //TODO comparable for angle
+      let binIndex = 
+        isInBin
+          |> List.findIndex (fun b-> b)
+      binIndex
 
-    let drawRoseDiagram (leftUpper : V2d) (radius : float) (color : C4b) (nrCircles : int) (weight : float) =
+      
+        
+
+    let drawStarLines' (angles :list<Angle>) (start : V2d) (radius : float) (color : C4b) (weight : float) =
+      let lines =
+        angles
+          |> List.map (fun angle ->
+                          drawLineFromAngle start angle radius color weight
+                      )
+      lines
+
+    let draw16StarLines (start : V2d) (radius : float) (color : C4b) (weight : float) =
+      let angles = starAngles16
+      let lines =
+        angles
+          |> List.map (fun angle ->
+                          drawLineFromAngle start angle radius color weight
+                      )
+      lines
+
+    type Bin16x6 = {
+      angularBin : int
+      radius     : float
+    }
+
+    let getBinBorders binNr =
+      let fromAngle = Angle.init ((starAngles16.Item binNr).radians - starAngles16.Head.radians) // TODO implement (-)
+      let toAngle = starAngles16.Item binNr
+      (fromAngle, toAngle)
+
+
+    let circleSegment (centre : V2d) (bin : Bin16x6)
+                      (radius : float) (color : C4b) =
+      let angBin = bin.angularBin%15
+      let fromAngle = starAngles16.Item angBin
+      let toAngle = starAngles16.Item angBin
+      drawCircleSegment' centre fromAngle toAngle radius color
+
+    let drawRoseDiagram (leftUpper : V2d) (radius : float) 
+                        (color : C4b) (nrCircles : int) 
+                        (weight : float) (countPerBin : list<int * int>) =
       let centre = (leftUpper - (new V2d (radius)))
       let circles = drawConcentricCircles leftUpper radius color nrCircles weight
       let lines = draw16StarLines centre radius color weight
-      toGroup (circles@lines) []
-
-
-
-
-            
-        
-        
-        
-      
-      
-        
-      
-
+      let circleDist = radius / (float nrCircles)
+      let circleRadii =
+        [1..(nrCircles)]
+          |> List.map (fun nr -> (float nr) * circleDist)
+      let bins =
+        countPerBin
+          |> List.map (fun (bin, count) -> {angularBin = bin;radius = (circleRadii.Item (count - 1))})
+      let filledBins =
+        bins
+          |> List.map (fun bin -> circleSegment centre bin radius color)
+      toGroup (circles@lines@filledBins) []
 
 
     let drawCircleButton (centre : V2d) (radius : float)

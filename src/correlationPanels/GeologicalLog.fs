@@ -36,6 +36,8 @@
                     |> List.min 
 
 
+
+
     module Calculate = 
       let svgXPosAndSize (id : SemanticId) (xAxisScaleFactor : float) (nodes : plist<LogNode>)  : (plist<LogNode> * float) =
         let updNodes = 
@@ -343,6 +345,8 @@
     ///////////////////////////////////////// SVG VIEW ///////////////////////////////////////////
 
     module View = 
+      open Svg
+
       let svgView (model        : MGeologicalLog) 
                  // (viewType     : IMod<CorrelationPlotViewType>) 
                   (flags        : IMod<SvgFlags>)
@@ -350,6 +354,38 @@
                   (secondaryLvl : IMod<int>)
                   (styleFun     : float -> IMod<LogAxisSection>) 
                    =
+        let logNodeTo16Bins (node : MLogNode) (nrBins : int) =
+          let aNodes = LogNode.getAngularChildren node
+          adaptive {
+            let! isEmpty = AList.isEmpty aNodes
+            match isEmpty with
+              | true -> return None
+              | false -> 
+                let angles =
+                  aNodes
+                    |> AList.map (fun n -> LogNode.calcAngularValue' n)
+                    |> AList.filterNone
+                let! isEmpty = AList.isEmpty angles
+                match isEmpty with 
+                  | true -> return None
+                  | false ->
+                    let max = angles |> AList.maxBy (fun a -> a.radians)
+                    let binNrs =
+                      angles
+                        |> AList.map (fun a -> Svg.Base.mapToBin a)
+                    let content = binNrs.Content
+                    let! binNrs = content
+                    let countPerBin =
+                      binNrs
+                        |> PList.toList
+                        |> List.sort
+                        |> List.countBy (fun bin -> bin)
+                    let (maxBin, max) = 
+                      countPerBin 
+                        |> List.maxBy (fun (bin, count) -> count)
+                    return Some (countPerBin, max)
+          }
+
 
         let roseDiagrams = 
           let secondaryLvlNodes = 
@@ -362,13 +398,26 @@
                   fun (n : MLogNode) -> (Mod.map (fun a -> a = lvl) n.level)
                 for n in model.nodes do
                   yield! LogNode.collectAndFilterAll' n lvlFilter
-            }          
+            }      
+            
           alist {
-            for n in secondaryLvlNodes do
-              let! pos = n.svgPos
-              let! size = n.svgSize
-              let shift = new V2d (size.X, size.Y * 0.5)
-              yield Svg.drawRoseDiagram (pos + shift) 15.0 C4b.Black 6 1.0
+            let! isEmpty = (AList.isEmpty secondaryLvlNodes)
+            if (not isEmpty) then
+              for n in secondaryLvlNodes do
+                let! pos = n.svgPos
+                let! size = n.svgSize
+                let shift = new V2d (size.X, size.Y * 0.5)
+                //let bins = 
+                //  match LogNode.calcAngularValue' n with
+                //    | Some angle -> []
+                //    | None -> []
+                let tmp = logNodeTo16Bins n 16
+                let! tmp = tmp
+                if tmp.IsSome then
+                  let (countPerBin, nrCircles) = tmp.Value
+                  let roseDiagram =
+                    Svg.Base.drawRoseDiagram (pos + shift) 15.0 C4b.Black nrCircles 1.0 countPerBin
+                  yield roseDiagram
           }
 
         let minLvl = Helpers.getMinLevel model

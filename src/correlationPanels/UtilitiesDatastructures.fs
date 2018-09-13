@@ -200,6 +200,14 @@ module AList =
         if fil then yield el
     }
 
+  let filterNone (lst : alist<option<'a>>) =
+    lst
+      |> AList.filter (fun el -> 
+                        match el with
+                          | Some el -> true
+                          | None    -> false)
+      |> AList.map (fun el -> el.Value)
+
 module HMap =
   let toSortedPlist (input : hmap<_,'a>) (projection : ('a -> 'b)) : plist<'a> =
     input 

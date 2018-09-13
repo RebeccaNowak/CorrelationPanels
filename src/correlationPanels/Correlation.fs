@@ -31,6 +31,6 @@
           let! c1 = model.fromBorder.color
           let! c2 = model.toBorder.color
 
-          return Svg.drawDottedLine fp tp c1 4.0 2.0 2.0 //TODO hardcoded
+          return Svg.Base.drawDottedLine fp tp c1 4.0 2.0 2.0 //TODO hardcoded
         }
         

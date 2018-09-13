@@ -66,11 +66,11 @@
               let! lstChildren = childrenView.Content     
               match (containsHNodes model) with
                 | true  ->
-                  yield (Svg.toGroup (lstChildren |> PList.toList) [])                                              
+                  yield (Svg.Attributes.toGroup (lstChildren |> PList.toList) [])                                              
                 | false ->
                   for v in selfView do
                     yield v 
-                  yield (Svg.toGroup (lstChildren |> PList.toList) [])
+                  yield (Svg.Attributes.toGroup (lstChildren |> PList.toList) [])
         }
       rval
     
@@ -78,18 +78,18 @@
       //let voidDomNode<'msg> = 
       //  DomNode.Void<'msg> ("",(AttributeMap.ofList []))
       let debugOutput (txt : string) (selectionCallback   : list<string> -> 'msg) = 
-        Svg.toGroup
-          [Svg.drawText (new V2d(5.0, 5.0)) txt Orientation.Horizontal]
+        Svg.Attributes.toGroup
+          [Svg.Base.drawText (new V2d(5.0, 5.0)) txt Orientation.Horizontal]
           (Svg.Events.onClickAttribute selectionCallback)
 
       let angularNode (yPos : float) (txt : string) (selectionCallback   : list<string> -> 'msg) = 
-        Svg.toGroup
-          [Svg.drawText (new V2d(5.0, 5.0)) txt Orientation.Horizontal]
+        Svg.Attributes.toGroup
+          [Svg.Base.drawText (new V2d(5.0, 5.0)) txt Orientation.Horizontal]
           (Svg.Events.onClickAttribute selectionCallback)
 
       let metricNode (yPos : float) (txt : string) (selectionCallback   : list<string> -> 'msg) = 
-        Svg.toGroup
-          [Svg.drawText (new V2d(5.0, 5.0)) txt Orientation.Horizontal]
+        Svg.Attributes.toGroup
+          [Svg.Base.drawText (new V2d(5.0, 5.0)) txt Orientation.Horizontal]
           (Svg.Events.onClickAttribute selectionCallback)
 
       let levelToWeight (level : int) = //TODO hardcoded
@@ -118,7 +118,7 @@
           | None   -> (size, position, offset + position.X)
 
       let drawRectangle () =  
-        let rfun = Svg.drawBorderedRectangle
+        let rfun = Svg.Base.drawBorderedRectangle
                     (new V2d(offset, position.Y))
                     size.X size.Y
                     color lBorderColor uBorderColor

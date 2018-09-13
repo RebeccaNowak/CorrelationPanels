@@ -108,7 +108,7 @@ module LogAxisApp =
               (new V2d((posList.Item i) + (startPoint.X + shift), (startPoint.Y + 15.0))) //TODO hardcoded
             | Orientation.Vertical ->
               (new V2d((startPoint.X + shift*2.0), (posList.Item i) + (startPoint.Y + shift)))
-        yield Svg.drawText' pos txt dir // could rotate labels with Svg.drawText
+        yield Svg.Base.drawText' pos txt dir // could rotate labels with Svg.drawText
     } |> Seq.toList
 
   let makeNrLabels (a : float) (step : float) (b : float) (mapper: float -> float) (startPoint : V2d) (dir : Orientation) =
@@ -138,11 +138,11 @@ module LogAxisApp =
         seq {
           // AXIS
           let svgLength = nativeYRange.range * yMapping
-          yield Svg.drawYAxis svgStartPoint svgLength C4b.Black weight (nativeStep * yMapping)
+          yield Svg.Base.drawYAxis svgStartPoint svgLength C4b.Black weight (nativeStep * yMapping)
           let shift = centreShift label fontSize
           //TODO calc number label width first to determine required padding
           // AXIS LABEL //TODO hardcoded padding
-          yield Svg.drawBoldText (new V2d(svgStartPoint.X + 2.0*shift, svgStartPoint.Y + (svgLength * 0.5) + shift)) label Orientation.Vertical
+          yield Svg.Base.drawBoldText (new V2d(svgStartPoint.X + 2.0*shift, svgStartPoint.Y + (svgLength * 0.5) + shift)) label Orientation.Vertical
           // NR LABELS
           let nrLabels = 
             makeNrLabels ((nativeYRange.max + nativeYRange.range * 0.1))
@@ -154,7 +154,7 @@ module LogAxisApp =
                          fontSize
           yield! nrLabels
         }
-      Svg.toGroup (List.ofSeq domNodes) []//[attribute "font-size" "10px"]
+      Svg.Attributes.toGroup (List.ofSeq domNodes) []//[attribute "font-size" "10px"]
 
   let svgYAxis' (opt : MSvgOptions)
                 (nativeRange : IMod<Rangef>)
@@ -204,10 +204,10 @@ module LogAxisApp =
           | Some t ->
               let gr = 
                 seq {
-                  yield Svg.drawXAxis startPoint svgLength C4b.Black weight (toSvg t.defaultGranularity)
+                  yield Svg.Base.drawXAxis startPoint svgLength C4b.Black weight (toSvg t.defaultGranularity)
                   let shift = centreShift label fontSize.fontSize
                   // AXIS LABEL
-                  yield Svg.drawBoldText (new V2d(startPoint.X + (svgLength * 0.5) + shift, startPoint.Y + 45.0)) label Orientation.Horizontal
+                  yield Svg.Base.drawBoldText (new V2d(startPoint.X + (svgLength * 0.5) + shift, startPoint.Y + 45.0)) label Orientation.Horizontal
 
                   // AXIS SECTION LABELS
                   //filter labels: only show relevant labels
@@ -225,7 +225,7 @@ module LogAxisApp =
                                     | max,min  -> (startPoint.X + ((max - min)) * xAxisScaleFactor)
 
                     // AXIS SECTION LABELS
-                    yield Svg.drawText (new V2d(posX, startPoint.Y + 30.0)) txt Orientation.Horizontal //TODO hardcoded
+                    yield Svg.Base.drawText (new V2d(posX, startPoint.Y + 30.0)) txt Orientation.Horizontal //TODO hardcoded
 
 
                   //NUMBER LABELS
@@ -240,9 +240,9 @@ module LogAxisApp =
                           fontSize.fontSize
                   yield! nrLabels 
                 }
-              Svg.toGroup (List.ofSeq gr) [] //[attribute "font-size" "10px"] //TODO hardcoded font size
+              Svg.Attributes.toGroup (List.ofSeq gr) [] //[attribute "font-size" "10px"] //TODO hardcoded font size
           | None -> 
-              Svg.drawXAxis startPoint svgLength C4b.Black 2.0 10.0
+              Svg.Base.drawXAxis startPoint svgLength C4b.Black 2.0 10.0
       return res
     }
 

@@ -7,6 +7,7 @@ module Math =
   let twoPi = System.Math.PI * 2.0
   let halfPi = System.Math.PI / 2.0
   let quarterPi = System.Math.PI / 4.0
+  let eigthPi = System.Math.PI / 8.0
 
 
   type Angle = {
@@ -25,6 +26,7 @@ module Math =
     let twoPi = {radians = twoPi}
     let halfPi = {radians = halfPi}
     let quarterPi = {radians = quarterPi}
+    let eigthPi = {radians = eigthPi}
 
     let init radians =
       {radians = radians % twoPi.radians}

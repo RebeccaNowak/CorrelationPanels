@@ -319,6 +319,15 @@
                       let x = x.point
                       let y = y.point
                       Math.Angle.init (V3d.Distance (x,y))) h t
+
+
+    let getAngularChildren (node : MLogNode) =
+       collectAndFilterAll' 
+        node 
+        (fun n -> 
+          Mod.map (fun (t : LogNodeType) -> t = LogNodeType.Angular) n.nodeType
+        )
+      
    
 
     let calcSizeX (model : LogNode) (xAxis : SemanticId) (xAxisScaleFactor : float) = 

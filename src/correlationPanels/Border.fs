@@ -110,13 +110,13 @@ module Border =
 
         let! lSel = model.lBorder.isSelected
         let btnLowerBorder =              
-         Svg.drawCircleButton 
+         Svg.Base.drawCircleButton 
            posLBtn
            5.0 lBorderColor lSel 1.0 lcb
 
         let! uSel = model.uBorder.isSelected
         let btnUpperBorder = 
-          Svg.drawCircleButton 
+          Svg.Base.drawCircleButton 
             posUBtn
             5.0 uBorderColor uSel 1.0 ucb
 
