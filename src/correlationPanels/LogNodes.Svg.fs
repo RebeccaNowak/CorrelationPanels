@@ -1,9 +1,10 @@
-﻿namespace CorrelationDrawing
+﻿namespace CorrelationDrawing.LogNodes
 
-  module LogNodeSvg =
+  module Svg =
     open Aardvark.Base
     open Aardvark.Base.Incremental
     open Aardvark.UI
+    open CorrelationDrawing
 
     let hasChildren (model : MLogNode) =
       let isEmpty = AList.isEmpty model.children
@@ -74,7 +75,7 @@
         }
       rval
     
-    module Default =
+    module private Default =
       //let voidDomNode<'msg> = 
       //  DomNode.Void<'msg> ("",(AttributeMap.ofList []))
       let debugOutput (txt : string) (selectionCallback   : list<string> -> 'msg) = 
@@ -97,7 +98,7 @@
 
 
 
-    let createDomNode    // (viewType            : CorrelationPlotViewType)
+    let private createDomNode    // (viewType            : CorrelationPlotViewType)
                           (nodeType            : LogNodeType)
                           (size                : V2d)
                           (color               : C4b)
@@ -158,7 +159,7 @@
       domNode
 
 
-    let getDomNodeFunction // (viewType            : IMod<CorrelationPlotViewType>) 
+    let private getDomNodeFunction // (viewType            : IMod<CorrelationPlotViewType>) 
                             (flags               : IMod<SvgFlags>)
                             (options             : MSvgOptions) 
                             (styleFun            : float -> IMod<LogAxisSection>) //TODO rename
@@ -213,3 +214,120 @@
                 )      
         return f
       }
+
+
+    let view  (model        : MLogNode) 
+              (secondaryLvl : IMod<int>)
+              //(viewType     : IMod<CorrelationPlotViewType>)
+              (flags        : IMod<SvgFlags>)
+              (options      : MSvgOptions)
+              (styleFun     : float -> IMod<LogAxisSection>) =
+      let f = getDomNodeFunction 
+                flags options styleFun 
+                (ToggleSelectNode) 
+                (BorderMessage) //(fun (id : BorderId) lst -> Border.ToggleSelect id)
+                  
+      adaptive {
+        let! sLvl = secondaryLvl
+        let! sLevelWidth = options.secLevelWidth
+        return createView 0.0 (sLvl, sLevelWidth) model f          
+      } 
+
+
+/////////////////////
+
+    let xPosAndSize (id : SemanticId) (xAxisScaleFactor : float) (nodes : plist<LogNode>)  : (plist<LogNode> * float) =
+      let updNodes = 
+        nodes 
+          |> PList.map (fun n -> LogNodes.Update.update (LogNodes.ChangeXAxis (id, xAxisScaleFactor)) n) 
+
+      // nodes without grainsize/Annotations of x-Axis semantic type get avg
+      let size = updNodes
+                  |> PList.toList
+                  |> List.filter (fun n -> n.svgSize.X <> 0.0) 
+                  |> List.map (fun (n : LogNode) -> n.svgSize.X)
+      if size.Length = 0 then printfn "%s" "calc svg x position/size failed" //TODO if list empty //TODO bug/refactor
+        
+      let avg = 
+          match (size |> List.averageOrZero) with
+          | n when n = 0.0 -> 10.0 //TODO hardcoded size if no grain size annotations in log
+          | n -> n
+
+      let updNodes =
+        updNodes |> PList.map (fun n -> LogNodes.Helper.defaultIfZero n avg)
+      (updNodes, avg)
+
+
+
+    let yPosAndSize (logHeight : float) (optMapper : option<float>) (plst : plist<LogNode>) =
+
+      let rec calcRecYPosSize (height : float) (startAt : float) (plst : plist<LogNode>) =
+        let lst = PList.toList plst
+        match lst with 
+          | [] -> PList.empty
+          | lst ->
+              let accHeight = lst |> List.sumBy (fun x -> (abs (Rangef.calcRangeNoInf x.range)))
+              let factor = height / accHeight
+              let result = 
+                lst
+                  |> List.map (fun (x : LogNode) -> 
+                                {x with svgSize = V2d.OO 
+                                                + V2d.OI * (Rangef.calcRangeNoInf x.range) * factor
+                                }
+                              )
+                  |> List.scan (fun (a : LogNode) (b : LogNode) -> 
+                                    {b with svgPos   = V2d(0.0, a.svgPos.Y + a.svgSize.Y)}
+                                ) {LogNodes.Init.empty with svgPos = V2d(0.0, startAt)}
+                  |> List.tail  
+                  |> List.map (fun (x : LogNode) ->
+                                {x with children = calcRecYPosSize 
+                                                    x.svgSize.Y
+                                                    x.svgPos.Y
+                                                    x.children
+                                }
+                )
+                  |> PList.ofList
+              result
+
+
+
+
+      let lst = PList.toList plst
+      match lst with 
+        | [] -> (PList.empty, 1.0)
+        | lst ->
+
+        let accHeight = lst |> List.sumBy (fun x -> (abs (Rangef.calcRangeNoInf x.range)))
+        let factor = 
+          match optMapper with
+            | None -> logHeight / accHeight
+            | Some m -> m
+        let result = 
+          lst
+            |> List.map (fun (n : LogNode) ->
+                          {n with svgSize = V2d.OO 
+                                              + V2d.OI
+                                              * (Rangef.calcRangeNoInf n.range) 
+                                              * factor
+                                  nativeSize = V2d.OO 
+                                                + V2d.OI 
+                                                * (Rangef.calcRangeNoInf n.range) 
+                                                  
+                          }
+                        )
+            |> List.scan (fun (a : LogNode) (b : LogNode) -> 
+                              {b with svgPos    = V2d(b.svgPos.X, a.svgPos.Y + a.svgSize.Y)
+                                      nativePos = V2d(b.nativePos.X, a.nativePos.Y + a.nativeSize.Y)
+                              }
+                          ) (LogNodes.Init.empty) 
+            |> List.tail  
+            |> List.map (fun (x : LogNode) ->
+                          {x with children = calcRecYPosSize 
+                                              x.svgSize.Y
+                                              x.svgPos.Y
+                                              x.children
+                          }
+                        )
+            |> PList.ofList
+        (result, factor)
+

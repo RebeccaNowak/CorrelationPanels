@@ -62,8 +62,12 @@
 	<Compile Include="Border.fs" />
 	<Compile Include="LogAxisSection.fs" />
 	<Compile Include="LogAxisApp.fs" />
-	<Compile Include="LogNodeSvg.fs" />
-	<Compile Include="LogNode.fs" />
+	<Compile Include="LogNode.Init.fs" />
+	<Compile Include="LogNode.Recursive.fs" />
+	<Compile Include="LogNode.Helper.fs" />
+	<Compile Include="LogNode.Update.fs" />
+	<Compile Include="LogNode.Svg.fs" />
+	<Compile Include="LogNode.Debug.fs" />
 	<Compile Include="GeologicalLog.fs" />
 	<Compile Include="GeologicalLogApp.fs" />
 	<Compile Include="Correlation.fs" />

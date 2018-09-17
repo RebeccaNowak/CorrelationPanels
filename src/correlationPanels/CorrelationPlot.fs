@@ -93,7 +93,7 @@
             match n with
               | None -> None
               | Some n ->
-                (LogNode.findBorder n borderId)
+                (LogNodes.Helper.findBorder n borderId)
       (log, node, border)
 
 
@@ -277,7 +277,7 @@
           match b with
             | GeologicalLog.LogNodeMessage (nodeId, c) ->
               match c with
-                | LogNode.BorderMessage d ->
+                | LogNodes.BorderMessage d ->
                   match d with
                     | Border.ToggleSelect (borderId, pos) ->
                       correlate model logId nodeId borderId pos

@@ -149,14 +149,13 @@
     let drawCircle (upperLeft : V2d) (radius : float) (color : C4b) (stroke : float) (fill : bool) = 
       let fillAttr =
         match fill with
-          | true -> [atc "fill" color]
-          | false -> [ats "fill" "none"]
+          | true -> [atc "fill" color; atc "stroke" C4b.Black]
+          | false -> [ats "fill" "none";atc "stroke" color]
       Svg.circle
         ([
           atf "cx" (upperLeft.X - radius)
           atf "cy" (upperLeft.Y - radius)
           atf "r" radius
-          atc "stroke" C4b.Black //Performance
           atf "stroke-width" stroke
         ]@fillAttr)
 
@@ -164,16 +163,26 @@
       let upperLeft = centre + (new V2d (radius))
       drawCircle upperLeft radius color stroke fill
 
-    let drawConcentricCircles (upperLeft : V2d) (radius : float) (color : C4b) (nrCircles : int) (weight : float) =
-        let centre = upperLeft - (new V2d (radius))
-        let dist = radius / (float nrCircles)
+    let drawConcentricCircles (upperLeft : V2d) (outerRadius : float) 
+                              (innerRadius : float) (circleDist : float) 
+                              (color : C4b) (nrCircles : int) 
+                              (weight : float) =
+        let centre = upperLeft - (new V2d (outerRadius))
         let radii = 
-          [1..nrCircles]
-            |> List.map (fun i -> (float i) * dist)
+          [0..nrCircles]
+            |> List.map (fun i -> innerRadius + (float i) * circleDist)
         let circles =
           radii
             |> List.map (fun r -> drawCircle' centre r color weight false)
         circles
+
+    let drawConcentricCircles' (centre : V2d) (outerRadius : float)
+                               (innerRadius : float) (color : C4b) 
+                               (nrCircles : int) (circleDist : float)
+                               (weight : float) =
+        let upperLeft = centre + (new V2d (outerRadius))
+        drawConcentricCircles upperLeft outerRadius innerRadius circleDist color nrCircles weight
+
 
     let pointFromAngle (start : V2d) (angle : Angle) (length : float) =
       let endX = start.X + Math.Cos(angle.radians) * length
@@ -185,9 +194,10 @@
                           (fromPoint : V2d) (toPoint : V2d)
                           (color : C4b) =
       let pathStr = 
-        move centre 
-          >> lineTo fromPoint 
-          >> (circleSegmentTo radius fromPoint toPoint color)
+         move fromPoint 
+          >> (circleSegmentTo radius toPoint)
+          >> (lineTo centre)
+          >> close
       buildPath pathStr color 1.0 true
 
     let drawCircleSegment' (start : V2d) (angleFrom : Angle) (angleTo : Angle) 
@@ -196,15 +206,36 @@
       let end2 = pointFromAngle start angleTo radius
       drawCircleSegment start radius  end1 end2 color
 
+    let drawDonutSegment  (centre : V2d) 
+                          (outerRadius : float) 
+                          (innerRadius : float)
+                          (angleFrom : Angle) (angleTo : Angle)
+                          (color : C4b) =
 
-    let drawLineFromAngle (start : V2d) (angle : Angle) (length : float) (color : C4b) (width : float)=
+      let startInner = pointFromAngle centre angleFrom innerRadius
+      let endInner   = pointFromAngle centre angleTo   innerRadius
+      let startOuter = pointFromAngle centre angleFrom outerRadius
+      let endOuter   = pointFromAngle centre angleTo   outerRadius
+            
+      let pathStr = 
+         move startInner 
+          >> (circleSegmentTo' innerRadius endInner)
+          >> (lineTo endOuter)
+          >> (circleSegmentTo outerRadius startOuter)
+          >> close
+      buildPath pathStr color 1.0 true
+
+
+    let drawLineFromAngle (start : V2d) (angle : Angle) 
+                          (length : float) 
+                          (color : C4b) (width : float) =
       let endPoint = pointFromAngle start angle length
       drawLine start endPoint color width
 
     let starAngles16 =
-        [1..16]
+        [0..15]
           |> List.map (fun i ->
-                          let angle = Angle.eigthPi * (float i)
+                          let angle = Angle.sixteenthPi + (Angle.eigthPi * (float i))
                           angle
                       )
 
@@ -221,20 +252,24 @@
       
         
 
-    let drawStarLines' (angles :list<Angle>) (start : V2d) (radius : float) (color : C4b) (weight : float) =
+    let drawStarLines' (angles :list<Angle>) (centre : V2d) 
+                       (radius : float) (innerRadius : float) 
+                       (color : C4b) (weight : float) =
       let lines =
         angles
           |> List.map (fun angle ->
-                          drawLineFromAngle start angle radius color weight
+                          let start = pointFromAngle centre angle innerRadius
+                          drawLineFromAngle start angle (radius - innerRadius) color weight
                       )
       lines
 
-    let draw16StarLines (start : V2d) (radius : float) (color : C4b) (weight : float) =
+    let draw16StarLines (start : V2d) (radius : float) (innerRadius : float) (color : C4b) (weight : float) =
       let angles = starAngles16
       let lines =
         angles
           |> List.map (fun angle ->
-                          drawLineFromAngle start angle radius color weight
+                          let start = pointFromAngle start angle innerRadius
+                          drawLineFromAngle start angle (radius - innerRadius) color weight
                       )
       lines
 
@@ -250,31 +285,47 @@
 
 
     let circleSegment (centre : V2d) (bin : Bin16x6)
-                      (radius : float) (color : C4b) =
+                      (color : C4b) =
       let angBin = bin.angularBin%15
       let fromAngle = starAngles16.Item angBin
-      let toAngle = starAngles16.Item angBin
-      drawCircleSegment' centre fromAngle toAngle radius color
+      let toAngle = starAngles16.Item (angBin + 1)
+      drawCircleSegment' centre fromAngle toAngle bin.radius color
 
-    let drawRoseDiagram (leftUpper : V2d) (radius : float) 
+    let donutSegment (centre : V2d) 
+                     (innerRadius : float)
+                     (bin : Bin16x6) (color : C4b) =
+      let angBin = bin.angularBin%15
+      let fromAngle = starAngles16.Item angBin
+      let toAngle = starAngles16.Item (angBin + 1)
+      drawDonutSegment centre bin.radius innerRadius fromAngle toAngle color
+
+
+    let drawRoseDiagram (leftUpper : V2d) (outerRadius : float)  (innerRadius : float)
                         (color : C4b) (nrCircles : int) 
                         (weight : float) (countPerBin : list<int * int>) =
-      let centre = (leftUpper - (new V2d (radius)))
-      let circles = drawConcentricCircles leftUpper radius color nrCircles weight
-      let lines = draw16StarLines centre radius color weight
-      let circleDist = radius / (float nrCircles)
+      let circleDist = (outerRadius - innerRadius) / (float nrCircles)
+      
+      let centre = (leftUpper - (new V2d (outerRadius)))
+      let circles = drawConcentricCircles' centre outerRadius innerRadius C4b.Gray nrCircles circleDist 0.5
+      
+      let lines = draw16StarLines centre outerRadius innerRadius C4b.Gray weight
+      
       let circleRadii =
         [1..(nrCircles)]
           |> List.map (fun nr -> (float nr) * circleDist)
       let bins =
         countPerBin
-          |> List.map (fun (bin, count) -> {angularBin = bin;radius = (circleRadii.Item (count - 1))})
+          |> List.map (fun (bin, count) -> {angularBin = bin;radius = innerRadius + (circleRadii.Item (count - 1))})
       let filledBins =
         bins
-          |> List.map (fun bin -> circleSegment centre bin radius color)
+          |> List.map (fun bin -> donutSegment centre innerRadius bin color)
       toGroup (circles@lines@filledBins) []
 
 
+
+
+
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     let drawCircleButton (centre : V2d) (radius : float)
                          (color : C4b) (filled : bool) 
                          (stroke : float)

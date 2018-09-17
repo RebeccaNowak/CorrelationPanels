@@ -33,9 +33,12 @@
           atf "stroke-witdth" stroke
         ]@fillAttr)
 
-    let circleSegmentTo (radius : float) (a : V2d) (b : V2d) (color : C4b) =
-        sprintf "A %f,%f 0 %f,%f %f,%f" radius radius a.X a.Y b.X b.Y
-      
+    let circleSegmentTo (radius : float) (b : V2d) =
+        sprintf "A %f %f, 0, 0, 0, %f %f" radius radius b.X b.Y
+
+    let circleSegmentTo' (radius : float) (b : V2d) =
+        sprintf "A %f %f, 0, 0, 1, %f %f" radius radius b.X b.Y
+     
 
     type CurveType = SmoothCurve | BezierCurve | Elliptical
       
