@@ -5,19 +5,21 @@
     open Aardvark.Base.Incremental
     open Aardvark.UI
     open CorrelationDrawing
+    open Helper
+    open Recursive
 
-    let hasChildren (model : MLogNode) =
-      let isEmpty = AList.isEmpty model.children
-      Mod.map (fun x -> not x) isEmpty
+    module Calc =
+      let offset (nodeLevel : IMod<int>) (nodeOffset : float)
+                 ((secondaryLevel : int), (secondaryLevelWidth : float)) = 
+        adaptive {
+          let! lvl = nodeLevel 
+          return match (lvl = secondaryLevel), lvl = 0 with
+                  | true, true  -> nodeOffset + secondaryLevelWidth
+                  | false, true -> nodeOffset + secondaryLevelWidth
+                  | true, false -> nodeOffset
+                  | false, false -> nodeOffset
+        }
 
-
-    let private containsHNodes (node : MLogNode) =
-      let foo = (Mod.force node.children.Content) 
-                  |> PList.filter (fun n -> (Mod.force n.nodeType = LogNodeType.Hierarchical))
-      (not (foo.IsEmpty()))
-
-
-        
     let rec createView  (offset        : float)
                         (secondaryLvl  : (int * float))
                         (model         : MLogNode) 
@@ -29,33 +31,23 @@
                                         )>
                         )
                         : alist<DomNode<'msg>> =
-      let (secLvlNr, breadthSec) = secondaryLvl //TODO hardcoded
-      let offset =
-        adaptive {
-          let! lvl = model.level 
-          let sLvl = secondaryLvl
-          return match (lvl = secLvlNr), lvl = 0 with
-                  | true, true  -> offset + breadthSec
-                  | false, true -> offset + breadthSec
-                  | true, false -> offset
-                  | false, false -> offset
-        }
+      let (secLvlNr, breadthSec) = secondaryLvl 
+      let offset = Calc.offset model.level offset secondaryLvl
           
       let childrenView = 
         alist {
           let! os = offset
           for c in model.children do               
             let v = (createView os secondaryLvl c viewFunction)
-            for it in (v : alist<DomNode<'msg>>) do
-              yield it
+            yield! v
         }
     
       let rval =
         alist {
-          let! os = offset
-          let! selfViewFunction = viewFunction os model
+          let! offset = offset
+          let! selfViewFunction = viewFunction offset model
           let! hasCs = hasChildren model
-          let selfView = selfViewFunction os None
+          let selfView = selfViewFunction offset None
           let! lvl = model.level 
           if lvl = secLvlNr then
             for v in (selfViewFunction 0.0 (Some breadthSec)) do yield v
@@ -64,14 +56,14 @@
                 for v in selfView do
                   yield v                
             | true   ->  
-              let! lstChildren = childrenView.Content     
-              match (containsHNodes model) with
+              let! hasHierarchicalNodes = (hasHierarchicalNodes' model)
+              match hasHierarchicalNodes with
                 | true  ->
-                  yield (Svg.Attributes.toGroup (lstChildren |> PList.toList) [])                                              
+                  yield (Svg.Attributes.toGroup' childrenView AMap.empty)                                             
                 | false ->
                   for v in selfView do
                     yield v 
-                  yield (Svg.Attributes.toGroup (lstChildren |> PList.toList) [])
+                  yield (Svg.Attributes.toGroup' childrenView AMap.empty)
         }
       rval
     
@@ -218,14 +210,13 @@
 
     let view  (model        : MLogNode) 
               (secondaryLvl : IMod<int>)
-              //(viewType     : IMod<CorrelationPlotViewType>)
               (flags        : IMod<SvgFlags>)
               (options      : MSvgOptions)
               (styleFun     : float -> IMod<LogAxisSection>) =
       let f = getDomNodeFunction 
                 flags options styleFun 
                 (ToggleSelectNode) 
-                (BorderMessage) //(fun (id : BorderId) lst -> Border.ToggleSelect id)
+                (BorderMessage)
                   
       adaptive {
         let! sLvl = secondaryLvl
@@ -235,26 +226,35 @@
 
 
 /////////////////////
+    // calculate the size of nodes in svg. 
+    let calcSizeX (model : LogNode) (xAxis : SemanticId) (xAxisScaleFactor : float) = 
+      let metricNodes = childrenWith model (fun n -> n.lBorder.anno.semanticId = xAxis)
+      let metricValues = metricNodes |> List.map (fun n -> calcMetricValue n)
+      let sizeX = (metricValues |> List.filterNone |> List.maxOrZero) * xAxisScaleFactor
+      {model with svgSize = (model.svgSize * V2d.OI) + (V2d.IO) * sizeX}
 
-    let xPosAndSize (id : SemanticId) (xAxisScaleFactor : float) (nodes : plist<LogNode>)  : (plist<LogNode> * float) =
+
+    let xPosAndSize (id : SemanticId) 
+                    (xAxisScaleFactor : float) 
+                    (nodes : plist<LogNode>) : (plist<LogNode> * float) =
       let updNodes = 
         nodes 
-          |> PList.map (fun n -> LogNodes.Update.update (LogNodes.ChangeXAxis (id, xAxisScaleFactor)) n) 
+          |> LogNodes.Recursive.applyAll (fun n -> (calcSizeX n id xAxisScaleFactor))
 
       // nodes without grainsize/Annotations of x-Axis semantic type get avg
-      let size = updNodes
+      let sizes = updNodes
                   |> PList.toList
                   |> List.filter (fun n -> n.svgSize.X <> 0.0) 
                   |> List.map (fun (n : LogNode) -> n.svgSize.X)
-      if size.Length = 0 then printfn "%s" "calc svg x position/size failed" //TODO if list empty //TODO bug/refactor
+      if sizes.Length = 0 then printfn "%s" "calc svg x position/size failed" //TODO if list empty //TODO bug/refactor
         
       let avg = 
-          match (size |> List.averageOrZero) with
+          match (List.averageOrZero sizes) with
           | n when n = 0.0 -> 10.0 //TODO hardcoded size if no grain size annotations in log
           | n -> n
 
       let updNodes =
-        updNodes |> PList.map (fun n -> LogNodes.Helper.defaultIfZero n avg)
+        updNodes |> PList.map (fun n -> LogNodes.Recursive.defaultIfZero n avg)
       (updNodes, avg)
 
 

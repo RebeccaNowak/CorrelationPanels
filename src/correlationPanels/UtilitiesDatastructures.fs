@@ -137,22 +137,68 @@ module PList =
       |> List.reduce (fun x y -> if (maxBy x) < (maxBy y) then x else y)
       |> mapTo 
 
+  let tail (lst : plist<'a>) =
+    match lst.IsEmptyOrNull () with
+      | true  -> PList.empty
+      | false -> PList.removeAt 0 lst
+
+  let tryHead (lst : plist<'a>) =
+    match lst.IsEmptyOrNull () with
+      | true  -> None
+      | false -> Some (lst.Item 0)
+  
+  let rec allTrueOrEmpty (f : 'a -> bool) (lst : plist<'a>) =
+    match lst.IsEmptyOrNull () with
+      | true  -> true
+      | false -> 
+        match f (lst.Item 0) with
+          | true  -> allTrueOrEmpty f (tail lst)
+          | false -> false
+
+  let rec anyTrue (f : 'a -> bool) (lst : plist<'a>) =
+    match lst.IsEmptyOrNull () with
+      | true -> false
+      | false -> 
+        match f (lst.Item 0) with
+          | true  -> true
+          | false -> anyTrue f (tail lst)
+        
+
+
   
 
 module AList =
+  let tryHead (lst : alist<'a>) =
+    adaptive {
+      let! plst = lst.Content
+      return 
+        match plst.IsEmptyOrNull () with
+          | true -> None
+          | false -> Some (plst.Item 0)
+    }
+    
   let fromAMap (input : amap<_,'a>) : alist<'a> = 
     input |> AMap.toASet |> AList.ofASet |> AList.map snd 
 
   let isEmpty (alst: alist<'a>) =
     alst.Content 
       |> Mod.map (fun x -> (x.Count < 1))
+
+  let exists (f : 'a -> IMod<bool>) (alst: alist<'a>) = //performance :(
+    let res = 
+      alist {
+        for a in alst do 
+          let! b = (f a)
+          if b then yield true
+      }
+    Mod.map (fun c -> (c > 0)) (AList.count res)
     
   let reduce (f : 'a -> 'a -> 'a) (alst: alist<'a>) =
     alst.Content
       |> Mod.map (fun (x : plist<'a>) -> 
                       let r =
-                        AList.toList alst
-                           |> List.reduce f//(fun x y -> if x < y then x else y)
+                        PList.toList x
+                           |> List.reduce f
                       r
                   )
 
@@ -172,26 +218,16 @@ module AList =
     alst
       |> reduce (fun x y -> if x > y then x else y)
 
-  let average (alst : alist<float>) = //TODO make dynamic
-    let lst = 
-      alst
-        |> AList.toList
-    
+  let average (alst : alist<float>) =
     let sum =
-      lst |> List.reduce (fun x y -> x + y)
-
-    sum / (float lst.Length)
+      alst |> reduce (fun x y -> x + y)
+    Mod.map2 (fun s c -> s / (float c)) sum (AList.count alst)
+    
 
   let averageOf (f : 'a -> float) (alst : alist<'a>) = //TODO make dynamic
-    let lst = 
-      alst
-        |> AList.toList
-
-    let sum =
-      lst |> List.map (fun x-> (f x))
-          |> List.reduce (fun x y -> x + y)
-
-    sum / (float lst.Length)
+    alst
+      |> AList.map f
+      |> average
 
   let filter' (f : 'a -> IMod<bool>) (alst : alist<'a>) =
     alist {

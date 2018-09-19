@@ -30,6 +30,7 @@
 	<Content Include="semui-overrides.css">
 	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	</Content>
+	<Compile Include="tmpAList.fs" />
 	<Compile Include="Math.fs" />
 	<Compile Include="UtilitiesDatastructures.fs" />
 	<Compile Include="String.fs" />
@@ -62,12 +63,12 @@
 	<Compile Include="Border.fs" />
 	<Compile Include="LogAxisSection.fs" />
 	<Compile Include="LogAxisApp.fs" />
-	<Compile Include="LogNode.Init.fs" />
-	<Compile Include="LogNode.Recursive.fs" />
-	<Compile Include="LogNode.Helper.fs" />
-	<Compile Include="LogNode.Update.fs" />
-	<Compile Include="LogNode.Svg.fs" />
-	<Compile Include="LogNode.Debug.fs" />
+	<Compile Include="LogNodes.Init.fs" />
+	<Compile Include="LogNodes.Helper.fs" />
+	<Compile Include="LogNodes.Recursive.fs" />
+	<Compile Include="LogNodes.Svg.fs" />
+	<Compile Include="LogNodes.Update.fs" />
+	<Compile Include="LogNodes.Debug.fs" />
 	<Compile Include="GeologicalLog.fs" />
 	<Compile Include="GeologicalLogApp.fs" />
 	<Compile Include="Correlation.fs" />

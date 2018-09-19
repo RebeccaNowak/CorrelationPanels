@@ -56,6 +56,7 @@ module Border =
   let initPosInf = 
     initial (Annotation.initialDummyWithPoints (posInf)) posInf LogNodeId.invalid
 
+////////////////////////////////////////////////
   type Action =
     | Correlate of BorderId 
     | ToggleSelect of (BorderId * V2d)
@@ -68,17 +69,15 @@ module Border =
           | true  -> {model with isSelected = not model.isSelected}
           | false -> model
 
-  //let update (model : Border) =
+  ////////////////////////////////////////////////
 
 
-  let getAvgY (points : alist<V3d>) =
-    (AList.toList points) |> List.averageBy  (fun x -> x.Y)
 
-  let getMinY (points : alist<V3d>) =
-    (AList.toList points) |> List.minBy  (fun x -> x.Y)
+  let elevation (model : Border) = 
+    (Annotation.elevation model.anno) 
 
-  let calcElevation (border : Border) = 
-    border.point.Length
+  let elevation' (model : MBorder) =
+    (Annotation.elevation' model.anno)
     
 
   module Sg =

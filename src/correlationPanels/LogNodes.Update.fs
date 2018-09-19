@@ -3,7 +3,7 @@
  open CorrelationDrawing
  
  module Update = 
-    open Helper
+    open Svg
     open Recursive
 
     let update  (action : Action) (model : LogNode) =

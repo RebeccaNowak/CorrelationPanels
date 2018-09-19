@@ -252,7 +252,7 @@
                   (styleFun     : float -> IMod<LogAxisSection>) 
                    =
         let logNodeTo16Bins (node : MLogNode) (nrBins : int) =
-          let aNodes = LogNodes.Helper.getAngularChildren node
+          let aNodes = LogNodes.Recursive.angularChildren node
           adaptive {
             let! isEmpty = AList.isEmpty aNodes
             match isEmpty with

@@ -21,7 +21,7 @@
         ] 
 
   module Svg =
-    let inline g x = elemNS "g" Incremental.Svg.svgNS x
+    
 
 
     module Events =
