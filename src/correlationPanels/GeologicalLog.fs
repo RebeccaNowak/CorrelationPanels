@@ -304,10 +304,6 @@
                 let! pos = n.svgPos
                 let! size = n.svgSize
                 let shift = new V2d (size.X, size.Y * 0.5)
-                //let bins = 
-                //  match LogNode.calcAngularValue' n with
-                //    | Some angle -> []
-                //    | None -> []
                 let tmp = logNodeTo16Bins n 16
                 let! tmp = tmp
                 if tmp.IsSome then
@@ -318,7 +314,7 @@
           }
 
         let minLvl = Helpers.getMinLevel model
-        let minLvlNodes =
+        let minLvlNodes = //TODO refactor
           model.nodes
             |> AList.filter (fun n -> Mod.force n.level = minLvl)
             |> AList.toSeq // TODO check if OK
@@ -330,7 +326,6 @@
               let mapper (a : DomNode<LogNodes.Action>) =
                 a |> UI.map (fun m -> LogNodeMessage (n.id, m))
               let! v = (LogNodes.Svg.view n secondaryLvl flags svgOptions styleFun) 
-                        //|> AList.map (UI.map LogNodeMessage)
               for it in v do
                 yield (mapper it)
           }

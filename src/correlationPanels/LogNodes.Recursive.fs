@@ -137,11 +137,6 @@ open CorrelationDrawing
                    n.nodeType
          )  
          
-    //let hasHierarchicalChildren (model : MLogNode) =
-
-
-    //let childrenWithSemantic (model : LogNode) (semId : SemanticId) =
-    //  filterAndCollect model (fun f -> model.lBorder.anno.semanticId = semId)
 
 
 

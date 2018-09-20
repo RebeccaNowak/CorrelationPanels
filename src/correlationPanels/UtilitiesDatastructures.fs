@@ -137,6 +137,11 @@ module PList =
       |> List.reduce (fun x y -> if (maxBy x) < (maxBy y) then x else y)
       |> mapTo 
 
+  let average (lst : plist<float>) : float =
+    lst
+      |> PList.toList
+      |> List.average
+
   let tail (lst : plist<'a>) =
     match lst.IsEmptyOrNull () with
       | true  -> PList.empty
@@ -163,9 +168,12 @@ module PList =
           | true  -> true
           | false -> anyTrue f (tail lst)
         
+  let averageOrZero (lst : plist<float>) =
+    match lst.IsEmptyOrNull () with
+      | true -> 0.0
+      | false -> PList.average lst
 
 
-  
 
 module AList =
   let tryHead (lst : alist<'a>) =

@@ -20,6 +20,8 @@
                   | false, false -> nodeOffset
         }
 
+
+
     let rec createView  (offset        : float)
                         (secondaryLvl  : (int * float))
                         (model         : MLogNode) 
@@ -34,7 +36,7 @@
       let (secLvlNr, breadthSec) = secondaryLvl 
       let offset = Calc.offset model.level offset secondaryLvl
           
-      let childrenView = 
+      let childrenView () = 
         alist {
           let! os = offset
           for c in model.children do               
@@ -57,13 +59,10 @@
                   yield v                
             | true   ->  
               let! hasHierarchicalNodes = (hasHierarchicalNodes' model)
-              match hasHierarchicalNodes with
-                | true  ->
-                  yield (Svg.Attributes.toGroup' childrenView AMap.empty)                                             
-                | false ->
-                  for v in selfView do
-                    yield v 
-                  yield (Svg.Attributes.toGroup' childrenView AMap.empty)
+              if not hasHierarchicalNodes then 
+                for v in selfView do
+                  yield v 
+              yield (Svg.Attributes.toGroup' (childrenView ()) AMap.empty)           
         }
       rval
     
@@ -123,6 +122,7 @@
                     rfun true
                 | false ->
                     rfun false
+
       let btns = 
         match buttons with
           | Some (lb, ub) -> [lb;ub]
@@ -131,16 +131,7 @@
       let domNode = 
         match nodeType with
             | LogNodeType.Angular -> []
-              
-              //[
-              //  Svg.drawCircleButton 
-              //    (new V2d(offset + size.X, (position.Y + size.Y) * 0.5))
-              //    2.0 C4b.Black false 0.5 selectionCallback
-              //]
             | LogNodeType.Metric  -> []
-              //[Svg.drawCircleButton 
-              //  (new V2d(offset + size.X, (position.Y + size.Y) * 0.5))
-              //  2.0 C4b.Black false 0.5 selectionCallback]
             | LogNodeType.Hierarchical -> [drawRectangle ()]@btns
             | LogNodeType.HierarchicalLeaf -> [drawRectangle ()]@btns
             | LogNodeType.PosInfinity
@@ -189,6 +180,8 @@
             | true  -> Some btns
             | false -> None
         let selCb = (fun lst -> selectAction model.id)
+
+
         
         let f = (
                   createDomNode //viewType
@@ -206,6 +199,9 @@
                 )      
         return f
       }
+
+
+
 
 
     let view  (model        : MLogNode) 
@@ -242,14 +238,15 @@
           |> LogNodes.Recursive.applyAll (fun n -> (calcSizeX n id xAxisScaleFactor))
 
       // nodes without grainsize/Annotations of x-Axis semantic type get avg
-      let sizes = updNodes
-                  |> PList.toList
-                  |> List.filter (fun n -> n.svgSize.X <> 0.0) 
-                  |> List.map (fun (n : LogNode) -> n.svgSize.X)
-      if sizes.Length = 0 then printfn "%s" "calc svg x position/size failed" //TODO if list empty //TODO bug/refactor
+      let sizes = 
+        updNodes
+          |> PList.filter (fun n -> n.svgSize.X <> 0.0) 
+          |> PList.map (fun (n : LogNode) -> n.svgSize.X)
+
+      if sizes.Count = 0 then printfn "%s" "calc svg x position/size failed" //TODO if list empty //TODO bug/refactor
         
       let avg = 
-          match (List.averageOrZero sizes) with
+        match (PList.averageOrZero sizes) with
           | n when n = 0.0 -> 10.0 //TODO hardcoded size if no grain size annotations in log
           | n -> n
 
@@ -260,24 +257,31 @@
 
 
     let yPosAndSize (logHeight : float) (optMapper : option<float>) (plst : plist<LogNode>) =
+      let calcSvgFactor availableHeight (logNodes : list<LogNode>) = 
+        let accumulatedHeight =
+          logNodes |> List.sumBy (fun x -> (abs (Rangef.calcRangeNoInf x.range)))
+        availableHeight / accumulatedHeight
 
-      let rec calcRecYPosSize (height : float) (startAt : float) (plst : plist<LogNode>) =
-        let lst = PList.toList plst
+      let calcSvgX (svgFactor : float) (node : LogNode) =
+        {node with svgSize = V2d.OO 
+                               + V2d.OI 
+                               * (Rangef.calcRangeNoInf node.range) 
+                               * svgFactor
+        }
+
+      let calcCurrentY (prev : LogNode) (current : LogNode) =
+        {current with svgPos = V2d(0.0, prev.svgPos.Y + prev.svgSize.Y)}                
+
+      let rec calcRecYPosSize (height : float) (startAt : float) (nodes : plist<LogNode>) =
+        let lst = PList.toList nodes
         match lst with 
           | [] -> PList.empty
           | lst ->
-              let accHeight = lst |> List.sumBy (fun x -> (abs (Rangef.calcRangeNoInf x.range)))
-              let factor = height / accHeight
+              let factor = calcSvgFactor height lst
               let result = 
                 lst
-                  |> List.map (fun (x : LogNode) -> 
-                                {x with svgSize = V2d.OO 
-                                                + V2d.OI * (Rangef.calcRangeNoInf x.range) * factor
-                                }
-                              )
-                  |> List.scan (fun (a : LogNode) (b : LogNode) -> 
-                                    {b with svgPos   = V2d(0.0, a.svgPos.Y + a.svgSize.Y)}
-                                ) {LogNodes.Init.empty with svgPos = V2d(0.0, startAt)}
+                  |> List.map (calcSvgX factor)
+                  |> List.scan calcCurrentY {LogNodes.Init.empty with svgPos = V2d(0.0, startAt)}
                   |> List.tail  
                   |> List.map (fun (x : LogNode) ->
                                 {x with children = calcRecYPosSize 
