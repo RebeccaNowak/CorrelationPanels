@@ -29,7 +29,8 @@
         lastMousePos        = V2i.OO
       }
 
-    let update (model : CorrelationPlotApp)
+    let update (annoApp : AnnotationApp)
+               (model : CorrelationPlotApp)
                (action : Action) = 
                
       match action with
@@ -96,15 +97,15 @@
             | false, false -> model
         | Clear -> 
           {model with correlationPlot =
-                        CorrelationPlot.update model.correlationPlot CorrelationPlot.Clear
+                        CorrelationPlot.update annoApp model.correlationPlot CorrelationPlot.Clear
           }
         | CorrelationPlotMessage lm -> 
-          {model with correlationPlot = CorrelationPlot.update model.correlationPlot lm}
+          {model with correlationPlot = CorrelationPlot.update annoApp model.correlationPlot lm}
         | AxisMessage m -> 
-          {model with correlationPlot = CorrelationPlot.update model.correlationPlot (m |> CorrelationPlot.LogAxisAppMessage)} //TODO refactor
+          {model with correlationPlot = CorrelationPlot.update annoApp model.correlationPlot (m |> CorrelationPlot.LogAxisAppMessage)} //TODO refactor
 
 
-    let viewSvg (model : MCorrelationPlotApp) =
+    let viewSvg (annoApp : MAnnotationApp) (model : MCorrelationPlotApp) =
      
       let menu = 
           let axisSel = ((LogAxisApp.view model.correlationPlot.logAxisApp) |> AList.map (UI.map AxisMessage))
@@ -126,19 +127,19 @@
       let domNode = 
         div [attribute "overflow-x" "hidden";attribute "overflow-y" "hidden"] [
                 //menu
-                CorrelationPlot.viewSvg model.correlationPlot |> UI.map CorrelationPlotMessage
+                CorrelationPlot.viewSvg annoApp model.correlationPlot |> UI.map CorrelationPlotMessage
                ]
       domNode
 
     // Log Debug View
     module View =
       let mapper (log : MGeologicalLog) = (fun a -> CorrelationPlot.LogMessage (log.id, a))
-      let logList (model : MCorrelationPlotApp) =
+      let logList (model : MCorrelationPlotApp) (semApp : MSemanticApp) =
         let rows = 
           alist {
             for log in model.correlationPlot.logs do
               let! tmp = 
-                GeologicalLog.View.listView log (CorrelationPlot.Action.SelectLog log.id) 
+                Log.View.listView log semApp (CorrelationPlot.Action.SelectLog log.id) 
                                             (mapper log)
               let tmp = tmp
                           |> List.map (UI.map (fun a -> Action.CorrelationPlotMessage a))
@@ -185,7 +186,7 @@
                             ]
                             div [] 
                                 [
-                                  (GeologicalLog.View.debug 
+                                  (Log.View.debug 
                                     log 
                                   )
                                 ]        
@@ -195,7 +196,7 @@
 
 
         let domNode =
-          require (UI.CSS.myCss) (
+          require (GUI.CSS.myCss) (
             body [style "overflow: auto"] [
               div [] [
                // menu |> UI.map CorrelationPlotMessage
@@ -212,26 +213,17 @@
 
     let threads (model : CorrelationPlotApp) =
       CorrelationPlot.threads model.correlationPlot
-
         
-        
-    let app : App<CorrelationPlotApp,MCorrelationPlotApp,Action> =
+    let app (annoApp : MAnnotationApp) (mAnnoApp : AnnotationApp) : App<CorrelationPlotApp,MCorrelationPlotApp,Action> =
           {
               unpersist = Unpersist.instance
               threads = threads
               initial = initial
-              update = update
-              view = viewSvg
+              update = update mAnnoApp
+              view = viewSvg annoApp
           }
 
-    let start = App.start app
-
-
-
-
-
-
-
+    let start annoApp mAnnoApp = App.start (app annoApp mAnnoApp)
 
 
             //let menu =

@@ -1,8 +1,10 @@
 ﻿namespace CorrelationDrawing.LogNodes
 
+open SimpleTypes
+
 open CorrelationDrawing
       type Action =
-      | ChangeXAxis       of (SemanticId * float)
+      | ChangeXAxis       of (AnnotationApp * SemanticId * float)
       | MouseOver         of LogNodeId
       | ToggleSelectNode  of LogNodeId
       | BorderMessage     of Border.Action
@@ -14,29 +16,37 @@ open CorrelationDrawing
 
     let empty  : LogNode = {
       id           = LogNodeId.invalid
+      logId        = LogId.invalid
       isSelected   = false
       hasDefaultX  = false
       nodeType     = LogNodeType.Empty
       label        = "log node"
-      level        = -1
-      lBorder      = Border.initialEmpty
-      uBorder      = Border.initialEmpty
+      level        = NodeLevel.INVALID
+      lBorder      = None
+      uBorder      = None
+      annotation   = None
       children     = plist.Empty
       //svgPos.Y      = 0.0
       //svgPos.X      = 0.0
       nativePos    = V2d.OO
-      nativeSize   = V2d.OO
+      nativeSize   = Size2D.init
       svgPos       = V2d.OO
-      svgSize         = V2d.OO
+      svgSize      = Size2D.init
+
+      mainBody     = None
+      roseDiagram  = None
+      buttonNorth  = None
+      buttonSouth  = None
+
     }
 
 
     let topLevel 
       (logId    : LogId)
-      ((up, ua) : (V3d * Annotation)) 
-      ((lp, la) : (V3d * Annotation)) 
+      ((up, ua) : (V3d * AnnotationId)) 
+      ((lp, la) : (V3d * AnnotationId)) 
       (children : plist<LogNode>)
-      (level    : int) : LogNode = 
+      (level    : NodeLevel) : LogNode = 
       let nodeId = LogNodeId.newId()
       let lBorder = Border.initial la lp nodeId logId
       let uBorder = Border.initial ua up nodeId logId
@@ -51,69 +61,77 @@ open CorrelationDrawing
       { 
         empty with 
           id          = nodeId
+          logId       = logId
           nodeType    = nodeType
           label       = "log node"
           level       = level
-          lBorder     = lBorder
-          uBorder     = uBorder
+          lBorder     = Some lBorder
+          uBorder     = Some uBorder
           children    = children
       }
 
     let topLevelWithId
       (nodeId   : LogNodeId)
       (logId    : LogId)
-      ((up, ua)  : (V3d * Annotation)) 
-      ((lp, la) : (V3d * Annotation)) 
+      ((up, ua)  : (V3d * AnnotationId)) 
+      ((lp, la) : (V3d * AnnotationId)) 
       (children : plist<LogNode>)
-      (level    : int) : LogNode = 
+      (level    : NodeLevel) : LogNode = 
       let lBorder = Border.initial la lp nodeId logId
       let uBorder = Border.initial ua up nodeId logId
       let n = topLevel logId (up, ua) (lp, la) children level
       {
         n with id       = nodeId
-               lBorder  = lBorder
-               uBorder  = uBorder
+               logId    = logId
+               lBorder  = Some lBorder
+               uBorder  = Some uBorder
       }
 
 
     // TODO add level
     let hierarchicalLeaf 
       (logId    : LogId)
-      (anno     : Annotation) 
+      (anno     : AnnotationId) 
       (lp       : V3d ) 
       (up       : V3d )  =
-      let nodeId = LogNodeId.newId()
+      let nodeId = LogNodeId.newId ()
       {empty with
         id        = nodeId
+        logId     = logId
         nodeType  = LogNodeType.HierarchicalLeaf
-        lBorder   = Border.initial anno lp nodeId logId
-        uBorder   = Border.initial anno up nodeId logId}
+        lBorder   = Some (Border.initial anno lp nodeId logId)
+        uBorder   = Some (Border.initial anno up nodeId logId)
+      }
 
-    let metric (logId : LogId)  (anno : Annotation)  =
-      let nodeId = LogNodeId.newId()
+    let metric (logId : LogId)  (annoId : AnnotationId)  =
+      let nodeId = LogNodeId.newId ()
+      
       {empty with
         id         = nodeId
+        logId      = logId
         nodeType   = LogNodeType.Metric
-        lBorder    = Border.initial anno (Annotation.lowestPoint anno).point nodeId logId
-        uBorder    = Border.initial anno (Annotation.highestPoint anno).point nodeId logId
+        annotation = Some annoId
       }
 
 
-    let angular (logId : LogId) (anno : Annotation) =
-      let nodeId = LogNodeId.newId()
+    let angular (logId : LogId) (annoId : AnnotationId) =
+      let nodeId = LogNodeId.newId ()
       {empty with
         id         = nodeId
+        logId      = logId
         nodeType   = LogNodeType.Angular
-        lBorder    = Border.initial anno (Annotation.lowestPoint anno).point nodeId logId
-        uBorder    = Border.initial anno (Annotation.highestPoint anno).point nodeId logId}
+        annotation = Some annoId
+      }
 
         //////////////////////////////////////////
     let fromSemanticType (a : Annotation) (semApp : SemanticApp) 
-                         (logId : LogId) (lp : V3d) (up : V3d) =   
-      match (Annotation.getType semApp a) with
-        | SemanticType.Hierarchical -> hierarchicalLeaf logId a lp up
-        | SemanticType.Angular -> angular logId a
-        | SemanticType.Metric -> metric logId a
+                         (logId : LogId) 
+                         (lp : V3d) (up : V3d) =   
+      let semType = Annotation.getType semApp a
+      match semType with
+        | SemanticType.Hierarchical -> hierarchicalLeaf logId a.id lp up
+        | SemanticType.Angular -> angular logId a.id
+        | SemanticType.Metric -> metric logId a.id
         | SemanticType.Undefined -> empty //TODO something useful
         | _ -> empty //TODO something useful
             

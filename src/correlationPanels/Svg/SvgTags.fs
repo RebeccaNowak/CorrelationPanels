@@ -13,6 +13,8 @@
 
       let inline g (a : AttributeMap<'msg>) (x : alist<DomNode<'msg>>) = elemNS "g" svgNS a x
 
+      let inline rect (a : AttributeMap<'msg>) (x : alist<DomNode<'msg>>) = elemNS "rect" svgNS a x
+
 
 
 

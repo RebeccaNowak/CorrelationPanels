@@ -18,6 +18,23 @@
     <RunWorkingDirectory>$(OutputPath)</RunWorkingDirectory>
   </PropertyGroup>
   <ItemGroup>
+	<Compile Include="Types.fs" />
+	<Compile Include="Math.fs" />
+	<Compile Include="UtilitiesDatastructures.fs" />
+	<Compile Include="UIEvents.fs" />
+	<Compile Include="UI.CSS.fs" />
+	<Compile Include="Svg\Svgplus.fs" />
+	<Compile Include="Svg\SvgTags.fs" />
+	<Compile Include="Svg\SvgTypes.fs" />
+	<Compile Include="Svg\Svg.Attributes.fs" />
+	<Compile Include="Svg\Svg.Paths.fs" />
+	<Compile Include="Svg\Svg.Base.fs" />
+	<Compile Include="Svg\Svg.Incremental.fs" />
+	<Compile Include="Svg\Svg.BorderedRectangle.fs" />
+	<Compile Include="Svg\RoseDiagramApp\Svg.RoseDiagram.fs" />
+	<Compile Include="Svg\RoseDiagramApp\Svg.RoseDiagramApp.fs" />
+	<Compile Include="Svg\SvgButtonApp\Svg.Button.fs" />
+	<Compile Include="Svg\SvgButtonApp\Svg.ButtonApp.fs" />
 	<Content Include="docking.css">
 	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	</Content>
@@ -30,28 +47,24 @@
 	<Content Include="semui-overrides.css">
 	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	</Content>
+	<Compile Include="Debug.fs" />
 	<Compile Include="tmpAList.fs" />
-	<Compile Include="Math.fs" />
-	<Compile Include="UtilitiesDatastructures.fs" />
+	<Compile Include="V2d.fs" />
+	<Compile Include="V3d.fs" />
+	<Compile Include="Option.fs" />
 	<Compile Include="String.fs" />
 	<Compile Include="Rendering.fs" />
-	<Compile Include="UIEvents.fs" />
-	<Compile Include="SvgTags.fs" />
 	<Compile Include="Mars.fs" />
 	<Compile Include="CorrelationDrawingTypes.fs" />
 	<Compile Include="Flags.fs" />
 	<Compile Include="SvgOptions.fs" />
 	<Compile Include="NumericExt.fs" />
 	<Compile Include="Utilities.fs" />
-	<Compile Include="UI.CSS.fs" />
 	<Compile Include="UI.Tooltips.fs" />
 	<Compile Include="UI.Menus.fs" />
 	<Compile Include="UI.Table.fs" />
 	<Compile Include="UI.Buttons.fs" />
 	<Compile Include="UI.Flags.fs" />
-	<Compile Include="Svg.Attributes.fs" />
-	<Compile Include="Svg.Paths.fs" />
-	<Compile Include="Svg.fs" />
 	<Compile Include="Shaders.fs" />
 	<Compile Include="TextInputApp.fs" />
 	<Compile Include="DropdownApp.fs" />

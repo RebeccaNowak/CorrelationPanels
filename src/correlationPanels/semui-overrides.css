@@ -17,7 +17,13 @@ body {
     text-align: inherit;
 }
 
-
+.clickable {
+    stroke: #fff;
+    fill: #fff;
+    fill-opacity: 0;
+    stroke-opacity: 0;
+    z-index: 1;
+}
 
 
 

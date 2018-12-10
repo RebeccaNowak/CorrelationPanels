@@ -15,66 +15,136 @@ namespace CorrelationDrawing
       | AnnotationMessage       of Annotation.Action
       | AddAnnotation           of Annotation
       | DeselectAllPoints       
-      | SelectPoints            of List<(V3d * string)>
+      | SelectPoints            of hmap<AnnotationId, V3d>
 
 
     let initial : AnnotationApp = {
-      annotations         = plist.Empty
+      annotations         = hmap.Empty
       selectedAnnotation  = None
     }
  
     let binarySerializer = MBrace.FsPickler.FsPickler.CreateBinarySerializer()
     
-    let findAnnotation (app : AnnotationApp) (id : string) =
-      app.annotations.FirstOrDefault((fun x -> x.id = id), Annotation.initialDummy)
+    let findAnnotation (app : AnnotationApp) (id : AnnotationId) =
+      HMap.tryFind id app.annotations
+      
+
+    let annotationOrDefault (app : AnnotationApp) (id : AnnotationId) =
+      let a = HMap.tryFind id app.annotations
+      match a with 
+        | Some a -> a
+        | None   -> Annotation.initialDummy
+
+    let findAnnotation' (app : MAnnotationApp) (id : AnnotationId) =
+      AMap.tryFind id app.annotations
+
+    let findAnnotation'' (app : MAnnotationApp) (optId : Option<AnnotationId>) =
+      optId |> Option.map (fun id -> AMap.tryFind id app.annotations)
+            |> Option.flattenModOpt
+      
+
+    let tryElevation (app : AnnotationApp) (id : AnnotationId) =
+      let anno = (findAnnotation app id) 
+      let el =
+        match anno with
+              | Some a -> Some (Annotation.elevation a)
+              | None   ->
+                printf "could not find annotation id\n" //TODO proper error handling
+                None
+      el
+    
+    let elevation' (app : MAnnotationApp) (id : IMod<AnnotationId>) =
+      adaptive {
+        let! anno = Mod.bind (fun id -> (findAnnotation' app id)) id
+        let! el =
+          match anno with
+                | Some a -> Annotation.elevation' a
+                | None   ->
+                  printf "could not find annotation id" //TODO proper error handling
+                  Mod.constant 0.0
+        return el
+      }
+
+    let isElevationBetween (annoApp : AnnotationApp) (id : AnnotationId) (lower : V3d) (upper : V3d) =
+      let a = findAnnotation annoApp id
+      match a with
+        | Some a ->
+            Annotation.isElevationBetween lower upper a
+        | None   -> false
+
+    let getLevel' (annoApp : AnnotationApp) (semApp : SemanticApp) (id : AnnotationId) =
+      let anno = annoApp.annotations.Item id
+      Annotation.getLevel semApp anno 
+
 
     let getSelectedPoints (model : AnnotationApp) =
       model.annotations
-        |> PList.map (fun a -> Annotation.getSelected a)
-        |> PList.filterNone
+        |> HMap.map (fun k a -> Annotation.getSelected a)
+        |> HMap.filter (fun k opt ->
+                          match opt with 
+                            | None -> false
+                            | Some p -> true
+                       )
 
     let getSelectedPoints' (model : AnnotationApp) =
-      model.annotations
-        |> PList.map (fun a -> Annotation.getSelected a)
-        |> PList.filterNone
-        |> PList.toList
-        |> List.map (fun (p, a) -> (p.point, a))
+        model.annotations
+          |> HMap.map (fun k a -> Annotation.getSelected a)
+          |> HMap.filterNone
+          |> HMap.map (fun k (p,a) -> p.point)
+
  
+    let getLevel  (id           : AnnotationId) //orInvalid
+                  (annoApp      : AnnotationApp) 
+                  (semanticApp  : SemanticApp) =
+      let anno = findAnnotation annoApp id
+      let semantic = 
+        anno |> Option.bind (fun a ->
+          (SemanticApp.getSemantic semanticApp a.semanticId))
+      match semantic with
+        | Some s -> s.level
+        | None   -> NodeLevel.INVALID
+
+    let getColourIcon' (annoId      : AnnotationId) 
+                       (semanticApp : MSemanticApp)
+                       (annoApp     : MAnnotationApp) =
+      let anno = findAnnotation' annoApp annoId
+      let iconAttr =
+        amap {
+          yield clazz "circle icon"
+          let! anno = anno
+          let! c = Annotation.getColor anno semanticApp
+          yield style (sprintf "color:%s" (GUI.CSS.colorToHexStr c))
+        }      
+      Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
+
+
     let update (model       : AnnotationApp)
                (action      : Action) =
       match action with
-        | Clear                -> {model with annotations        = PList.empty
+        | Clear                -> {model with annotations        = HMap.empty
                                               selectedAnnotation = None
                                   }
         | AnnotationMessage m  -> 
             {model with annotations = model.annotations 
-                                        |> PList.map (fun a -> Annotation.update m a)}
+                                        |> HMap.map (fun k a -> Annotation.update m a)}
         | AddAnnotation a      ->      
-            {model with annotations = model.annotations.Append a}
+            {model with annotations = model.annotations.Add (a.id,a)}
         | DeselectAllPoints _  -> 
           {model with annotations = 
                         model.annotations 
-                          |> PList.map
-                              (fun a -> Annotation.update (Annotation.Action.Deselect) a)
+                          |> HMap.map
+                              (fun k a -> Annotation.update (Annotation.Action.Deselect) a)
           }    
         | SelectPoints lst  ->
           let deselected = model.annotations 
-                            |> PList.map
-                                (fun a -> Annotation.update (Annotation.Action.Deselect) a)
-          let annoInList (a : Annotation) = 
-            lst 
-              |> List.map snd
-              |> List.contains a.id
-              
-          let updateFunction (anno : Annotation) =
-              match annoInList anno with
-                  | true  -> 
-                    let ind = lst.FirstIndexOf (fun (p, a) -> a = anno.id)
-                    let (pt, a) = lst.Item ind
-                    Annotation.update (Annotation.Action.Select pt) anno
-                  | false -> anno
-          let updated = deselected |> PList.map updateFunction
-                  
+                            |> HMap.map
+                                (fun k a -> Annotation.update (Annotation.Action.Deselect) a)
+          let updateFunction (k : AnnotationId) =
+            match (lst.TryFind k) with
+              | Some v -> Annotation.update (Annotation.Action.Select v)
+              | None   -> (fun a -> a)
+            
+          let updated = deselected |> HMap.map updateFunction
           {model with annotations = updated}
 
     let save (model : AnnotationApp) (savename : string) =
@@ -100,14 +170,15 @@ namespace CorrelationDrawing
     
  
     let view (model : MAnnotationApp)  (semanticApp : MSemanticApp)  =
+      let annos = AMap.valuesToAList model.annotations
       let domList = 
         alist {
-          for a in model.annotations do
+          for a in annos do
             let! annoView = (Annotation.View.view a semanticApp
             
             )
             yield (tr 
-              ([style UI.CSS.tinyPadding])
+              ([style GUI.CSS.tinyPadding])
               (List.map (fun x -> x |> UI.map AnnotationMessage) annoView)
             )
         }  
@@ -132,7 +203,7 @@ namespace CorrelationDrawing
                (semApp        : MSemanticApp) 
                (cam           : IMod<CameraView>) =    
         
-        let annoSet = ASet.ofAList model.annotations
+        let annoSet = AMap.valuesToASet model.annotations
                
         aset {
           for a in annoSet do

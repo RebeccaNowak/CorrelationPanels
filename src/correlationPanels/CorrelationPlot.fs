@@ -14,17 +14,17 @@
       | ToggleSelectLog        of option<LogId>
       | SelectLog              of LogId
       //| NewLog                 
-      | TogglePoint            of (V3d * Annotation)
-      | FinishLog         
+      | TogglePoint            of (V3d * AnnotationId)
+      | FinishLog              
       | SaveLog                of LogId              
       | DeleteLog              of LogId
-      | LogMessage             of (LogId * GeologicalLog.Action)
+      | LogMessage             of (LogId * Log.Action)
       | ChangeView             of CorrelationPlotViewType
-      | ChangeXAxis            of SemanticId
+      | ChangeXAxis            of (AnnotationApp * SemanticId)
       | LogAxisAppMessage      of LogAxisApp.Action
       | NoMessage              of obj
       | ToggleEditCorrelations
-      | SetSecondaryLevel      of int
+      | SetSecondaryLevel      of NodeLevel
       | ToggleFlag             of SvgFlags
 
 
@@ -39,9 +39,9 @@
         selectedBorder      = None
         editCorrelations    = false
 
-        selectedPoints      = List<(V3d * Annotation)>.Empty
+        selectedPoints      = hmap<AnnotationId, V3d>.Empty
         selectedLog         = None
-        secondaryLvl        = 1
+        secondaryLvl        = NodeLevel.init 1
 
         //creatingNew         = false
         viewType            = CorrelationPlotViewType.LogView
@@ -49,11 +49,10 @@
         svgFlags            = SvgFlags.None
         svgOptions          = SvgOptions.init
 
-
         logAxisApp          = LogAxisApp.initial
         xAxis               = SemanticId.invalid
         semanticApp         = SemanticApp.getInitialWithSamples
-        annotations         = PList.empty
+        //annotations         = hmap<AnnotationId, Annotation>.Empty
         yRange              = Rangef.init
         currrentYMapping    = None
 
@@ -67,7 +66,7 @@
           |> List.tryFind (fun x -> x.id = logId)
       match optLog with
         | Some log -> log.annoPoints
-        | None     -> []
+        | None     -> hmap<AnnotationId, V3d>.Empty
 
 
     let findBorder (model : CorrelationPlot) 
@@ -83,13 +82,13 @@
         match log with
           | None -> None
           | Some l ->
-            GeologicalLog.findNode l nodeId        
+            Log.findNode l nodeId        
             
       let border = 
         match log with
           | None -> None
           | Some l ->
-            let n = GeologicalLog.findNode' l borderId
+            let n = Log.findNode' l borderId
             match n with
               | None -> None
               | Some n ->
@@ -216,7 +215,7 @@
         (new V2d (newPosLogCoordinates.X + (logXOffset model log.index),
                     newPosLogCoordinates.Y + log.yOffset))
       let calcSvgPosTo toLog toNode = 
-        (new V2d (toNode.svgPos.X 
+        (new V2d (toNode.svgPos.X  //TODO content of svgPos.X is 0 for hierarchical nodes
                       + (logXOffset model toLog.index) 
                       + 2.0 *  model.svgOptions.secLevelWidth, //2* so correlation line extends through secondary level
                   newPosLogCoordinates.Y 
@@ -275,7 +274,7 @@
       match a with
         | LogMessage (logId, b) ->
           match b with
-            | GeologicalLog.LogNodeMessage (nodeId, c) ->
+            | Log.LogNodeMessage (nodeId, c) ->
               match c with
                 | LogNodes.BorderMessage d ->
                   match d with
@@ -288,7 +287,7 @@
                   
 
 
-    let createNewLog (model : CorrelationPlot) =
+    let createNewLog (model : CorrelationPlot) (annoApp : AnnotationApp) =
       let xAxis = 
         match model.xAxis with
           | x when  x = SemanticId.invalid -> 
@@ -297,7 +296,7 @@
               | Some o -> o
               | None   -> SemanticId.invalid
           | _ -> model.xAxis
-      let yRangeNewLog = AnnotationPoint.tryCalcRange model.annotations //TODO taking all annos in the model > filter?
+      let yRangeNewLog = AnnotationPoint.tryCalcRange (HMap.toPList annoApp.annotations) //TODO taking all annos in the model > filter?
       let yRangePrev = (tryCalcAllLogsRange model)
       let (model, yOffset) = 
         match yRangeNewLog, yRangePrev with
@@ -318,7 +317,7 @@
                 model with
                   logs   = model.logs 
                             |> PList.map (fun log ->  ////////////////TODO BUG
-                                            (GeologicalLog.update log (GeologicalLog.UpdateYOffset ((newYOffset log)))) //TODO refactor
+                                            (Log.update log (Log.UpdateYOffset ((newYOffset log)))) //TODO refactor
                                           ) 
                   correlations = 
                     if diff <= 0.0 then model.correlations else model.correlations |> PList.map (Correlation.moveDown (diff * model.currrentYMapping.Value)) //TODO do proper checks before using option.value
@@ -326,16 +325,16 @@
             (model, yToSvg model newRange.max)
 
       let (newLog, mapping) = 
-        (GeologicalLog.generate 
+        (Log.generate 
             model.logs.Count
             model.selectedPoints
-            model.annotations  //TODO taking all annos in the system > filter?
             model.semanticApp 
+            annoApp
             xAxis 
             yOffset
             (model.svgOptions.logHeight - yOffset)
-            (model.svgOptions.xAxisScaleFactor)
-            model.currrentYMapping)
+            model.currrentYMapping
+            model.svgOptions)
       let mapping =
         match model.logs.Count with
           | 0 -> Some mapping
@@ -345,7 +344,7 @@
           //creatingNew      = false
           xAxis            = xAxis
           logs             = (model.logs.Append newLog)
-          selectedPoints   = List<(V3d * Annotation)>.Empty
+          selectedPoints   = hmap<AnnotationId, V3d>.Empty
           currrentYMapping = mapping
       }
 
@@ -371,7 +370,7 @@
       let (ind, opt) = tryGetLog logs id
       match opt with
         | Some log ->
-          logs.Update (ind, (fun x -> GeologicalLog.update x message))
+          logs.Update (ind, (fun x -> Log.update x message))
         | None    -> logs
 
     
@@ -390,7 +389,7 @@
       
 
     let updateLog' message index (logs : plist<GeologicalLog>) =
-       logs.Update (index, (fun x -> GeologicalLog.update x message))
+       logs.Update (index, (fun x -> Log.update x message))
 
     let moveUp (logs : plist<GeologicalLog>) id =
       let (ind, log) = tryGetLog logs id
@@ -399,8 +398,8 @@
           let above = logs.Item (ind-1)
           let updLogs =
             logs
-              |> updateLog' (GeologicalLog.MoveUp id) ind
-              |> updateLog' (GeologicalLog.MoveDown above.id) (ind-1)
+              |> updateLog' (Log.MoveUp id) ind
+              |> updateLog' (Log.MoveDown above.id) (ind-1)
           let above = logs.Item (ind-1)
           let current = logs.Item ind
           let updLogs = updLogs.Update (ind,(fun x -> above))
@@ -415,8 +414,8 @@
           let below = logs.Item (ind+1)
           let updLogs =
             logs
-              |> updateLog' (GeologicalLog.MoveDown id) ind
-              |> updateLog' (GeologicalLog.MoveUp below.id) (ind+1)
+              |> updateLog' (Log.MoveDown id) ind
+              |> updateLog' (Log.MoveUp below.id) (ind+1)
           let below = logs.Item (ind+1)
           let current = logs.Item ind
           let updLogs = updLogs.Update (ind,(fun x -> below))
@@ -424,16 +423,17 @@
           updLogs
         | false -> logs
 
-    let update (model : CorrelationPlot) 
-               (action : Action) = 
+    let update (annoApp  : AnnotationApp)
+               (model    : CorrelationPlot) 
+               (action   : Action) = 
                
       match action with
         | Clear                    ->
           {model with logs             = PList.empty
-                      selectedPoints   = List<(V3d * Annotation)>.Empty
+                      selectedPoints   = hmap<AnnotationId, V3d>.Empty
                       selectedLog      = None
                       correlations     = plist.Empty
-                      annotations      = plist.Empty
+                      //annotations      = hmap<AnnotationId, Annotation>.Empty
                       currrentYMapping = None
                       selectedBorder   = None
           }
@@ -450,7 +450,7 @@
             let updLogs =
                   model.logs
                       |> PList.map (fun log -> {log with state = State.Display})
-                      |> updateLog id (GeologicalLog.Action.SetState State.Edit)
+                      |> updateLog id (Log.Action.SetState State.Edit)
             {model with logs = updLogs}
           
           
@@ -458,15 +458,15 @@
         //  {model with creatingNew     = true
         //              selectedPoints  = List<(V3d * Annotation)>.Empty}
         | FinishLog ->
-          match model.selectedPoints with
-            | []      -> 
+          match model.selectedPoints.IsEmpty with
+            | true      -> 
               printf "no points in list for creating log"
               model //TODO create empty log
-            | working ->
+            | false ->
               let updLogs =
                 model.logs
                   |> PList.map (fun log -> {log with state = State.Display})
-              (createNewLog {model with logs = updLogs})
+              (createNewLog {model with logs = updLogs} annoApp)
 
         | SaveLog   id      ->
           let ind = indexOf model.logs id
@@ -485,10 +485,10 @@
         | LogMessage (id, m)    -> 
           let logs =
             match m with
-              | GeologicalLog.Action.MoveUp id ->
+              | Log.Action.MoveUp id ->
                 moveUp model.logs id
                 
-              | GeologicalLog.Action.MoveDown id ->
+              | Log.Action.MoveDown id ->
                 moveDown model.logs id
               | _ ->
                 model.logs |> updateLog id m
@@ -499,10 +499,10 @@
         | LogAxisAppMessage m -> 
           {model with logAxisApp  = (LogAxisApp.update model.logAxisApp m)}
         | ChangeView m          -> {model with viewType = m}
-        | ChangeXAxis id          -> 
+        | ChangeXAxis (annoApp, id)     -> 
           let updLogs = model.logs 
                           |> PList.map (fun log -> 
-                              GeologicalLog.update log (GeologicalLog.ChangeXAxis (id, model.svgOptions.xAxisScaleFactor))
+                              Log.update log (Log.ChangeXAxis (annoApp, id, model.svgOptions.xAxisScaleFactor, model.svgOptions))
                                        )
           {model with xAxis    = id
                       logs     = updLogs
@@ -517,7 +517,7 @@
         
 
 
-    let viewSvg (model : MCorrelationPlot) = //TODO refactor
+    let viewSvg (annoApp : MAnnotationApp) (model : MCorrelationPlot)  = //TODO refactor
       let attsRoot = 
         [
           clazz "svgRoot"
@@ -526,7 +526,6 @@
           attribute "preserveAspectRatio" "xMinYMin meet"
           attribute "height" "100%"
           attribute "width" "100%"
-          
         ]
 
       let attsGroup =
@@ -572,12 +571,12 @@
                   ]
                 |> AttributeMap.ofList 
 
-              let mapper (a : DomNode<GeologicalLog.Action>) =
+              let mapper (a : DomNode<Log.Action>) =
                 a |> UI.map (fun m -> LogMessage (log.id, m))
               let! xAxisScaleFactor = model.svgOptions.xAxisScaleFactor
               let logDomNode =
-                (GeologicalLog.View.svgView 
-                                log model.svgFlags model.svgOptions model.secondaryLvl 
+                (Log.View.svgView 
+                                log annoApp model.svgFlags model.svgOptions model.secondaryLvl 
                                 (LogAxisApp.getStyle model.logAxisApp xAxisScaleFactor)
                 ) |> AList.map mapper
               let logView =
@@ -677,7 +676,7 @@
                   let sgs = 
                     model.logs
                       |> AList.map (fun (x : MGeologicalLog) -> 
-                                      (GeologicalLog.getLogConnectionSg x semanticApp (x.id = logId) camera |> Sg.noEvents))
+                                      (Log.getLogConnectionSg x semanticApp (x.id = logId) camera |> Sg.noEvents))
                       |> ASet.ofAList
                       |> Sg.set
                   sgs
@@ -689,19 +688,22 @@
       match model.logs.IsEmpty() with
         | true  -> ThreadPool.empty
         | false ->
-            model.logs |> PList.map (fun lo -> GeologicalLog.threads lo)
+            model.logs |> PList.map (fun lo -> Log.threads lo)
                        |> PList.toList
                        |> List.reduce ThreadPool.union
 
-        
-        
-    let app : App<CorrelationPlot,MCorrelationPlot,Action> =
+
+
+
+
+    let app (annoApp : AnnotationApp) (mAnnoApp : MAnnotationApp) : App<CorrelationPlot,MCorrelationPlot,Action> =
           {
               unpersist = Unpersist.instance
               threads = threads
               initial = initial
-              update = update
-              view = viewSvg
+              update = (update annoApp)
+              view = (viewSvg mAnnoApp)
           }
 
-    let start = App.start app
+    let start (annoApp : AnnotationApp) (mAnnoApp : MAnnotationApp) =
+      App.start (app annoApp mAnnoApp)

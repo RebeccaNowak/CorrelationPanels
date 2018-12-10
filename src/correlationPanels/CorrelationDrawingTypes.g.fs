@@ -10,6 +10,97 @@ module Mutable =
 
     
     
+    type MBorderedRectangle(__initial : CorrelationDrawing.BorderedRectangle) =
+        inherit obj()
+        let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.BorderedRectangle> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.BorderedRectangle>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.BorderedRectangle>
+        let _leftUpper = ResetMod.Create(__initial.leftUpper)
+        let _size = ResetMod.Create(__initial.size)
+        let _fill = ResetMod.Create(__initial.fill)
+        let _borderColors = ResetMod.Create(__initial.borderColors)
+        let _bWeight = ResetMod.Create(__initial.bWeight)
+        let _selected = ResetMod.Create(__initial.selected)
+        let _dottedBorder = ResetMod.Create(__initial.dottedBorder)
+        
+        member x.leftUpper = _leftUpper :> IMod<_>
+        member x.size = _size :> IMod<_>
+        member x.fill = _fill :> IMod<_>
+        member x.borderColors = _borderColors :> IMod<_>
+        member x.bWeight = _bWeight :> IMod<_>
+        member x.selected = _selected :> IMod<_>
+        member x.dottedBorder = _dottedBorder :> IMod<_>
+        
+        member x.Current = __current :> IMod<_>
+        member x.Update(v : CorrelationDrawing.BorderedRectangle) =
+            if not (System.Object.ReferenceEquals(__current.Value, v)) then
+                __current.Value <- v
+                
+                ResetMod.Update(_leftUpper,v.leftUpper)
+                ResetMod.Update(_size,v.size)
+                ResetMod.Update(_fill,v.fill)
+                ResetMod.Update(_borderColors,v.borderColors)
+                ResetMod.Update(_bWeight,v.bWeight)
+                ResetMod.Update(_selected,v.selected)
+                ResetMod.Update(_dottedBorder,v.dottedBorder)
+                
+        
+        static member Create(__initial : CorrelationDrawing.BorderedRectangle) : MBorderedRectangle = MBorderedRectangle(__initial)
+        static member Update(m : MBorderedRectangle, v : CorrelationDrawing.BorderedRectangle) = m.Update(v)
+        
+        override x.ToString() = __current.Value.ToString()
+        member x.AsString = sprintf "%A" __current.Value
+        interface IUpdatable<CorrelationDrawing.BorderedRectangle> with
+            member x.Update v = x.Update v
+    
+    
+    
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module BorderedRectangle =
+        [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+        module Lens =
+            let leftUpper =
+                { new Lens<CorrelationDrawing.BorderedRectangle, Aardvark.Base.V2d>() with
+                    override x.Get(r) = r.leftUpper
+                    override x.Set(r,v) = { r with leftUpper = v }
+                    override x.Update(r,f) = { r with leftUpper = f r.leftUpper }
+                }
+            let size =
+                { new Lens<CorrelationDrawing.BorderedRectangle, SimpleTypes.Size2D>() with
+                    override x.Get(r) = r.size
+                    override x.Set(r,v) = { r with size = v }
+                    override x.Update(r,f) = { r with size = f r.size }
+                }
+            let fill =
+                { new Lens<CorrelationDrawing.BorderedRectangle, Aardvark.Base.C4b>() with
+                    override x.Get(r) = r.fill
+                    override x.Set(r,v) = { r with fill = v }
+                    override x.Update(r,f) = { r with fill = f r.fill }
+                }
+            let borderColors =
+                { new Lens<CorrelationDrawing.BorderedRectangle, SimpleTypes.BorderColors>() with
+                    override x.Get(r) = r.borderColors
+                    override x.Set(r,v) = { r with borderColors = v }
+                    override x.Update(r,f) = { r with borderColors = f r.borderColors }
+                }
+            let bWeight =
+                { new Lens<CorrelationDrawing.BorderedRectangle, SimpleTypes.SvgWeight>() with
+                    override x.Get(r) = r.bWeight
+                    override x.Set(r,v) = { r with bWeight = v }
+                    override x.Update(r,f) = { r with bWeight = f r.bWeight }
+                }
+            let selected =
+                { new Lens<CorrelationDrawing.BorderedRectangle, System.Boolean>() with
+                    override x.Get(r) = r.selected
+                    override x.Set(r,v) = { r with selected = v }
+                    override x.Update(r,f) = { r with selected = f r.selected }
+                }
+            let dottedBorder =
+                { new Lens<CorrelationDrawing.BorderedRectangle, System.Boolean>() with
+                    override x.Get(r) = r.dottedBorder
+                    override x.Set(r,v) = { r with dottedBorder = v }
+                    override x.Update(r,f) = { r with dottedBorder = f r.dottedBorder }
+                }
+    
+    
     type MTextInput(__initial : CorrelationDrawing.TextInput) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.TextInput> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.TextInput>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.TextInput>
@@ -372,7 +463,7 @@ module Mutable =
                     override x.Update(r,f) = { r with geometryType = f r.geometryType }
                 }
             let level =
-                { new Lens<CorrelationDrawing.Semantic, System.Int32>() with
+                { new Lens<CorrelationDrawing.Semantic, CorrelationDrawing.NodeLevel>() with
                     override x.Get(r) = r.level
                     override x.Set(r,v) = { r with level = v }
                     override x.Update(r,f) = { r with level = f r.level }
@@ -551,7 +642,7 @@ module Mutable =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
             let id =
-                { new Lens<CorrelationDrawing.Annotation, System.String>() with
+                { new Lens<CorrelationDrawing.Annotation, CorrelationDrawing.AnnotationId>() with
                     override x.Get(r) = r.id
                     override x.Set(r,v) = { r with id = v }
                     override x.Update(r,f) = { r with id = f r.id }
@@ -627,10 +718,10 @@ module Mutable =
     type MAnnotationApp(__initial : CorrelationDrawing.AnnotationApp) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.AnnotationApp> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.AnnotationApp>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.AnnotationApp>
-        let _annotations = MList.Create(__initial.annotations, (fun v -> MAnnotation.Create(v)), (fun (m,v) -> MAnnotation.Update(m, v)), (fun v -> v))
+        let _annotations = MMap.Create(__initial.annotations, (fun v -> MAnnotation.Create(v)), (fun (m,v) -> MAnnotation.Update(m, v)), (fun v -> v))
         let _selectedAnnotation = MOption.Create(__initial.selectedAnnotation)
         
-        member x.annotations = _annotations :> alist<_>
+        member x.annotations = _annotations :> amap<_,_>
         member x.selectedAnnotation = _selectedAnnotation :> IMod<_>
         
         member x.Current = __current :> IMod<_>
@@ -638,7 +729,7 @@ module Mutable =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
-                MList.Update(_annotations, v.annotations)
+                MMap.Update(_annotations, v.annotations)
                 MOption.Update(_selectedAnnotation, v.selectedAnnotation)
                 
         
@@ -657,13 +748,13 @@ module Mutable =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
             let annotations =
-                { new Lens<CorrelationDrawing.AnnotationApp, Aardvark.Base.plist<CorrelationDrawing.Annotation>>() with
+                { new Lens<CorrelationDrawing.AnnotationApp, Aardvark.Base.hmap<CorrelationDrawing.AnnotationId,CorrelationDrawing.Annotation>>() with
                     override x.Get(r) = r.annotations
                     override x.Set(r,v) = { r with annotations = v }
                     override x.Update(r,f) = { r with annotations = f r.annotations }
                 }
             let selectedAnnotation =
-                { new Lens<CorrelationDrawing.AnnotationApp, Microsoft.FSharp.Core.Option<System.String>>() with
+                { new Lens<CorrelationDrawing.AnnotationApp, Microsoft.FSharp.Core.Option<CorrelationDrawing.AnnotationId>>() with
                     override x.Get(r) = r.selectedAnnotation
                     override x.Set(r,v) = { r with selectedAnnotation = v }
                     override x.Update(r,f) = { r with selectedAnnotation = f r.selectedAnnotation }
@@ -677,7 +768,7 @@ module Mutable =
         let _logId = ResetMod.Create(__initial.logId)
         let _isSelected = ResetMod.Create(__initial.isSelected)
         let _correlation = MOption.Create(__initial.correlation)
-        let _anno = MAnnotation.Create(__initial.anno)
+        let _annotationId = ResetMod.Create(__initial.annotationId)
         let _point = ResetMod.Create(__initial.point)
         let _color = ResetMod.Create(__initial.color)
         let _weight = ResetMod.Create(__initial.weight)
@@ -688,7 +779,7 @@ module Mutable =
         member x.logId = _logId :> IMod<_>
         member x.isSelected = _isSelected :> IMod<_>
         member x.correlation = _correlation :> IMod<_>
-        member x.anno = _anno
+        member x.annotationId = _annotationId :> IMod<_>
         member x.point = _point :> IMod<_>
         member x.color = _color :> IMod<_>
         member x.weight = _weight :> IMod<_>
@@ -704,7 +795,7 @@ module Mutable =
                 ResetMod.Update(_logId,v.logId)
                 ResetMod.Update(_isSelected,v.isSelected)
                 MOption.Update(_correlation, v.correlation)
-                MAnnotation.Update(_anno, v.anno)
+                ResetMod.Update(_annotationId,v.annotationId)
                 ResetMod.Update(_point,v.point)
                 ResetMod.Update(_color,v.color)
                 ResetMod.Update(_weight,v.weight)
@@ -755,11 +846,11 @@ module Mutable =
                     override x.Set(r,v) = { r with correlation = v }
                     override x.Update(r,f) = { r with correlation = f r.correlation }
                 }
-            let anno =
-                { new Lens<CorrelationDrawing.Border, CorrelationDrawing.Annotation>() with
-                    override x.Get(r) = r.anno
-                    override x.Set(r,v) = { r with anno = v }
-                    override x.Update(r,f) = { r with anno = f r.anno }
+            let annotationId =
+                { new Lens<CorrelationDrawing.Border, CorrelationDrawing.AnnotationId>() with
+                    override x.Get(r) = r.annotationId
+                    override x.Set(r,v) = { r with annotationId = v }
+                    override x.Update(r,f) = { r with annotationId = f r.annotationId }
                 }
             let point =
                 { new Lens<CorrelationDrawing.Border, Aardvark.Base.V3d>() with
@@ -851,50 +942,68 @@ module Mutable =
     type MLogNode(__initial : CorrelationDrawing.LogNode) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.LogNode> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.LogNode>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.LogNode>
+        let _logId = ResetMod.Create(__initial.logId)
         let _label = ResetMod.Create(__initial.label)
         let _isSelected = ResetMod.Create(__initial.isSelected)
         let _hasDefaultX = ResetMod.Create(__initial.hasDefaultX)
         let _nodeType = ResetMod.Create(__initial.nodeType)
         let _level = ResetMod.Create(__initial.level)
-        let _lBorder = MBorder.Create(__initial.lBorder)
-        let _uBorder = MBorder.Create(__initial.uBorder)
+        let _lBorder = MOption.Create(__initial.lBorder, (fun v -> MBorder.Create(v)), (fun (m,v) -> MBorder.Update(m, v)), (fun v -> v))
+        let _uBorder = MOption.Create(__initial.uBorder, (fun v -> MBorder.Create(v)), (fun (m,v) -> MBorder.Update(m, v)), (fun v -> v))
+        let _annotation = MOption.Create(__initial.annotation)
         let _children = MList.Create(__initial.children, (fun v -> MLogNode.Create(v)), (fun (m,v) -> MLogNode.Update(m, v)), (fun v -> v))
         let _svgPos = ResetMod.Create(__initial.svgPos)
         let _nativePos = ResetMod.Create(__initial.nativePos)
         let _svgSize = ResetMod.Create(__initial.svgSize)
         let _nativeSize = ResetMod.Create(__initial.nativeSize)
+        let _mainBody = MOption.Create(__initial.mainBody, (fun v -> MBorderedRectangle.Create(v)), (fun (m,v) -> MBorderedRectangle.Update(m, v)), (fun v -> v))
+        let _roseDiagram = MOption.Create(__initial.roseDiagram, (fun v -> Svgplus.Mutable.MRoseDiagram.Create(v)), (fun (m,v) -> Svgplus.Mutable.MRoseDiagram.Update(m, v)), (fun v -> v))
+        let _buttonNorth = MOption.Create(__initial.buttonNorth, (fun v -> Svgplus.Mutable.MButton.Create(v)), (fun (m,v) -> Svgplus.Mutable.MButton.Update(m, v)), (fun v -> v))
+        let _buttonSouth = MOption.Create(__initial.buttonSouth, (fun v -> Svgplus.Mutable.MButton.Create(v)), (fun (m,v) -> Svgplus.Mutable.MButton.Update(m, v)), (fun v -> v))
         
         member x.id = __current.Value.id
+        member x.logId = _logId :> IMod<_>
         member x.label = _label :> IMod<_>
         member x.isSelected = _isSelected :> IMod<_>
         member x.hasDefaultX = _hasDefaultX :> IMod<_>
         member x.nodeType = _nodeType :> IMod<_>
         member x.level = _level :> IMod<_>
-        member x.lBorder = _lBorder
-        member x.uBorder = _uBorder
+        member x.lBorder = _lBorder :> IMod<_>
+        member x.uBorder = _uBorder :> IMod<_>
+        member x.annotation = _annotation :> IMod<_>
         member x.children = _children :> alist<_>
         member x.svgPos = _svgPos :> IMod<_>
         member x.nativePos = _nativePos :> IMod<_>
         member x.svgSize = _svgSize :> IMod<_>
         member x.nativeSize = _nativeSize :> IMod<_>
+        member x.mainBody = _mainBody :> IMod<_>
+        member x.roseDiagram = _roseDiagram :> IMod<_>
+        member x.buttonNorth = _buttonNorth :> IMod<_>
+        member x.buttonSouth = _buttonSouth :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : CorrelationDrawing.LogNode) =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
+                ResetMod.Update(_logId,v.logId)
                 ResetMod.Update(_label,v.label)
                 ResetMod.Update(_isSelected,v.isSelected)
                 ResetMod.Update(_hasDefaultX,v.hasDefaultX)
                 ResetMod.Update(_nodeType,v.nodeType)
                 ResetMod.Update(_level,v.level)
-                MBorder.Update(_lBorder, v.lBorder)
-                MBorder.Update(_uBorder, v.uBorder)
+                MOption.Update(_lBorder, v.lBorder)
+                MOption.Update(_uBorder, v.uBorder)
+                MOption.Update(_annotation, v.annotation)
                 MList.Update(_children, v.children)
                 ResetMod.Update(_svgPos,v.svgPos)
                 ResetMod.Update(_nativePos,v.nativePos)
                 ResetMod.Update(_svgSize,v.svgSize)
                 ResetMod.Update(_nativeSize,v.nativeSize)
+                MOption.Update(_mainBody, v.mainBody)
+                MOption.Update(_roseDiagram, v.roseDiagram)
+                MOption.Update(_buttonNorth, v.buttonNorth)
+                MOption.Update(_buttonSouth, v.buttonSouth)
                 
         
         static member Create(__initial : CorrelationDrawing.LogNode) : MLogNode = MLogNode(__initial)
@@ -916,6 +1025,12 @@ module Mutable =
                     override x.Get(r) = r.id
                     override x.Set(r,v) = { r with id = v }
                     override x.Update(r,f) = { r with id = f r.id }
+                }
+            let logId =
+                { new Lens<CorrelationDrawing.LogNode, CorrelationDrawing.LogId>() with
+                    override x.Get(r) = r.logId
+                    override x.Set(r,v) = { r with logId = v }
+                    override x.Update(r,f) = { r with logId = f r.logId }
                 }
             let label =
                 { new Lens<CorrelationDrawing.LogNode, System.String>() with
@@ -942,22 +1057,28 @@ module Mutable =
                     override x.Update(r,f) = { r with nodeType = f r.nodeType }
                 }
             let level =
-                { new Lens<CorrelationDrawing.LogNode, System.Int32>() with
+                { new Lens<CorrelationDrawing.LogNode, CorrelationDrawing.NodeLevel>() with
                     override x.Get(r) = r.level
                     override x.Set(r,v) = { r with level = v }
                     override x.Update(r,f) = { r with level = f r.level }
                 }
             let lBorder =
-                { new Lens<CorrelationDrawing.LogNode, CorrelationDrawing.Border>() with
+                { new Lens<CorrelationDrawing.LogNode, Microsoft.FSharp.Core.Option<CorrelationDrawing.Border>>() with
                     override x.Get(r) = r.lBorder
                     override x.Set(r,v) = { r with lBorder = v }
                     override x.Update(r,f) = { r with lBorder = f r.lBorder }
                 }
             let uBorder =
-                { new Lens<CorrelationDrawing.LogNode, CorrelationDrawing.Border>() with
+                { new Lens<CorrelationDrawing.LogNode, Microsoft.FSharp.Core.Option<CorrelationDrawing.Border>>() with
                     override x.Get(r) = r.uBorder
                     override x.Set(r,v) = { r with uBorder = v }
                     override x.Update(r,f) = { r with uBorder = f r.uBorder }
+                }
+            let annotation =
+                { new Lens<CorrelationDrawing.LogNode, Microsoft.FSharp.Core.Option<CorrelationDrawing.AnnotationId>>() with
+                    override x.Get(r) = r.annotation
+                    override x.Set(r,v) = { r with annotation = v }
+                    override x.Update(r,f) = { r with annotation = f r.annotation }
                 }
             let children =
                 { new Lens<CorrelationDrawing.LogNode, Aardvark.Base.plist<CorrelationDrawing.LogNode>>() with
@@ -978,16 +1099,40 @@ module Mutable =
                     override x.Update(r,f) = { r with nativePos = f r.nativePos }
                 }
             let svgSize =
-                { new Lens<CorrelationDrawing.LogNode, Aardvark.Base.V2d>() with
+                { new Lens<CorrelationDrawing.LogNode, SimpleTypes.Size2D>() with
                     override x.Get(r) = r.svgSize
                     override x.Set(r,v) = { r with svgSize = v }
                     override x.Update(r,f) = { r with svgSize = f r.svgSize }
                 }
             let nativeSize =
-                { new Lens<CorrelationDrawing.LogNode, Aardvark.Base.V2d>() with
+                { new Lens<CorrelationDrawing.LogNode, SimpleTypes.Size2D>() with
                     override x.Get(r) = r.nativeSize
                     override x.Set(r,v) = { r with nativeSize = v }
                     override x.Update(r,f) = { r with nativeSize = f r.nativeSize }
+                }
+            let mainBody =
+                { new Lens<CorrelationDrawing.LogNode, Microsoft.FSharp.Core.Option<CorrelationDrawing.BorderedRectangle>>() with
+                    override x.Get(r) = r.mainBody
+                    override x.Set(r,v) = { r with mainBody = v }
+                    override x.Update(r,f) = { r with mainBody = f r.mainBody }
+                }
+            let roseDiagram =
+                { new Lens<CorrelationDrawing.LogNode, Microsoft.FSharp.Core.Option<Svgplus.RoseDiagram>>() with
+                    override x.Get(r) = r.roseDiagram
+                    override x.Set(r,v) = { r with roseDiagram = v }
+                    override x.Update(r,f) = { r with roseDiagram = f r.roseDiagram }
+                }
+            let buttonNorth =
+                { new Lens<CorrelationDrawing.LogNode, Microsoft.FSharp.Core.Option<Svgplus.Button>>() with
+                    override x.Get(r) = r.buttonNorth
+                    override x.Set(r,v) = { r with buttonNorth = v }
+                    override x.Update(r,f) = { r with buttonNorth = f r.buttonNorth }
+                }
+            let buttonSouth =
+                { new Lens<CorrelationDrawing.LogNode, Microsoft.FSharp.Core.Option<Svgplus.Button>>() with
+                    override x.Get(r) = r.buttonSouth
+                    override x.Set(r,v) = { r with buttonSouth = v }
+                    override x.Update(r,f) = { r with buttonSouth = f r.buttonSouth }
                 }
     
     
@@ -1106,7 +1251,7 @@ module Mutable =
         let _isVisible = ResetMod.Create(__initial.isVisible)
         let _isSelected = ResetMod.Create(__initial.isSelected)
         let _label = MTextInput.Create(__initial.label)
-        let _annoPoints = ResetMod.Create(__initial.annoPoints)
+        let _annoPoints = MMap.Create(__initial.annoPoints)
         let _nodes = MList.Create(__initial.nodes, (fun v -> MLogNode.Create(v)), (fun (m,v) -> MLogNode.Update(m, v)), (fun v -> v))
         let _nativeYRange = ResetMod.Create(__initial.nativeYRange)
         let _svgMaxX = ResetMod.Create(__initial.svgMaxX)
@@ -1121,7 +1266,7 @@ module Mutable =
         member x.isVisible = _isVisible :> IMod<_>
         member x.isSelected = _isSelected :> IMod<_>
         member x.label = _label
-        member x.annoPoints = _annoPoints :> IMod<_>
+        member x.annoPoints = _annoPoints :> amap<_,_>
         member x.nodes = _nodes :> alist<_>
         member x.nativeYRange = _nativeYRange :> IMod<_>
         member x.svgMaxX = _svgMaxX :> IMod<_>
@@ -1140,7 +1285,7 @@ module Mutable =
                 ResetMod.Update(_isVisible,v.isVisible)
                 ResetMod.Update(_isSelected,v.isSelected)
                 MTextInput.Update(_label, v.label)
-                ResetMod.Update(_annoPoints,v.annoPoints)
+                MMap.Update(_annoPoints, v.annoPoints)
                 MList.Update(_nodes, v.nodes)
                 ResetMod.Update(_nativeYRange,v.nativeYRange)
                 ResetMod.Update(_svgMaxX,v.svgMaxX)
@@ -1201,7 +1346,7 @@ module Mutable =
                     override x.Update(r,f) = { r with label = f r.label }
                 }
             let annoPoints =
-                { new Lens<CorrelationDrawing.GeologicalLog, Microsoft.FSharp.Collections.List<(Aardvark.Base.V3d * CorrelationDrawing.Annotation)>>() with
+                { new Lens<CorrelationDrawing.GeologicalLog, Aardvark.Base.hmap<CorrelationDrawing.AnnotationId,Aardvark.Base.V3d>>() with
                     override x.Get(r) = r.annoPoints
                     override x.Set(r,v) = { r with annoPoints = v }
                     override x.Update(r,f) = { r with annoPoints = f r.annoPoints }
@@ -1457,8 +1602,7 @@ module Mutable =
         let _correlations = MList.Create(__initial.correlations, (fun v -> MCorrelation.Create(v)), (fun (m,v) -> MCorrelation.Update(m, v)), (fun v -> v))
         let _selectedBorder = MOption.Create(__initial.selectedBorder, (fun v -> MBorder.Create(v)), (fun (m,v) -> MBorder.Update(m, v)), (fun v -> v))
         let _editCorrelations = ResetMod.Create(__initial.editCorrelations)
-        let _selectedPoints = ResetMod.Create(__initial.selectedPoints)
-        let _annotations = MList.Create(__initial.annotations, (fun v -> MAnnotation.Create(v)), (fun (m,v) -> MAnnotation.Update(m, v)), (fun v -> v))
+        let _selectedPoints = MMap.Create(__initial.selectedPoints)
         let _selectedLog = MOption.Create(__initial.selectedLog)
         let _secondaryLvl = ResetMod.Create(__initial.secondaryLvl)
         let _viewType = ResetMod.Create(__initial.viewType)
@@ -1474,8 +1618,7 @@ module Mutable =
         member x.correlations = _correlations :> alist<_>
         member x.selectedBorder = _selectedBorder :> IMod<_>
         member x.editCorrelations = _editCorrelations :> IMod<_>
-        member x.selectedPoints = _selectedPoints :> IMod<_>
-        member x.annotations = _annotations :> alist<_>
+        member x.selectedPoints = _selectedPoints :> amap<_,_>
         member x.selectedLog = _selectedLog :> IMod<_>
         member x.secondaryLvl = _secondaryLvl :> IMod<_>
         member x.viewType = _viewType :> IMod<_>
@@ -1496,8 +1639,7 @@ module Mutable =
                 MList.Update(_correlations, v.correlations)
                 MOption.Update(_selectedBorder, v.selectedBorder)
                 ResetMod.Update(_editCorrelations,v.editCorrelations)
-                ResetMod.Update(_selectedPoints,v.selectedPoints)
-                MList.Update(_annotations, v.annotations)
+                MMap.Update(_selectedPoints, v.selectedPoints)
                 MOption.Update(_selectedLog, v.selectedLog)
                 ResetMod.Update(_secondaryLvl,v.secondaryLvl)
                 ResetMod.Update(_viewType,v.viewType)
@@ -1549,16 +1691,10 @@ module Mutable =
                     override x.Update(r,f) = { r with editCorrelations = f r.editCorrelations }
                 }
             let selectedPoints =
-                { new Lens<CorrelationDrawing.CorrelationPlot, Microsoft.FSharp.Collections.List<(Aardvark.Base.V3d * CorrelationDrawing.Annotation)>>() with
+                { new Lens<CorrelationDrawing.CorrelationPlot, Aardvark.Base.hmap<CorrelationDrawing.AnnotationId,Aardvark.Base.V3d>>() with
                     override x.Get(r) = r.selectedPoints
                     override x.Set(r,v) = { r with selectedPoints = v }
                     override x.Update(r,f) = { r with selectedPoints = f r.selectedPoints }
-                }
-            let annotations =
-                { new Lens<CorrelationDrawing.CorrelationPlot, Aardvark.Base.plist<CorrelationDrawing.Annotation>>() with
-                    override x.Get(r) = r.annotations
-                    override x.Set(r,v) = { r with annotations = v }
-                    override x.Update(r,f) = { r with annotations = f r.annotations }
                 }
             let selectedLog =
                 { new Lens<CorrelationDrawing.CorrelationPlot, Microsoft.FSharp.Core.Option<CorrelationDrawing.LogId>>() with
@@ -1567,7 +1703,7 @@ module Mutable =
                     override x.Update(r,f) = { r with selectedLog = f r.selectedLog }
                 }
             let secondaryLvl =
-                { new Lens<CorrelationDrawing.CorrelationPlot, System.Int32>() with
+                { new Lens<CorrelationDrawing.CorrelationPlot, CorrelationDrawing.NodeLevel>() with
                     override x.Get(r) = r.secondaryLvl
                     override x.Set(r,v) = { r with secondaryLvl = v }
                     override x.Update(r,f) = { r with secondaryLvl = f r.secondaryLvl }

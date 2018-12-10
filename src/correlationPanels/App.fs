@@ -1,4 +1,4 @@
-namespace correlationPanels
+namespace Test
 
 open System
 open Aardvark.Base
@@ -6,63 +6,83 @@ open Aardvark.Base.Incremental
 open Aardvark.UI
 open Aardvark.UI.Primitives
 open Aardvark.Base.Rendering
-open correlationPanels.Model
+
 
 type Message =
     | ToggleModel
+    | ButtonMessage   of Svgplus.Button.Action
     | CameraMessage of CameraControllerMessage
+    | RDMessage of Svgplus.RoseDiagram.Action
 
 module App =
+    open Svgplus.Mutable
     
-    let initial = { currentModel = Box; cameraState = CameraController.initial }
+    let initial = {
+      currentModel = Primitive.Box
+      cameraState  = CameraController.initial
+      svgButton    = {Svgplus.Button.init with pos = V2d (10.0)}
+      roseDiagram  = {Svgplus.RoseDiagram.init with centre = V2d (100.0)}
+    }
 
-    let update (m : Model) (msg : Message) =
+    let update (model : TestModel) (msg : Message) =
         match msg with
             | ToggleModel -> 
-                match m.currentModel with
-                    | Box -> { m with currentModel = Sphere }
-                    | Sphere -> { m with currentModel = Box }
+                match model.currentModel with
+                    | Box -> { model with currentModel = Sphere }
+                    | Sphere -> { model with currentModel = Primitive.Box }
 
             | CameraMessage msg ->
-                { m with cameraState = CameraController.update m.cameraState msg }
+                { model with cameraState = CameraController.update model.cameraState msg }
 
-    let view (m : MModel) =
+            | ButtonMessage msg -> 
+              match msg with
+                | Svgplus.Button.Action.OnLeftClick -> 
+                  {model with svgButton = (Svgplus.Button.update model.svgButton msg)
+                              roseDiagram = {model.roseDiagram with 
+                                                centre = model.roseDiagram.centre + 50.0}
+                  }
+                | _ -> {model with svgButton = (Svgplus.Button.update model.svgButton msg)}
+            
+            | RDMessage msg -> {model with roseDiagram = Svgplus.RoseDiagram.update model.roseDiagram msg}
 
-        let frustum = 
-            Frustum.perspective 60.0 0.1 100.0 1.0 
-                |> Mod.constant
+    let view (model : MTestModel) =
 
-        let sg =
-            m.currentModel |> Mod.map (fun v ->
-                match v with
-                    | Box -> Sg.box (Mod.constant C4b.Red) (Mod.constant (Box3d(-V3d.III, V3d.III)))
-                    | Sphere -> Sg.sphere 5 (Mod.constant C4b.Green) (Mod.constant 1.0)
-            )
-            |> Sg.dynamic
-            |> Sg.shader {
-                do! DefaultSurfaces.trafo
-                do! DefaultSurfaces.simpleLighting
-            }
 
-        let att =
-            [
-                style "position: fixed; left: 0; top: 0; width: 100%; height: 100%"
-            ]
+        let svgAtts = 
+          [
+            clazz "svgRoot"
+            style "border: 1px solid black"
+            //attribute "viewBox" "0 0 600 400"
+            attribute "preserveAspectRatio" "xMinYMin meet"
+            attribute "height" "100%"
+            attribute "width" "100%"
+          ] |> AttributeMap.ofList
 
-        body [] [
-            CameraController.controlledControl m.cameraState CameraMessage frustum (AttributeMap.ofList att) sg
+        let button =
+          alist {
+            yield (Svgplus.Button.view model.svgButton) |> UI.map ButtonMessage
+          } 
+        let rose = ((Svgplus.RoseDiagram.view model.roseDiagram) 
+                      |> AList.map (UI.map RDMessage))
 
-            div [style "position: fixed; left: 20px; top: 20px"] [
-                button [onClick (fun _ -> ToggleModel)] [text "Toggle Model"]
-            ]
+        let content = AList.append button rose
 
-        ]
+        require (GUI.CSS.myCss) (
+          body [] [
+              // CameraController.controlledControl m.cameraState CameraMessage frustum (AttributeMap.ofList att) sg
+                  
+              //div [style "position: fixed; left: 20px; top: 20px"] [
+              //    button [onClick (fun _ -> ToggleModel)] [text "Toggle Model"]
+              //]
 
+              Incremental.Svg.svg svgAtts content
+          ]
+        )
     let app =
         {
             initial = initial
             update = update
             view = view
-            threads = Model.Lens.cameraState.Get >> CameraController.threads >> ThreadPool.map CameraMessage
+            threads = fun _ -> ThreadPool.empty
             unpersist = Unpersist.instance
         }

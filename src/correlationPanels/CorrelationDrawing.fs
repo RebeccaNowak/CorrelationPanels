@@ -73,9 +73,7 @@ module CorrelationDrawing =
                 }
               newAnno
           | None    -> 
-              let id = Guid.NewGuid().ToString()     
-              
-              let newAnno = {Annotation.initial id geometryType with
+              let newAnno = {Annotation.initial geometryType with
                               points        = PList.ofList [{AnnotationPoint.initial with point = point
                                                                                           selected = false}];  
                               semanticId    = semanticApp.selectedSemantic

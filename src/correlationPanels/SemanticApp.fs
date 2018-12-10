@@ -47,9 +47,9 @@ module SemanticApp =
   let getSemantic' (app : MSemanticApp) (semanticId : SemanticId) =
     AMap.tryFind semanticId app.semantics
 
-  let getSemanticOrDefault'  (app : MSemanticApp) (semanticId : SemanticId) =
-    AMap.tryFind semanticId app.semantics
 
+  //let getSemanticOrDefault'  (app : MSemanticApp) (semanticId : SemanticId) =
+  //  AMap.tryFind semanticId app.semantics
 
   let getColor (model : MSemanticApp) (semanticId : IMod<SemanticId>) =
     let sem = Mod.bind (fun id -> AMap.tryFind id model.semantics) semanticId
@@ -106,7 +106,7 @@ module SemanticApp =
   let sortFunction (sortBy : SemanticsSortingOption) = 
     match sortBy with
       | SemanticsSortingOption.Label        -> fun (x : Semantic) -> x.label.text
-      | SemanticsSortingOption.Level        -> fun (x : Semantic) -> (sprintf "%03i" x.level)
+      | SemanticsSortingOption.Level        -> fun (x : Semantic) -> (sprintf "%03i" x.level.level)
 //      | SemanticsSortingOption.GeometryType -> fun (x : Semantic) -> x.geometry.ToString()
       | SemanticsSortingOption.SemanticType -> fun (x : Semantic) -> x.semanticType.ToString()
       | SemanticsSortingOption.SemanticId   -> fun (x : Semantic) -> x.id.id // TODO make more elegant
@@ -289,7 +289,7 @@ module SemanticApp =
               let! domNode = Semantic.View.view mSem    
               let! col = mSem.style.color.c
               let textCol = Table.textColorFromBackground col
-              let st = style (sprintf "background: %s;%s" (CSS.colorToHexStr col) textCol)
+              let st = style (sprintf "background: %s;%s" (GUI.CSS.colorToHexStr col) textCol)
               yield tr 
                       ([st; onClick (fun str -> SetSemantic (Some mSem.id))]) 
                       (List.map (fun x -> x |> UI.map SemanticMessage) domNode)

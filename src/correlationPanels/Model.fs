@@ -1,4 +1,4 @@
-namespace correlationPanels.Model
+namespace Test
 
 open System
 open Aardvark.Base
@@ -11,8 +11,10 @@ type Primitive =
 
 
 [<DomainType>]
-type Model =
+type TestModel =
     {
         currentModel    : Primitive
         cameraState     : CameraControllerState
+        svgButton       : Svgplus.Button
+        roseDiagram     : Svgplus.RoseDiagram
     }

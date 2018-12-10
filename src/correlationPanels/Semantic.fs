@@ -19,7 +19,7 @@ module Semantic =
   [<Literal>]
   let ThicknessDefault = 1.0
 
-  let LEVELS = [0;1;2;3;4;5;6;7;8]
+  //let LEVELS = [0;1;2;3;4;5;6;7;8]
 
   let initial id = {
       id            = {id = id}
@@ -40,8 +40,8 @@ module Semantic =
             }
         }
       semanticType  = SemanticType.Metric
-      geometryType  = GeometryType.Polyline
-      level         = 0
+      geometryType  = GeometryType.Line
+      level         = NodeLevel.init 0
   }
 
   let initInvalid = 
@@ -55,8 +55,8 @@ module Semantic =
       style         = {Style.color      = {c = new C4b(37,52,148)}
                        Style.thickness  = {Numeric.init with value = 6.0}}
       semanticType  = SemanticType.Hierarchical
-      geometryType  = GeometryType.Polyline
-      level         = 0
+     // geometryType  = GeometryType.Polyline
+      level         = NodeLevel.init 0
     }
 
   let initialHorizon1 id = {
@@ -65,8 +65,8 @@ module Semantic =
       style         = {Style.color      = {c = new C4b(44,127,184)}
                        Style.thickness  = {Numeric.init with value = 5.0}}
       semanticType  = SemanticType.Hierarchical
-      geometryType  = GeometryType.Polyline
-      level         = 1
+    //  geometryType  = GeometryType.Polyline
+      level         = NodeLevel.init 1
     }
 
   let initialHorizon2 id = {
@@ -75,8 +75,8 @@ module Semantic =
       style         = {Style.color      = {c = new C4b(65,182,196)}
                        Style.thickness  = {Numeric.init with value = 4.0}}
       semanticType  = SemanticType.Hierarchical
-      geometryType  = GeometryType.Polyline
-      level         = 2
+  //    geometryType  = GeometryType.Polyline
+      level         = NodeLevel.init 2
     }
 
   let initialHorizon3 id = {
@@ -85,8 +85,8 @@ module Semantic =
       style         = {Style.color      = {c = new C4b(127,205,187)}
                        Style.thickness  = {Numeric.init with value = 3.0}}
       semanticType  = SemanticType.Hierarchical
-      geometryType  = GeometryType.Polyline
-      level         = 3
+  //    geometryType  = GeometryType.Polyline
+      level         = NodeLevel.init 3
     }
 
   let initialHorizon4 id = {
@@ -95,8 +95,8 @@ module Semantic =
       style         = {Style.color      = {c = new C4b(199,233,180)}
                        Style.thickness  = {Numeric.init with value = 2.0}}
       semanticType  = SemanticType.Hierarchical
-      geometryType  = GeometryType.Polyline
-      level         = 4
+  //    geometryType  = GeometryType.Polyline
+      level         = NodeLevel.init 4
     }
 
 
@@ -106,7 +106,7 @@ module Semantic =
       style         = {Style.color      = {c = new C4b(252,141,98)}
                        Style.thickness  = {Numeric.init with value = 1.0}}
       semanticType  = SemanticType.Metric
-      level         = -1
+      level         = NodeLevel.INVALID
     }
 
   let initialGrainSize2 id = {
@@ -115,7 +115,7 @@ module Semantic =
       style         = {Style.color      = {c = new C4b(247,252,185)}
                        Style.thickness  = {Numeric.init with value = 1.0}}
       semanticType  = SemanticType.Metric
-      level         = -1
+      level         = NodeLevel.INVALID
     }
 
   let initialCrossbed id = {
@@ -124,7 +124,7 @@ module Semantic =
       style         = {Style.color      = {c = new C4b(231,138,195)}
                        Style.thickness  = {Numeric.init with value = 1.0}}
       semanticType  = SemanticType.Angular
-      level         = -1
+      level         = NodeLevel.INVALID
     }
 
   let impactBreccia id = {
@@ -133,7 +133,7 @@ module Semantic =
       style         = {Style.color      = {c = new C4b(166,216,84)}
                        Style.thickness  = {Numeric.init with value = 1.0}}
       semanticType  = SemanticType.Angular
-      level         = -1
+      level         = NodeLevel.INVALID
     }
     
   ////// ACTIONS
@@ -142,7 +142,7 @@ module Semantic =
       | ColorPickerMessage  of ColorPicker.Action
       | ChangeThickness     of Numeric.Action
       | TextInputMessage    of TextInput.Action
-      | SetLevel            of int
+      | SetLevel            of NodeLevel
       | SetSemanticType     of SemanticType
       | SetGeometryType     of GeometryType
       | Save
@@ -236,13 +236,13 @@ module Semantic =
           amap {
             yield clazz "circle icon"
             let! c = model.style.color.c
-            yield style (sprintf "color:%s" (CSS.colorToHexStr c))
+            yield style (sprintf "color:%s" (GUI.CSS.colorToHexStr c))
           }  
 
         intoTd <|
           div[] [
             Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
-            Incremental.text (Mod.map(fun (x : C4b) -> CSS.colorToHexStr x) model.style.color.c)
+            Incremental.text (Mod.map(fun (x : C4b) -> GUI.CSS.colorToHexStr x) model.style.color.c)
           ]//  |> intoTd
 
 
@@ -256,7 +256,7 @@ module Semantic =
         ColorPicker.view model.style.color
           |> intoTd
           |> UI.map ColorPickerMessage
-        Html.SemUi.dropDown' (AList.ofList LEVELS) model.level SetLevel (fun x -> sprintf "%i" x)
+        Html.SemUi.dropDown' NodeLevel.availableLevels model.level SetLevel (fun x -> sprintf "%i" x.level)
           |> intoTd
         Html.SemUi.dropDown model.semanticType SetSemanticType
           |> intoTd
@@ -301,13 +301,13 @@ module Semantic =
           amap {
             yield clazz "circle icon"
             let! c = model.style.color.c
-            yield style (sprintf "color:%s" (CSS.colorToHexStr c))
+            yield style (sprintf "color:%s" (GUI.CSS.colorToHexStr c))
           }  
 
         intoTd <|
           div[] [
             Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
-            Incremental.text (Mod.map(fun (x : C4b) -> CSS.colorToHexStr x) model.style.color.c)
+            Incremental.text (Mod.map(fun (x : C4b) -> GUI.CSS.colorToHexStr x) model.style.color.c)
           ]//  |> intoTd
 
 
@@ -321,7 +321,7 @@ module Semantic =
         ColorPicker.view model.style.color
           |> intoTd
           |> UI.map ColorPickerMessage
-        Html.SemUi.dropDown' (AList.ofList LEVELS) model.level SetLevel (fun x -> sprintf "%i" x)
+        Html.SemUi.dropDown' NodeLevel.availableLevels model.level SetLevel (fun x -> sprintf "%i" x.level)
           |> intoTd
         domNodeSemanticType
         domNodeGeometryType
@@ -336,7 +336,7 @@ module Semantic =
           Incremental.label 
             (AttributeMap.union 
                (AttributeMap.ofList [clazz "ui horizontal label"]) 
-               (AttributeMap.ofAMap (UI.CSS.incrBgColorAMap model.style.color.c)))
+               (AttributeMap.ofAMap (GUI.CSS.incrBgColorAMap model.style.color.c)))
             (AList.ofList [Incremental.text (model.label.text)])
           |> intoTd
 
@@ -352,18 +352,18 @@ module Semantic =
           amap {
             yield clazz "circle icon"
             let! c = model.style.color.c
-            yield style (sprintf "color:%s" (CSS.colorToHexStr c))
+            yield style (sprintf "color:%s" (GUI.CSS.colorToHexStr c))
           }  
         intoTd <|
           div[] [
             Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
-            Incremental.text (Mod.map(fun (x : C4b) -> CSS.colorToHexStr x) model.style.color.c)
+            Incremental.text (Mod.map(fun (x : C4b) -> GUI.CSS.colorToHexStr x) model.style.color.c)
           ]
            
 
       let domNodeLevel = 
         intoTd <| 
-                Incremental.text (Mod.map(fun x -> sprintf "%i" x) model.level)
+                Incremental.text (Mod.map(fun (x : NodeLevel) -> sprintf "%i" x.level) model.level)
             
 
 

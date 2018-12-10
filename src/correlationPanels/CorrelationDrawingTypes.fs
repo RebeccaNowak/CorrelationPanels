@@ -5,13 +5,28 @@ open Aardvark.Base.Incremental
 open Aardvark.Base.Rendering
 open Aardvark.UI
 open Aardvark.UI.Primitives
-open Aardvark.SceneGraph
-open Aardvark.Base
-open System
+open SimpleTypes
+open Svgplus
+
+
+
+[<DomainType>]
+type BorderedRectangle = {
+  leftUpper         : V2d 
+  size              : Size2D
+  fill              : C4b
+  borderColors      : BorderColors
+  bWeight           : SvgWeight
+  selected          : bool
+  dottedBorder      : bool
+}
+
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// BEGIN GUI
+
 
 [<DomainType>]
 type TextInput = {
@@ -42,7 +57,9 @@ type DropdownList<'a> = {
   //let b = degrees a
 
 
-type Rangef = {
+
+
+type Rangef = { //TODO move to math
   min     : float
   max     : float
 } with 
@@ -103,7 +120,7 @@ type SvgFlags =
 type Projection   = Linear = 0 | Viewpoint = 1 | Sky = 2
 type GeometryType = Point = 0  | Line = 1      | Polyline = 2     | Polygon = 3 | DnS = 4       | Undefined = 5
 type SemanticType = Metric = 0 | Angular = 1   | Hierarchical = 2 | Dummy = 3   | Undefined = 4
-type Orientation  = Horizontal | Vertical
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -115,6 +132,15 @@ type SemanticId = {
 module SemanticId = 
   let invalid = {id = ""}
   let newId unit : SemanticId  = 
+    {id = System.Guid.NewGuid().ToString()}
+
+type AnnotationId = {
+  id        : string 
+} with
+  member this.isValid = (this.id <> "")
+module AnnotationId = 
+  let invalid = {id = ""}
+  let newId unit : AnnotationId  = 
     {id = System.Guid.NewGuid().ToString()}
 
 type BorderId = {
@@ -147,6 +173,14 @@ module LogNodeId =
 /////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+  
+
+
+
+
 [<DomainType>]
 type Style = {
     color     : ColorInput
@@ -194,7 +228,7 @@ module SvgZoom =
       match d with
         | a when a <= 0.1 -> 0.1
         | b when b >= 10.0 -> 10.0
-        | _ -> d
+        | _ -> 1.0
     {zoomFactor = z}
 
   let add (z : SvgZoom) (d : float) : SvgZoom =
@@ -222,6 +256,31 @@ module FontSize =
     init (s.fontSize + d)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+type NodeLevel = {
+  level : int
+} with 
+    member this.weight =
+      ((8.0 - (float this.level)) * 0.3)
+
+module NodeLevel =
+  let LEVEL_MAX = 8
+  let INVALID = {level = -1}
+
+  let init integer : NodeLevel = 
+    match integer with
+      | i when i < 0         -> {level = i}
+      | i when i > LEVEL_MAX -> {level = LEVEL_MAX}
+      | i                    -> {level = i}
+
+  let isInvalid nodeLevel =
+    nodeLevel = INVALID
+  
+  let availableLevels =
+    alist {
+      for i in 0..LEVEL_MAX do
+        yield {level = i}
+    }
+
 
 [<DomainType>]
 type Semantic = {
@@ -237,7 +296,7 @@ type Semantic = {
    style             : Style
    semanticType      : SemanticType
    geometryType      : GeometryType
-   level             : int
+   level             : NodeLevel
  }
 
  type SemanticsSortingOption = Label = 0 | Level = 1 | GeometryType = 2 | SemanticType = 3 | SemanticId = 4 | Timestamp = 5
@@ -264,7 +323,7 @@ type AnnotationPoint = {
 [<DomainType>]
 type Annotation = {     
     [<NonIncremental;PrimaryKey>]
-    id                    : string
+    id                    : AnnotationId
     
     [<NonIncremental>]
     geometry              : GeometryType
@@ -289,8 +348,8 @@ type Annotation = {
 
 [<DomainType>]
 type AnnotationApp = {
-  annotations         : plist<Annotation>
-  selectedAnnotation  : option<string>
+  annotations         : hmap<AnnotationId, Annotation>
+  selectedAnnotation  : option<AnnotationId>
 }
 
 
@@ -300,21 +359,22 @@ type BorderType  = PositiveInfinity | NegativeInfinity | Normal | Invalid
 [<DomainType>]
 type Border = {
     [<NonIncremental>]
-    id          : BorderId
+    id            : BorderId
 
-    nodeId      : LogNodeId
-    logId       : LogId
-    isSelected  : bool
-    correlation : Option<BorderId>
-    anno        : Annotation
-    point       : V3d
-    color       : C4b
-    weight      : double
-    svgPosition : V2d
+    nodeId        : LogNodeId
+    logId         : LogId
+    isSelected    : bool
+    correlation   : Option<BorderId>
+    annotationId  : AnnotationId
+    point         : V3d
+    color         : C4b
+    weight        : double
+    svgPosition   : V2d
 
     [<NonIncremental>]
     borderType  : BorderType
 }
+
 
 type LogNodeType             = Hierarchical | HierarchicalLeaf | Metric | Angular | PosInfinity | NegInfinity | Infinity | Empty
 type CorrelationPlotViewType = LineView | LogView | CorrelationView
@@ -333,36 +393,57 @@ type LogAxisConfigId = {
     id        : string
 }
 
+
 [<DomainType>]
 type LogNode = {
     [<NonIncremental>]
     id            : LogNodeId
 
+    logId         : LogId
     label         : string
     isSelected    : bool
     hasDefaultX   : bool
                   
     //[<NonIncremental>]
-    nodeType      : LogNodeType
+    nodeType           : LogNodeType
 
-    level         : int //TODO think about this; performance vs interaction
-    lBorder       : Border
-    uBorder       : Border
-    children      : plist<LogNode>
-                  
-   // elevation     : float //TODO should be a function if at all
-   // range         : Rangef
-    //svgPos.Y       : float
-    //svgPos.X       : float
-    svgPos        : V2d
-    nativePos     : V2d
-    svgSize       : V2d
-    nativeSize    : V2d
+    level              : NodeLevel //TODO think about this; performance vs interaction
+    lBorder            : option<Border>
+    uBorder            : option<Border>
+    annotation         : option<AnnotationId>
+
+    children           : plist<LogNode>
+    svgPos             : V2d
+    nativePos          : V2d
+    svgSize            : Size2D
+    nativeSize         : Size2D
+
+    
+    mainBody           : Option<BorderedRectangle>
+    roseDiagram        : Option<RoseDiagram>
+    buttonNorth        : Option<Svgplus.Button>
+    buttonSouth        : Option<Svgplus.Button>
+
 } with 
     member this.range = 
-            {Rangef.init with min = this.lBorder.point.Length
-                              max = this.uBorder.point.Length}
-              
+      match this.nodeType with
+       | LogNodeType.Metric 
+       | LogNodeType.Angular -> Rangef.init //TODO using Option might be cleaner
+       | _ ->
+          match this.lBorder, this.uBorder with
+            | Some lb, Some ub ->
+               {Rangef.init with min = lb.point.Length
+                                 max = ub.point.Length}
+            | _,_ -> Rangef.init
+
+    member this.svgSizeY (factor : float) =
+      (Rangef.calcRangeNoInf this.range) * factor
+
+      
+    member this.nativeSizeY =
+      (Rangef.calcRangeNoInf this.range)          
+
+
 
 [<DomainType>]
 type LogAxisConfig = { //TODO make dynamic
@@ -372,8 +453,6 @@ type LogAxisConfig = { //TODO make dynamic
     label              : string
     [<NonIncremental>]
     defaultRange       : Rangef
-    //[<NonIncremental>]
-    //metricToSvgSize    : float //TODO put into svgOptions, needs to be able to handle negative numbers!
     [<NonIncremental>]
     defaultGranularity : float //TODO must be positive and > 0; maybe use uint
     [<NonIncremental>]
@@ -402,7 +481,7 @@ type GeologicalLog = {
 
     isSelected   : bool
     label        : TextInput
-    annoPoints   : list<(V3d * Annotation)>
+    annoPoints   : hmap<AnnotationId, V3d>
     nodes        : plist<LogNode>
     nativeYRange : Rangef
     svgMaxX      : float
@@ -448,16 +527,15 @@ type CorrelationPlot = {
    //aardvark dies: selectedBorder      : Option<(Border * V2d)>
 
    editCorrelations    : bool
-   selectedPoints      : list<(V3d * Annotation)>
-   annotations         : plist<Annotation>
+   selectedPoints      : hmap<AnnotationId, V3d>
+   //annotations         : hmap<AnnotationId, Annotation>
    selectedLog         : option<LogId>
-   secondaryLvl        : int
+   secondaryLvl        : NodeLevel
    //creatingNew         : bool
    viewType            : CorrelationPlotViewType
 
    svgFlags            : SvgFlags
    svgOptions          : SvgOptions
-
 
    logAxisApp          : LogAxisApp
    xAxis               : SemanticId
@@ -529,10 +607,13 @@ module SaveIndex =
 
   let nextAvaible () =
     let si = findSavedIndices ()
-    let max = 
-      si |> List.map (fun i -> i.ind)
-         |> List.max
-    {ind = max}.next
+    match si with
+      | [] -> init
+      | si ->
+        let max = 
+          si |> List.map (fun i -> i.ind)
+              |> List.max
+        {ind = max}.next
       
 
 [<DomainType>]

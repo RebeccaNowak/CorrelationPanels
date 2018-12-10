@@ -101,7 +101,7 @@ module Pages =
     let updateCamera =
       CameraController.update model.camera 
     let updatePlot =
-      CorrelationPlotApp.update model.corrPlotApp
+      CorrelationPlotApp.update model.annotationApp model.corrPlotApp
     let updateSemantics m model = 
       let updSemApp = SemanticApp.update model.semanticApp m
       {model with semanticApp = updSemApp //TODO refactor
@@ -118,7 +118,7 @@ module Pages =
       }
     let loadAnnotations (ind : SaveIndex) model = 
       let annoApp = AnnotationApp.load model.annotationApp (ind.filename SaveType.Annotations)
-      let updCPA = (CorrelationPlotApp.update model.corrPlotApp CorrelationPlotApp.Clear)
+      let updCPA = (CorrelationPlotApp.update model.annotationApp model.corrPlotApp CorrelationPlotApp.Clear)
       {model with   
               annotationApp = annoApp
               corrPlotApp   = updCPA
@@ -140,19 +140,19 @@ module Pages =
       | MouseDown bp,_ ->
         {model with 
           corrPlotApp = 
-           CorrelationPlotApp.update model.corrPlotApp 
+           CorrelationPlotApp.update model.annotationApp model.corrPlotApp 
                                      (CorrelationPlotApp.Action.MouseDown bp)
         }
       | MouseUp bp,_ -> 
         {model with 
           corrPlotApp = 
-           CorrelationPlotApp.update model.corrPlotApp 
+           CorrelationPlotApp.update model.annotationApp model.corrPlotApp 
                                      (CorrelationPlotApp.Action.MouseUp bp)
         }
       | MouseMove p,_ -> 
         {model with 
           corrPlotApp = 
-           CorrelationPlotApp.update model.corrPlotApp 
+           CorrelationPlotApp.update model.annotationApp model.corrPlotApp 
                                      (CorrelationPlotApp.Action.MouseMove p)
         }
       | KeyDown Keys.Enter, true ->                          
@@ -200,8 +200,8 @@ module Pages =
         let updCorrPlotApp m = 
           let sel      = AnnotationApp.getSelectedPoints' model.annotationApp
           {model.corrPlotApp with 
-            correlationPlot = {model.corrPlotApp.correlationPlot with selectedPoints = sel
-                                                                      annotations    = model.annotationApp.annotations}}
+            correlationPlot = {model.corrPlotApp.correlationPlot with selectedPoints = sel}}
+                                                                      //annotations    = model.annotationApp.annotations}}
 
         {model with annotationApp = updAnnoApp
                     corrPlotApp   = updCorrPlotApp m}
@@ -239,9 +239,9 @@ module Pages =
           let sel      = AnnotationApp.getSelectedPoints' model.annotationApp
           let updModel = //TODO refactor
             {model.corrPlotApp with 
-              correlationPlot = {model.corrPlotApp.correlationPlot with selectedPoints = sel
-                                                                        annotations    = model.annotationApp.annotations}}
-          CorrelationPlotApp.update updModel m
+              correlationPlot = {model.corrPlotApp.correlationPlot with selectedPoints = sel}}
+                                                                        //annotations    = model.annotationApp.annotations}}
+          CorrelationPlotApp.update model.annotationApp updModel m
 
         let (annoApp, corrPlotApp) =
           match m with 
@@ -253,11 +253,11 @@ module Pages =
                     AnnotationApp.update model.annotationApp AnnotationApp.DeselectAllPoints
                   let selPoints =
                     selPoints
-                      |> List.map (fun ((p : V3d),(a : Annotation)) -> (p, a.id))
+                     // |> List.map (fun ((p : V3d),(a : AnnotationId)) -> (p, a))
                   let annoApp = 
                     AnnotationApp.update upd (AnnotationApp.SelectPoints selPoints)
                   let cPlot =
-                    CorrelationPlot.update model.corrPlotApp.correlationPlot (CorrelationPlot.SelectLog id)
+                    CorrelationPlot.update model.annotationApp model.corrPlotApp.correlationPlot (CorrelationPlot.SelectLog id)
                   (annoApp, {model.corrPlotApp with correlationPlot = cPlot})
                 | _ -> (model.annotationApp, updCorrPlotApp m)
             | _ -> (model.annotationApp, updCorrPlotApp m)
@@ -353,7 +353,8 @@ module Pages =
                   (onMouseClick (fun _ -> CorrelationPlot.Action.FinishLog)) 
                  ] 
                  [text "New Log"]
-          ) |> UI.map CorrelationPlotApp.CorrelationPlotMessage 
+          )
+            |> UI.map CorrelationPlotApp.CorrelationPlotMessage
             |> UI.map Action.CorrPlotMessage
 
       let menuItems = 
@@ -376,10 +377,10 @@ module Pages =
               [
                 text "SecondaryLevel"
                 div[clazz "detail"] [Html.SemUi.dropDown' 
-                        (AList.ofList Semantic.LEVELS) 
+                        NodeLevel.availableLevels
                         model.corrPlotApp.correlationPlot.secondaryLvl 
                         CorrelationPlot.SetSecondaryLevel 
-                        (fun x -> sprintf "%i" x)
+                        (fun (x : NodeLevel) -> sprintf "%i" x.level)
                         |> UI.map CorrelationPlotApp.Action.CorrelationPlotMessage
                         |> UI.map CorrPlotMessage]
               ]
@@ -414,7 +415,7 @@ module Pages =
           model.camera) |> Sg.map CorrPlotMessage
       let frustum = Mod.constant (Frustum.perspective 60.0 0.1 100.0 1.0)
       
-      require (UI.CSS.myCss) (
+      require (GUI.CSS.myCss) (
         (
           body [clazz "ui"
                 style "background: #1B1C1E; width: 100%; height:100%; overflow: auto;"
@@ -460,7 +461,7 @@ module Pages =
                       )
 
                   | Some "svg" -> 
-                    require (UI.CSS.myCss) (
+                    require (GUI.CSS.myCss) (
                       body [attribute "overflow-x" "hidden";
                             attribute "overflow-y" "hidden"; 
                             (onMouseDown (fun b p -> MouseDown (b,p)))
@@ -468,13 +469,13 @@ module Pages =
                             (onMouseMove (fun p -> MouseMove p))
                             onLayoutChanged UpdateConfig
                            ] [
-                            CorrelationPlotApp.viewSvg model.corrPlotApp 
+                            CorrelationPlotApp.viewSvg model.annotationApp model.corrPlotApp 
                               |> (UI.map CorrPlotMessage)
                       ]
                     )
 
                   | Some "logs" -> //DEBUG
-                      CorrelationPlotApp.View.logList model.corrPlotApp
+                      CorrelationPlotApp.View.logList model.corrPlotApp model.semanticApp
                         |> UI.map CorrPlotMessage
                       //CorrelationPlotApp.view model.corrPlotApp
                       //  |> UI.map CorrPlotMessage
@@ -486,7 +487,7 @@ module Pages =
                         |> UI.map SemanticAppMessage
              
                   | Some "annotations" ->
-                    require (UI.CSS.myCss) (
+                    require (GUI.CSS.myCss) (
                       body [] [
                         AnnotationApp.view model.annotationApp model.semanticApp |> UI.map AnnotationAppMessage
                       ]

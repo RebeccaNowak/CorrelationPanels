@@ -4,7 +4,6 @@
       open System
       open Aardvark.Base
       open Aardvark.Base.Incremental
-      open CorrelationDrawing.UI.CSS
 
       let textColorFromBackground (col  : C4b) =
          match  (int col.R + int col.B + int col.G) with
@@ -19,7 +18,7 @@
 
       let intoTd' domNode colSpan = 
         td [clazz "center aligned";
-            style lrPadding;
+            style GUI.CSS.lrPadding;
             attribute "colspan" (sprintf "%i" colSpan)]
            [domNode]
     
@@ -43,7 +42,7 @@
           columnNames
             |> List.map (fun str -> th[] [text str])
 
-        require (CSS.myCss) (
+        require (GUI.CSS.myCss) (
           body [clazz "ui"; style "background: #1B1C1E;position:fixed;width:100%;overflow: auto;"] [
             div [] [
               menu

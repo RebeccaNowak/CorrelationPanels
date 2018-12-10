@@ -1,17 +1,61 @@
-﻿namespace CorrelationDrawing.Svg
+﻿namespace Svgplus
 
   module Base =
-    open Aardvark.UI
     open Aardvark.Base
     open System
-    open CorrelationDrawing.Math
-    open CorrelationDrawing.Svg.Attributes
-    open CorrelationDrawing.Svg.Paths
-    open CorrelationDrawing
+    open SimpleTypes
+    open SimpleTypes.Math
+    open Aardvark.UI
+    open Svgplus.Attributes
+    open Svgplus.Paths
+
+    let lighten (colour : C4b) =
+      C4b(int colour.R - 20, int colour.G - 20, int colour.B - 20)
+
+    let gradient (rgb1 : V3d) (rgb2 : V3d) = 
+      let RGBToC4b (rgb : V3d) =
+        C4b(rgb.X |> Math.Round |> int, 
+            rgb.Y |> Math.Round |> int, 
+            rgb.Z |> Math.Round |> int)
+
+      let diff = (rgb1 - rgb2) / 8.0 
+
+      let cs = 
+        [0 .. 15]
+          |> List.map (fun x -> 
+                        match x with
+                          | a when a <= 8 -> 
+                            let rgb = (rgb1 - (float a) * diff)
+                            RGBToC4b rgb
+                          | a when a >  8 ->
+                            let rgb = (rgb2 +  float (a - 8) * diff)
+                            RGBToC4b rgb
+                      )
+      cs
+
+    let gradient_blue_green =
+      let green = V3d(50,180,30)
+      let blue  = V3d(50,30,180)
+      gradient green blue
+
+    let gradient_blue_red = 
+      let red   = V3d(180,50,30)
+      let blue  = V3d(50,30,180)
+      gradient blue red
+
 
     let margin = 5.0
     let sw = "3"
 
+    let clickableRectangle (centre: V2d) (radius : float) (fOnClick : _ -> 'a) =
+      let leftUpper = centre - radius
+      Svg.rect ([
+                  clazz "clickable"
+                  atf "x" leftUpper.X
+                  atf "y" leftUpper.Y
+                  atf "width" (radius * 2.0)
+                  atf "height" (radius * 2.0)
+                ]@(Aardvark.UI.Svg.Events.onClickAttributes [fOnClick]))
 
     let drawBoldText (a : V2d) (str : string) (orientation : Orientation) = //TODO refactor
       let dir = 
@@ -150,7 +194,7 @@
       let fillAttr =
         match fill with
           | true -> [atc "fill" color; atc "stroke" C4b.Black]
-          | false -> [ats "fill" "none";atc "stroke" color]
+          | false -> [ats "fill" "none"; atc "stroke" color]
       Svg.circle
         ([
           atf "cx" (upperLeft.X - radius)
@@ -273,10 +317,7 @@
                       )
       lines
 
-    type Bin16x6 = {
-      angularBin : int
-      radius     : float
-    }
+
 
     let getBinBorders binNr =
       let fromAngle = Angle.init ((starAngles16.Item binNr).radians - starAngles16.Head.radians) // TODO implement (-)
@@ -293,33 +334,36 @@
 
     let donutSegment (centre : V2d) 
                      (innerRadius : float)
-                     (bin : Bin16x6) (color : C4b) =
-      let angBin = bin.angularBin%15
-      let fromAngle = starAngles16.Item angBin
-      let toAngle = starAngles16.Item (angBin + 1)
-      drawDonutSegment centre bin.radius innerRadius fromAngle toAngle color
+                     (bin : Bin16x6) =
+      let fromAngle = starAngles16.Item bin.angularBin
+      let toAngle = starAngles16.Item ((bin.angularBin + 1)%16)
+      drawDonutSegment centre bin.radius innerRadius fromAngle toAngle bin.colour
 
 
-    let drawRoseDiagram (leftUpper : V2d) (outerRadius : float)  (innerRadius : float)
-                        (color : C4b) (nrCircles : int) 
-                        (weight : float) (countPerBin : list<int * int>) =
-      let circleDist = (outerRadius - innerRadius) / (float nrCircles)
+    //let drawRoseDiagram (leftUpper : V2d) (outerRadius : float)  (innerRadius : float)
+    //                    (color : C4b) (nrCircles : int) 
+    //                    (weight : float) (countPerBin : list<int * int>) =
+    //  let circleDist = (outerRadius - innerRadius) / (float nrCircles)
       
-      let centre = (leftUpper - (new V2d (outerRadius)))
-      let circles = drawConcentricCircles' centre outerRadius innerRadius C4b.Gray nrCircles circleDist 0.5
+    //  let centre = (leftUpper - (new V2d (outerRadius)))
+    //  let circles = drawConcentricCircles' centre outerRadius innerRadius C4b.Gray nrCircles circleDist 0.5
       
-      let lines = draw16StarLines centre outerRadius innerRadius C4b.Gray weight
+    //  let lines = draw16StarLines centre outerRadius innerRadius C4b.Gray weight
       
-      let circleRadii =
-        [1..(nrCircles)]
-          |> List.map (fun nr -> (float nr) * circleDist)
-      let bins =
-        countPerBin
-          |> List.map (fun (bin, count) -> {angularBin = bin;radius = innerRadius + (circleRadii.Item (count - 1))})
-      let filledBins =
-        bins
-          |> List.map (fun bin -> donutSegment centre innerRadius bin color)
-      toGroup (circles@lines@filledBins) []
+    //  let circleRadii =
+    //    [1..(nrCircles)]
+    //      |> List.map (fun nr -> (float nr) * circleDist)
+    //  let bins =
+    //    countPerBin
+    //      |> List.map (fun (bin, count) -> 
+    //                      {
+    //                        angularBin = bin;
+    //                        radius = innerRadius + (circleRadii.Item (count - 1))
+    //                        colour = bin.})
+    //  let filledBins =
+    //    bins
+    //      |> List.map (fun bin -> donutSegment centre innerRadius bin color)
+    //  toGroup (circles@lines@filledBins) []
 
 
 
@@ -339,7 +383,7 @@
         ]
       toGroup [
         Svg.circle (if filled then atts @ [atc "fill" color] else atts)
-      ] (Svg.Events.onClickAttribute (callback))
+      ] (Svg.Events.onClickToggleButton (callback))
 
         
 
@@ -409,16 +453,20 @@
             width lBorder bWeight
         ][ onMouseEnter (callback) ]
 
-    let drawBorderedRectangle (leftUpper    : V2d) 
-                              (width        : float)
-                              (height       : float)
-                              (fill         : C4b) 
-                              (uBorder      : C4b) 
-                              (lBorder      : C4b)
-                              (bWeight      : float)
-                              (selectionCallback     : list<string> -> 'msg)
-                              (selected     : bool)
-                              (dottedBorder : bool) =
+    let drawBorderedRectangle (leftUpper         : V2d) 
+                              (size              : Size2D)
+                              (fill              : C4b) 
+                              (lowerBorderColor  : C4b)
+                              (upperBorderColor  : C4b)
+                              (bWeight           : float)
+                              (selectionCallback : list<string> -> 'msg)
+                              (selected          : bool)
+                              (dottedBorder      : bool) =
+      let width = size.width
+      let height = size.height
+      let uBorder = lowerBorderColor
+      let lBorder = upperBorderColor
+
       let fill =
         match selected with //TODO read papers: mark selection state
           | true  -> C4b.DarkYellow
@@ -441,7 +489,7 @@
 
       toGroup 
         (elements @ [rBorder])
-        (Svg.Events.onClickAttribute (selectionCallback))
+        (Svg.Events.onClickToggleButton (selectionCallback))
 
     let drawLogarithmicXAxis (leftUpper : V2d) (length : float) (color : C4b) (weight : float) (granularity : float) =
       //TODO

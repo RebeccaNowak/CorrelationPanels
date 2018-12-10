@@ -18,6 +18,12 @@ open CorrelationDrawing
                   |> List.collect (fun (x : LogNode) -> collect x)
             )
 
+    let rec collectAll (lst : plist<LogNode>) =
+      seq {
+        for n in lst do
+          yield! (collect n)
+      } |> List.ofSeq
+
     let rec collect' (n : MLogNode) =
       alist {
         let! nr = AList.count n.children 
@@ -59,7 +65,7 @@ open CorrelationDrawing
                 |> PList.toList
                 |> List.collect (fun (x : LogNode) -> mapAndCollect x f))
 
-    let collectAll (lst : alist<MLogNode>) =
+    let collectAll' (lst : alist<MLogNode>) =
       alist {
         for el in lst do 
           yield! (collect' el)
@@ -72,8 +78,44 @@ open CorrelationDrawing
                   let c = n.children |> PList.map (fun (n : LogNode) -> apply n f)
                   f {n with children = c}
 
+    let rec applyWithParent (p : option<LogNode>) (n : LogNode) 
+                            (g: LogNode -> LogNode) 
+                            (f : LogNode -> LogNode -> LogNode) =
+      match PList.count n.children, p with
+        | 0, Some p     -> f p n 
+        | 0, None  -> g n
+        | other, Some p -> 
+          let fOfn = f p n
+          let children = 
+            n.children 
+              |> PList.map (fun (c : LogNode) -> applyWithParent (Some fOfn) c g f)
+          {n with children = children}
+        | other, None ->
+          let children = 
+            n.children 
+              |> PList.map (fun (c : LogNode) -> applyWithParent (Some n) c g f)
+          {n with children = children}
+
+
     let applyAll (f : LogNode -> LogNode) (lst : plist<LogNode>) = 
       lst |> PList.map (fun n -> apply n f)
+
+    let rec apply' (parent : option<LogNode>) (current : LogNode) 
+            (applyParentCurrent : LogNode -> LogNode -> LogNode) =
+      let children = current.children
+      let updCurrentAndChildren () = 
+        let updChildren = 
+          children 
+            |> PList.map (fun n -> apply' (Some current) n applyParentCurrent)
+        {current with children = updChildren}
+      match parent with
+        | None   -> updCurrentAndChildren ()
+        | Some p ->
+          match children.IsEmptyOrNull () with
+            | true  -> 
+              (applyParentCurrent p current)
+            | false ->
+              updCurrentAndChildren ()
 
     let rec filterAndCollect (n : LogNode) (f : LogNode -> bool) =
       match PList.count n.children, f n with
@@ -137,17 +179,16 @@ open CorrelationDrawing
                    n.nodeType
          )  
          
-
-
-
-
-
-    
-    let defaultIfZero (model : LogNode) (defaultSizeX : float) =
+    let defaultSizeXIfZero (model : LogNode) (defaultSizeX : float) =
       let diz (node : LogNode) = 
         match node with
           | n when n.svgSize.X = 0.0 -> 
-            {n with svgSize        = (node.svgSize * V2d.OI) + (V2d.IO) * defaultSizeX
-                    hasDefaultX = true}
+            {n with svgSize        = {width = defaultSizeX; height = n.svgSize.Y}
+                    hasDefaultX    = true}
           | _ -> node
       apply model diz
+
+    let xRange (lst : plist<LogNode>) =
+      lst |> collectAll
+          |> List.map (fun (n : LogNode) -> n.svgSize.X)
+          |> List.max

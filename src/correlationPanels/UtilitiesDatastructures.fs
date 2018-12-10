@@ -91,6 +91,8 @@ module PList =
       | ind when ind = -1 -> (false, lst)
       | ind -> (true, lst.RemoveAt ind)
 
+  
+
 
   let rec deleteAll (f : 'a -> bool) (lst : plist<'a>) =
     match deleteFirst lst f with
@@ -99,11 +101,19 @@ module PList =
 
   let filterNone (lst : plist<option<'a>>) =
     lst
-      |> PList.filter (fun el -> 
-                        match el with
-                          | Some el -> true
-                          | None    -> false)
+      |> PList.filter (fun (el : option<'a>) -> el.IsSome)
       |> PList.map (fun el -> el.Value)
+
+  let min (lst : plist<'a>) : 'a =
+    lst
+      |> PList.toList
+      |> List.min
+
+  let mapMin (f : 'a -> 'b) (lst : plist<'a>) : 'b =
+    lst |> PList.toList
+        |> List.map f
+        |> List.min
+
 
   let minBy (f : 'a -> 'b) (lst : plist<'a>) : 'a =
     lst
@@ -151,7 +161,15 @@ module PList =
     match lst.IsEmptyOrNull () with
       | true  -> None
       | false -> Some (lst.Item 0)
-  
+
+  let rec reduce (f : 'a -> 'a -> 'a) 
+                 (acc : 'a) 
+                 (lst : plist<'a>) =
+    match (tryHead lst) with
+      | None           -> acc
+      | Some h         -> 
+        reduce f (f acc h) (tail lst)
+
   let rec allTrueOrEmpty (f : 'a -> bool) (lst : plist<'a>) =
     match lst.IsEmptyOrNull () with
       | true  -> true
@@ -171,11 +189,20 @@ module PList =
   let averageOrZero (lst : plist<float>) =
     match lst.IsEmptyOrNull () with
       | true -> 0.0
-      | false -> PList.average lst
+      | false -> average lst
 
 
 
 module AList =
+  open Aardvark.Base.Incremental
+
+  let bindIMod (lst : alist<IMod<'a>>) =
+    alist {
+      for a in lst do
+        let! a = a
+        yield a
+    }
+
   let tryHead (lst : alist<'a>) =
     adaptive {
       let! plst = lst.Content
@@ -184,7 +211,7 @@ module AList =
           | true -> None
           | false -> Some (plst.Item 0)
     }
-    
+   
   let fromAMap (input : amap<_,'a>) : alist<'a> = 
     input |> AMap.toASet |> AList.ofASet |> AList.map snd 
 
@@ -201,7 +228,24 @@ module AList =
       }
     Mod.map (fun c -> (c > 0)) (AList.count res)
     
-  let reduce (f : 'a -> 'a -> 'a) (alst: alist<'a>) =
+  let findAll (alst : alist<'a>) (f : 'a -> bool) =
+    alist {
+      let count = ref 0
+      for a in alst do
+        if f a then 
+          incr count
+          yield (count.Value, a)
+    }
+
+  let findFirst (alst : alist<'a>) (f : 'a -> bool) =
+    let all = findAll alst f //runtime :(
+    all
+      |> AList.map snd
+      |> tryHead
+    
+      
+
+  let reduce (f : 'a -> 'a -> 'a) (alst: alist<'a>) = //TODO tryReduce
     alst.Content
       |> Mod.map (fun (x : plist<'a>) -> 
                       let r =
@@ -210,27 +254,57 @@ module AList =
                       r
                   )
 
+  let tryReduce (f : 'a -> 'a -> 'a) (alst: alist<'a>) = //TODO tryReduce
+    adaptive {
+      let! count = AList.count alst
+      match count = 0 with
+        | true -> return None
+        | false ->
+          let! cont = alst.Content
+          let res = 
+            cont 
+              |> PList.toList 
+              |> List.reduce f
+          return Some res
+    }
+
   let minBy (f : 'a -> 'b) (alst : alist<'a>) =
     alst
-      |> reduce (fun x y -> if (f x) < (f y) then x else y)
+      |> tryReduce (fun x y -> if (f x) < (f y) then x else y)
       
   let min (alst : alist<'a>) =
      alst |>
-      reduce (fun x y -> if x < y then x else y)
+      tryReduce (fun x y -> if x < y then x else y)
 
   let maxBy (f : 'a -> 'b) (alst : alist<'a>)  =
     alst
-      |> reduce (fun x y -> if (f x) > (f y) then x else y)
+      |> tryReduce (fun x y -> if (f x) > (f y) then x else y)
       
-  let max (alst : alist<'a>) =
+  let tryMax (alst : alist<'a>) =
     alst
-      |> reduce (fun x y -> if x > y then x else y)
+      |> tryReduce (fun x y -> if x > y then x else y)
 
   let average (alst : alist<float>) =
     let sum =
       alst |> reduce (fun x y -> x + y)
     Mod.map2 (fun s c -> s / (float c)) sum (AList.count alst)
+
+  let tryAverage (alst : alist<float>) =
+    let sum =
+      alst |> tryReduce (fun x y -> x + y)
+    adaptive {
+      let! sum = sum
+      let! c = AList.count alst
+      return Option.map (fun s -> s / (float c)) sum
+    }
+
+  let sortByDescending (f : 'a -> 'b)  (alst : alist<'a>)  =
+    alst |> AList.sortWith (fun c d -> compare (f d) (f c))
     
+
+
+    //|> AList.map mapper
+    //     |> bindIMod
 
   let averageOf (f : 'a -> float) (alst : alist<'a>) = //TODO make dynamic
     alst
@@ -253,9 +327,88 @@ module AList =
       |> AList.map (fun el -> el.Value)
 
 module HMap =
-  let toSortedPlist (input : hmap<_,'a>) (projection : ('a -> 'b)) : plist<'a> =
+  let toSortedPlist (input : hmap<'k,'a>) (projection : ('a -> 'b)) : plist<'a> =
     input 
         |> HMap.toSeq 
         |> Seq.map snd
         |> Seq.sortBy projection
         |> PList.ofSeq
+
+  let filterNone (input : hmap<'k,option<'a>>) =
+    input |> HMap.filter (fun k v -> v.IsSome)
+          |> HMap.map (fun k v -> v.Value)
+
+
+
+  let toPList (input : hmap<_,'a>)  : plist<'a> =
+    input 
+        |> HMap.toSeq 
+        |> Seq.map snd
+        |> PList.ofSeq
+
+  let values  (input : hmap<'k,'a>)  : list<'a> =
+    input 
+        |> HMap.toSeq 
+        |> Seq.map snd
+        |> List.ofSeq
+
+  let keys  (input : hmap<'k,'a>)  : list<'k> =
+    input 
+        |> HMap.toSeq 
+        |> Seq.map fst
+        |> List.ofSeq
+
+  let toPairList (input : hmap<'k,'a>)  : list<'k * 'a> =
+    let keys = (keys input)
+    let values = (values input)
+    List.zip  keys values
+
+  let toSwappedPairList (input : hmap<'k,'a>)  : list<'a * 'k> =
+    let keys = (keys input)
+    let values = (values input)
+    List.zip values keys
+
+
+  
+  
+  let inline negate2 (f : 'a -> 'b -> bool) (a : 'a) (b : 'b) =
+    not (f a b)
+
+  let split (input : hmap<'k,'a>) (f : 'k -> 'a -> bool) =
+    let trueMap = HMap.filter f input
+    let falseMap = HMap.filter (negate2 f) input
+    (trueMap, falseMap)
+  //let filter (map : hmap<'k,'a>) (f : 'a -> bool) =
+  //  let newMap = HMap.empty
+  //  let lst = HMap.fi
+  //  hmap {
+  //    for (k,a) in map do
+  //      yield k 
+  //      yield a
+  //  }
+
+module AMap =
+  let tryFind (map : amap<'k, 'a>) (key : 'k) =
+   adaptive {
+     let! content = map.Content
+     return content.TryFind key
+   }
+
+  let valuesToASet (map : amap<'k, 'a>) =
+    map
+      |> AMap.toASet 
+      |> ASet.map (fun (k,a) -> a)
+
+  let valuesToAList (map : amap<'k, 'a>) =
+    map
+      |> AMap.toASet 
+      |> ASet.map (fun (k,a) -> a)
+      |> AList.ofASet
+
+
+module PairList =
+  let filterNone (lst : List<'a * option<'b>>) =
+    lst 
+      |> List.filter (fun (a, opt) -> opt.IsSome)
+      |> List.map (fun (a, opt) -> (a, opt.Value))
+     

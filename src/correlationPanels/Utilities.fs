@@ -8,19 +8,6 @@ open Aardvark.Base.Rendering
 
 
 
-
-    
-      
-    
-    
-//    let str = "#12AD3F"
-//    str 
-//      |> hex2StrToInt
-//      |> (fun x ->
-//              for c in x do
-//                printf "%i, " c)
-
-
 module RenderingPars =
     let initial : RenderingParameters = {
         fillMode = FillMode.Fill

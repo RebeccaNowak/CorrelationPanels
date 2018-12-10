@@ -6,15 +6,14 @@ open Aardvark.Base.Rendering
 open Aardvark.Rendering.Text
 open Aardvark.UI
 open Aardvark.SceneGraph
-open UI
-open UI.CSS
+open GUI.CSS
 
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Annotation =
-  let initial (id : string) (t : GeometryType)= 
+  let initial (t : GeometryType)= 
       {     
-          id              = id
+          id              = AnnotationId.newId ()
           semanticType    = SemanticType.Hierarchical
           geometry        = t
           semanticId      = SemanticId.invalid
@@ -31,7 +30,7 @@ module Annotation =
 
   let initialDummy = 
     {     
-        id              = "-1"
+        id              = AnnotationId.invalid
         semanticType    = SemanticType.Dummy
         geometry        = GeometryType.Line
         semanticId      = SemanticId.invalid
@@ -48,7 +47,7 @@ module Annotation =
 
   let initialDummyWithPoints (v : V3d)= 
     {     
-        id              = "-2"
+        id              = AnnotationId.invalid
         semanticType    = SemanticType.Dummy
         geometry        = GeometryType.Point
         semanticId      = SemanticId.invalid
@@ -71,19 +70,27 @@ module Annotation =
       | SetSemantic     of option<SemanticId>
       | ToggleSelected  of V3d
       | Select          of V3d 
-      | HoverIn         of string
-      | HoverOut        of string
+      | HoverIn         of AnnotationId
+      | HoverOut        of AnnotationId
       | Deselect
 
-  let getConstColor  (anno : MAnnotation) (semanticApp : MSemanticApp) (ignoreOverride : bool) = 
-    let foo = Mod.force anno.overrideStyle
-    let bar = match foo, ignoreOverride with //TODO refactor
-                //| null      -> ((SemanticApp.getColor semanticApp anno.semanticId))
-                | Some f, false    -> f.color.c
-                | Some f, true     -> ((SemanticApp.getColor semanticApp anno.semanticId))
-                | None, true       -> ((SemanticApp.getColor semanticApp anno.semanticId))
-                | None, false      -> ((SemanticApp.getColor semanticApp anno.semanticId))
-    bar
+  let getColor (anno : option<MAnnotation>) 
+               (semanticApp : MSemanticApp)  = 
+        match anno with //TODO refactor
+          | Some (a : MAnnotation) -> 
+              adaptive {
+                let! ostyle = a.overrideStyle
+                let! c =
+                  match ostyle with
+                    | Some st -> st.color.c
+                    | None -> 
+                      let c = (SemanticApp.getColor semanticApp a.semanticId)
+                      c
+                return c
+              }
+          | None -> Mod.constant C4b.Black
+    
+
 
   let getColor' (anno : MAnnotation) (semanticApp : MSemanticApp) =          
     let rval = 
@@ -95,6 +102,30 @@ module Annotation =
                         | None -> ((SemanticApp.getColor semanticApp anno.semanticId)))
       }
     rval
+
+  let getColor'' (imAnno : IMod<Option<MAnnotation>>) (semanticApp : MSemanticApp) =
+    adaptive {
+      let! optAnno = imAnno
+      let (a : IMod<C4b>, b : IMod<bool>) = 
+          match optAnno with
+            | Some an -> 
+              let col =
+                an.overrideStyle 
+                  |> Mod.bind (fun (st : Option<MStyle>) ->
+                                match st with
+                                  | Some st -> st.color.c
+                                  | None -> ((SemanticApp.getColor semanticApp an.semanticId))
+                              )
+              (col, an.hovered)
+            | None -> ((Mod.constant C4b.Red), (Mod.constant false))
+
+      // let! hover = b
+      let! col = a
+//      return match hover with
+//              | true -> C4b.Yellow
+//              | false -> col
+      return col
+    }
 
   let update  (a : Action) (anno : Annotation) =
     match a with
@@ -143,23 +174,16 @@ module Annotation =
         |> PList.tryAt 0
     sel |> Option.map (fun s -> (s, anno))
 
-  module View = 
-    let getColourIcon (model : MAnnotation) (semanticApp : MSemanticApp) =
-      let iconAttr =
-        amap {
-          yield clazz "circle icon"
-          let! c = getConstColor model semanticApp false
-          yield style (sprintf "color:%s" (CSS.colorToHexStr c))
-        }      
-      Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
 
+
+  module View = 
     let viewSelected (model : MAnnotation)  (semanticApp : MSemanticApp) = 
       let semanticsNode = 
         let iconAttr =
           amap {
             yield clazz "circle outline icon"
             let! c = SemanticApp.getColor semanticApp model.semanticId
-            yield style (sprintf "color:%s" (CSS.colorToHexStr c))
+            yield style (sprintf "color:%s" (GUI.CSS.colorToHexStr c))
           }      
         td [clazz "center aligned"; style lrPadding] 
            [
@@ -191,7 +215,7 @@ module Annotation =
           amap {
             yield clazz "circle icon"
             let! c = SemanticApp.getColor semanticApp model.semanticId
-            yield style (sprintf "color:%s" (CSS.colorToHexStr c))
+            yield style (sprintf "color:%s" (GUI.CSS.colorToHexStr c))
   //          yield attribute "color" "blue"
           }      
         td [clazz "center aligned"; style lrPadding] 
@@ -284,46 +308,7 @@ module Annotation =
       //  let elevationLabel =
       //    makeLblSg (sprintf "%.2f" (Mod.force point.point).Length) (Mod.force point.point)
   ///////// HELPER FUNCTIONS
-  let getColor (imAnno : IMod<Option<MAnnotation>>) (semanticApp : MSemanticApp) =
-    adaptive {
-      let! optAnno = imAnno
-      let (a : IMod<C4b>, b : IMod<bool>) = 
-          match optAnno with
-            | Some an -> 
-              let col =
-                an.overrideStyle 
-                  |> Mod.bind (fun (st : Option<MStyle>) ->
-                                match st with
-                                  | Some st -> st.color.c
-                                  | None -> ((SemanticApp.getColor semanticApp an.semanticId))
-                              )
-              (col, an.hovered)
-//                let! style = a.overrideStyle
-//                match style with
-//                  | Some st -> st.color
-//                  | None -> ((SemanticApp.getColor semanticApp a.semanticId), a.hovered)
-//              foo
-            //let foo = ((SemanticApp.getColor semanticApp a.semanticId), a.hovered)
-            //foo
-            | None -> ((Mod.constant C4b.Red), (Mod.constant false))
-
-      let! hover = b
-      let! col = a
-//      return match hover with
-//              | true -> C4b.Yellow
-//              | false -> col
-      return col
-    }
-//      Mod.map2 (fun c h -> 
-//                  match h with 
-//                    | true -> Mod.constant C4b.Yellow
-//                    | false -> c
-//               ) c h 
-
-      //let! h = anno.hovered
-//      return! match h with
-//                | true -> Mod.constant C4b.Yellow
-//                | false -> SemanticApp.getColor semanticApp anno.semanticId
+ 
 
    
  
@@ -347,40 +332,44 @@ module Annotation =
   let elevation (anno : Annotation) =
     anno.points 
       |> PList.toList
-      |> List.map (fun x -> x.point.Length)
+      |> List.map (fun x -> V3d.elevation x.point)
       |> List.average
 
   let lowestPoint (anno : Annotation) = //TODO unsafe
     anno.points 
-      |> PList.minBy (fun x -> x.point.Length)
+      |> PList.minBy (fun x -> V3d.elevation x.point)
 
   let tryLowestPoint (anno : Annotation) =
     anno.points 
-      |> PList.tryMinBy (fun x -> x.point.Length)
+      |> PList.tryMinBy (fun x ->V3d.elevation x.point)
 
   let highestPoint (anno : Annotation) = //TODO unsafe
     anno.points 
-      |> PList.maxBy (fun x -> x.point.Length)
+      |> PList.maxBy (fun x -> V3d.elevation x.point)
 
   let tryHighestPoint (anno : Annotation) = 
     anno.points 
-      |> PList.tryMaxBy (fun x -> x.point.Length)
+      |> PList.tryMaxBy (fun x -> V3d.elevation x.point)
+  
 
   let elevation' (anno : MAnnotation) =
     adaptive {
       let! lst = anno.points.Content
       return lst
-              |> PList.map (fun x -> x.point.Length)
+              |> PList.map (fun x -> V3d.elevation x.point)
               |> PList.toList
               |> List.average
     }
 
-  let isElevationBetween (a : float) (b : float) (model : Annotation)  =
-    (a < (elevation model) && (b > (elevation model)))
+  let isElevationBetween (a : V3d) (b : V3d) (model : Annotation)  =
+      V3d.elevation a < (elevation model) 
+        && (V3d.elevation b > (elevation model))
+    
+  
 
   let sortByElevation (p1 : V3d, a1 : Annotation)  (p2 : V3d, a2 : Annotation) =
-    let (lp, la) = if p1.Length < p2.Length then (p1, a1) else (p2, a2) //TODO refactor
-    let (up, ua) = if p1.Length < p2.Length then (p2, a2) else (p1, a1)
+    let (lp, la) = if V3d.elevation p1 < V3d.elevation p2 then (p1, a1) else (p2, a2) //TODO refactor
+    let (up, ua) = if V3d.elevation p1 < V3d.elevation p2 then (p2, a2) else (p1, a1)
     ((lp,la),(up,ua))
 
 //
@@ -432,7 +421,7 @@ module Annotation =
         let s = (SemanticApp.getSemantic semanticApp anno.semanticId)
         match s with
           | Some s -> s.level
-          | None   -> -1
+          | None   -> NodeLevel.INVALID
 
   let onlyHierarchicalAnnotations (semanticApp : SemanticApp) (nodes : List<Annotation>) =
     nodes
@@ -453,11 +442,11 @@ module Annotation =
         |> List.distinct
       
     levels 
-      |> List.map (fun (lvl : int) ->
+      |> List.map (fun (lvl : NodeLevel) ->
                     annos 
                       |> List.filter (fun a -> (sem a).level = lvl))
 
-  let onlyLvli (semanticApp : SemanticApp) (i : int) (annos : List<Annotation>) =
+  let onlyLvli (semanticApp : SemanticApp) (i : NodeLevel) (annos : List<Annotation>) =
     annos
       |> List.filter (fun (a : Annotation) -> 
       match (SemanticApp.getSemantic semanticApp a.semanticId) with

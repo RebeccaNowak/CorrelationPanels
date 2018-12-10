@@ -1,4 +1,4 @@
-open correlationPanels
+
 
 open System
 open Aardvark.Base
@@ -33,8 +33,16 @@ let main argv =
     // if you are unhappy with them, you can always use your own server config.
     // the localhost variant does not require to allow the port through your firewall.
     // the non localhost variant runs in 127.0.0.1 which enables remote acces (e.g. via your mobile phone)
+
+    // CORRELATIONS
+    //WebPart.startServerLocalhost 4321 [ 
+    //    MutableApp.toWebPart' app.Runtime false (Pages.start app.Runtime)
+    //    Suave.Files.browseHome
+    //]  
+
+    //TEST
     WebPart.startServerLocalhost 4321 [ 
-        MutableApp.toWebPart' app.Runtime false (Pages.start app.Runtime)
+        MutableApp.toWebPart app.Runtime (App.start Test.App.app)
         Suave.Files.browseHome
     ]  
 

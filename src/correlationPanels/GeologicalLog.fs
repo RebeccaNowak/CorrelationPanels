@@ -1,7 +1,6 @@
 ﻿namespace CorrelationDrawing
 
-  [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-  module GeologicalLog =
+  module Log =
 
     open Aardvark.Base
     open Aardvark.Base.Rendering
@@ -13,11 +12,12 @@
     open Aardvark.UI.Primitives
     open Aardvark.SceneGraph
     open Aardvark.Application
+    open SimpleTypes
 
     type Action =
       | SetState                  of State
       | CameraMessage             of ArcBallController.Message    
-      | ChangeXAxis               of (SemanticId * float)
+      | ChangeXAxis               of (AnnotationApp * SemanticId * float * SvgOptions)
       | LogNodeMessage            of (LogNodeId * LogNodes.Action)
       | SelectLogNode             of LogNodeId
       | UpdateYOffset             of float
@@ -26,67 +26,97 @@
       | MoveUp                    of LogId
       | MoveDown                  of LogId
 
-      
-      
-
     module Helpers = 
       let getMinLevel ( model : MGeologicalLog) = 
-        model.nodes |> AList.toList
-                    |> List.map (fun (n : MLogNode) -> Mod.force n.level)
-                    |> List.min 
+        adaptive {
+          let! lst = model.nodes.Content
 
+          let min =
+            lst |> PList.toList
+                |> List.map (fun (n : MLogNode) -> Mod.force n.level)
+                |> List.min 
 
+          return min
+        }
 
+      let getMinLevelNodes (model : MGeologicalLog) = //TODO this should be unnecessary as root nodes are min lvl
+        alist {
+          let! minLvl  = getMinLevel model
+          for n in model.nodes do
+            let! lvl = n.level
+            if lvl = minLvl then yield n
+        }
 
-
+      let mapMinLevelNodes (model : MGeologicalLog) (f : MLogNode -> alist<'b>) = //TODO this should be unnecessary as root nodes are min lvl
+        alist {
+          let! minLvl  = getMinLevel model
+          for n in model.nodes do
+            let! lvl = n.level
+            if lvl = minLvl then 
+              yield! f n
+        }
+        
 
     module Generate = 
-      let generateNonLevelNodes (logId : LogId) (annos : plist<Annotation>) (lp, la) (up, ua) (semApp : SemanticApp) =                   
+
+      let generateNonLevelNodes (logId : LogId) 
+                                (annos : plist<Annotation>) 
+                                (lp, la) (up, ua) 
+                                (semApp : SemanticApp) =                   
         annos 
           |> PList.map (fun a ->
               LogNodes.Init.fromSemanticType a semApp logId lp up)
 
       let rec generateLevel (logId          : LogId)
-                            (selectedPoints : List<V3d * Annotation>) 
-                            (annos          : plist<Annotation>) 
+                            (selectedPoints : hmap<AnnotationId, V3d>) 
+                            (annoApp        : AnnotationApp)
                             (semApp         : SemanticApp) 
                             (lowerBorder    : Border) //TODO could pass point and anno
                             (upperBorder    : Border) =
       
-        match selectedPoints with
-          | [] -> plist.Empty
-          | lst ->
+        match selectedPoints.IsEmpty with
+          | true -> plist.Empty
+          | false ->
             let currentLevel =
-              lst
-                |> List.map (fun (p,a) -> Annotation.getLevel semApp a)
+              selectedPoints
+                |> HMap.keys
+                |> List.map (fun id -> AnnotationApp.getLevel' annoApp semApp id)
                 |> List.min
 
             let onlyCurrentLevel = 
-              lst 
-                |> List.filter (fun (p, a) -> (Annotation.getLevel semApp a) = currentLevel)
-                |> List.sortBy (fun (p, a) -> (p.Length))
+              let filtered = 
+                HMap.filter 
+                  (fun id p -> ( AnnotationApp.getLevel' annoApp semApp id) = currentLevel)
+                  selectedPoints
+              filtered
+                |> HMap.toSwappedPairList
+                |> List.map (fun ((p : V3d) ,id) -> 
+                              (p, AnnotationApp.findAnnotation annoApp id))
+                |> PairList.filterNone
+                |> List.sortBy (fun (p, k) -> (p.Length))
         
             let listWithBorders = 
               List.concat 
                     [
-                      [(lowerBorder.point, lowerBorder.anno)]
-                      onlyCurrentLevel;
-                      [(upperBorder.point, upperBorder.anno)]
+                      [(lowerBorder.point, AnnotationApp.annotationOrDefault annoApp lowerBorder.annotationId)]
+                      onlyCurrentLevel
+                      [(upperBorder.point, AnnotationApp.annotationOrDefault annoApp upperBorder.annotationId)]
                     ]
               |> List.sortBy (fun (p, a) -> (p.Length))
-
-        
+              
             let pairwiseWithBorders =
               listWithBorders
                 |> List.pairwise
 
+            let level a =
+              (Annotation.getLevel semApp a)
             let restAnnos =
-              annos
-                |> PList.filter (fun a -> (Annotation.getLevel semApp a) <> currentLevel)
+              annoApp.annotations
+                |> HMap.filter (fun k a -> (level a) <> currentLevel)
 
             let restSelPoints =
-              lst 
-                |> List.filter (fun (p, a) -> (Annotation.getLevel semApp a) <> currentLevel)
+              selectedPoints 
+                |> HMap.filter (fun id p -> AnnotationApp.getLevel id annoApp semApp <> currentLevel)
        
             let nodesInCurrentLevel =
               seq {
@@ -96,32 +126,28 @@
                   let nodeChildren = 
                     let childrenAnnos = 
                       restAnnos // only take Annotations with elevations within the current node borders
-                        |> PList.filter (Annotation.isElevationBetween lp.Length up.Length)
+                        |> HMap.filter (fun id a -> Annotation.isElevationBetween lp up a)
                     let childrenSelectedPoints = 
                       restSelPoints // only take selected points with elevations within the current node borders
-                        |> List.filter (
-                          fun (p, a) -> 
-                            (lp.Length < p.Length && (up.Length > p.Length)))
+                        |> HMap.filter (fun a p -> V3d.isElevationBetween p lp up)
 
-                    match childrenSelectedPoints with
-                      | []    -> generateNonLevelNodes logId childrenAnnos (lp, la) (up, ua) semApp
-                      | cLst  -> 
-                        match childrenAnnos with
-                          | lst when lst.IsEmpty() -> PList.empty
-                          | _ -> 
-                            let lBorder = Border.initial la lp nodeId logId
-                            let uBorder = Border.initial ua up nodeId logId
-                            generateLevel logId cLst childrenAnnos semApp lBorder uBorder
+                    match childrenSelectedPoints.IsEmptyOrNull () with
+                      | true    -> generateNonLevelNodes logId (HMap.toPList childrenAnnos) (lp, la) (up, ua) semApp
+                      | false   -> 
+                        match childrenAnnos.IsEmptyOrNull () with
+                          | true  -> PList.empty
+                          | false -> 
+                            let lBorder = Border.initial la.id lp nodeId logId
+                            let uBorder = Border.initial ua.id up nodeId logId
+                            generateLevel logId childrenSelectedPoints annoApp semApp lBorder uBorder
                   yield LogNodes.Init.topLevelWithId nodeId logId
-                          (up, ua) (lp, la) nodeChildren currentLevel        
+                          (up, ua.id) (lp, la.id) nodeChildren currentLevel        
               }
 
             nodesInCurrentLevel
-              |> Seq.sortByDescending (fun x -> LogNodes.Helper.elevation x)
+              |> Seq.sortByDescending (fun x -> LogNodes.Helper.elevation x annoApp)
               |> PList.ofSeq
         
-
-
     let initial = {
       id            = LogId.invalid
       index         = 0
@@ -130,7 +156,7 @@
       isSelected    = false
       label         = {TextInput.init with text = "log"}
       nodes         = PList.empty
-      annoPoints    = []
+      annoPoints    = hmap<AnnotationId, V3d>.Empty
       nativeYRange  = Rangef.init
       svgMaxX       = 0.0
       camera        = 
@@ -149,44 +175,43 @@
 
     ///////////////////////////////////////////////////// GENERATE ///////////////////////////////////////////////////////////////////////
     let generate     (index     : int)
-                     (lst       : List<V3d * Annotation>) 
-                     (annos     : plist<Annotation>) 
+                     (lst       : hmap<AnnotationId, V3d>) 
                      (semApp    : SemanticApp)
+                     (annoApp   : AnnotationApp)
                      (xAxis     : SemanticId) 
                      (yOffset   : float)
                      (logHeight : float)
-                     (xAxisScaleFactor : float)
-                     (optMapper : option<float>) = 
+                     (optMapper : option<float>) 
+                     (opts       : SvgOptions) = 
 
       let id = LogId.newId()
       let nodes = (Generate.generateLevel //TODO make more compact by removing debug stuff
                         id
                         lst 
-                        annos
+                        annoApp
                         semApp 
                         (Border.initNegInf id)
                         (Border.initPosInf id)
                    )
       let nodes = 
-        nodes 
-          |> LogNodes.Helper.replaceInfinity'
-      //let nodes = 
-      //  nodes |> PList.filter LogNode.isInfinityTypeLeaf
+        LogNodes.Helper.replaceInfinity' nodes annoApp
       
       let (nodes, yMapper) =
-        nodes |> (LogNodes.Svg.yPosAndSize logHeight optMapper)
+        (LogNodes.Svg.Calc.yPosAndSize logHeight 0.0 optMapper nodes)
       
       let (nodes, svgMaxX) =
-        nodes
-           |> LogNodes.Svg.xPosAndSize xAxis xAxisScaleFactor
+        LogNodes.Svg.Calc.xPosAndSize xAxis opts.xAxisScaleFactor nodes annoApp opts
 
-      let yRange : option<Rangef> = AnnotationPoint.tryCalcRange annos
+      let yRange : option<Rangef> = AnnotationPoint.tryCalcRange (HMap.toPList annoApp.annotations)
       let yRange = 
         match yRange with
           | None ->
             printf "could not calculate log range" //TODO proper debug output
             Rangef.init
           | Some r -> r
+
+      let xRange = (LogNodes.Recursive.xRange nodes)
+
 
       let newLog = 
         {
@@ -199,7 +224,7 @@
           nodes        = nodes
           annoPoints   = lst
           nativeYRange = yRange
-          svgMaxX      = svgMaxX 
+          svgMaxX      = xRange //WIP 
           camera       = //TODO for 3D view
             {ArcBallController.initial with 
               view = CameraView.lookAt (2.0 * V3d.III) V3d.Zero V3d.OOI}    
@@ -225,7 +250,10 @@
 
     let findNode' (model : GeologicalLog) (borderId : BorderId) = //TODO make more generic!!
       let filter (n : LogNode) = 
-        (n.lBorder.id = borderId) || (n.uBorder.id = borderId)
+        match n.lBorder, n.uBorder with
+          | Some lb, Some ub ->
+            (lb.id = borderId) || (ub.id = borderId)
+          | _,_ -> false
 
       let nodeIds = model.nodes
                           |> PList.toList
@@ -244,13 +272,16 @@
     module View = 
       open Svg
 
-      let svgView (model        : MGeologicalLog) 
-                 // (viewType     : IMod<CorrelationPlotViewType>) 
-                  (flags        : IMod<SvgFlags>)
-                  (svgOptions   : MSvgOptions)
-                  (secondaryLvl : IMod<int>)
-                  (styleFun     : float -> IMod<LogAxisSection>) 
-                   =
+      let createHeader (model   : MGeologicalLog) =
+        () //TODO
+
+
+
+      let createRoseDiagrams (model   : MGeologicalLog) 
+                             (annoApp : MAnnotationApp) 
+                             (flags   : IMod<SvgFlags>)
+                             (svgOptions   : MSvgOptions)
+                             (secondaryLvl : IMod<NodeLevel>) =
         let logNodeTo16Bins (node : MLogNode) (nrBins : int) =
           let aNodes = LogNodes.Recursive.angularChildren node
           adaptive {
@@ -260,16 +291,17 @@
               | false -> 
                 let angles =
                   aNodes
-                    |> AList.map (fun n -> LogNodes.Helper.calcAngularValue' n)
+                    |> AList.map (fun n -> LogNodes.Helper.calcAngularValue' n annoApp)
+                    |> AList.bindIMod
                     |> AList.filterNone
                 let! isEmpty = AList.isEmpty angles
                 match isEmpty with 
                   | true -> return None
                   | false ->
-                    let max = angles |> AList.maxBy (fun a -> a.radians)
+                    let max = angles |> AList.maxBy (fun (a : Math.Angle) -> a.radians)
                     let binNrs =
                       angles
-                        |> AList.map (fun a -> Svg.Base.mapToBin a)
+                        |> AList.map (fun a -> Svgplus.Base.mapToBin a)
                     let content = binNrs.Content
                     let! binNrs = content
                     let countPerBin =
@@ -282,57 +314,79 @@
                         |> List.maxBy (fun (bin, count) -> count)
                     return Some (countPerBin, max)
           }
+          
+        let calcRoseDiagramPosition (sLvlNode : MLogNode) 
+                                    (radius : float) 
+                                    (svgOpt : MSvgOptions) =
+          let posX = 
+            adaptive {
+              let! maxX = model.svgMaxX
+              let! offset = svgOpt.offset
+              let! secLvl = svgOpt.secLevelWidth
+              return maxX + offset.X + secLvl + radius * 3.0
+            }
+          let posY =
+            Mod.map (fun (size : Size2D) -> size.Y * 0.5 + radius) sLvlNode.svgSize
+          Mod.map2 (fun (x : float) (y : float) -> V2d(x,y)) posX posY
 
 
-        let roseDiagrams = 
-          let secondaryLvlNodes = 
-            alist {
-              let! flags = flags
-              let flag = Flags.isSet SvgFlags.RadialDiagrams flags
-              if flag then 
-                let! lvl = secondaryLvl
-                let lvlFilter =
-                  fun (n : MLogNode) -> (Mod.map (fun a -> a = lvl) n.level)
-                for n in model.nodes do
-                  yield! LogNodes.Recursive.collectAndFilterAll' n lvlFilter
-            }      
-            
+        let secondaryLvlNodes = 
           alist {
-            let! isEmpty = (AList.isEmpty secondaryLvlNodes)
-            if (not isEmpty) then
-              for n in secondaryLvlNodes do
-                let! pos = n.svgPos
-                let! size = n.svgSize
-                let shift = new V2d (size.X, size.Y * 0.5)
-                let tmp = logNodeTo16Bins n 16
-                let! tmp = tmp
-                if tmp.IsSome then
-                  let (countPerBin, nrCircles) = tmp.Value
-                  let roseDiagram =
-                    Svg.Base.drawRoseDiagram (pos + shift) 15.0 5.0 C4b.Black nrCircles 0.5 countPerBin
-                  yield roseDiagram
-          }
+            let! flags = flags
+            let flag = Flags.isSet SvgFlags.RadialDiagrams flags
+            if flag then 
+              let! lvl = secondaryLvl
+              let lvlFilter =
+                fun (n : MLogNode) -> (Mod.map (fun a -> a = lvl) n.level)
+              for n in model.nodes do
+                yield! LogNodes.Recursive.collectAndFilterAll' n lvlFilter
+          }      
 
-        let minLvl = Helpers.getMinLevel model
-        let minLvlNodes = //TODO refactor
-          model.nodes
-            |> AList.filter (fun n -> Mod.force n.level = minLvl)
-            |> AList.toSeq // TODO check if OK
-            |> Seq.sortByDescending (fun n -> Mod.force (LogNodes.Helper.elevation' n))
+        alist {
+          let! isEmpty = (AList.isEmpty secondaryLvlNodes)
+          let radius = 15.0; //TODO put into svgOptions
+          if (not isEmpty) then
+            for n in secondaryLvlNodes do
+              let! pos = calcRoseDiagramPosition n radius svgOptions
+              let tmp = logNodeTo16Bins n 16
+              let! tmp = tmp
+              if tmp.IsSome then
+                let (countPerBin, nrCircles) = tmp.Value
+                failwith "TODO rose diagram!!!"
+                //let roseDiagram =
+                //  Svgplus.Base.drawRoseDiagram pos radius 5.0 
+                //                           C4b.Black nrCircles 0.5 countPerBin
+                //yield roseDiagram
+          
+        }
 
-        let nodeViews =
-          alist {
-            for n in minLvlNodes do
-              let mapper (a : DomNode<LogNodes.Action>) =
-                a |> UI.map (fun m -> LogNodeMessage (n.id, m))
-              let! v = (LogNodes.Svg.view n secondaryLvl flags svgOptions styleFun) 
-              for it in v do
-                yield (mapper it)
-          }
-        AList.append nodeViews roseDiagrams
+
+
+      let svgView (model        : MGeologicalLog) 
+                  (annoApp      : MAnnotationApp)
+                  (flags        : IMod<SvgFlags>)
+                  (svgOptions   : MSvgOptions)
+                  (secondaryLvl : IMod<NodeLevel>)
+                  (styleFun     : float -> IMod<LogAxisSection>) 
+                   =
+
+        let nodeViewFunction (n : MLogNode) = 
+          let mapper (a : DomNode<LogNodes.Action>) =
+            a |> UI.map (fun m -> LogNodeMessage (n.id, m))
+          let domNodes = 
+            (LogNodes.Svg.view n secondaryLvl flags svgOptions styleFun annoApp) 
+          domNodes |> AList.map (fun d -> mapper d)
+
+        let nodeViews = 
+          Helpers.mapMinLevelNodes model nodeViewFunction
+
+        AList.append nodeViews (createRoseDiagrams model annoApp flags svgOptions secondaryLvl)
+
+////////////////////////////////////////////////////////////////////////
 
       open UI
       let listView (model : MGeologicalLog) 
+                   (semApp : MSemanticApp)
                    (rowOnClick : 'msg) 
                    (mapper : Action -> 'msg)   =
         let labelEditNode textInput = 
@@ -351,11 +405,7 @@
                                      (fun _ -> MoveDown model.id) 
                                      (style "padding: 0px 2px 0px 2px")
             ]
-
-        let indexNode =
-            Incremental.text (Mod.map(fun x -> sprintf("%i") x) model.index) 
-          
-
+        
         let viewNew (model : MGeologicalLog) : list<DomNode<'msg>> =
             [
               [
@@ -364,15 +414,16 @@
                   |> UI.map mapper
                   |> Table.intoTd
                 //moveUpDown |> Table.intoTd
-              ] |> Table.intoActiveTr rowOnClick
-                     
-
+              ] |> Table.intoActiveTr rowOnClick      
             ]
-            
-              
-        
 
         let viewEdit (model : MGeologicalLog)  : list<DomNode<'msg>> =
+          let nodes = 
+            alist {
+              for n in model.nodes do
+                let lst = LogNodes.Debug.view n semApp
+                yield! lst
+            }
           [
             [
               (labelEditNode model.label) |> UI.map Action.TextInputMessage |> UI.map mapper
@@ -380,8 +431,10 @@
               moveUpDown |> Table.intoTd  |> UI.map mapper
 
             ] |> Table.intoActiveTr rowOnClick
+            [
+              Incremental.div (AttributeMap.ofList []) nodes
+            ] |> Table.intoActiveTr rowOnClick
           ]          
-        
 
         let viewDisplay (model : MGeologicalLog)  : list<DomNode<'msg>>  =
           [
@@ -401,26 +454,21 @@
                           | State.New      -> viewNew model //TODO probably not necessary
                      ) 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-      let debug (model       : MGeologicalLog) =
-        let minLvl = Helpers.getMinLevel model
-        let minLvlNodes =
-          model.nodes
-            |> AList.filter (fun n -> Mod.force n.level = minLvl)
-            |> AList.toSeq
-            |> Seq.sortByDescending (fun n -> Mod.force (LogNodes.Helper.elevation' n))
-     
+
+
+
+      let debug (model       : MGeologicalLog)  =
+        let minLvlNodes = Helpers.getMinLevelNodes model
 
         let nodeViews =
           alist {
             for n in minLvlNodes do
               yield 
                   Incremental.ul ([clazz  "ui inverted list"] |> AttributeMap.ofList) 
-                            (alist {
-                              let! v = (LogNodes.Debug.view n model.semanticApp)
-                              for it in v do
-                                yield it
-                            })                      
+                                 (LogNodes.Debug.view n model.semanticApp)
+                     
           }
 
         let attributes = 
@@ -433,6 +481,9 @@
           |> AttributeMap.ofAMap
 
         Incremental.div attributes nodeViews  
+
+
+
     
     let getLogConnectionSg //TODO connections wrong
           (model : MGeologicalLog) 
@@ -447,10 +498,11 @@
           let width = Mod.constant 3.0 
           let lines =
             adaptive {
-              let! aps = model.annoPoints
+              let! aps = model.annoPoints.Content
               let points =  
-                aps
-                  |> List.map (fun (p, a) -> p)
+                HMap.toPList aps
+                  |> PList.toList
+                
               let head = points |> List.tryHead
               return match head with
                       | Some h ->  points
@@ -476,8 +528,8 @@
 
     let update (model : GeologicalLog) (action : Action) =
       match action with
-        | ChangeXAxis (id, xAxisScaleFacor) ->
-            let (nodes, svgMaxX) = LogNodes.Svg.xPosAndSize id xAxisScaleFacor model.nodes
+        | ChangeXAxis (annoApp, id, xAxisScaleFacor, opts) ->
+            let (nodes, svgMaxX) = LogNodes.Svg.Calc.xPosAndSize id xAxisScaleFacor model.nodes annoApp opts
             {
               model with nodes    = nodes
                          svgMaxX  = svgMaxX

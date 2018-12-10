@@ -1,9 +1,9 @@
-﻿namespace CorrelationDrawing.Svg
+﻿namespace Svgplus
   
   module Paths =
     open Aardvark.Base
     open Aardvark.UI
-    open CorrelationDrawing.Svg.Attributes
+    open Svgplus.Attributes
 
 
     /////// PATHS

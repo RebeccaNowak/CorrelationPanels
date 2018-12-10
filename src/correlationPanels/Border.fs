@@ -8,14 +8,9 @@ module Border =
   open Aardvark.UI
   open Aardvark.Rendering.Text
 
-//  let initial id : Border = {
-//    anno  = Annotation.initialDummy
-//    point = V3d.OOO
-//  }
-
-
   let posInf = V3d.PositiveInfinity
   let negInf = V3d(0.0)
+  let defaultColor = C4b.Red
 
   let initialEmpty : Border = 
     {
@@ -24,7 +19,7 @@ module Border =
       logId       = LogId.invalid
       isSelected  = false
       correlation = None
-      anno        = Annotation.initialDummy
+      annotationId        = AnnotationId.invalid
       point       = V3d.OOO
       color       = C4b.Gray
       weight      = 0.0
@@ -38,7 +33,7 @@ module Border =
     logId       = logId
     isSelected  = false
     correlation = None
-    anno        = anno //Annotation.initialDummy
+    annotationId        = anno //Annotation.initialDummy
     point       = point //V3d.OOO
     color       = C4b.Gray
     weight      = 1.0
@@ -51,10 +46,12 @@ module Border =
   }
 
   let initNegInf = 
-    initial (Annotation.initialDummyWithPoints (negInf)) negInf LogNodeId.invalid
+    //initial (Annotation.initialDummyWithPoints (negInf)) negInf LogNodeId.invalid
+    initial AnnotationId.invalid negInf LogNodeId.invalid
   
   let initPosInf = 
-    initial (Annotation.initialDummyWithPoints (posInf)) posInf LogNodeId.invalid
+    initial AnnotationId.invalid posInf LogNodeId.invalid
+   // initial (Annotation.initialDummyWithPoints (posInf)) posInf LogNodeId.invalid
 
 ////////////////////////////////////////////////
   type Action =
@@ -71,14 +68,21 @@ module Border =
 
   ////////////////////////////////////////////////
 
+  let annotationId (optModel : option<Border>)  =
+    Option.map (fun (m : Border) -> m.annotationId) optModel
 
+  let tryElevation (model : Border) (annoApp : AnnotationApp) =  
+    (AnnotationApp.tryElevation annoApp model.annotationId)
 
-  let elevation (model : Border) = 
-    (Annotation.elevation model.anno) 
+  let elevation' (model : MBorder) (annoApp : MAnnotationApp) =
+    (AnnotationApp.elevation' annoApp model.annotationId)
 
-  let elevation' (model : MBorder) =
-    (Annotation.elevation' model.anno)
-    
+  let colorOrDefault (model : IMod<Option<MBorder>>)  =
+    Option.extractOrDefault model
+                            (fun b -> b.color)
+                            C4b.Red
+
+  
 
   module Sg =
     let createLabel (str : string) (pos : V3d) =
@@ -88,38 +92,60 @@ module Border =
           |> Sg.trafo(Mod.constant (Trafo3d.Translation pos))
 
   module Svg = 
-    let getCorrelationButtons (model : MLogNode) (offset : float) (weight : float) = //callback  =
-      let btnSize = 4.0 //TODO might want to make this an argument
+    open SimpleTypes
+    //open Svgplus
+
+    type Corners = {
+      upperRight : V2d
+      lowerRight : V2d
+    }
+
+    let getCorners (svgSize : IMod<Size2D>) (svgPos : IMod<V2d>)
+                   (weight : IMod<float>)
+                   (buttonSize : IMod<float>) =
       adaptive {
-        let! uBorderColor = model.uBorder.color
-        let! lBorderColor = model.lBorder.color
-        
-        let! size = model.svgSize
-        let! pos  = model.svgPos
-        //let pos   = new V2d(offset, pos.Y)
+        let! size = svgSize
+        let! pos = svgPos
+        let! buttonSize = buttonSize
+        let! weight = weight
+        let halfButtonSize = buttonSize * 0.5
+        let halfWeight = weight * 0.5
+        let posL  = (new V2d(pos.X + size.width, pos.Y 
+                              + size.height - halfWeight - halfButtonSize))
+        let posU  = (new V2d(pos.X + size.width, pos.Y               
+                                            + halfWeight + halfButtonSize))
+        return {upperRight = posU; lowerRight = posL}
+      }
 
-        let posL  = (new V2d(offset + size.X, pos.Y + size.Y - (weight * 0.5)))
-        let posU  = (new V2d(offset + size.X, pos.Y + (weight * 0.5)))
+    let getCorrelationButtons (model : MLogNode) =
+      adaptive {
+        let! lBorder = model.lBorder
+        let! uBorder = model.uBorder
 
-        let posLBtn = new V2d(posL.X, posL.Y - (btnSize * 0.5))
-        let posUBtn = new V2d(posU.X, posU.Y + (btnSize * 0.5))
+        match lBorder, uBorder with  
+          | Some lowerBorder, Some upperBorder ->
+            let buttonSize = Mod.constant 4.0 //TODO might want to make this an argument
+            let! uCol = colorOrDefault model.uBorder
+            let! lCol = colorOrDefault model.lBorder
+            let weight = model.level |> Mod.map (fun level -> level.weight)
+            let! corners = getCorners model.svgSize model.svgPos weight buttonSize
+            let lcb = (fun lst -> ToggleSelect (lowerBorder.id, corners.lowerRight)) 
+            let ucb = (fun lst -> ToggleSelect (upperBorder.id, corners.upperRight))
 
-        let lcb = (fun lst -> ToggleSelect (model.lBorder.id, posL)) //callback model.lBorder.id
-        let ucb = (fun lst -> ToggleSelect (model.uBorder.id, posU)) //callback model.uBorder.id
+            let! lSel = lowerBorder.isSelected
+            let btnLowerBorder =              
+             Svgplus.Base.drawCircleButton 
+               corners.lowerRight
+               5.0 lCol lSel 1.0 lcb
 
-        let! lSel = model.lBorder.isSelected
-        let btnLowerBorder =              
-         Svg.Base.drawCircleButton 
-           posLBtn
-           5.0 lBorderColor lSel 1.0 lcb
+            let! uSel = upperBorder.isSelected
+            let btnUpperBorder = 
+              Svgplus.Base.drawCircleButton 
+                corners.upperRight
+                5.0 uCol uSel 1.0 ucb
 
-        let! uSel = model.uBorder.isSelected
-        let btnUpperBorder = 
-          Svg.Base.drawCircleButton 
-            posUBtn
-            5.0 uBorderColor uSel 1.0 ucb
-
-        return ((btnLowerBorder), (btnUpperBorder))
+            return Some ((btnLowerBorder), (btnUpperBorder))
+          | _,_ -> return None
       }
 
 

@@ -48,7 +48,7 @@
                 amap {
                   yield clazz "circle icon"
                   let! c = color
-                  yield style (sprintf "color:%s" (CSS.colorToHexStr c))
+                  yield style (sprintf "color:%s" (GUI.CSS.colorToHexStr c))
                 }      
               Incremental.i (AttributeMap.ofAMap iconAttr) (alist{yield Incremental.text label})
             button [clazz "ui labeled icon button"; onMouseClick onClick] 
@@ -62,7 +62,7 @@
                 amap {
                   yield clazz "circle icon"
                   let! c = color
-                  yield style (sprintf "color:%s" (CSS.colorToHexStr c))
+                  yield style (sprintf "color:%s" (GUI.CSS.colorToHexStr c))
                 }      
               Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
             button [clazz "ui icon button"; onMouseClick onClick] 

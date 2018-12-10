@@ -1,11 +1,12 @@
-﻿namespace CorrelationDrawing.UI
+﻿namespace GUI
 
 
     module CSS =
-      open Aardvark.UI
       open System
       open Aardvark.Base
       open Aardvark.Base.Incremental
+      open Aardvark.UI
+      open CorrelationDrawing
 
 
       let myCss = [
@@ -22,8 +23,20 @@
                 |> (String.concat System.String.Empty)
         String.concat String.Empty ["#";str] 
 
+      let (--) (attStr1 : string) (attStr2 : string) =
+        sprintf "%s; %s" attStr1 attStr2
+
+      let styles (attList : list<string>) =
+        attList 
+          |> List.reduce (fun x y -> x -- y)
 
       // ATTRIBUTES
+      let transition (seconds : float) =
+        (sprintf "transition: all %.2fs ease" seconds)
+
+      let saturation (sat : int) =
+        (sprintf "filter: saturate(%i)" sat)
+
       let bgColorAttr (color : C4b) =
         style (sprintf "background: %s" (colorToHexStr color))
 
@@ -50,3 +63,30 @@
       let noPadding  = "padding: 0px 0px 0px 0px"
       let tinyPadding  = "padding: 1px 1px 1px 1px"
       let lrPadding = "padding: 1px 4px 1px 4px"
+
+      module Incremental =
+        open Aardvark.Base.Incremental
+
+        let style (lst : list<IMod<String>>) = 
+          let res = 
+            List.fold (fun s1 s2 -> 
+                        Mod.map2 (fun a b -> 
+                                    sprintf ("%s%s") a b) s1 s2
+                      ) (Mod.constant "") lst
+          amap {
+            let! r = res
+            yield style r
+          }
+          
+
+      //  let saturation (sat : IMod<int>) =
+          //FIREFOX: Mod.map (fun s -> sprintf "filter: saturate(%i%%);" s) sat
+         
+            
+          
+        let transition (sec : IMod<float>) =
+           Mod.map (fun s -> (sprintf "transition: all %.2fs ease;" s)) sec
+           
+          
+
+        
