@@ -1,4 +1,4 @@
-﻿namespace CorrelationDrawing.UI
+﻿namespace UIPlus
 
     open Aardvark.Base
     open Aardvark.UI
@@ -10,7 +10,7 @@
         seq {
           for str in names.[1..names.Length-1] do
             let e = Flags.parse t str
-            yield (UI.Buttons.toggleButton str (fun p -> toggleAction e)) //|> UI.map CorrelationPlotMessage
+            yield (UIPlus.Buttons.toggleButton str (fun p -> toggleAction e)) //|> UI.map CorrelationPlotMessage
         } |> List.ofSeq
 
       let toButtonGroup (t : System.Type) (toggleAction : 'a -> 'msg) =

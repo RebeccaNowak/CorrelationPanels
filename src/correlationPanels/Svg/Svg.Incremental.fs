@@ -44,7 +44,7 @@
                             leftUpper
                             size
                             color lborder uborder
-                            bWeight.value
+                            bWeight
                             selectionCallback
                             isSelected
 

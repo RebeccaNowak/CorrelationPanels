@@ -1,9 +1,6 @@
 ﻿namespace CorrelationDrawing
 
-
-open Aardvark.Base.Rendering
 open Aardvark.Base.Incremental
-open CorrelationDrawing.UI
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module TextInput =

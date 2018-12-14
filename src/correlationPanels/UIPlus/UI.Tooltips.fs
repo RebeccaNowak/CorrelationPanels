@@ -1,4 +1,4 @@
-﻿namespace CorrelationDrawing.UI
+﻿namespace UIPlus
 
     module ToolTips =
       open Aardvark.UI

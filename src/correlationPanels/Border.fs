@@ -19,7 +19,7 @@ module Border =
       logId       = LogId.invalid
       isSelected  = false
       correlation = None
-      annotationId        = AnnotationId.invalid
+      annotationId = AnnotationId.invalid
       point       = V3d.OOO
       color       = C4b.Gray
       weight      = 0.0
@@ -53,6 +53,8 @@ module Border =
     initial AnnotationId.invalid posInf LogNodeId.invalid
    // initial (Annotation.initialDummyWithPoints (posInf)) posInf LogNodeId.invalid
 
+
+
 ////////////////////////////////////////////////
   type Action =
     | Correlate of BorderId 
@@ -82,7 +84,8 @@ module Border =
                             (fun b -> b.color)
                             C4b.Red
 
-  
+
+        
 
   module Sg =
     let createLabel (str : string) (pos : V3d) =
@@ -117,36 +120,36 @@ module Border =
         return {upperRight = posU; lowerRight = posL}
       }
 
-    let getCorrelationButtons (model : MLogNode) =
-      adaptive {
-        let! lBorder = model.lBorder
-        let! uBorder = model.uBorder
+    //let getCorrelationButtons (model : MLogNode) =
+    //  adaptive {
+    //    let! lBorder = model.lBorder
+    //    let! uBorder = model.uBorder
 
-        match lBorder, uBorder with  
-          | Some lowerBorder, Some upperBorder ->
-            let buttonSize = Mod.constant 4.0 //TODO might want to make this an argument
-            let! uCol = colorOrDefault model.uBorder
-            let! lCol = colorOrDefault model.lBorder
-            let weight = model.level |> Mod.map (fun level -> level.weight)
-            let! corners = getCorners model.svgSize model.svgPos weight buttonSize
-            let lcb = (fun lst -> ToggleSelect (lowerBorder.id, corners.lowerRight)) 
-            let ucb = (fun lst -> ToggleSelect (upperBorder.id, corners.upperRight))
+    //    match lBorder, uBorder with  
+    //      | Some lowerBorder, Some upperBorder ->
+    //        let buttonSize = Mod.constant 4.0 //TODO might want to make this an argument
+    //        let! uCol = colorOrDefault model.uBorder
+    //        let! lCol = colorOrDefault model.lBorder
+    //        let weight = model.level |> Mod.map (fun level -> level.weight)
+    //        let! corners = getCorners model.mainBody.dim model.mainBody.svgPos weight buttonSize
+    //        let lcb = (fun lst -> ToggleSelect (lowerBorder.id, corners.lowerRight)) 
+    //        let ucb = (fun lst -> ToggleSelect (upperBorder.id, corners.upperRight))
 
-            let! lSel = lowerBorder.isSelected
-            let btnLowerBorder =              
-             Svgplus.Base.drawCircleButton 
-               corners.lowerRight
-               5.0 lCol lSel 1.0 lcb
+    //        let! lSel = lowerBorder.isSelected
+    //        let btnLowerBorder =              
+    //         Svgplus.Base.drawCircleButton 
+    //           corners.lowerRight
+    //           5.0 lCol lSel 1.0 lcb
 
-            let! uSel = upperBorder.isSelected
-            let btnUpperBorder = 
-              Svgplus.Base.drawCircleButton 
-                corners.upperRight
-                5.0 uCol uSel 1.0 ucb
+    //        let! uSel = upperBorder.isSelected
+    //        let btnUpperBorder = 
+    //          Svgplus.Base.drawCircleButton 
+    //            corners.upperRight
+    //            5.0 uCol uSel 1.0 ucb
 
-            return Some ((btnLowerBorder), (btnUpperBorder))
-          | _,_ -> return None
-      }
+    //        return Some ((btnLowerBorder), (btnUpperBorder))
+    //      | _,_ -> return None
+    //  }
 
 
 //    let view' (annos : alist<MAnnotation>)  =

@@ -1,5 +1,4 @@
-﻿namespace CorrelationDrawing.UI    
-    
+﻿namespace UIPlus    
     
     module Buttons = 
       open Aardvark.UI

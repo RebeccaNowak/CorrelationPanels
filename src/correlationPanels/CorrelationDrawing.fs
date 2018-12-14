@@ -14,7 +14,7 @@ module CorrelationDrawing =
     open Aardvark.UI.Primitives
     open Aardvark.Rendering.Text
     open Annotation
-    open UI
+    open UIPlus
 
     let initial : CorrelationDrawingModel = {
         isDrawing = false

@@ -35,6 +35,11 @@ module List =
       | [] -> 0.0
       | li -> List.max li
 
+  let tryMax (lst : list<float>) = 
+    match lst with
+      | [] -> None
+      | li -> Some (List.max li)
+
 
   let contains' (f : 'a -> bool) (lst : List<'a>)  =
     match lst with
@@ -90,6 +95,8 @@ module PList =
     match lst.FirstIndexOf f with
       | ind when ind = -1 -> (false, lst)
       | ind -> (true, lst.RemoveAt ind)
+
+  
 
   
 
@@ -191,7 +198,21 @@ module PList =
       | true -> 0.0
       | false -> average lst
 
-
+  let rec mapPrev (lst  : plist<'a>) 
+                  (prev : option<'a>)
+                  (f    : 'a -> 'a -> 'a) =
+    let current = tryHead lst
+    match prev, current with
+      | None, None     -> PList.empty
+      | None, Some c   -> 
+        PList.append c (mapPrev (tail lst) current f)
+      | Some p, None   -> PList.empty
+      | Some p, Some c -> 
+        let foo = 
+          mapPrev (tail lst) current f
+        let bar =
+          PList.append (f p c) foo
+        bar   
 
 module AList =
   open Aardvark.Base.Incremental

@@ -5,8 +5,8 @@ open Aardvark.Base
 open Aardvark.Base.Incremental
 open Aardvark.Base.Rendering
 open Aardvark.UI
-open UI
-open UI.Table
+open UIPlus
+open UIPlus.Table
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Semantic = 

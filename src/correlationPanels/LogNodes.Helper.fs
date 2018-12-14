@@ -157,8 +157,16 @@ open CorrelationDrawing
     let findHighestNode (lst : plist<LogNode>) (annoApp : AnnotationApp)  =
       lst |> PList.tryMinBy (fun n -> elevation n annoApp)      
 
-/////////////////////////////////////////////////////////////
 
+/////////////////////////////////////////////////////////////
+    let elevationRange (node : LogNode)  = 
+      match node.lBorder, node.uBorder with
+        | Some lb, Some ub ->
+          {Rangef.init with min = lb.point.Length
+                            max = ub.point.Length}
+        | _,_ -> 
+          printf "range calc failed"
+          Rangef.init
 
     let private isInfinityTypeLeaf (model : LogNode) =
       let noChildren = (model.children.IsEmpty())
@@ -168,11 +176,13 @@ open CorrelationDrawing
                           && model.nodeType <> LogNodeType.Metric)
       (noChildren && infType && notDataNode)
         
-      
+  
 
     let rec replaceInfinity (model : LogNode) (annoApp : AnnotationApp) : (LogNode) =
       let (newNode) =
-        match not (isInfinityTypeLeaf model), model.children.IsEmpty(), model.nodeType with
+        let notLeaf = not (isInfinityTypeLeaf model)  
+        let noChildren = model.children.IsEmpty()
+        match notLeaf, noChildren, model.nodeType with
           | true, true, _  -> model //(model, false)
           | true, false, LogNodeType.NegInfinity -> 
             let children   = model.children 
@@ -202,11 +212,19 @@ open CorrelationDrawing
 
     let replaceInfinity' (nodes : plist<LogNode>) 
                          (annoApp : AnnotationApp) : plist<LogNode> =
-      let nodes1 = 
+      let _nodes = 
         nodes
           |> PList.map (fun n -> (replaceInfinity n annoApp))
-      nodes1
-        |> PList.filter (fun n -> not (isInfinityTypeLeaf n ))
+          |> PList.filter (fun n -> not (isInfinityTypeLeaf n ))
+      
+      for n in _nodes do
+        printf "%s" (n.nodeType.ToString ())
+
+      _nodes
+        
+
+      
+
 
       
       

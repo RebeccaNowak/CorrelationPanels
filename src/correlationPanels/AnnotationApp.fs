@@ -4,7 +4,7 @@ namespace CorrelationDrawing
   open Aardvark.Base.Incremental
   open Aardvark.SceneGraph
   open Aardvark.UI
-  open UI
+  open UIPlus
 
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -209,4 +209,5 @@ namespace CorrelationDrawing
           for a in annoSet do
                 yield! ((Annotation.Sg.view a cam semApp) 
                            |> ASet.map (fun x -> x |> Sg.map AnnotationMessage))
-        } |> Sg.set           
+        } |> Sg.set        
+        

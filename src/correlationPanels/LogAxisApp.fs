@@ -6,7 +6,7 @@ module LogAxisApp =
   open Aardvark.Base
   open Aardvark.UI
   open Aardvark.Base.Incremental
-  open UI
+  open UIPlus
   open SimpleTypes
 
   type Action = 

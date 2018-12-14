@@ -9,6 +9,21 @@
     open Svgplus.Attributes
     open Svgplus.Paths
 
+
+    let inline b0 (a : int) =
+      if a < 0 then 0 else a
+
+    let inline (%%) (v : V3i) (a : int) =
+      V3i((b0 v.X%a),(b0 v.Y%a),(b0 v.Z%a)) 
+
+    let V3iToC4b (v : V3i) =
+      let _v = v%%255
+      new C4b(v)
+
+    let inline (--) (c : C4b) (v : V3i) =
+      let col = c.ToV3i ()
+      V3iToC4b (col - v)
+
     let lighten (colour : C4b) =
       C4b(int colour.R - 20, int colour.G - 20, int colour.B - 20)
 
@@ -30,6 +45,7 @@
                           | a when a >  8 ->
                             let rgb = (rgb2 +  float (a - 8) * diff)
                             RGBToC4b rgb
+                          | _ -> C4b.VRVisGreen
                       )
       cs
 
@@ -458,7 +474,7 @@
                               (fill              : C4b) 
                               (lowerBorderColor  : C4b)
                               (upperBorderColor  : C4b)
-                              (bWeight           : float)
+                              (bWeight           : SvgWeight)
                               (selectionCallback : list<string> -> 'msg)
                               (selected          : bool)
                               (dottedBorder      : bool) =
@@ -475,11 +491,11 @@
           [  
             drawRectangle leftUpper width height fill
             drawHorizontalLine 
-              (new V2d(leftUpper.X, leftUpper.Y + bWeight * 0.5)) 
-              width lBorder bWeight
+              (new V2d(leftUpper.X, leftUpper.Y + bWeight.value * 0.5)) 
+              width lBorder bWeight.value
             drawHorizontalLine 
-              (new V2d(leftUpper.X, leftUpper.Y + height - bWeight * 0.5)) 
-              width uBorder bWeight 
+              (new V2d(leftUpper.X, leftUpper.Y + height - bWeight.value * 0.5)) 
+              width uBorder bWeight.value
             drawVerticalLine leftUpper height C4b.Black 2.0
           ]
       let rBorder = 

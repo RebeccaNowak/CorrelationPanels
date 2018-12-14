@@ -5,9 +5,7 @@ module Button =
   open Aardvark.Base
   open Aardvark.Base.Incremental
   open Aardvark.UI
-  open Svgplus
-  open Aardvark.Rendering.Vulkan
-
+  open Svgplus.Base
 
 
   type Action =
@@ -39,19 +37,11 @@ module Button =
 
   
 
-  let inline b0 (a : int) =
-    if a < 0 then 0 else a
 
-  let inline (%%) (v : V3i) (a : int) =
-    V3i((b0 v.X%a),(b0 v.Y%a),(b0 v.Z%a)) 
 
-  let V3iToC4b (v : V3i) =
-    let _v = v%%255
-    new C4b(v)
 
-  let inline (--) (c : C4b) (v : V3i) =
-    let col = c.ToV3i ()
-    V3iToC4b (col - v)
+
+
 
   let update (model : Button) (action : Action) =
     match action with
@@ -84,7 +74,6 @@ module Button =
     let actions = [enter;exit]@left
                     |> AMap.ofList
                     
-      
     Incremental.circle' ((AMap.union atts actions) 
                             |> AMap.union st)
           

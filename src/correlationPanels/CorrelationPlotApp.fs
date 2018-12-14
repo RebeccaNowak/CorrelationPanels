@@ -6,7 +6,7 @@
     open Aardvark.Base
     open Aardvark.Application
     open Aardvark.UI
-    open UI
+    open UIPlus
     open System
 
     type Action =
@@ -127,20 +127,25 @@
       let domNode = 
         div [attribute "overflow-x" "hidden";attribute "overflow-y" "hidden"] [
                 //menu
-                CorrelationPlot.viewSvg annoApp model.correlationPlot |> UI.map CorrelationPlotMessage
+                CorrelationPlot.viewSvg annoApp model.correlationPlot 
+                  |> UI.map CorrelationPlotMessage
                ]
       domNode
 
     // Log Debug View
     module View =
       let mapper (log : MGeologicalLog) = (fun a -> CorrelationPlot.LogMessage (log.id, a))
-      let logList (model : MCorrelationPlotApp) (semApp : MSemanticApp) =
+      
+      let logList (model : MCorrelationPlotApp) 
+                  (semApp : MSemanticApp)
+                  (annoApp : MAnnotationApp) =
         let rows = 
           alist {
             for log in model.correlationPlot.logs do
               let! tmp = 
-                Log.View.listView log semApp (CorrelationPlot.Action.SelectLog log.id) 
-                                            (mapper log)
+                Log.View.listView log semApp annoApp 
+                                  (CorrelationPlot.Action.SelectLog log.id) 
+                                  (mapper log)
               let tmp = tmp
                           |> List.map (UI.map (fun a -> Action.CorrelationPlotMessage a))
                                                       
@@ -153,7 +158,7 @@
                 yield dNodeRow
                 if state = State.New then
                   let menu = 
-                    (UI.Menus.saveCancelMenu 
+                    (UIPlus.Menus.saveCancelMenu 
                       (CorrelationPlot.Action.SaveLog log.id)
                       (CorrelationPlot.Action.DeleteLog log.id) 
                        |> UI.map CorrelationPlotMessage)
@@ -164,49 +169,51 @@
         Table.toTableView (div[][]) rows ["Label";"Order"]
 
 
-      let view  (model : MCorrelationPlotApp)  =
-
-
-
-        let domList =
-          alist {            
-            let! xAxis = model.correlationPlot.xAxis
-            for log in model.correlationPlot.logs do
-              let! sel = model.correlationPlot.selectedLog
-              let isSelected = 
-                match sel with
-                  | Some s  -> s = log.id
-                  | None    -> false
+      //let view  (model    : MCorrelationPlotApp) 
+      //          (annoApp  : MAnnotationApp) 
+      //          (semApp   : MSemanticApp) =
+        //let domList =
+        //  alist {            
+        //    let! xAxis = model.correlationPlot.xAxis
+        //    for log in model.correlationPlot.logs do
+        //      let! sel = model.correlationPlot.selectedLog
+        //      let isSelected = 
+        //        match sel with
+        //          | Some s  -> s = log.id
+        //          | None    -> false
               
-              yield
-                        div [clazz "item"][
-                          div [clazz "content"] [
-                            div [clazz "header"; style "text-align: center"; onMouseClick (fun _ -> CorrelationPlot.ToggleSelectLog (Some log.id))] [
-                              i [clazz "yellow arrow alternate circle down icon"] [] |> UI.ToolTips.wrapToolTip "select"
-                            ]
-                            div [] 
-                                [
-                                  (Log.View.debug 
-                                    log 
-                                  )
-                                ]        
-                          ]
-                        ]
-          }   
+        //      yield
+        //        div [clazz "item"][
+        //          div [clazz "content"] [
+        //            div [clazz "header"; 
+        //                 style "text-align: center"; 
+        //                 onMouseClick (fun _ -> CorrelationPlot.ToggleSelectLog (Some log.id))] 
+        //                [
+        //                  i [clazz "yellow arrow alternate circle down icon"] [] |> UI.ToolTips.wrapToolTip "select"
+        //                ] |> UI.map (Action.CorrelationPlotMessage)
+        //            div [] 
+        //                [
+        //                  (
+        //                      logList model semApp annoApp
+        //                  )
+        //                ]        
+        //          ]
+        //        ]
+        //  }   
 
 
-        let domNode =
-          require (GUI.CSS.myCss) (
-            body [style "overflow: auto"] [
-              div [] [
-               // menu |> UI.map CorrelationPlotMessage
-                Incremental.div (AttributeMap.ofList [clazz "ui inverted segment"])
-                                domList |> UI.map CorrelationPlotMessage
-              ]
-            ]
-          )
+        //let domNode =
+        //  require (GUI.CSS.myCss) (
+        //    body [style "overflow: auto"] [
+        //      div [] [
+        //       // menu |> UI.map CorrelationPlotMessage
+        //        Incremental.div (AttributeMap.ofList [clazz "ui inverted segment"])
+        //                        domList
+        //      ]
+        //    ]
+        //  )
 
-        domNode
+        //domNode
     
 
 

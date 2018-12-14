@@ -5,23 +5,24 @@ open Aardvark.Base
 open Aardvark.Base.Incremental
 open Aardvark.UI
 open Aardvark.UI.Primitives
-open Aardvark.Base.Rendering
 
 
 type Message =
     | ToggleModel
     | ButtonMessage   of Svgplus.Button.Action
-    | CameraMessage of CameraControllerMessage
-    | RDMessage of Svgplus.RoseDiagram.Action
+    | CameraMessage   of CameraControllerMessage
+    | RDMessage       of Svgplus.RoseDiagram.Action
+    | RectMessage     of Svgplus.Rectangle.Action
 
 module App =
     open Svgplus.Mutable
     
-    let initial = {
+    let initial : TestModel = {
       currentModel = Primitive.Box
       cameraState  = CameraController.initial
       svgButton    = {Svgplus.Button.init with pos = V2d (10.0)}
       roseDiagram  = {Svgplus.RoseDiagram.init with centre = V2d (100.0)}
+      rectangle    = {Svgplus.Rectangle.init with pos = V2d (200.00)}
     }
 
     let update (model : TestModel) (msg : Message) =
@@ -44,10 +45,9 @@ module App =
                 | _ -> {model with svgButton = (Svgplus.Button.update model.svgButton msg)}
             
             | RDMessage msg -> {model with roseDiagram = Svgplus.RoseDiagram.update model.roseDiagram msg}
+            | RectMessage msg -> {model with rectangle = Svgplus.Rectangle.update model.rectangle msg}
 
     let view (model : MTestModel) =
-
-
         let svgAtts = 
           [
             clazz "svgRoot"
@@ -65,7 +65,12 @@ module App =
         let rose = ((Svgplus.RoseDiagram.view model.roseDiagram) 
                       |> AList.map (UI.map RDMessage))
 
-        let content = AList.append button rose
+        let rect = (Svgplus.Rectangle.view model.rectangle)
+                      |> AList.map (UI.map RectMessage)
+
+        let content = button 
+                        |> AList.append rose
+                        |> AList.append rect
 
         require (GUI.CSS.myCss) (
           body [] [
@@ -78,6 +83,7 @@ module App =
               Incremental.Svg.svg svgAtts content
           ]
         )
+
     let app =
         {
             initial = initial

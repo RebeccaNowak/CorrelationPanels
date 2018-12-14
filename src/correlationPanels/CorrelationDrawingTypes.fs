@@ -8,21 +8,16 @@ open Aardvark.UI.Primitives
 open SimpleTypes
 open Svgplus
 
-
-
-[<DomainType>]
-type BorderedRectangle = {
-  leftUpper         : V2d 
-  size              : Size2D
-  fill              : C4b
-  borderColors      : BorderColors
-  bWeight           : SvgWeight
-  selected          : bool
-  dottedBorder      : bool
-}
-
-
-
+//[<DomainType>]
+//type BorderedRectangle = {
+//  leftUpper         : V2d 
+//  size              : Size2D
+//  fill              : C4b
+//  borderColors      : BorderColors
+//  bWeight           : SvgWeight
+//  selected          : bool
+//  dottedBorder      : bool
+//}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// BEGIN GUI
@@ -80,6 +75,9 @@ module Rangef =
       min     = 0.0
       max     = 0.0
     }
+
+  let calcRange (r : Rangef) =
+    r.max - r.min
 
   let calcRangeNoInf (r : Rangef) =
     match r.max with 
@@ -401,8 +399,6 @@ type LogNode = {
 
     logId         : LogId
     label         : string
-    isSelected    : bool
-    hasDefaultX   : bool
                   
     //[<NonIncremental>]
     nodeType           : LogNodeType
@@ -413,37 +409,16 @@ type LogNode = {
     annotation         : option<AnnotationId>
 
     children           : plist<LogNode>
-    svgPos             : V2d
-    nativePos          : V2d
-    svgSize            : Size2D
-    nativeSize         : Size2D
-
+    //nativePos          : V2d
+    //nativeSize         : Size2D
     
-    mainBody           : Option<BorderedRectangle>
-    roseDiagram        : Option<RoseDiagram>
-    buttonNorth        : Option<Svgplus.Button>
-    buttonSouth        : Option<Svgplus.Button>
+    mainBody           : Svgplus.Rectangle
+    roseDiagram        : RoseDiagram
+    buttonNorth        : Svgplus.Button
+    buttonSouth        : Svgplus.Button
 
-} with 
-    member this.range = 
-      match this.nodeType with
-       | LogNodeType.Metric 
-       | LogNodeType.Angular -> Rangef.init //TODO using Option might be cleaner
-       | _ ->
-          match this.lBorder, this.uBorder with
-            | Some lb, Some ub ->
-               {Rangef.init with min = lb.point.Length
-                                 max = ub.point.Length}
-            | _,_ -> Rangef.init
-
-    member this.svgSizeY (factor : float) =
-      (Rangef.calcRangeNoInf this.range) * factor
-
+}
       
-    member this.nativeSizeY =
-      (Rangef.calcRangeNoInf this.range)          
-
-
 
 [<DomainType>]
 type LogAxisConfig = { //TODO make dynamic
@@ -624,7 +599,6 @@ type Pages =
 
         saveIndices   : list<SaveIndex>
         
-
         [<NonIncremental>]
         future        : Option<Pages>
 

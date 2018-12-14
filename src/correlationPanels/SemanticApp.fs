@@ -5,7 +5,7 @@ open Aardvark.Base.Incremental
 open Aardvark.Base
 open Aardvark.Application
 open Aardvark.UI
-open UI
+open UIPlus
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module SemanticApp = 
@@ -260,10 +260,10 @@ module SemanticApp =
              style "width:100%; height: 10%; float:middle; vertical-align: middle"][
           div [clazz "item"]
               [button [clazz "ui small icon button"; onMouseClick (fun _ -> AddSemantic)] 
-                      [i [clazz "small plus icon"] [] ] |> UI.ToolTips.wrapToolTip "add"];
+                      [i [clazz "small plus icon"] [] ] |> UIPlus.ToolTips.wrapToolTip "add"];
           div [clazz "item"]
               [button [clazz "ui small icon button"; onMouseClick (fun _ -> DeleteSemantic)] 
-                      [i [clazz "small minus icon"] [] ] |> UI.ToolTips.wrapToolTip "delete"];
+                      [i [clazz "small minus icon"] [] ] |> UIPlus.ToolTips.wrapToolTip "delete"];
           div [clazz "item"] [
             button 
               [clazz "ui small icon button"; style "width: 20ch; text-align: left"; onMouseClick (fun _ -> SortBy;)]
@@ -302,10 +302,14 @@ module SemanticApp =
 
       Table.toTableView menu domList ["Label";"Weight";"Colour";"Level";"Semantic Type";"Geometry"]
 
+
+  let threads (model : SemanticApp) = 
+    ThreadPool.empty
+
   let app : App<SemanticApp, MSemanticApp, Action> =
       {
           unpersist = Unpersist.instance
-          threads   = fun _ -> ThreadPool.empty
+          threads   = threads
           initial   = getInitialWithSamples
           update    = update
           view      = View.expertGUI

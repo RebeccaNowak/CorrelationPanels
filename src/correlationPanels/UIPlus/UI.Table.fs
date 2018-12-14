@@ -1,4 +1,4 @@
-﻿namespace CorrelationDrawing.UI
+﻿namespace UIPlus
     module Table =
       open Aardvark.UI
       open System

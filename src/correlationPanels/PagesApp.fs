@@ -8,7 +8,7 @@ module Pages =
   open Aardvark.Base
   open Aardvark.Base.Incremental
   open Aardvark.Base.Rendering
-  open UI
+  open UIPlus
 
 
   type Action =
@@ -22,7 +22,7 @@ module Pages =
       | SemanticAppMessage            of SemanticApp.Action
       | AnnotationAppMessage          of AnnotationApp.Action
       | CorrelationDrawingMessage     of CorrelationDrawing.Action
-      | CenterScene
+      | CentreScene
       | UpdateConfig                  of DockConfig
       | Export
       | Save
@@ -267,7 +267,7 @@ module Pages =
         {model with corrPlotApp = corrPlotApp
                     annotationApp = annoApp}
 
-      | CenterScene,  _ -> 
+      | CentreScene,  _ -> 
         centerScene model
 
       | UpdateConfig cfg, _->
@@ -329,7 +329,7 @@ module Pages =
         let indexToMenuItem (ind : SaveIndex) =
           let label = 
             sprintf "Load %s" (string ind.ind)
-          UI.Menus.toMenuItem label (Load ind) 
+          UIPlus.Menus.toMenuItem label (Load ind) 
 
         let items = 
           model.saveIndices
@@ -344,7 +344,7 @@ module Pages =
             for item in lst do
               yield item
           }
-        lst |> UI.Menus.Incremental.toMouseOverMenu
+        lst |> UIPlus.Menus.Incremental.toMouseOverMenu
         
 
       let newLogButton = 
@@ -366,7 +366,7 @@ module Pages =
           Buttons.iconButton "small external icon"      "export"  (fun _ -> Export)
           Buttons.iconButton "small arrow left icon"    "undo"    (fun _ -> Undo)
           Buttons.iconButton "small arrow right icon"   "redo"    (fun _ -> Redo)
-          Buttons.iconButton "small bullseye icon"      "centre"  (fun _ -> CenterScene)
+          Buttons.iconButton "small bullseye icon"      "centre"  (fun _ -> CentreScene)
           Flags.toButtonGroup typeof<AppFlags> ToggleAppFlag //TODO css
           Flags.toButtonGroup typeof<SgFlags> ToggleSgFlag
           (Flags.toButtonGroup typeof<SvgFlags> CorrelationPlot.ToggleFlag) 
@@ -475,13 +475,13 @@ module Pages =
                     )
 
                   | Some "logs" -> //DEBUG
-                      CorrelationPlotApp.View.logList model.corrPlotApp model.semanticApp
+                      CorrelationPlotApp.View.logList model.corrPlotApp model.semanticApp model.annotationApp
                         |> UI.map CorrPlotMessage
                       //CorrelationPlotApp.view model.corrPlotApp
                       //  |> UI.map CorrPlotMessage
-                  | Some "Debug" ->
-                      CorrelationPlotApp.View.view model.corrPlotApp
-                        |> UI.map CorrPlotMessage
+                  //| Some "Debug" ->
+                  //    CorrelationPlotApp.View.view model.corrPlotApp model.annotationApp model.semanticApp
+                  //      |> UI.map CorrPlotMessage
                   | Some "semantics" ->
                       SemanticApp.View.expertGUI model.semanticApp 
                         |> UI.map SemanticAppMessage
@@ -502,15 +502,13 @@ module Pages =
                           style "width:100%;height:100%;"
                           onLayoutChanged UpdateConfig
                       ]
-
           ))))
     
 
   let threads (model : Pages) = 
       CameraController.threads model.camera |> ThreadPool.map CameraMessage
         |> ThreadPool.union (CorrelationPlotApp.threads model.corrPlotApp)
-
-
+        |> ThreadPool.union (SemanticApp.threads model.semanticApp)
 
   let start (runtime: IRuntime) =
       App.start {

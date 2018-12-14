@@ -6,12 +6,12 @@
     open Aardvark.Base
     open Aardvark.Application
     open Aardvark.UI
-    open UI
+    open UIPlus
     open Aardvark.UI.Primitives
 
     type Action = 
       | Clear
-      | ToggleSelectLog        of option<LogId>
+     // | ToggleSelectLog        of option<LogId>
       | SelectLog              of LogId
       //| NewLog                 
       | TogglePoint            of (V3d * AnnotationId)
@@ -215,7 +215,7 @@
         (new V2d (newPosLogCoordinates.X + (logXOffset model log.index),
                     newPosLogCoordinates.Y + log.yOffset))
       let calcSvgPosTo toLog toNode = 
-        (new V2d (toNode.svgPos.X  //TODO content of svgPos.X is 0 for hierarchical nodes
+        (new V2d (toNode.mainBody.pos.X  //TODO content of svgPos.X is 0 for hierarchical nodes
                       + (logXOffset model toLog.index) 
                       + 2.0 *  model.svgOptions.secLevelWidth, //2* so correlation line extends through secondary level
                   newPosLogCoordinates.Y 
@@ -437,21 +437,33 @@
                       currrentYMapping = None
                       selectedBorder   = None
           }
-        | ToggleSelectLog oStr -> 
-          match (oStr = model.selectedLog) with
-            | true  -> {model with selectedLog = None}
-            | false -> {model with selectedLog = oStr}
 
         | SelectLog id ->
           let hasNew = model.logs |> PList.contains (fun x -> x.state = State.New)
           if hasNew then
             model
           else
-            let updLogs =
-                  model.logs
-                      |> PList.map (fun log -> {log with state = State.Display})
+            let (_logs, _sel) =
+              match model.selectedLog with
+                | None -> 
+                  let _logs = 
+                    model.logs
                       |> updateLog id (Log.Action.SetState State.Edit)
-            {model with logs = updLogs}
+                  (_logs, Some id)
+                | Some logId when logId = id ->
+                  let _logs = 
+                    model.logs
+                      |> updateLog id (Log.Action.SetState State.Display)
+                  (_logs, None)
+                | Some logId ->
+                  let _logs = 
+                    model.logs
+                        |> updateLog logId (Log.Action.SetState State.Display)
+                        //|> PList.map (fun log -> {log with state = State.Display})
+                        |> updateLog id (Log.Action.SetState State.Edit)
+                  (_logs, Some id)
+            {model with logs        = _logs
+                        selectedLog = _sel}
           
           
         //| NewLog             -> 
@@ -499,14 +511,14 @@
         | LogAxisAppMessage m -> 
           {model with logAxisApp  = (LogAxisApp.update model.logAxisApp m)}
         | ChangeView m          -> {model with viewType = m}
-        | ChangeXAxis (annoApp, id)     -> 
-          let updLogs = model.logs 
-                          |> PList.map (fun log -> 
-                              Log.update log (Log.ChangeXAxis (annoApp, id, model.svgOptions.xAxisScaleFactor, model.svgOptions))
-                                       )
-          {model with xAxis    = id
-                      logs     = updLogs
-          }
+        //| ChangeXAxis (annoApp, id)     -> 
+        //  let updLogs = model.logs 
+        //                  |> PList.map (fun log -> 
+        //                      Log.update log (Log.ChangeXAxis (annoApp, id, model.svgOptions.xAxisScaleFactor, model.svgOptions))
+        //                               )
+        //  {model with xAxis    = id
+        //              logs     = updLogs
+        //  }
         | ToggleEditCorrelations  -> 
           {model with editCorrelations = not model.editCorrelations}
         | SetSecondaryLevel lvl  -> 
@@ -682,7 +694,6 @@
                   sgs
       }
       |> Sg.dynamic
-
 
     let threads (model : CorrelationPlot) =
       match model.logs.IsEmpty() with
