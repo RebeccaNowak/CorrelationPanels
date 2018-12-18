@@ -9,12 +9,13 @@ open Aardvark.UI
 
   type Action =
   //| ChangeXAxis         of (AnnotationApp * SemanticId * float)
-  | MouseOver           of LogNodeId
-  | ToggleSelectNode    of LogNodeId
-  | BorderMessage       of Border.Action
-  | DrawCorrelation     of BorderId
-  | RectangleMessage    of Svgplus.Rectangle.Action
-  | ColorPickerMessage  of ColorPicker.Action
+    | MouseOver           of LogNodeId
+    | ToggleSelectNode    of LogNodeId
+    | BorderMessage       of Border.Action
+    | DrawCorrelation     of BorderId
+    | RectangleMessage    of Svgplus.Rectangle.Action
+    | ColorPickerMessage  of ColorPicker.Action
+    | RoseDiagramMessage  of Svgplus.RoseDiagram.Action
   //| RoseDiagramMessage  of Svgplus.RoseDiagram.Action
   //| CorrelationButton   of Svgplus.Button.Action
 

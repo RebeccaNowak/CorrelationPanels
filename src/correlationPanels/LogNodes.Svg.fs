@@ -55,6 +55,7 @@
             let _n = Lens.svgWidth.Set  (_n, metricVal * xScaleFactor)
             let _n = Lens.hasAverageWidth.Set(_n, false)
             let draw = ((hierChildren.IsEmptyOrNull ()))
+            
             let _n = Lens.draw.Set (_n, draw)
             _n
 
@@ -66,7 +67,7 @@
         let thisLevelWithPos =
           let setY (prev : LogNode) (n : LogNode) = 
             let sY = startAtY + (LogNodes.Lens.svgHeight.Get prev)
-            Lens.svgY.Set  (n, sY)       
+            Lens.svgY.Set (n, sY)       
           let _nodes = thisLevel |> PList.map (fun n -> Lens.svgY.Set (n, startAtY)) 
           (PList.mapPrev _nodes None setY)
 
@@ -76,7 +77,8 @@
                           if n.children.IsEmptyOrNull () then 
                             {n with children = PList.empty}
                           else 
-                            {n with children = calcPosition startAtY startAtX annoApp n.children}
+                            let _startY = (startAtY + LogNodes.Lens.svgHeight.Get n)
+                            {n with children = calcPosition _startY startAtX annoApp n.children}
                         )
 
       let posDimAll  (startAtY         : float) 
@@ -86,19 +88,19 @@
                      (yScaleFactor     : Option<float>) 
                      (annoApp          : AnnotationApp)
                      (nodes            : plist<LogNode>) = 
-          match nodes.IsEmptyOrNull () with
-            | true  -> (PList.empty, 0.0)
-            | false -> 
-              let factor = 
-                match yScaleFactor with 
-                  | Some factor -> factor
-                  | None        -> calcYScaleFactor availableHeight nodes
-              let _nodes = 
-                nodes
-                 |> LogNodes.Recursive.applyAll 
-                    (fun (n : LogNode) -> calcDim  xScaleFactor factor annoApp n)
-                 |> calcPosition startAtY startAtX annoApp
-              (_nodes, factor)
+        match nodes.IsEmptyOrNull () with
+          | true  -> (PList.empty, 0.0)
+          | false -> 
+            let factor = 
+              match yScaleFactor with 
+                | Some factor -> factor
+                | None        -> calcYScaleFactor availableHeight nodes
+            let _nodes = 
+              nodes
+                |> LogNodes.Recursive.applyAll 
+                  (fun (n : LogNode) -> calcDim  xScaleFactor factor annoApp n)
+                |> calcPosition startAtY startAtX annoApp
+            (_nodes, factor)
     
 
     let rec view  (model        : MLogNode) 
@@ -111,9 +113,13 @@
           |> AList.map (fun c -> view c flags options annoApp)  
       alist {
         let! t = model.nodeType
+        let! draw = model.mainBody.draw
         if t = LogNodeType.Hierarchical then
           let v = (Svgplus.Rectangle.view model.mainBody 
                     |> AList.map (UI.map Action.RectangleMessage))
+          //if draw then
+          //  yield! ((Svgplus.RoseDiagram.view model.roseDiagram) 
+          //            |> AList.map (UI.map RoseDiagramMessage))
           yield! v
         for c in childrenView do
           yield! c

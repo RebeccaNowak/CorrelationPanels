@@ -279,7 +279,20 @@
       open Svg
 
       let createHeader (model   : MGeologicalLog) =
-        () //TODO
+        alist {
+          let label = 
+            Aardvark.UI.Incremental.Svg.text 
+              (AttributeMap.ofAMap 
+                (amap {
+                let! y = model.yOffset
+                yield (Svgplus.Attributes.atf "y" y)
+                yield (Svgplus.Attributes.atf "x" 0.0)
+                yield (Svgplus.Attributes.ats "font-weight" "bold")
+              })) model.label.text
+          yield label 
+
+
+        }
 
 
 
@@ -386,12 +399,11 @@
         let nodeViews = 
           Helpers.mapMinLevelNodes model nodeViewFunction
 
-        nodeViews
+        AList.append nodeViews (createHeader model)
        // AList.append nodeViews (createRoseDiagrams model annoApp flags svgOptions secondaryLvl)
 
 ////////////////////////////////////////////////////////////////////////
 
-      open UIPlus
       open UIPlus
 
       let listView (model       : MGeologicalLog) 
