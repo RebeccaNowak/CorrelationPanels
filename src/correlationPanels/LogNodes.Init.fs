@@ -127,7 +127,7 @@ open Aardvark.UI
        // svgPos       = V2d.OO
       //  svgSize      = Size2D.init
 
-        mainBody     = Svgplus.Rectangle.init 
+        mainBody     = Svgplus.Rectangle.init (RectangleId.newId ())
         roseDiagram  = Svgplus.RoseDiagram.init
         buttonNorth  = Svgplus.Button.init
         buttonSouth  = Svgplus.Button.init

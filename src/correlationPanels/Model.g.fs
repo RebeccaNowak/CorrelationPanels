@@ -17,13 +17,13 @@ module Mutable =
         let _cameraState = Aardvark.UI.Primitives.Mutable.MCameraControllerState.Create(__initial.cameraState)
         let _svgButton = Svgplus.Mutable.MButton.Create(__initial.svgButton)
         let _roseDiagram = Svgplus.Mutable.MRoseDiagram.Create(__initial.roseDiagram)
-        let _rectangle = Svgplus.Mutable.MRectangle.Create(__initial.rectangle)
+        let _diagramApp = Svgplus.Mutable.MDiagramApp.Create(__initial.diagramApp)
         
         member x.currentModel = _currentModel :> IMod<_>
         member x.cameraState = _cameraState
         member x.svgButton = _svgButton
         member x.roseDiagram = _roseDiagram
-        member x.rectangle = _rectangle
+        member x.diagramApp = _diagramApp
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : Test.TestModel) =
@@ -34,7 +34,7 @@ module Mutable =
                 Aardvark.UI.Primitives.Mutable.MCameraControllerState.Update(_cameraState, v.cameraState)
                 Svgplus.Mutable.MButton.Update(_svgButton, v.svgButton)
                 Svgplus.Mutable.MRoseDiagram.Update(_roseDiagram, v.roseDiagram)
-                Svgplus.Mutable.MRectangle.Update(_rectangle, v.rectangle)
+                Svgplus.Mutable.MDiagramApp.Update(_diagramApp, v.diagramApp)
                 
         
         static member Create(__initial : Test.TestModel) : MTestModel = MTestModel(__initial)
@@ -75,9 +75,9 @@ module Mutable =
                     override x.Set(r,v) = { r with roseDiagram = v }
                     override x.Update(r,f) = { r with roseDiagram = f r.roseDiagram }
                 }
-            let rectangle =
-                { new Lens<Test.TestModel, Svgplus.Rectangle>() with
-                    override x.Get(r) = r.rectangle
-                    override x.Set(r,v) = { r with rectangle = v }
-                    override x.Update(r,f) = { r with rectangle = f r.rectangle }
+            let diagramApp =
+                { new Lens<Test.TestModel, Svgplus.DiagramApp>() with
+                    override x.Get(r) = r.diagramApp
+                    override x.Set(r,v) = { r with diagramApp = v }
+                    override x.Update(r,f) = { r with diagramApp = f r.diagramApp }
                 }

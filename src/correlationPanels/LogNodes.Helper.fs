@@ -8,7 +8,7 @@ open CorrelationDrawing
 
 
     let hasChildren (model : MLogNode) =
-      let isEmpty = AList.isEmpty model.children
+      let isEmpty = DS.AList.isEmpty model.children
       Mod.map (fun x -> not x) isEmpty
 
     let hasNodeType (model : MLogNode) (t : LogNodeType) =
@@ -222,12 +222,6 @@ open CorrelationDrawing
 
       _nodes
         
-
-      
-
-
-      
-      
 ///////////////////////////////////////////      
 
 

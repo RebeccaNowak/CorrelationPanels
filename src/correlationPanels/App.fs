@@ -5,27 +5,37 @@ open Aardvark.Base
 open Aardvark.Base.Incremental
 open Aardvark.UI
 open Aardvark.UI.Primitives
+open Svgplus
 
 
-type Message =
+type Action =
     | ToggleModel
-    | ButtonMessage   of Svgplus.Button.Action
+    | ButtonMessage   of Button.Action
     | CameraMessage   of CameraControllerMessage
-    | RDMessage       of Svgplus.RoseDiagram.Action
-    | RectMessage     of Svgplus.Rectangle.Action
+    | RDMessage       of RoseDiagram.Action
+    | DiagramMessage  of DiagramApp.Action
+    | MouseMove       of V2i
 
 module App =
     open Svgplus.Mutable
+    open Svgplus
+    open Aardvark.Base.IL.Frontend
     
-    let initial : TestModel = {
-      currentModel = Primitive.Box
-      cameraState  = CameraController.initial
-      svgButton    = {Svgplus.Button.init with pos = V2d (10.0)}
-      roseDiagram  = {Svgplus.RoseDiagram.init with centre = V2d (100.0)}
-      rectangle    = {Svgplus.Rectangle.init with pos = V2d (200.00)}
-    }
+    let initial : TestModel =
+      {
+        currentModel  = Primitive.Box
+        cameraState   = CameraController.initial
+        svgButton     = {Button.init with pos = V2d (10.0)}
+        roseDiagram   = {RoseDiagram.init with centre = V2d (100.0)}
+        diagramApp    = DiagramApp.init
+      }
 
-    let update (model : TestModel) (msg : Message) =
+    let updateConnections model msg =
+      ConnectionApp.update model.connectionApp 
+                           (ConnectionApp.Action.ButtonMessage msg)
+      
+
+    let update (model : TestModel) (msg : Action) =
         match msg with
             | ToggleModel -> 
                 match model.currentModel with
@@ -37,16 +47,19 @@ module App =
 
             | ButtonMessage msg -> 
               match msg with
-                | Svgplus.Button.Action.OnLeftClick -> 
-                  {model with svgButton = (Svgplus.Button.update model.svgButton msg)
-                              roseDiagram = {model.roseDiagram with 
-                                                centre = model.roseDiagram.centre + 50.0}
-                  }
+                | Svgplus.Button.Action.OnLeftClick p -> 
+                  {model with svgButton = (Svgplus.Button.update model.svgButton msg)}
                 | _ -> {model with svgButton = (Svgplus.Button.update model.svgButton msg)}
             
             | RDMessage msg -> {model with roseDiagram = Svgplus.RoseDiagram.update model.roseDiagram msg}
-            | RectMessage msg -> {model with rectangle = Svgplus.Rectangle.update model.rectangle msg}
-
+            | DiagramMessage msg -> 
+              {model with diagramApp = DiagramApp.update model.diagramApp msg}
+              
+            | MouseMove p -> 
+              {model with diagramApp = 
+                            DiagramApp.update model.diagramApp 
+                                              (DiagramApp.Action.MouseMove p)
+              }
     let view (model : MTestModel) =
         let svgAtts = 
           [
@@ -56,6 +69,7 @@ module App =
             attribute "preserveAspectRatio" "xMinYMin meet"
             attribute "height" "100%"
             attribute "width" "100%"
+            (onMouseMove (fun p -> MouseMove p))
           ] |> AttributeMap.ofList
 
         let button =
@@ -64,13 +78,11 @@ module App =
           } 
         let rose = ((Svgplus.RoseDiagram.view model.roseDiagram) 
                       |> AList.map (UI.map RDMessage))
+      
 
-        let rect = (Svgplus.Rectangle.view model.rectangle)
-                      |> AList.map (UI.map RectMessage)
-
-        let content = button 
-                        |> AList.append rose
-                        |> AList.append rect
+        let content = 
+          (DiagramApp.view model.diagramApp) 
+            |> AList.map (fun d -> d |> UI.map Action.DiagramMessage)
 
         require (GUI.CSS.myCss) (
           body [] [

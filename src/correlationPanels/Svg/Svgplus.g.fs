@@ -21,6 +21,7 @@ module Mutable =
         let _weight = ResetMod.Create(__initial.weight)
         let _countPerBin = MList.Create(__initial.countPerBin)
         
+        member x.id = __current.Value.id
         member x.centre = _centre :> IMod<_>
         member x.outerRadius = _outerRadius :> IMod<_>
         member x.innerRadius = _innerRadius :> IMod<_>
@@ -57,6 +58,12 @@ module Mutable =
     module RoseDiagram =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
+            let id =
+                { new Lens<Svgplus.RoseDiagram, Svgplus.RoseDiagramId>() with
+                    override x.Get(r) = r.id
+                    override x.Set(r,v) = { r with id = v }
+                    override x.Update(r,f) = { r with id = f r.id }
+                }
             let centre =
                 { new Lens<Svgplus.RoseDiagram, Aardvark.Base.V2d>() with
                     override x.Get(r) = r.centre
@@ -101,6 +108,61 @@ module Mutable =
                 }
     
     
+    type MConnectionApp(__initial : Svgplus.ConnectionApp) =
+        inherit obj()
+        let mutable __current : Aardvark.Base.Incremental.IModRef<Svgplus.ConnectionApp> = Aardvark.Base.Incremental.EqModRef<Svgplus.ConnectionApp>(__initial) :> Aardvark.Base.Incremental.IModRef<Svgplus.ConnectionApp>
+        let _connections = MList.Create(__initial.connections)
+        let _connecting = MOption.Create(__initial.connecting)
+        let _mouseposition = ResetMod.Create(__initial.mouseposition)
+        
+        member x.connections = _connections :> alist<_>
+        member x.connecting = _connecting :> IMod<_>
+        member x.mouseposition = _mouseposition :> IMod<_>
+        
+        member x.Current = __current :> IMod<_>
+        member x.Update(v : Svgplus.ConnectionApp) =
+            if not (System.Object.ReferenceEquals(__current.Value, v)) then
+                __current.Value <- v
+                
+                MList.Update(_connections, v.connections)
+                MOption.Update(_connecting, v.connecting)
+                ResetMod.Update(_mouseposition,v.mouseposition)
+                
+        
+        static member Create(__initial : Svgplus.ConnectionApp) : MConnectionApp = MConnectionApp(__initial)
+        static member Update(m : MConnectionApp, v : Svgplus.ConnectionApp) = m.Update(v)
+        
+        override x.ToString() = __current.Value.ToString()
+        member x.AsString = sprintf "%A" __current.Value
+        interface IUpdatable<Svgplus.ConnectionApp> with
+            member x.Update v = x.Update v
+    
+    
+    
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module ConnectionApp =
+        [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+        module Lens =
+            let connections =
+                { new Lens<Svgplus.ConnectionApp, Aardvark.Base.plist<Svgplus.Connection>>() with
+                    override x.Get(r) = r.connections
+                    override x.Set(r,v) = { r with connections = v }
+                    override x.Update(r,f) = { r with connections = f r.connections }
+                }
+            let connecting =
+                { new Lens<Svgplus.ConnectionApp, Microsoft.FSharp.Core.Option<Aardvark.Base.V2d>>() with
+                    override x.Get(r) = r.connecting
+                    override x.Set(r,v) = { r with connecting = v }
+                    override x.Update(r,f) = { r with connecting = f r.connecting }
+                }
+            let mouseposition =
+                { new Lens<Svgplus.ConnectionApp, Aardvark.Base.V2i>() with
+                    override x.Get(r) = r.mouseposition
+                    override x.Set(r,v) = { r with mouseposition = v }
+                    override x.Update(r,f) = { r with mouseposition = f r.mouseposition }
+                }
+    
+    
     type MButton(__initial : Svgplus.Button) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<Svgplus.Button> = Aardvark.Base.Incremental.EqModRef<Svgplus.Button>(__initial) :> Aardvark.Base.Incremental.IModRef<Svgplus.Button>
@@ -115,6 +177,7 @@ module Mutable =
         let _isHovering = ResetMod.Create(__initial.isHovering)
         let _transitionSec = ResetMod.Create(__initial.transitionSec)
         
+        member x.id = __current.Value.id
         member x.pos = _pos :> IMod<_>
         member x.radius = _radius :> IMod<_>
         member x.rHoverChange = _rHoverChange :> IMod<_>
@@ -157,6 +220,12 @@ module Mutable =
     module Button =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
+            let id =
+                { new Lens<Svgplus.Button, Svgplus.ButtonId>() with
+                    override x.Get(r) = r.id
+                    override x.Set(r,v) = { r with id = v }
+                    override x.Update(r,f) = { r with id = f r.id }
+                }
             let pos =
                 { new Lens<Svgplus.Button, Aardvark.Base.V2d>() with
                     override x.Get(r) = r.pos
@@ -231,7 +300,12 @@ module Mutable =
         let _isHovering = ResetMod.Create(__initial.isHovering)
         let _dottedBorder = ResetMod.Create(__initial.dottedBorder)
         let _draw = ResetMod.Create(__initial.draw)
+        let _northWestButton = MButton.Create(__initial.northWestButton)
+        let _northEastButton = MButton.Create(__initial.northEastButton)
+        let _southWestButton = MButton.Create(__initial.southWestButton)
+        let _southEastButton = MButton.Create(__initial.southEastButton)
         
+        member x.id = __current.Value.id
         member x.pos = _pos :> IMod<_>
         member x.dim = _dim :> IMod<_>
         member x.colour = _colour
@@ -241,6 +315,10 @@ module Mutable =
         member x.isHovering = _isHovering :> IMod<_>
         member x.dottedBorder = _dottedBorder :> IMod<_>
         member x.draw = _draw :> IMod<_>
+        member x.northWestButton = _northWestButton
+        member x.northEastButton = _northEastButton
+        member x.southWestButton = _southWestButton
+        member x.southEastButton = _southEastButton
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : Svgplus.Rectangle) =
@@ -256,6 +334,10 @@ module Mutable =
                 ResetMod.Update(_isHovering,v.isHovering)
                 ResetMod.Update(_dottedBorder,v.dottedBorder)
                 ResetMod.Update(_draw,v.draw)
+                MButton.Update(_northWestButton, v.northWestButton)
+                MButton.Update(_northEastButton, v.northEastButton)
+                MButton.Update(_southWestButton, v.southWestButton)
+                MButton.Update(_southEastButton, v.southEastButton)
                 
         
         static member Create(__initial : Svgplus.Rectangle) : MRectangle = MRectangle(__initial)
@@ -272,6 +354,12 @@ module Mutable =
     module Rectangle =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
+            let id =
+                { new Lens<Svgplus.Rectangle, Svgplus.RectangleId>() with
+                    override x.Get(r) = r.id
+                    override x.Set(r,v) = { r with id = v }
+                    override x.Update(r,f) = { r with id = f r.id }
+                }
             let pos =
                 { new Lens<Svgplus.Rectangle, Aardvark.Base.V2d>() with
                     override x.Get(r) = r.pos
@@ -325,4 +413,74 @@ module Mutable =
                     override x.Get(r) = r.draw
                     override x.Set(r,v) = { r with draw = v }
                     override x.Update(r,f) = { r with draw = f r.draw }
+                }
+            let northWestButton =
+                { new Lens<Svgplus.Rectangle, Svgplus.Button>() with
+                    override x.Get(r) = r.northWestButton
+                    override x.Set(r,v) = { r with northWestButton = v }
+                    override x.Update(r,f) = { r with northWestButton = f r.northWestButton }
+                }
+            let northEastButton =
+                { new Lens<Svgplus.Rectangle, Svgplus.Button>() with
+                    override x.Get(r) = r.northEastButton
+                    override x.Set(r,v) = { r with northEastButton = v }
+                    override x.Update(r,f) = { r with northEastButton = f r.northEastButton }
+                }
+            let southWestButton =
+                { new Lens<Svgplus.Rectangle, Svgplus.Button>() with
+                    override x.Get(r) = r.southWestButton
+                    override x.Set(r,v) = { r with southWestButton = v }
+                    override x.Update(r,f) = { r with southWestButton = f r.southWestButton }
+                }
+            let southEastButton =
+                { new Lens<Svgplus.Rectangle, Svgplus.Button>() with
+                    override x.Get(r) = r.southEastButton
+                    override x.Set(r,v) = { r with southEastButton = v }
+                    override x.Update(r,f) = { r with southEastButton = f r.southEastButton }
+                }
+    
+    
+    type MDiagramApp(__initial : Svgplus.DiagramApp) =
+        inherit obj()
+        let mutable __current : Aardvark.Base.Incremental.IModRef<Svgplus.DiagramApp> = Aardvark.Base.Incremental.EqModRef<Svgplus.DiagramApp>(__initial) :> Aardvark.Base.Incremental.IModRef<Svgplus.DiagramApp>
+        let _rectangles = MMap.Create(__initial.rectangles, (fun v -> MRectangle.Create(v)), (fun (m,v) -> MRectangle.Update(m, v)), (fun v -> v))
+        let _connectionApp = MConnectionApp.Create(__initial.connectionApp)
+        
+        member x.rectangles = _rectangles :> amap<_,_>
+        member x.connectionApp = _connectionApp
+        
+        member x.Current = __current :> IMod<_>
+        member x.Update(v : Svgplus.DiagramApp) =
+            if not (System.Object.ReferenceEquals(__current.Value, v)) then
+                __current.Value <- v
+                
+                MMap.Update(_rectangles, v.rectangles)
+                MConnectionApp.Update(_connectionApp, v.connectionApp)
+                
+        
+        static member Create(__initial : Svgplus.DiagramApp) : MDiagramApp = MDiagramApp(__initial)
+        static member Update(m : MDiagramApp, v : Svgplus.DiagramApp) = m.Update(v)
+        
+        override x.ToString() = __current.Value.ToString()
+        member x.AsString = sprintf "%A" __current.Value
+        interface IUpdatable<Svgplus.DiagramApp> with
+            member x.Update v = x.Update v
+    
+    
+    
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module DiagramApp =
+        [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+        module Lens =
+            let rectangles =
+                { new Lens<Svgplus.DiagramApp, Aardvark.Base.hmap<Svgplus.RectangleId,Svgplus.Rectangle>>() with
+                    override x.Get(r) = r.rectangles
+                    override x.Set(r,v) = { r with rectangles = v }
+                    override x.Update(r,f) = { r with rectangles = f r.rectangles }
+                }
+            let connectionApp =
+                { new Lens<Svgplus.DiagramApp, Svgplus.ConnectionApp>() with
+                    override x.Get(r) = r.connectionApp
+                    override x.Set(r,v) = { r with connectionApp = v }
+                    override x.Update(r,f) = { r with connectionApp = f r.connectionApp }
                 }
