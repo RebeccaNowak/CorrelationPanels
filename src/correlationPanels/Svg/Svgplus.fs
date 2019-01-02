@@ -55,7 +55,7 @@ open SimpleTypes
   module ButtonId = 
     let invalid = {id = ""}
     let newId () : ButtonId  = 
-      {id = System.Guid.NewGuid().ToString()}
+      {id = System.Guid.NewGuid().ToString ()}
 
   type ConnectionStatus =
     | NoConnection
@@ -99,7 +99,7 @@ open SimpleTypes
   module RectangleId = 
     let invalid = {id = ""}
     let newId () : RectangleId  = 
-      let id = System.Guid.NewGuid()
+      let id = System.Guid.NewGuid ()
       {id = id.ToString () }
 
   [<DomainType>]
@@ -124,7 +124,32 @@ open SimpleTypes
   }
 
   [<DomainType>]
+  type Header = {
+    label       : string
+  }
+
+  type RectangleStackId = {
+    id        : string 
+  } with
+    member this.isValid = (this.id <> "")
+  module RectangleStackId = 
+    let invalid = {id = ""}
+    let newId () : RectangleStackId  = 
+      let id = System.Guid.NewGuid ()
+      {id = id.ToString () }
+
+  [<DomainType>]
+  type RectangleStack = {
+    [<NonIncremental>]
+    id            : RectangleStackId
+    rectangles    : hmap<RectangleId, Rectangle>
+    order         : plist<RectangleId>
+    pos           : V2d
+
+  }
+
+  [<DomainType>]
   type DiagramApp = {
-    rectangles      : hmap<RectangleId, Rectangle>
+    rectangleStacks : hmap<RectangleStackId, RectangleStack>
     connectionApp   : ConnectionApp
   }

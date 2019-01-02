@@ -16,8 +16,6 @@
       input |> HMap.filter (fun k v -> v.IsSome)
             |> HMap.map (fun k v -> v.Value)
 
-
-
     let toPList (input : hmap<_,'a>)  : plist<'a> =
       input 
           |> HMap.toSeq 

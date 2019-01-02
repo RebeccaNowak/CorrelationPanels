@@ -214,7 +214,25 @@ module PList =
           PList.append (f p c) foo
         bar   
 
-
+  //let rec mapPrev' (keys  : plist<'key>) 
+  //                 (items : hmap<'key, 'b>)
+  //                 (prev  : option<'key>)
+  //                 (f     : 'key -> 'key -> 'b) : hmap<'key, 'b> =
+  //  let current = tryHead keys
+  //  match prev, current with
+  //    | None, None     -> HMap.empty
+  //    | None, Some c   -> 
+  //      HMap.add c (items.Item c) (mapPrev' (tail keys) items current f)
+  //    | Some p, None   -> HMap.empty
+  //    | Some p, Some c -> 
+  //      let _current = (f p c)
+  //      let _items   = (HMap.remove p items)
+  //      let _items   = HMap.update c (fun optv -> _current) _items
+  //      let rest = 
+  //        mapPrev' (tail keys) _items current f
+  //      let bar =
+  //        HMap.add c _current rest
+  //      bar   
 
 module HMap =
   let toSortedPlist (input : hmap<'k,'a>) (projection : ('a -> 'b)) : plist<'a> =
@@ -257,9 +275,6 @@ module HMap =
     let keys = (keys input)
     let values = (values input)
     List.zip values keys
-
-
-  
   
   let inline negate2 (f : 'a -> 'b -> bool) (a : 'a) (b : 'b) =
     not (f a b)

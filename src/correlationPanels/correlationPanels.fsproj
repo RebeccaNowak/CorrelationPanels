@@ -44,6 +44,8 @@
 	<Compile Include="Svg\SvgButtonApp\Svg.ButtonApp.fs" />
 	<Compile Include="Svg\ConnectionApp\ConnectionApp.fs" />
 	<Compile Include="Svg\RectangleApp\RectangleApp.fs" />
+	<Compile Include="Svg\HeaderApp\Header.fs" />
+	<Compile Include="Svg\RStackApp\RStackApp.fs" />
 	<Compile Include="Svg\DiagramApp\DiagramApp.fs" />
 	<Content Include="docking.css">
 	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

@@ -440,13 +440,112 @@ module Mutable =
                 }
     
     
+    type MHeader(__initial : Svgplus.Header) =
+        inherit obj()
+        let mutable __current : Aardvark.Base.Incremental.IModRef<Svgplus.Header> = Aardvark.Base.Incremental.EqModRef<Svgplus.Header>(__initial) :> Aardvark.Base.Incremental.IModRef<Svgplus.Header>
+        let _label = ResetMod.Create(__initial.label)
+        
+        member x.label = _label :> IMod<_>
+        
+        member x.Current = __current :> IMod<_>
+        member x.Update(v : Svgplus.Header) =
+            if not (System.Object.ReferenceEquals(__current.Value, v)) then
+                __current.Value <- v
+                
+                ResetMod.Update(_label,v.label)
+                
+        
+        static member Create(__initial : Svgplus.Header) : MHeader = MHeader(__initial)
+        static member Update(m : MHeader, v : Svgplus.Header) = m.Update(v)
+        
+        override x.ToString() = __current.Value.ToString()
+        member x.AsString = sprintf "%A" __current.Value
+        interface IUpdatable<Svgplus.Header> with
+            member x.Update v = x.Update v
+    
+    
+    
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module Header =
+        [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+        module Lens =
+            let label =
+                { new Lens<Svgplus.Header, System.String>() with
+                    override x.Get(r) = r.label
+                    override x.Set(r,v) = { r with label = v }
+                    override x.Update(r,f) = { r with label = f r.label }
+                }
+    
+    
+    type MRectangleStack(__initial : Svgplus.RectangleStack) =
+        inherit obj()
+        let mutable __current : Aardvark.Base.Incremental.IModRef<Svgplus.RectangleStack> = Aardvark.Base.Incremental.EqModRef<Svgplus.RectangleStack>(__initial) :> Aardvark.Base.Incremental.IModRef<Svgplus.RectangleStack>
+        let _rectangles = MMap.Create(__initial.rectangles, (fun v -> MRectangle.Create(v)), (fun (m,v) -> MRectangle.Update(m, v)), (fun v -> v))
+        let _order = MList.Create(__initial.order)
+        let _pos = ResetMod.Create(__initial.pos)
+        
+        member x.id = __current.Value.id
+        member x.rectangles = _rectangles :> amap<_,_>
+        member x.order = _order :> alist<_>
+        member x.pos = _pos :> IMod<_>
+        
+        member x.Current = __current :> IMod<_>
+        member x.Update(v : Svgplus.RectangleStack) =
+            if not (System.Object.ReferenceEquals(__current.Value, v)) then
+                __current.Value <- v
+                
+                MMap.Update(_rectangles, v.rectangles)
+                MList.Update(_order, v.order)
+                ResetMod.Update(_pos,v.pos)
+                
+        
+        static member Create(__initial : Svgplus.RectangleStack) : MRectangleStack = MRectangleStack(__initial)
+        static member Update(m : MRectangleStack, v : Svgplus.RectangleStack) = m.Update(v)
+        
+        override x.ToString() = __current.Value.ToString()
+        member x.AsString = sprintf "%A" __current.Value
+        interface IUpdatable<Svgplus.RectangleStack> with
+            member x.Update v = x.Update v
+    
+    
+    
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module RectangleStack =
+        [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+        module Lens =
+            let id =
+                { new Lens<Svgplus.RectangleStack, Svgplus.RectangleStackId>() with
+                    override x.Get(r) = r.id
+                    override x.Set(r,v) = { r with id = v }
+                    override x.Update(r,f) = { r with id = f r.id }
+                }
+            let rectangles =
+                { new Lens<Svgplus.RectangleStack, Aardvark.Base.hmap<Svgplus.RectangleId,Svgplus.Rectangle>>() with
+                    override x.Get(r) = r.rectangles
+                    override x.Set(r,v) = { r with rectangles = v }
+                    override x.Update(r,f) = { r with rectangles = f r.rectangles }
+                }
+            let order =
+                { new Lens<Svgplus.RectangleStack, Aardvark.Base.plist<Svgplus.RectangleId>>() with
+                    override x.Get(r) = r.order
+                    override x.Set(r,v) = { r with order = v }
+                    override x.Update(r,f) = { r with order = f r.order }
+                }
+            let pos =
+                { new Lens<Svgplus.RectangleStack, Aardvark.Base.V2d>() with
+                    override x.Get(r) = r.pos
+                    override x.Set(r,v) = { r with pos = v }
+                    override x.Update(r,f) = { r with pos = f r.pos }
+                }
+    
+    
     type MDiagramApp(__initial : Svgplus.DiagramApp) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<Svgplus.DiagramApp> = Aardvark.Base.Incremental.EqModRef<Svgplus.DiagramApp>(__initial) :> Aardvark.Base.Incremental.IModRef<Svgplus.DiagramApp>
-        let _rectangles = MMap.Create(__initial.rectangles, (fun v -> MRectangle.Create(v)), (fun (m,v) -> MRectangle.Update(m, v)), (fun v -> v))
+        let _rectangleStacks = MMap.Create(__initial.rectangleStacks, (fun v -> MRectangleStack.Create(v)), (fun (m,v) -> MRectangleStack.Update(m, v)), (fun v -> v))
         let _connectionApp = MConnectionApp.Create(__initial.connectionApp)
         
-        member x.rectangles = _rectangles :> amap<_,_>
+        member x.rectangleStacks = _rectangleStacks :> amap<_,_>
         member x.connectionApp = _connectionApp
         
         member x.Current = __current :> IMod<_>
@@ -454,7 +553,7 @@ module Mutable =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
-                MMap.Update(_rectangles, v.rectangles)
+                MMap.Update(_rectangleStacks, v.rectangleStacks)
                 MConnectionApp.Update(_connectionApp, v.connectionApp)
                 
         
@@ -472,11 +571,11 @@ module Mutable =
     module DiagramApp =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
-            let rectangles =
-                { new Lens<Svgplus.DiagramApp, Aardvark.Base.hmap<Svgplus.RectangleId,Svgplus.Rectangle>>() with
-                    override x.Get(r) = r.rectangles
-                    override x.Set(r,v) = { r with rectangles = v }
-                    override x.Update(r,f) = { r with rectangles = f r.rectangles }
+            let rectangleStacks =
+                { new Lens<Svgplus.DiagramApp, Aardvark.Base.hmap<Svgplus.RectangleStackId,Svgplus.RectangleStack>>() with
+                    override x.Get(r) = r.rectangleStacks
+                    override x.Set(r,v) = { r with rectangleStacks = v }
+                    override x.Update(r,f) = { r with rectangleStacks = f r.rectangleStacks }
                 }
             let connectionApp =
                 { new Lens<Svgplus.DiagramApp, Svgplus.ConnectionApp>() with

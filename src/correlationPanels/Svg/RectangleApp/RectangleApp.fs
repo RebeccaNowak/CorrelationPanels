@@ -91,6 +91,18 @@ module Rectangle =
           }
       }
 
+    let pos =
+        { new Lens<Svgplus.Rectangle, Aardvark.Base.V2d>() with
+            override x.Get(r) = V2d (posX.Get r, posY.Get r)
+            override x.Set(r,v) =
+              let _r = posX.Set (r,v.X)
+              posY.Set (_r,v.Y)
+            override x.Update(r,f) =
+              let _v = f (V2d ((posX.Get r), (posY.Get r)))
+              let _r = posX.Set (r,_v.X)
+              posY.Set (_r,_v.Y)
+        }
+
     let colour =
       {new Lens<Svgplus.Rectangle, C4b>() with
         override x.Get(r)   = r.colour.c
@@ -140,8 +152,8 @@ module Rectangle =
 
     let _new = Lens.width.Set (_new, 50.0)
     let _new = Lens.height.Set (_new, 100.0)
-    let _new = Lens.posX.Set (_new, 100.0)
-    let _new = Lens.posY.Set (_new, 100.0)
+    let _new = Lens.posX.Set (_new, 0.0)
+    let _new = Lens.posY.Set (_new, 0.0)
 
     _new
 
