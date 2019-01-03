@@ -5,6 +5,8 @@ open Aardvark.Base
 open Aardvark.Base.Incremental
 open Aardvark.UI
 open Aardvark.UI.Primitives
+open Svgplus.CA
+open Svgplus.DA
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module DiagramApp = 

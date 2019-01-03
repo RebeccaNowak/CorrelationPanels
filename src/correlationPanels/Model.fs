@@ -18,5 +18,5 @@ type TestModel =
         cameraState     : CameraControllerState
         svgButton       : Svgplus.Button
         roseDiagram     : Svgplus.RoseDiagram
-        diagramApp      : Svgplus.DiagramApp
+        diagramApp      : Svgplus.DA.DiagramApp
     }

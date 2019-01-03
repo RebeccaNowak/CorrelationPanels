@@ -24,6 +24,10 @@
       let col = c.ToV3i ()
       V3iToC4b (col - v)
 
+    let inline (++) (c : C4b) (v : V3i) =
+      let col = c.ToV3i ()
+      V3iToC4b (col + v)
+
     let lighten (colour : C4b) =
       C4b(int colour.R - 20, int colour.G - 20, int colour.B - 20)
 

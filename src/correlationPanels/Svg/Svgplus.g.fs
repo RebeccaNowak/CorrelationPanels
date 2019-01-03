@@ -108,61 +108,6 @@ module Mutable =
                 }
     
     
-    type MConnectionApp(__initial : Svgplus.ConnectionApp) =
-        inherit obj()
-        let mutable __current : Aardvark.Base.Incremental.IModRef<Svgplus.ConnectionApp> = Aardvark.Base.Incremental.EqModRef<Svgplus.ConnectionApp>(__initial) :> Aardvark.Base.Incremental.IModRef<Svgplus.ConnectionApp>
-        let _connections = MList.Create(__initial.connections)
-        let _connecting = MOption.Create(__initial.connecting)
-        let _mouseposition = ResetMod.Create(__initial.mouseposition)
-        
-        member x.connections = _connections :> alist<_>
-        member x.connecting = _connecting :> IMod<_>
-        member x.mouseposition = _mouseposition :> IMod<_>
-        
-        member x.Current = __current :> IMod<_>
-        member x.Update(v : Svgplus.ConnectionApp) =
-            if not (System.Object.ReferenceEquals(__current.Value, v)) then
-                __current.Value <- v
-                
-                MList.Update(_connections, v.connections)
-                MOption.Update(_connecting, v.connecting)
-                ResetMod.Update(_mouseposition,v.mouseposition)
-                
-        
-        static member Create(__initial : Svgplus.ConnectionApp) : MConnectionApp = MConnectionApp(__initial)
-        static member Update(m : MConnectionApp, v : Svgplus.ConnectionApp) = m.Update(v)
-        
-        override x.ToString() = __current.Value.ToString()
-        member x.AsString = sprintf "%A" __current.Value
-        interface IUpdatable<Svgplus.ConnectionApp> with
-            member x.Update v = x.Update v
-    
-    
-    
-    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module ConnectionApp =
-        [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-        module Lens =
-            let connections =
-                { new Lens<Svgplus.ConnectionApp, Aardvark.Base.plist<Svgplus.Connection>>() with
-                    override x.Get(r) = r.connections
-                    override x.Set(r,v) = { r with connections = v }
-                    override x.Update(r,f) = { r with connections = f r.connections }
-                }
-            let connecting =
-                { new Lens<Svgplus.ConnectionApp, Microsoft.FSharp.Core.Option<Aardvark.Base.V2d>>() with
-                    override x.Get(r) = r.connecting
-                    override x.Set(r,v) = { r with connecting = v }
-                    override x.Update(r,f) = { r with connecting = f r.connecting }
-                }
-            let mouseposition =
-                { new Lens<Svgplus.ConnectionApp, Aardvark.Base.V2i>() with
-                    override x.Get(r) = r.mouseposition
-                    override x.Set(r,v) = { r with mouseposition = v }
-                    override x.Update(r,f) = { r with mouseposition = f r.mouseposition }
-                }
-    
-    
     type MButton(__initial : Svgplus.Button) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<Svgplus.Button> = Aardvark.Base.Incremental.EqModRef<Svgplus.Button>(__initial) :> Aardvark.Base.Incremental.IModRef<Svgplus.Button>
@@ -536,50 +481,4 @@ module Mutable =
                     override x.Get(r) = r.pos
                     override x.Set(r,v) = { r with pos = v }
                     override x.Update(r,f) = { r with pos = f r.pos }
-                }
-    
-    
-    type MDiagramApp(__initial : Svgplus.DiagramApp) =
-        inherit obj()
-        let mutable __current : Aardvark.Base.Incremental.IModRef<Svgplus.DiagramApp> = Aardvark.Base.Incremental.EqModRef<Svgplus.DiagramApp>(__initial) :> Aardvark.Base.Incremental.IModRef<Svgplus.DiagramApp>
-        let _rectangleStacks = MMap.Create(__initial.rectangleStacks, (fun v -> MRectangleStack.Create(v)), (fun (m,v) -> MRectangleStack.Update(m, v)), (fun v -> v))
-        let _connectionApp = MConnectionApp.Create(__initial.connectionApp)
-        
-        member x.rectangleStacks = _rectangleStacks :> amap<_,_>
-        member x.connectionApp = _connectionApp
-        
-        member x.Current = __current :> IMod<_>
-        member x.Update(v : Svgplus.DiagramApp) =
-            if not (System.Object.ReferenceEquals(__current.Value, v)) then
-                __current.Value <- v
-                
-                MMap.Update(_rectangleStacks, v.rectangleStacks)
-                MConnectionApp.Update(_connectionApp, v.connectionApp)
-                
-        
-        static member Create(__initial : Svgplus.DiagramApp) : MDiagramApp = MDiagramApp(__initial)
-        static member Update(m : MDiagramApp, v : Svgplus.DiagramApp) = m.Update(v)
-        
-        override x.ToString() = __current.Value.ToString()
-        member x.AsString = sprintf "%A" __current.Value
-        interface IUpdatable<Svgplus.DiagramApp> with
-            member x.Update v = x.Update v
-    
-    
-    
-    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module DiagramApp =
-        [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-        module Lens =
-            let rectangleStacks =
-                { new Lens<Svgplus.DiagramApp, Aardvark.Base.hmap<Svgplus.RectangleStackId,Svgplus.RectangleStack>>() with
-                    override x.Get(r) = r.rectangleStacks
-                    override x.Set(r,v) = { r with rectangleStacks = v }
-                    override x.Update(r,f) = { r with rectangleStacks = f r.rectangleStacks }
-                }
-            let connectionApp =
-                { new Lens<Svgplus.DiagramApp, Svgplus.ConnectionApp>() with
-                    override x.Get(r) = r.connectionApp
-                    override x.Set(r,v) = { r with connectionApp = v }
-                    override x.Update(r,f) = { r with connectionApp = f r.connectionApp }
                 }

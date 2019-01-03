@@ -6,6 +6,9 @@ open Aardvark.Base.Incremental
 open Aardvark.UI
 open Aardvark.UI.Primitives
 open Svgplus
+open Svgplus.CA
+open Svgplus.DA
+
 
 
 type Action =

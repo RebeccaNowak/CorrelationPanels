@@ -17,7 +17,7 @@ module Mutable =
         let _cameraState = Aardvark.UI.Primitives.Mutable.MCameraControllerState.Create(__initial.cameraState)
         let _svgButton = Svgplus.Mutable.MButton.Create(__initial.svgButton)
         let _roseDiagram = Svgplus.Mutable.MRoseDiagram.Create(__initial.roseDiagram)
-        let _diagramApp = Svgplus.Mutable.MDiagramApp.Create(__initial.diagramApp)
+        let _diagramApp = Svgplus.DA.Mutable.MDiagramApp.Create(__initial.diagramApp)
         
         member x.currentModel = _currentModel :> IMod<_>
         member x.cameraState = _cameraState
@@ -34,7 +34,7 @@ module Mutable =
                 Aardvark.UI.Primitives.Mutable.MCameraControllerState.Update(_cameraState, v.cameraState)
                 Svgplus.Mutable.MButton.Update(_svgButton, v.svgButton)
                 Svgplus.Mutable.MRoseDiagram.Update(_roseDiagram, v.roseDiagram)
-                Svgplus.Mutable.MDiagramApp.Update(_diagramApp, v.diagramApp)
+                Svgplus.DA.Mutable.MDiagramApp.Update(_diagramApp, v.diagramApp)
                 
         
         static member Create(__initial : Test.TestModel) : MTestModel = MTestModel(__initial)
@@ -76,7 +76,7 @@ module Mutable =
                     override x.Update(r,f) = { r with roseDiagram = f r.roseDiagram }
                 }
             let diagramApp =
-                { new Lens<Test.TestModel, Svgplus.DiagramApp>() with
+                { new Lens<Test.TestModel, Svgplus.DA.DiagramApp>() with
                     override x.Get(r) = r.diagramApp
                     override x.Set(r,v) = { r with diagramApp = v }
                     override x.Update(r,f) = { r with diagramApp = f r.diagramApp }

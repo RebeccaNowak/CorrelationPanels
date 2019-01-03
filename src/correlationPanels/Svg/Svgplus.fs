@@ -62,18 +62,6 @@ open SimpleTypes
     | InProgress
     | Connected
 
-  type Connection = {
-    bFrom     : V2d
-    bTo       : V2d
-  }
-
-  [<DomainType>]
-  type ConnectionApp = {
-    connections   : plist<Connection>
-    connecting    : option<V2d>
-    mouseposition : V2i
-  }
-
 
   [<DomainType>]
   type Button = {
@@ -148,8 +136,5 @@ open SimpleTypes
 
   }
 
-  [<DomainType>]
-  type DiagramApp = {
-    rectangleStacks : hmap<RectangleStackId, RectangleStack>
-    connectionApp   : ConnectionApp
-  }
+
+
