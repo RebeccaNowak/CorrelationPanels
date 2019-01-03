@@ -143,19 +143,19 @@ open CorrelationDrawing
 
     let tryLowestBorder (lst : plist<LogNode>) (annoApp : AnnotationApp)  =
         lst |> PList.map (fun p -> p.lBorder) 
-            |> PList.filterNone
-            |> PList.tryMinBy (fun b -> Border.tryElevation b annoApp)
+            |> DS.PList.filterNone
+            |> DS.PList.tryMinBy (fun b -> Border.tryElevation b annoApp)
 
     let tryHighestBorder (lst : plist<LogNode>) (annoApp : AnnotationApp) =
         lst |> PList.map (fun p -> p.uBorder) 
-            |> PList.filterNone
-            |> PList.tryMaxBy (fun b -> Border.tryElevation b annoApp)
+            |> DS.PList.filterNone
+            |> DS.PList.tryMaxBy (fun b -> Border.tryElevation b annoApp)
 
     let findLowestNode (lst : plist<LogNode>) (annoApp : AnnotationApp)  =
-      lst |> PList.tryMaxBy (fun n -> elevation n annoApp)
+      lst |> DS.PList.tryMaxBy (fun n -> elevation n annoApp)
 
     let findHighestNode (lst : plist<LogNode>) (annoApp : AnnotationApp)  =
-      lst |> PList.tryMinBy (fun n -> elevation n annoApp)      
+      lst |> DS.PList.tryMinBy (fun n -> elevation n annoApp)      
 
 
 /////////////////////////////////////////////////////////////

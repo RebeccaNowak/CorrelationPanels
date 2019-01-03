@@ -37,8 +37,8 @@
           node 
             |> Recursive.metricChildren
             |> List.map (fun n -> Helper.calcMetricValue n annoApp)
-            |> List.filterNone
-            |> List.tryMax
+            |> DS.List.filterNone
+            |> DS.List.tryMax
 
         match metricValue with
           | None  ->
@@ -69,7 +69,7 @@
             let sY = startAtY + (LogNodes.Lens.svgHeight.Get prev)
             Lens.svgY.Set (n, sY)       
           let _nodes = thisLevel |> PList.map (fun n -> Lens.svgY.Set (n, startAtY)) 
-          (PList.mapPrev _nodes None setY)
+          (DS.PList.mapPrev _nodes None setY)
 
 
         thisLevelWithPos 

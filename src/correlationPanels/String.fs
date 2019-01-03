@@ -42,7 +42,7 @@
           | true  -> (hexSeq
                         |> Seq.filter (fun x -> x.IsSome)
                         |> Seq.map (fun x -> x.Value)
-                        |> Seq.properPairwise (fun x y -> x + y) 0)  
+                        |> DS.Seq.properPairwise (fun x y -> x + y) 0)  
           | false -> Seq.empty
       ans
 

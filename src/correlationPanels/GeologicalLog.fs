@@ -78,7 +78,7 @@
           | false ->
             let currentLevel =
               selectedPoints
-                |> HMap.keys
+                |> DS.HMap.keys
                 |> List.map (fun id -> AnnotationApp.getLevel' annoApp semApp id)
                 |> List.min
 
@@ -88,10 +88,10 @@
                   (fun id p -> ( AnnotationApp.getLevel' annoApp semApp id) = currentLevel)
                   selectedPoints
               filtered
-                |> HMap.toSwappedPairList
+                |> DS.HMap.toSwappedPairList
                 |> List.map (fun ((p : V3d) ,id) -> 
                               (p, AnnotationApp.findAnnotation annoApp id))
-                |> PairList.filterNone
+                |> DS.PairList.filterNone
                 |> List.sortBy (fun (p, k) -> (p.Length))
         
             let listWithBorders = 
@@ -131,7 +131,7 @@
                         |> HMap.filter (fun a p -> V3d.isElevationBetween p lp up)
 
                     match childrenSelectedPoints.IsEmptyOrNull () with
-                      | true    -> generateNonLevelNodes logId (HMap.toPList childrenAnnos) (lp, la) (up, ua) currentLevel semApp
+                      | true    -> generateNonLevelNodes logId (DS.HMap.toPList childrenAnnos) (lp, la) (up, ua) currentLevel semApp
                       | false   -> 
                         match childrenAnnos.IsEmptyOrNull () with
                           | true  -> PList.empty
@@ -200,7 +200,7 @@
                                 opts.xAxisScaleFactor optMapper
                                 annoApp nodes
 
-      let yRange : option<Rangef> = AnnotationPoint.tryCalcRange (HMap.toPList annoApp.annotations)
+      let yRange : option<Rangef> = AnnotationPoint.tryCalcRange (DS.HMap.toPList annoApp.annotations)
       let yRange = 
         match yRange with
           | None ->
@@ -529,7 +529,7 @@
             adaptive {
               let! aps = model.annoPoints.Content
               let points =  
-                HMap.toPList aps
+                DS.HMap.toPList aps
                   |> PList.toList
                 
               let head = points |> List.tryHead

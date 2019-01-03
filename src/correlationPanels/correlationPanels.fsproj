@@ -27,6 +27,7 @@
 	<Compile Include="DataStructures\AList.fs" />
 	<Compile Include="DataStructures\HMap.fs" />
 	<Compile Include="DataStructures\AMap.fs" />
+	<Compile Include="DataStructures\PairList.fs" />
 	<Compile Include="Types.fs" />
 	<Compile Include="Flags.fs" />
 	<Compile Include="UIMapping.fs" />

@@ -161,11 +161,11 @@
             let min =
               logs 
                 |> PList.map (fun log -> log.nativeYRange.min)
-                |> PList.tryMinBy (fun x -> x)
+                |> DS.PList.tryMinBy (fun x -> x)
             let max =
               logs 
                 |> PList.map (fun log -> log.nativeYRange.max)
-                |> PList.tryMaxBy (fun x -> x)
+                |> DS.PList.tryMaxBy (fun x -> x)
             Option.map2 (fun min max -> {min = min; max = max}) min max
                
     let yToSvg' (model : MCorrelationPlot) (y : float)  =
@@ -296,7 +296,7 @@
               | Some o -> o
               | None   -> SemanticId.invalid
           | _ -> model.xAxis
-      let yRangeNewLog = AnnotationPoint.tryCalcRange (HMap.toPList annoApp.annotations) //TODO taking all annos in the model > filter?
+      let yRangeNewLog = AnnotationPoint.tryCalcRange (DS.HMap.toPList annoApp.annotations) //TODO taking all annos in the model > filter?
       let yRangePrev = (tryCalcAllLogsRange model)
       let (model, yOffset) = 
         match yRangeNewLog, yRangePrev with
@@ -356,7 +356,7 @@
           || (x.toBorder.logId = logId)
       let updCorr = 
         model.correlations
-          |> PList.deleteAll f
+          |> DS.PList.deleteAll f
       {model with correlations = updCorr}
 
     let indexOf (logs : plist<GeologicalLog>) id =
@@ -439,7 +439,7 @@
           }
 
         | SelectLog id ->
-          let hasNew = model.logs |> PList.contains (fun x -> x.state = State.New)
+          let hasNew = model.logs |> DS.PList.contains (fun x -> x.state = State.New)
           if hasNew then
             model
           else

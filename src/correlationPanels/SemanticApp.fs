@@ -115,7 +115,7 @@ module SemanticApp =
 
   let getSortedList (list    : hmap<SemanticId, Semantic>) 
                     (sortBy  : SemanticsSortingOption) =
-    HMap.toSortedPlist list (sortFunction sortBy)
+    DS.HMap.toSortedPlist list (sortFunction sortBy)
 
   let deleteSemantic (model : SemanticApp)=
       let getAKey (m : hmap<SemanticId, 'a>) =

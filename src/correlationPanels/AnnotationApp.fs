@@ -89,7 +89,7 @@ namespace CorrelationDrawing
     let getSelectedPoints' (model : AnnotationApp) =
         model.annotations
           |> HMap.map (fun k a -> Annotation.getSelected a)
-          |> HMap.filterNone
+          |> DS.HMap.filterNone
           |> HMap.map (fun k (p,a) -> p.point)
 
  
@@ -170,7 +170,7 @@ namespace CorrelationDrawing
     
  
     let view (model : MAnnotationApp)  (semanticApp : MSemanticApp)  =
-      let annos = AMap.valuesToAList model.annotations
+      let annos = DS.AMap.valuesToAList model.annotations
       let domList = 
         alist {
           for a in annos do
@@ -203,7 +203,7 @@ namespace CorrelationDrawing
                (semApp        : MSemanticApp) 
                (cam           : IMod<CameraView>) =    
         
-        let annoSet = AMap.valuesToASet model.annotations
+        let annoSet = DS.AMap.valuesToASet model.annotations
                
         aset {
           for a in annoSet do
