@@ -70,7 +70,8 @@ open Svgplus.DA
           {model with rectangleStacks   = _rects
                       connectionApp     = _cons}
 
-        | ConnectionMessage msg -> model
+        | ConnectionMessage msg -> 
+          {model with connectionApp = ConnectionApp.update model.connectionApp msg}
         | MouseMove p -> 
           {model with connectionApp = ConnectionApp.update model.connectionApp (ConnectionApp.Action.MouseMoved p)}
 
