@@ -9,6 +9,7 @@ module Rectangle =
   open Svgplus.Base
   open SimpleTypes
 
+  let rand = System.Random ()
 
   type Action =
     | OnLeftClick

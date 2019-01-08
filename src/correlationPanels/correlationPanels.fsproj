@@ -51,6 +51,7 @@
 	<Compile Include="Svg\RoseDiagramApp\Svg.RoseDiagramApp.fs" />
 	<Compile Include="Svg\SvgButtonApp\Svg.ButtonApp.fs" />
 	<Compile Include="Svg\ConnectionApp\ConnectionAppTypes.fs" />
+	<Compile Include="Svg\ConnectionApp\Connection.fs" />
 	<Compile Include="Svg\ConnectionApp\ConnectionApp.fs" />
 	<Compile Include="Svg\RectangleApp\RectangleApp.fs" />
 	<Compile Include="Svg\HeaderApp\HeaderType.fs" />

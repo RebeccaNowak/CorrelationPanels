@@ -96,8 +96,9 @@ open Svgplus.RS
            
           {model with rectangleStacks   = _rects
                       connectionApp     = _cons}
-        | HeaderMessage m -> model
-        | ConnectionMessage msg -> model
+
+        | ConnectionMessage msg -> 
+          {model with connectionApp = ConnectionApp.update model.connectionApp msg}
         | MouseMove p -> 
           {model with connectionApp = ConnectionApp.update model.connectionApp (ConnectionApp.Action.MouseMoved p)}
 

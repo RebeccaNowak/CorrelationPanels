@@ -64,16 +64,16 @@ module App =
                                               (DiagramApp.Action.MouseMove p)
               }
     let view (model : MTestModel) =
-        let svgAtts = 
-          [
-            clazz "svgRoot"
-            style "border: 1px solid black"
-            //attribute "viewBox" "0 0 600 400"
-            attribute "preserveAspectRatio" "xMinYMin meet"
-            attribute "height" "100%"
-            attribute "width" "100%"
-            (onMouseMove (fun p -> MouseMove p))
-          ] |> AttributeMap.ofList
+        //let svgAtts = 
+        //  [
+        //    clazz "svgRoot"
+        //    style "border: 1px solid black"
+        //    //attribute "viewBox" "0 0 600 400"
+        //    attribute "preserveAspectRatio" "xMinYMin meet"
+        //    attribute "height" "100%"
+        //    attribute "width" "100%"
+        //    (onMouseMove (fun p -> MouseMove p))
+        //  ] |> AttributeMap.ofList
 
         let button =
           alist {
@@ -82,22 +82,22 @@ module App =
         let rose = ((Svgplus.RoseDiagram.view model.roseDiagram) 
                       |> AList.map (UI.map RDMessage))
       
+        (DiagramApp.view model.diagramApp) |> UI.map Action.DiagramMessage
+        //let content = 
+        //  (DiagramApp.view model.diagramApp) 
+        //    |> AList.map (fun d -> d |> UI.map Action.DiagramMessage)
 
-        let content = 
-          (DiagramApp.view model.diagramApp) 
-            |> AList.map (fun d -> d |> UI.map Action.DiagramMessage)
-
-        require (GUI.CSS.myCss) (
-          body [] [
-              // CameraController.controlledControl m.cameraState CameraMessage frustum (AttributeMap.ofList att) sg
+        //require (GUI.CSS.myCss) (
+        //  body [] [
+        //      // CameraController.controlledControl m.cameraState CameraMessage frustum (AttributeMap.ofList att) sg
                   
-              //div [style "position: fixed; left: 20px; top: 20px"] [
-              //    button [onClick (fun _ -> ToggleModel)] [text "Toggle Model"]
-              //]
+        //      //div [style "position: fixed; left: 20px; top: 20px"] [
+        //      //    button [onClick (fun _ -> ToggleModel)] [text "Toggle Model"]
+        //      //]
 
-              Incremental.Svg.svg svgAtts content
-          ]
-        )
+        //      Incremental.Svg.svg svgAtts content
+        //  ]
+        //)
 
     let app =
         {

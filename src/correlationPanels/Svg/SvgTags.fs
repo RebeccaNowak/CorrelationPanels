@@ -15,7 +15,7 @@
 
       let inline rect (a : AttributeMap<'msg>) (x : alist<DomNode<'msg>>) = elemNS "rect" svgNS a x
 
-
+      let inline foreignObject a x = elemNS "foreignobject" Svg.svgNS a x
 
 
 

@@ -5,9 +5,10 @@
   open Aardvark.UI
 
   module Labels =
+    let textLabel (text : IMod<string>) =
+      label [clazz "ui horizontal label"] [Incremental.text text]
+
     module Incremental = 
-
-
       let label (text : IMod<string>) (bgColour : IMod<C4b>) =
         let css =
           amap {
