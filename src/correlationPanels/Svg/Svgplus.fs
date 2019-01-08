@@ -80,6 +80,9 @@ open SimpleTypes
     transitionSec   : float
   }
 
+
+
+
   type RectangleId = {
     id        : string 
   } with
@@ -111,30 +114,8 @@ open SimpleTypes
     southEastButton : Button
   }
 
-  [<DomainType>]
-  type Header = {
-    label       : string
-  }
 
-  type RectangleStackId = {
-    id        : string 
-  } with
-    member this.isValid = (this.id <> "")
-  module RectangleStackId = 
-    let invalid = {id = ""}
-    let newId () : RectangleStackId  = 
-      let id = System.Guid.NewGuid ()
-      {id = id.ToString () }
 
-  [<DomainType>]
-  type RectangleStack = {
-    [<NonIncremental>]
-    id            : RectangleStackId
-    rectangles    : hmap<RectangleId, Rectangle>
-    order         : plist<RectangleId>
-    pos           : V2d
-
-  }
 
 
 

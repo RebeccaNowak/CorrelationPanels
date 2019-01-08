@@ -34,6 +34,14 @@
 	<Compile Include="Math.fs" />
 	<Compile Include="UIEvents.fs" />
 	<Compile Include="UI.CSS.fs" />
+	<Compile Include="UIPlus\UIPlus.fs" />
+	<Compile Include="UIPlus\UI.Tooltips.fs" />
+	<Compile Include="UIPlus\UI.Menus.fs" />
+	<Compile Include="UIPlus\UI.Table.fs" />
+	<Compile Include="UIPlus\UI.Buttons.fs" />
+	<Compile Include="UIPlus\UI.Flags.fs" />
+	<Compile Include="UIPlus\UI.Labels.fs" />
+	<Compile Include="UIPlus\ArrowButton\ArrowButtonApp.fs" />
 	<Compile Include="Svg\Svgplus.fs" />
 	<Compile Include="Svg\SvgTags.fs" />
 	<Compile Include="Svg\Svg.Attributes.fs" />
@@ -45,7 +53,9 @@
 	<Compile Include="Svg\ConnectionApp\ConnectionAppTypes.fs" />
 	<Compile Include="Svg\ConnectionApp\ConnectionApp.fs" />
 	<Compile Include="Svg\RectangleApp\RectangleApp.fs" />
-	<Compile Include="Svg\HeaderApp\Header.fs" />
+	<Compile Include="Svg\HeaderApp\HeaderType.fs" />
+	<Compile Include="Svg\HeaderApp\HeaderApp.fs" />
+	<Compile Include="Svg\RStackApp\RStackType.fs" />
 	<Compile Include="Svg\RStackApp\RStackApp.fs" />
 	<Compile Include="Svg\DiagramApp\DiagramAppTypes.fs" />
 	<Compile Include="Svg\DiagramApp\DiagramApp.fs" />
@@ -61,12 +71,6 @@
 	<Content Include="semui-overrides.css">
 	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	</Content>
-	<Compile Include="UIPlus\UI.Tooltips.fs" />
-	<Compile Include="UIPlus\UI.Menus.fs" />
-	<Compile Include="UIPlus\UI.Table.fs" />
-	<Compile Include="UIPlus\UI.Buttons.fs" />
-	<Compile Include="UIPlus\UI.Flags.fs" />
-	<Compile Include="UIPlus\UI.Labels.fs" />
 	<Compile Include="Debug.fs" />
 	<Compile Include="tmpAList.fs" />
 	<Compile Include="V2d.fs" />
