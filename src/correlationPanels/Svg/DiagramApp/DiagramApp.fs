@@ -14,7 +14,7 @@ open Svgplus.RS
 
     type Action =
         | RectStackMessage  of (RectangleStackId * RectangleStack.Action)
-        | HeaderMessage     of Header.Action
+        //| HeaderMessage     of Header.Action
         | MouseMove         of V2i
         | ConnectionMessage of ConnectionApp.Action
         

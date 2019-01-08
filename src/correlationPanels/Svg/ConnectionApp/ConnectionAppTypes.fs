@@ -16,12 +16,14 @@ open Svgplus
   [<DomainType>]
   type Connection = {
     [<NonIncremental>]
-    id    : ConnectionId
-    bFrom   : IMod<V2d>
-    bTo     : IMod<V2d>
-    dotted  : bool
-    colour  : C4b
-    weight  : float
+    id          : ConnectionId
+    bFrom       : IMod<V2d>
+    bTo         : IMod<V2d>
+    dotted      : bool
+    colour      : C4b
+    weight      : float
+    dashLength  : float
+    dashDist    : float
     //bFrom     : Lens<'a,V2d>
     //bTo       : Lens<'a,V2d>
     //mFrom     : 'ma -> IMod<V2d>

@@ -137,7 +137,7 @@
     
       let content =
         alist {
-          yield (Header.view model.header) |> UI.map HeaderMessage
+          //yield (Header.view model.header) |> UI.map HeaderMessage
           for id in model.order do
             let! r = AMap.find id model.rectangles 
             yield! (viewMap r id RectangleMessage)

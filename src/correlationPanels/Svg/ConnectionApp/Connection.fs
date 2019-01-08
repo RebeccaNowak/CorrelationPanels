@@ -21,6 +21,8 @@
         colour = C4b.Black
         dotted = false
         weight = 5.0
+        dashLength = 2.0
+        dashDist   = 2.0
       }
 
     let update (model : Connection) (a : Action) =
@@ -36,12 +38,20 @@
          
 
     let view (model : MConnection) =
+      let actions = MouseActions.init ()
       alist {
         let! fr = model.bFrom
         let! t  = model.bTo
-        let actions = MouseActions.init ()
+        let! dotted = model.dotted
+        let dNode = 
+          match dotted with
+            | true ->
+              (Incremental.drawDottedLine fr t model.colour model.weight model.dashLength model.dashDist actions)
+            | false ->
+              (Incremental.drawLine fr t model.colour model.weight actions)
+              
                        
-        let dNode = (Incremental.drawLine fr t model.colour model.weight actions)
+        
         yield dNode |> UI.map MouseMessage
       }
       

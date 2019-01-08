@@ -18,6 +18,8 @@ module Mutable =
         let _dotted = ResetMod.Create(__initial.dotted)
         let _colour = ResetMod.Create(__initial.colour)
         let _weight = ResetMod.Create(__initial.weight)
+        let _dashLength = ResetMod.Create(__initial.dashLength)
+        let _dashDist = ResetMod.Create(__initial.dashDist)
         
         member x.id = __current.Value.id
         member x.bFrom = _bFrom :> IMod<_>
@@ -25,6 +27,8 @@ module Mutable =
         member x.dotted = _dotted :> IMod<_>
         member x.colour = _colour :> IMod<_>
         member x.weight = _weight :> IMod<_>
+        member x.dashLength = _dashLength :> IMod<_>
+        member x.dashDist = _dashDist :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : Svgplus.CA.Connection) =
@@ -36,6 +40,8 @@ module Mutable =
                 ResetMod.Update(_dotted,v.dotted)
                 ResetMod.Update(_colour,v.colour)
                 ResetMod.Update(_weight,v.weight)
+                ResetMod.Update(_dashLength,v.dashLength)
+                ResetMod.Update(_dashDist,v.dashDist)
                 
         
         static member Create(__initial : Svgplus.CA.Connection) : MConnection = MConnection(__initial)
@@ -87,6 +93,18 @@ module Mutable =
                     override x.Get(r) = r.weight
                     override x.Set(r,v) = { r with weight = v }
                     override x.Update(r,f) = { r with weight = f r.weight }
+                }
+            let dashLength =
+                { new Lens<Svgplus.CA.Connection, System.Double>() with
+                    override x.Get(r) = r.dashLength
+                    override x.Set(r,v) = { r with dashLength = v }
+                    override x.Update(r,f) = { r with dashLength = f r.dashLength }
+                }
+            let dashDist =
+                { new Lens<Svgplus.CA.Connection, System.Double>() with
+                    override x.Get(r) = r.dashDist
+                    override x.Set(r,v) = { r with dashDist = v }
+                    override x.Update(r,f) = { r with dashDist = f r.dashDist }
                 }
     
     

@@ -12,16 +12,15 @@
 
 
     type Action =
-      | LeftArrowMessage of ArrowButtonApp.Action
-      | RightArrowMessage of ArrowButtonApp.Action
+      | LeftArrowMessage of Button.Action
+      | RightArrowMessage of Button.Action
 
     let init : Header =
       let left = 
-        {ArrowButtonApp.init (ArrowButtonId.newId ())
-          with direction = Direction.Left}
+        Button.init 
+          
       let right = 
-        {ArrowButtonApp.init (ArrowButtonId.newId ())
-          with direction = Direction.Right}
+        Button.init
       {
         pos           = V2d.OO
         dim           = {width = 50.0; height = 50.0}
@@ -69,10 +68,10 @@
         
       let content =
         alist {
-          yield ((ButtonApp.view model.leftButton)  |> UI.map LeftArrowMessage)
-          yield (Incremental.Svg.text model.label)
-          yield ((ButtonApp.view model.rightButton) |> UI.map LeftArrowMessage)
+          yield ((Button.view model.leftButton)  |> UI.map LeftArrowMessage)
+          yield ((Button.view model.rightButton) |> UI.map LeftArrowMessage)
         }
+      content
 
      
 
