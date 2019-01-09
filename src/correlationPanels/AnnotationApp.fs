@@ -4,6 +4,7 @@ namespace CorrelationDrawing
   open Aardvark.Base.Incremental
   open Aardvark.SceneGraph
   open Aardvark.UI
+  open Aardvark.Application
   open UIPlus
 
 
@@ -16,6 +17,7 @@ namespace CorrelationDrawing
       | AddAnnotation           of Annotation
       | DeselectAllPoints       
       | SelectPoints            of hmap<AnnotationId, V3d>
+      | KeyDown                 of key : Keys 
 
 
     let initial : AnnotationApp = {
@@ -124,6 +126,16 @@ namespace CorrelationDrawing
         | Clear                -> {model with annotations        = HMap.empty
                                               selectedAnnotation = None
                                   }
+
+        | KeyDown k ->
+          match k with 
+            | Keys.Delete ->
+              {model with 
+                annotations = 
+                  HMap.filter (fun id a -> not (Annotation.isSelected a)) model.annotations
+              }
+            | _ -> model
+
         | AnnotationMessage m  -> 
             {model with annotations = model.annotations 
                                         |> HMap.map (fun k a -> Annotation.update m a)}
@@ -207,7 +219,7 @@ namespace CorrelationDrawing
                
         aset {
           for a in annoSet do
-                yield! ((Annotation.Sg.view a cam semApp) 
+                yield! ((Annotation.Sg.view a cam semApp false) 
                            |> ASet.map (fun x -> x |> Sg.map AnnotationMessage))
         } |> Sg.set        
         

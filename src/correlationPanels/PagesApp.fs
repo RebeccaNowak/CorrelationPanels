@@ -59,16 +59,19 @@ module Pages =
                 // element {id "render"; title "Render View"; weight 5}
                 horizontal 0.1 [
                   element { id "controls"; title "Controls"; weight 0.08 }
-                  vertical 0.5 [
-                    horizontal 0.5 [
-                      element {id "render"; title "Render View"; weight 0.4}
-                      element {id "semantics"; title "Semantics"; weight 0.6}
+                  vertical 0.6 [
+                    horizontal 1.0 [
+                      element {id "render"; title "Render View"; weight 1.0}
+                      stack 0.1 (Some "semanticsMini") [
+                        dockelement {id "semanticsMini"; title "Simple view"; weight 1.0}
+                        dockelement {id "semantics"; title "Expert view"; weight 1.0}
+                      ]
                     ]
-                    horizontal 0.5 [
-                      element { id "svg"; title "Correlation Panel"; weight 0.5}
+                    stack 1.0 (Some "svg") [
+                      dockelement { id "svg"; title "Correlation Panel"; weight 0.5}
                       //stack 1.0 (Some "render") [dockelement {id "logs"; title "Logs"; weight 5};
                       //                           dockelement {id "debug"; title "Debug"; weight 1}]
-                      element { id "logs"; title "Logs: Debug"; weight 0.5}
+                      dockelement { id "logs"; title "Logs: Debug"; weight 0.5}
                         //dockelement { id "annotations"; title "Annotations"; weight 1.0}
                     ]
                   ]
@@ -180,8 +183,8 @@ module Pages =
             | _ -> model.annotationApp
         {
           model with 
-            drawingApp = updateDrawingApp (CorrelationDrawing.KeyDown k)
-            annotationApp = annoApp
+            drawingApp    = updateDrawingApp (CorrelationDrawing.KeyDown k)
+            annotationApp = AnnotationApp.update annoApp (AnnotationApp.KeyDown k)
             camera     = updateCamera (CameraController.Message.KeyDown k)
         }
 
@@ -485,6 +488,11 @@ module Pages =
                   | Some "semantics" ->
                       SemanticApp.View.expertGUI model.semanticApp 
                         |> UI.map SemanticAppMessage
+
+                  | Some "semanticsMini" ->
+                      SemanticApp.View.simpleView model.semanticApp 
+                        |> UI.map SemanticAppMessage
+             
              
                   | Some "annotations" ->
                     require (GUI.CSS.myCss) (

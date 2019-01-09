@@ -16,6 +16,9 @@
       let intoTd (domNode) = 
         td [clazz "center aligned"] [domNode]
 
+      let intoLeftAlignedTd (domNode) =
+        td [clazz "left aligned"] [domNode]
+
       let intoTd' domNode colSpan = 
         td [clazz "center aligned";
             style GUI.CSS.lrPadding;
