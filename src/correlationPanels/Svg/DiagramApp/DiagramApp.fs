@@ -17,12 +17,23 @@ open Svgplus.RS
         //| HeaderMessage     of Header.Action
         | MouseMove         of V2i
         | ConnectionMessage of ConnectionApp.Action
+        | AddStack          of RectangleStack
         
 
-    let init : DiagramApp =
-      let s1 = RectangleStack.init (RectangleStackId.newId ())
-      let s2 = RectangleStack.init (RectangleStackId.newId ())
-      let s3 = RectangleStack.init (RectangleStackId.newId ())
+    let init : DiagramApp = 
+      {
+        rectangleStacks    = HMap.empty
+        order              = PList.empty
+        connectionApp      = ConnectionApp.init
+        rstackGap          = 50.0
+        marginLeft         = 50.0
+        marginTop          = 50.0
+      }
+
+    let sampleInit : DiagramApp =
+      let s1 = RectangleStack.initSample (RectangleStackId.newId ())
+      let s2 = RectangleStack.initSample (RectangleStackId.newId ())
+      let s3 = RectangleStack.initSample (RectangleStackId.newId ())
 
       let _p1 = (V2d (0.0, 50.0))
       let _p2 = (V2d (RectangleStack.width s1 * 2.0, 50.0))
@@ -47,34 +58,51 @@ open Svgplus.RS
       //    yield (s3.id, Header.init)
       //  ] |> HMap.ofList
 
-      {
+      {init with 
         rectangleStacks    = smap
         order              = order
         connectionApp      = ConnectionApp.init
       }
 
     let layout (model : DiagramApp) =
-      let f (prev : RectangleStack) (curr : RectangleStack) =
-        let _pos =
-          let cx = prev.pos.X + (RectangleStack.width prev)
-          V2d (cx,curr.pos.Y)
-        RectangleStack.Lens.pos.Set (curr, _pos)
+      match model.order.Count > 0 with
+        | true ->
+          let clean = 
+            model.rectangleStacks
+              |> HMap.map (fun id s -> RectangleStack.Lens.pos.Set (s, V2d 0.0))
+              |> HMap.update (model.order.Item 0) 
+                             (fun opts -> RectangleStack.Lens.pos.Set (opts.Value, V2d (model.marginLeft, 0.0))) //hack
 
-      let _rs = 
-        DS.PList.mapPrev' model.order  model.rectangleStacks None f
-      {model with rectangleStacks = _rs}
+          let f (prev : RectangleStack) (curr : RectangleStack) =
+            let _pos =
+              let cx = model.rstackGap + prev.pos.X + (RectangleStack.width prev)
+              V2d (cx,curr.pos.Y)
+            RectangleStack.Lens.pos.Set (curr, _pos)
+
+          let _rs = 
+            DS.PList.mapPrev' model.order clean None f
+          {model with rectangleStacks = _rs}
+        | false -> model
 
     let update (model : DiagramApp) (msg : Action) =
       let updateRect (optr : option<RectangleStack>) (m : RectangleStack.Action) = 
         match optr with
           | Some r -> RectangleStack.update r m
-          | None   -> RectangleStack.init (RectangleStackId.newId ())
+          | None   -> RectangleStack.initSample (RectangleStackId.newId ())
 
       let updateConnections model msg =
         ConnectionApp.update model.connectionApp 
                               (ConnectionApp.Action.ButtonMessage msg)
 
       match msg with
+        | AddStack r ->
+          let _r = model.rectangleStacks.Add (r.id,r)
+          let _order = model.order.Append r.id
+          {model with
+            rectangleStacks = _r
+            order           = _order
+          } |> layout
+
         | RectStackMessage msg -> 
           let (id, m) = msg
           let _rects = model.rectangleStacks 
@@ -102,8 +130,25 @@ open Svgplus.RS
         | MouseMove p -> 
           {model with connectionApp = ConnectionApp.update model.connectionApp (ConnectionApp.Action.MouseMoved p)}
 
-
     let view (model : MDiagramApp) =
+      let rectangles = 
+        let foo = 
+          RectangleStack.view >> UIMapping.mapAListId  
+        model.rectangleStacks 
+                    |> AMap.map (fun k r -> foo r k RectStackMessage) 
+                    |> DS.AMap.toFlatAList
+
+      let connections = 
+        (ConnectionApp.view model.connectionApp) 
+          |> UIMapping.mapAList (Action.ConnectionMessage)
+
+      let content = rectangles 
+                      //|> AList.append headers
+                      |> AList.append connections
+                      
+      content
+
+    let standaloneView (model : MDiagramApp) =
 
       let rectangles = 
         let foo = 

@@ -151,18 +151,20 @@ module PList =
                    (prev  : option<'key>)
                    (f     : 'b -> 'b -> 'b) : hmap<'key, 'b> =
     let current = tryHead keys
-    match prev, current with
-      | None, None     -> HMap.empty
-      | None, Some c   -> 
-        HMap.add c (items.Item c) (mapPrev' (tail keys) items current f)
-      | Some p, None   -> HMap.empty
-      | Some p, Some c -> 
-        let prev = items.Item p
-        let curr = items.Item c
-        let _current = (f prev curr)
-        let _items   = HMap.update c (fun optv -> _current) items
-        let rest = 
-          mapPrev' (tail keys) _items current f
-        let bar =
-          HMap.add c _current rest
-        bar   
+    let result = 
+      match prev, current with
+        | None, None     -> HMap.empty
+        | None, Some c   -> 
+          HMap.add c (items.Item c) (mapPrev' (tail keys) items current f)
+        | Some p, None   -> HMap.empty
+        | Some p, Some c -> 
+          let prev = items.Item p
+          let curr = items.Item c
+          let _current = (f prev curr)
+          let _items   = HMap.update c (fun optv -> _current) items
+          let rest = 
+            mapPrev' (tail keys) _items current f
+          let bar =
+            HMap.add c _current rest
+          bar   
+    result

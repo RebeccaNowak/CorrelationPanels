@@ -243,8 +243,9 @@ module Pages =
           let updModel = //TODO refactor
             {model.corrPlotApp with 
               correlationPlot = {model.corrPlotApp.correlationPlot with selectedPoints = sel}}
-                                                                        //annotations    = model.annotationApp.annotations}}
-          CorrelationPlotApp.update model.annotationApp updModel m
+          let _corrPlot = 
+            CorrelationPlotApp.update model.annotationApp updModel m
+          _corrPlot
 
         let (annoApp, corrPlotApp) =
           match m with 
@@ -254,9 +255,6 @@ module Pages =
                   let selPoints = CorrelationPlot.getPointsOfLog model.corrPlotApp.correlationPlot id
                   let upd =
                     AnnotationApp.update model.annotationApp AnnotationApp.DeselectAllPoints
-                  let selPoints =
-                    selPoints
-                     // |> List.map (fun ((p : V3d),(a : AnnotationId)) -> (p, a))
                   let annoApp = 
                     AnnotationApp.update upd (AnnotationApp.SelectPoints selPoints)
                   let cPlot =
@@ -411,11 +409,11 @@ module Pages =
           model.camera.view 
           model.sgFlags) |> List.map (fun x -> x |> Sg.map CorrelationDrawingMessage) 
 
-      let corrSg = 
-        (CorrelationPlot.getLogConnectionSgs 
-          model.corrPlotApp.correlationPlot 
-          model.semanticApp 
-          model.camera) |> Sg.map CorrPlotMessage
+      //let corrSg = 
+      //  (CorrelationPlot.getLogConnectionSgs 
+      //    model.corrPlotApp.correlationPlot 
+      //    model.semanticApp 
+      //    model.camera) |> Sg.map CorrPlotMessage
       let frustum = Mod.constant (Frustum.perspective 60.0 0.1 100.0 1.0)
       
       require (GUI.CSS.myCss) (
@@ -435,7 +433,7 @@ module Pages =
                                     attribute "style" "width:100%; height: 100%; float: left;"]
                         )
 
-                        (drawingSgList @ [annoSg; corrSg]
+                        (drawingSgList @ [annoSg]//; corrSg]
                           |> Sg.ofList 
                           |> Sg.fillMode (model.rendering.fillMode)     
                           |> Sg.cullMode (model.rendering.cullMode))                                                                                                             
@@ -477,9 +475,9 @@ module Pages =
                       ]
                     )
 
-                  | Some "logs" -> //DEBUG
-                      CorrelationPlotApp.View.logList model.corrPlotApp model.semanticApp model.annotationApp
-                        |> UI.map CorrPlotMessage
+                  //| Some "logs" -> //DEBUG
+                  //    CorrelationPlotApp.View.logList model.corrPlotApp model.semanticApp model.annotationApp
+                  //      |> UI.map CorrPlotMessage
                       //CorrelationPlotApp.view model.corrPlotApp
                       //  |> UI.map CorrPlotMessage
                   //| Some "Debug" ->

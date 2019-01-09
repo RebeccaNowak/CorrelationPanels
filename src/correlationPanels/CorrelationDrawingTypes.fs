@@ -448,23 +448,11 @@ type LogAxisApp = {
 type GeologicalLog = {
     [<NonIncremental;PrimaryKey>]
     id          : LogId
-
-    index       : int
-
+    stackId     : Svgplus.RS.RectangleStackId
     state        : State
-    isVisible    : bool
 
-    isSelected   : bool
-    label        : TextInput
-    annoPoints   : hmap<AnnotationId, V3d>
     nodes        : plist<LogNode>
-    nativeYRange : Rangef
-    svgMaxX      : float
-    camera       : CameraControllerState
-
-    semanticApp  : SemanticApp
-    xAxis        : SemanticId
-    yOffset      : float
+    annoPoints   : hmap<AnnotationId, V3d>
 }
 
 [<DomainType>]
@@ -496,7 +484,8 @@ type SvgOptions = {
 
 [<DomainType>]
 type CorrelationPlot = {
-   logs                : plist<GeologicalLog>
+   diagramApp          : Svgplus.DA.DiagramApp
+   logs                : hmap<LogId, GeologicalLog>
    correlations        : plist<Correlation>
    selectedBorder      : Option<Border>
    //aardvark dies: selectedBorder      : Option<(Border * V2d)>

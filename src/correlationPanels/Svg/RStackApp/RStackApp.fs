@@ -14,29 +14,53 @@
 
     type Action =
       | RectangleMessage of (RectangleId * Rectangle.Action)
+      | AddRectangle     of Rectangle
       | HeaderMessage    of Header.Action
       | UpdatePosition   of V2d
       | Delete
 
     let stack (model : RectangleStack) =
-      let f (prev : Rectangle) (curr : Rectangle) =
-        let cposy = prev.pos.Y + prev.dim.height
-        Rectangle.Lens.posY.Set (curr, cposy)
-      let _rs = 
-        DS.PList.mapPrev' model.order  model.rectangles None f
+      match model.order.Count > 0 with
+        | true ->
+          let clean = 
+            model.rectangles
+              |> HMap.map (fun id r -> Rectangle.Lens.pos.Set (r, V2d 0.0))
 
-      let maxWidth = model.rectangles 
-                      |> DS.HMap.values
-                      |> List.map (fun r -> r.dim.width)
-                      |> List.max
+          let f (prev : Rectangle) (curr : Rectangle) =
+            let cposy = prev.pos.Y + prev.dim.height
+            Rectangle.Lens.posY.Set (curr, cposy)
 
-      let _header = Header.Lens.width.Set (model.header, maxWidth)
-      {
-        model with  rectangles = _rs
-                    header     = _header  
-      }
+          let _rs = 
+            DS.PList.mapPrev' model.order clean None f
 
-    let init id : RectangleStack =
+          let maxWidth = model.rectangles 
+                          |> DS.HMap.values
+                          |> List.map (fun r -> r.dim.width)
+                          |> List.max
+
+          let _header = Header.Lens.width.Set (model.header, maxWidth)
+          {
+            model with  rectangles = _rs
+                        header     = _header  
+          }
+        | false -> model
+
+    let init id rmap order : RectangleStack =
+      let header = Header.init
+
+      let rs = 
+        {
+          id            = id
+          rectangles    = rmap
+          header        = header
+          order         = order
+          pos           = V2d.OO
+        } 
+      
+      let stacked = rs |> stack
+      stacked
+
+    let initSample id : RectangleStack =
       let header = Header.init
 
       let r1 = {Rectangle.init (RectangleId.newId ()) with 
@@ -78,35 +102,48 @@
     module Lens =
       let pos =
         { new Lens<RectangleStack, Aardvark.Base.V2d>() with
-            override x.Get(r) = r.pos
-            override x.Set(r,v) =
+            override x.Get(s) = s.pos
+            override x.Set(s,v) =
               let _rectangles = 
-                r.rectangles 
-                  |> HMap.map (fun id r -> Rectangle.Lens.pos.Set (r, r.pos + v))
-              let _header = Header.Lens.pos.Set (r.header, v) 
+                s.rectangles 
+                  |> HMap.map (fun id r -> 
+                                  let _x = v.X
+                                  let _y = r.pos.Y + v.Y
+                                  let _v = V2d (_x, _y)
+                                  Rectangle.Lens.pos.Set (r, _v))
+              let _header = Header.Lens.pos.Set (s.header, v) 
               {
-                  r with  rectangles = _rectangles
+                  s with  rectangles = _rectangles
                           header     = _header
                           pos        = v
               }
-            override x.Update(r,f) =
-              let _v = f r.pos
+            override x.Update(s,f) =
+              let v = f s.pos
               let _rectangles = 
-                r.rectangles 
-                  |> HMap.map (fun id r -> Rectangle.Lens.pos.Set (r, r.pos + _v))
-              let _header = Header.Lens.pos.Set (r.header, _v) 
+                s.rectangles 
+                  |> HMap.map (fun id r -> 
+                                let _x = v.X
+                                let _y = r.pos.Y + v.Y
+                                let _v = V2d (_x, _y)
+                                Rectangle.Lens.pos.Set (r, _v))
+              let _header = Header.Lens.pos.Set (s.header, v) 
               {
-                r with  rectangles = _rectangles
+                s with  rectangles = _rectangles
                         header     = _header
-                        pos        = _v
+                        pos        = v
               }
         }
 
     
     let width (model : RectangleStack) =
-      let folded = 
-        HMap.fold (fun s k v -> s + v.dim.width) 0.0 model.rectangles
-      folded
+      //let folded = 
+      //  HMap.fold (fun s k v -> s + v.dim.width) 0.0 model.rectangles
+      let max =
+        (DS.HMap.values model.rectangles  )
+          |> List.map (fun r -> Rectangle.Lens.width.Get r)
+          |> List.max
+      max
+      
 
     let height (model : RectangleStack) =
       let folded = 
@@ -120,6 +157,9 @@
           | None   -> Rectangle.init (RectangleId.newId ())    
 
       match action with 
+        | AddRectangle r -> 
+          let _rectangles = model.rectangles.Add (r.id, r)
+          {model with rectangles = _rectangles} |> stack
         | UpdatePosition v -> Lens.pos.Set (model, v)
         | Delete           -> model
         | RectangleMessage msg ->
@@ -132,6 +172,23 @@
 
 
     let view (model : MRectangleStack) =
+
+        //    let createHeader (model   : MGeologicalLog) =
+        //alist {
+        //  let label = 
+        //    Aardvark.UI.Incremental.Svg.text 
+        //      (AttributeMap.ofAMap 
+        //        (amap {
+        //        let! y = model.yOffset
+        //        yield (Svgplus.Attributes.atf "y" y)
+        //        yield (Svgplus.Attributes.atf "x" 0.0)
+        //        yield (Svgplus.Attributes.ats "font-weight" "bold")
+        //      })) model.label.text
+        //  yield label 
+
+
+        //}
+
       let viewMap = 
         Svgplus.Rectangle.view >> UIMapping.mapAListId  
     

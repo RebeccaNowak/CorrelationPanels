@@ -1101,53 +1101,26 @@ module Mutable =
     type MGeologicalLog(__initial : CorrelationDrawing.GeologicalLog) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.GeologicalLog> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.GeologicalLog>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.GeologicalLog>
-        let _index = ResetMod.Create(__initial.index)
+        let _stackId = ResetMod.Create(__initial.stackId)
         let _state = ResetMod.Create(__initial.state)
-        let _isVisible = ResetMod.Create(__initial.isVisible)
-        let _isSelected = ResetMod.Create(__initial.isSelected)
-        let _label = MTextInput.Create(__initial.label)
-        let _annoPoints = MMap.Create(__initial.annoPoints)
         let _nodes = MList.Create(__initial.nodes, (fun v -> MLogNode.Create(v)), (fun (m,v) -> MLogNode.Update(m, v)), (fun v -> v))
-        let _nativeYRange = ResetMod.Create(__initial.nativeYRange)
-        let _svgMaxX = ResetMod.Create(__initial.svgMaxX)
-        let _camera = Aardvark.UI.Primitives.Mutable.MCameraControllerState.Create(__initial.camera)
-        let _semanticApp = MSemanticApp.Create(__initial.semanticApp)
-        let _xAxis = ResetMod.Create(__initial.xAxis)
-        let _yOffset = ResetMod.Create(__initial.yOffset)
+        let _annoPoints = MMap.Create(__initial.annoPoints)
         
         member x.id = __current.Value.id
-        member x.index = _index :> IMod<_>
+        member x.stackId = _stackId :> IMod<_>
         member x.state = _state :> IMod<_>
-        member x.isVisible = _isVisible :> IMod<_>
-        member x.isSelected = _isSelected :> IMod<_>
-        member x.label = _label
-        member x.annoPoints = _annoPoints :> amap<_,_>
         member x.nodes = _nodes :> alist<_>
-        member x.nativeYRange = _nativeYRange :> IMod<_>
-        member x.svgMaxX = _svgMaxX :> IMod<_>
-        member x.camera = _camera
-        member x.semanticApp = _semanticApp
-        member x.xAxis = _xAxis :> IMod<_>
-        member x.yOffset = _yOffset :> IMod<_>
+        member x.annoPoints = _annoPoints :> amap<_,_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : CorrelationDrawing.GeologicalLog) =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
-                ResetMod.Update(_index,v.index)
+                ResetMod.Update(_stackId,v.stackId)
                 ResetMod.Update(_state,v.state)
-                ResetMod.Update(_isVisible,v.isVisible)
-                ResetMod.Update(_isSelected,v.isSelected)
-                MTextInput.Update(_label, v.label)
-                MMap.Update(_annoPoints, v.annoPoints)
                 MList.Update(_nodes, v.nodes)
-                ResetMod.Update(_nativeYRange,v.nativeYRange)
-                ResetMod.Update(_svgMaxX,v.svgMaxX)
-                Aardvark.UI.Primitives.Mutable.MCameraControllerState.Update(_camera, v.camera)
-                MSemanticApp.Update(_semanticApp, v.semanticApp)
-                ResetMod.Update(_xAxis,v.xAxis)
-                ResetMod.Update(_yOffset,v.yOffset)
+                MMap.Update(_annoPoints, v.annoPoints)
                 
         
         static member Create(__initial : CorrelationDrawing.GeologicalLog) : MGeologicalLog = MGeologicalLog(__initial)
@@ -1170,11 +1143,11 @@ module Mutable =
                     override x.Set(r,v) = { r with id = v }
                     override x.Update(r,f) = { r with id = f r.id }
                 }
-            let index =
-                { new Lens<CorrelationDrawing.GeologicalLog, System.Int32>() with
-                    override x.Get(r) = r.index
-                    override x.Set(r,v) = { r with index = v }
-                    override x.Update(r,f) = { r with index = f r.index }
+            let stackId =
+                { new Lens<CorrelationDrawing.GeologicalLog, Svgplus.RS.RectangleStackId>() with
+                    override x.Get(r) = r.stackId
+                    override x.Set(r,v) = { r with stackId = v }
+                    override x.Update(r,f) = { r with stackId = f r.stackId }
                 }
             let state =
                 { new Lens<CorrelationDrawing.GeologicalLog, CorrelationDrawing.State>() with
@@ -1182,71 +1155,17 @@ module Mutable =
                     override x.Set(r,v) = { r with state = v }
                     override x.Update(r,f) = { r with state = f r.state }
                 }
-            let isVisible =
-                { new Lens<CorrelationDrawing.GeologicalLog, System.Boolean>() with
-                    override x.Get(r) = r.isVisible
-                    override x.Set(r,v) = { r with isVisible = v }
-                    override x.Update(r,f) = { r with isVisible = f r.isVisible }
-                }
-            let isSelected =
-                { new Lens<CorrelationDrawing.GeologicalLog, System.Boolean>() with
-                    override x.Get(r) = r.isSelected
-                    override x.Set(r,v) = { r with isSelected = v }
-                    override x.Update(r,f) = { r with isSelected = f r.isSelected }
-                }
-            let label =
-                { new Lens<CorrelationDrawing.GeologicalLog, CorrelationDrawing.TextInput>() with
-                    override x.Get(r) = r.label
-                    override x.Set(r,v) = { r with label = v }
-                    override x.Update(r,f) = { r with label = f r.label }
-                }
-            let annoPoints =
-                { new Lens<CorrelationDrawing.GeologicalLog, Aardvark.Base.hmap<CorrelationDrawing.AnnotationId,Aardvark.Base.V3d>>() with
-                    override x.Get(r) = r.annoPoints
-                    override x.Set(r,v) = { r with annoPoints = v }
-                    override x.Update(r,f) = { r with annoPoints = f r.annoPoints }
-                }
             let nodes =
                 { new Lens<CorrelationDrawing.GeologicalLog, Aardvark.Base.plist<CorrelationDrawing.LogNode>>() with
                     override x.Get(r) = r.nodes
                     override x.Set(r,v) = { r with nodes = v }
                     override x.Update(r,f) = { r with nodes = f r.nodes }
                 }
-            let nativeYRange =
-                { new Lens<CorrelationDrawing.GeologicalLog, CorrelationDrawing.Rangef>() with
-                    override x.Get(r) = r.nativeYRange
-                    override x.Set(r,v) = { r with nativeYRange = v }
-                    override x.Update(r,f) = { r with nativeYRange = f r.nativeYRange }
-                }
-            let svgMaxX =
-                { new Lens<CorrelationDrawing.GeologicalLog, System.Double>() with
-                    override x.Get(r) = r.svgMaxX
-                    override x.Set(r,v) = { r with svgMaxX = v }
-                    override x.Update(r,f) = { r with svgMaxX = f r.svgMaxX }
-                }
-            let camera =
-                { new Lens<CorrelationDrawing.GeologicalLog, Aardvark.UI.Primitives.CameraControllerState>() with
-                    override x.Get(r) = r.camera
-                    override x.Set(r,v) = { r with camera = v }
-                    override x.Update(r,f) = { r with camera = f r.camera }
-                }
-            let semanticApp =
-                { new Lens<CorrelationDrawing.GeologicalLog, CorrelationDrawing.SemanticApp>() with
-                    override x.Get(r) = r.semanticApp
-                    override x.Set(r,v) = { r with semanticApp = v }
-                    override x.Update(r,f) = { r with semanticApp = f r.semanticApp }
-                }
-            let xAxis =
-                { new Lens<CorrelationDrawing.GeologicalLog, CorrelationDrawing.SemanticId>() with
-                    override x.Get(r) = r.xAxis
-                    override x.Set(r,v) = { r with xAxis = v }
-                    override x.Update(r,f) = { r with xAxis = f r.xAxis }
-                }
-            let yOffset =
-                { new Lens<CorrelationDrawing.GeologicalLog, System.Double>() with
-                    override x.Get(r) = r.yOffset
-                    override x.Set(r,v) = { r with yOffset = v }
-                    override x.Update(r,f) = { r with yOffset = f r.yOffset }
+            let annoPoints =
+                { new Lens<CorrelationDrawing.GeologicalLog, Aardvark.Base.hmap<CorrelationDrawing.AnnotationId,Aardvark.Base.V3d>>() with
+                    override x.Get(r) = r.annoPoints
+                    override x.Set(r,v) = { r with annoPoints = v }
+                    override x.Update(r,f) = { r with annoPoints = f r.annoPoints }
                 }
     
     
@@ -1453,7 +1372,8 @@ module Mutable =
     type MCorrelationPlot(__initial : CorrelationDrawing.CorrelationPlot) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlot> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.CorrelationPlot>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlot>
-        let _logs = MList.Create(__initial.logs, (fun v -> MGeologicalLog.Create(v)), (fun (m,v) -> MGeologicalLog.Update(m, v)), (fun v -> v))
+        let _diagramApp = Svgplus.DA.Mutable.MDiagramApp.Create(__initial.diagramApp)
+        let _logs = MMap.Create(__initial.logs, (fun v -> MGeologicalLog.Create(v)), (fun (m,v) -> MGeologicalLog.Update(m, v)), (fun v -> v))
         let _correlations = MList.Create(__initial.correlations, (fun v -> MCorrelation.Create(v)), (fun (m,v) -> MCorrelation.Update(m, v)), (fun v -> v))
         let _selectedBorder = MOption.Create(__initial.selectedBorder, (fun v -> MBorder.Create(v)), (fun (m,v) -> MBorder.Update(m, v)), (fun v -> v))
         let _editCorrelations = ResetMod.Create(__initial.editCorrelations)
@@ -1469,7 +1389,8 @@ module Mutable =
         let _currrentYMapping = MOption.Create(__initial.currrentYMapping)
         let _yRange = ResetMod.Create(__initial.yRange)
         
-        member x.logs = _logs :> alist<_>
+        member x.diagramApp = _diagramApp
+        member x.logs = _logs :> amap<_,_>
         member x.correlations = _correlations :> alist<_>
         member x.selectedBorder = _selectedBorder :> IMod<_>
         member x.editCorrelations = _editCorrelations :> IMod<_>
@@ -1490,7 +1411,8 @@ module Mutable =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
-                MList.Update(_logs, v.logs)
+                Svgplus.DA.Mutable.MDiagramApp.Update(_diagramApp, v.diagramApp)
+                MMap.Update(_logs, v.logs)
                 MList.Update(_correlations, v.correlations)
                 MOption.Update(_selectedBorder, v.selectedBorder)
                 ResetMod.Update(_editCorrelations,v.editCorrelations)
@@ -1521,8 +1443,14 @@ module Mutable =
     module CorrelationPlot =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
+            let diagramApp =
+                { new Lens<CorrelationDrawing.CorrelationPlot, Svgplus.DA.DiagramApp>() with
+                    override x.Get(r) = r.diagramApp
+                    override x.Set(r,v) = { r with diagramApp = v }
+                    override x.Update(r,f) = { r with diagramApp = f r.diagramApp }
+                }
             let logs =
-                { new Lens<CorrelationDrawing.CorrelationPlot, Aardvark.Base.plist<CorrelationDrawing.GeologicalLog>>() with
+                { new Lens<CorrelationDrawing.CorrelationPlot, Aardvark.Base.hmap<CorrelationDrawing.LogId,CorrelationDrawing.GeologicalLog>>() with
                     override x.Get(r) = r.logs
                     override x.Set(r,v) = { r with logs = v }
                     override x.Update(r,f) = { r with logs = f r.logs }

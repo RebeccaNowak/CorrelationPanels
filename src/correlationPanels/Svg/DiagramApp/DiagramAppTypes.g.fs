@@ -16,10 +16,16 @@ module Mutable =
         let _rectangleStacks = MMap.Create(__initial.rectangleStacks, (fun v -> Svgplus.RS.Mutable.MRectangleStack.Create(v)), (fun (m,v) -> Svgplus.RS.Mutable.MRectangleStack.Update(m, v)), (fun v -> v))
         let _order = MList.Create(__initial.order)
         let _connectionApp = Svgplus.CA.Mutable.MConnectionApp.Create(__initial.connectionApp)
+        let _rstackGap = ResetMod.Create(__initial.rstackGap)
+        let _marginLeft = ResetMod.Create(__initial.marginLeft)
+        let _marginTop = ResetMod.Create(__initial.marginTop)
         
         member x.rectangleStacks = _rectangleStacks :> amap<_,_>
         member x.order = _order :> alist<_>
         member x.connectionApp = _connectionApp
+        member x.rstackGap = _rstackGap :> IMod<_>
+        member x.marginLeft = _marginLeft :> IMod<_>
+        member x.marginTop = _marginTop :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : Svgplus.DA.DiagramApp) =
@@ -29,6 +35,9 @@ module Mutable =
                 MMap.Update(_rectangleStacks, v.rectangleStacks)
                 MList.Update(_order, v.order)
                 Svgplus.CA.Mutable.MConnectionApp.Update(_connectionApp, v.connectionApp)
+                ResetMod.Update(_rstackGap,v.rstackGap)
+                ResetMod.Update(_marginLeft,v.marginLeft)
+                ResetMod.Update(_marginTop,v.marginTop)
                 
         
         static member Create(__initial : Svgplus.DA.DiagramApp) : MDiagramApp = MDiagramApp(__initial)
@@ -62,4 +71,22 @@ module Mutable =
                     override x.Get(r) = r.connectionApp
                     override x.Set(r,v) = { r with connectionApp = v }
                     override x.Update(r,f) = { r with connectionApp = f r.connectionApp }
+                }
+            let rstackGap =
+                { new Lens<Svgplus.DA.DiagramApp, System.Double>() with
+                    override x.Get(r) = r.rstackGap
+                    override x.Set(r,v) = { r with rstackGap = v }
+                    override x.Update(r,f) = { r with rstackGap = f r.rstackGap }
+                }
+            let marginLeft =
+                { new Lens<Svgplus.DA.DiagramApp, System.Double>() with
+                    override x.Get(r) = r.marginLeft
+                    override x.Set(r,v) = { r with marginLeft = v }
+                    override x.Update(r,f) = { r with marginLeft = f r.marginLeft }
+                }
+            let marginTop =
+                { new Lens<Svgplus.DA.DiagramApp, System.Double>() with
+                    override x.Get(r) = r.marginTop
+                    override x.Set(r,v) = { r with marginTop = v }
+                    override x.Update(r,f) = { r with marginTop = f r.marginTop }
                 }

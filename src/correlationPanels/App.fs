@@ -82,7 +82,7 @@ module App =
         let rose = ((Svgplus.RoseDiagram.view model.roseDiagram) 
                       |> AList.map (UI.map RDMessage))
       
-        (DiagramApp.view model.diagramApp) |> UI.map Action.DiagramMessage
+        (DiagramApp.standaloneView model.diagramApp) |> UI.map Action.DiagramMessage
         //let content = 
         //  (DiagramApp.view model.diagramApp) 
         //    |> AList.map (fun d -> d |> UI.map Action.DiagramMessage)

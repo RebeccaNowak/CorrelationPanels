@@ -8,6 +8,7 @@
     open Aardvark.UI
     open UIPlus
     open System
+    open Svgplus
 
     type Action =
       | MouseDown of (MouseButtons * V2i)
@@ -54,14 +55,18 @@
           match model.dragging, model.zooming with //TODO refactor
             | true, false ->
               let offset = model.correlationPlot.svgOptions.offset + V2d(p - model.lastMousePos)
-              {model with 
-                correlationPlot = 
+              let _cp = 
                   {model.correlationPlot with
                             svgOptions = {model.correlationPlot.svgOptions with
                                             offset = offset}
                   }
+              let _cp =
+                CorrelationPlot.update annoApp model.correlationPlot (CorrelationPlot.MouseMove p)
+              {model with 
+                correlationPlot = _cp
                 lastMousePos = p
               }            
+
             | false, true  -> 
               let diff = (V2d(p - model.lastMousePos))
               let factor = diff.OY.Length * 0.01 //TODO hardcoded zoom speed
@@ -133,40 +138,40 @@
       domNode
 
     // Log Debug View
-    module View =
-      let mapper (log : MGeologicalLog) = (fun a -> CorrelationPlot.LogMessage (log.id, a))
-      
-      let logList (model : MCorrelationPlotApp) 
-                  (semApp : MSemanticApp)
-                  (annoApp : MAnnotationApp) =
-        let rows = 
-          alist {
-            for log in model.correlationPlot.logs do
-              let! tmp = 
-                Log.View.listView log semApp annoApp 
-                                  (CorrelationPlot.Action.SelectLog log.id) 
-                                  (mapper log)
-              let tmp = tmp
-                          |> List.map (UI.map (fun a -> Action.CorrelationPlotMessage a))
-                                                      
-              let! state = log.state
-              for row in tmp do
-                let dNodeRow = 
-                  row
-                    //|> UI.map (fun m -> (CorrelationPlot.LogMessage (log.id, m)))
-                    //|> UI.map CorrelationPlotMessage
-                yield dNodeRow
-                if state = State.New then
-                  let menu = 
-                    (UIPlus.Menus.saveCancelMenu 
-                      (CorrelationPlot.Action.SaveLog log.id)
-                      (CorrelationPlot.Action.DeleteLog log.id) 
-                       |> UI.map CorrelationPlotMessage)
-                  yield Table.intoTr [(Table.intoTd' menu tmp.Length)]
-                                  
-          }
 
-        Table.toTableView (div[][]) rows ["Label";"Order"]
+ //     let mapper (log : MGeologicalLog) = (fun a -> CorrelationPlot.LogMessage (log.id, a))
+      
+      //let logList (model : MCorrelationPlotApp) 
+      //            (semApp : MSemanticApp)
+      //            (annoApp : MAnnotationApp) =
+      //  let rows = 
+      //    alist {
+      //      for log in model.correlationPlot.logs do
+      //        let! tmp = 
+      //          Log.View.listView log semApp annoApp 
+      //                            (CorrelationPlot.Action.SelectLog log.id) 
+      //                            (mapper log)
+      //        let tmp = tmp
+      //                    |> List.map (UI.map (fun a -> Action.CorrelationPlotMessage a))
+                                                      
+      //        let! state = log.state
+      //        for row in tmp do
+      //          let dNodeRow = 
+      //            row
+      //              //|> UI.map (fun m -> (CorrelationPlot.LogMessage (log.id, m)))
+      //              //|> UI.map CorrelationPlotMessage
+      //          yield dNodeRow
+      //          if state = State.New then
+      //            let menu = 
+      //              (UIPlus.Menus.saveCancelMenu 
+      //                (CorrelationPlot.Action.SaveLog log.id)
+      //                (CorrelationPlot.Action.DeleteLog log.id) 
+      //                 |> UI.map CorrelationPlotMessage)
+      //            yield Table.intoTr [(Table.intoTd' menu tmp.Length)]
+                                  
+      //    }
+
+      //  Table.toTableView (div[][]) rows ["Label";"Order"]
 
 
       //let view  (model    : MCorrelationPlotApp) 
