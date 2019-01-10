@@ -15,7 +15,7 @@ open Svgplus.RS
     type Action =
         | RectStackMessage  of (RectangleStackId * RectangleStack.Action)
         //| HeaderMessage     of Header.Action
-        | MouseMove         of V2i
+        | MouseMove         of V2d
         | ConnectionMessage of ConnectionApp.Action
         | AddStack          of RectangleStack
         
@@ -69,14 +69,14 @@ open Svgplus.RS
         | true ->
           let clean = 
             model.rectangleStacks
-              |> HMap.map (fun id s -> RectangleStack.Lens.pos.Set (s, V2d 0.0))
+              |> HMap.map (fun id s -> RectangleStack.resetPosition s (V2d 0.0))
               |> HMap.update (model.order.Item 0) 
-                             (fun opts -> RectangleStack.Lens.pos.Set (opts.Value, V2d (model.marginLeft, 0.0))) //hack
+                             (fun opts -> RectangleStack.Lens.pos.Set (opts.Value, V2d (model.marginLeft, model.marginTop))) //hack
 
           let f (prev : RectangleStack) (curr : RectangleStack) =
             let _pos =
               let cx = model.rstackGap + prev.pos.X + (RectangleStack.width prev)
-              V2d (cx,curr.pos.Y)
+              V2d (cx,model.marginTop)
             RectangleStack.Lens.pos.Set (curr, _pos)
 
           let _rs = 
@@ -177,7 +177,7 @@ open Svgplus.RS
           attribute "preserveAspectRatio" "xMinYMin meet"
           attribute "height" "100%"
           attribute "width" "100%"
-          (onMouseMove (fun p -> MouseMove p))
+          (onMouseMove (fun p -> MouseMove (V2d p)))
         ] |> AttributeMap.ofList
 
       require (GUI.CSS.myCss) (

@@ -35,5 +35,5 @@ open Svgplus
   type ConnectionApp = {
     connections   : hmap<ConnectionId, Connection>
     connecting    : option<IMod<V2d>>
-    mouseposition : V2i
+    mouseposition : V2d
   }

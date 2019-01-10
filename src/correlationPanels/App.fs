@@ -61,7 +61,7 @@ module App =
             | MouseMove p -> 
               {model with diagramApp = 
                             DiagramApp.update model.diagramApp 
-                                              (DiagramApp.Action.MouseMove p)
+                                              (DiagramApp.Action.MouseMove (V2d p))
               }
     let view (model : MTestModel) =
         //let svgAtts = 

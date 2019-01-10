@@ -46,14 +46,11 @@ module Button =
       }
 
 
-
-
-
   let init = {
     id             = ButtonId.newId ()
     pos            = V2d (0.0)
-    radius         = 8.0
-    rHoverChange   = 8.0
+    radius         = 4.0
+    rHoverChange   = 6.0
     stroke         = 1.0
     color          = C4b(44,127,184)
     colChange      = V3i(-20,-20,-20)

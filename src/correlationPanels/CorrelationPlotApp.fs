@@ -13,7 +13,7 @@
     type Action =
       | MouseDown of (MouseButtons * V2i)
       | MouseUp of (MouseButtons * V2i)
-      | MouseMove of V2i
+      | MouseMove of V2d
       | CorrelationPlotMessage of CorrelationPlot.Action
       | AxisMessage of LogAxisApp.Action
       | Clear
@@ -27,7 +27,7 @@
         semanticApp         = SemanticApp.initial
         zooming             = false
         dragging            = false
-        lastMousePos        = V2i.OO
+        lastMousePos        = V2d.OO
       }
 
     let update (annoApp : AnnotationApp)
@@ -36,6 +36,7 @@
                
       match action with
         | MouseDown (b,p) ->
+          let p = V2d p
           match b with
             | MouseButtons.Right -> {model with dragging = true
                                                 lastMousePos = p}
@@ -44,6 +45,7 @@
             | _ -> model
           
         | MouseUp (b,p) -> 
+          let p = V2d p
           match b with
             | MouseButtons.Right -> {model with dragging = false
                                                 lastMousePos = p}
@@ -99,7 +101,10 @@
               }
             | true, true -> {model with dragging = false
                                         zooming  = false}
-            | false, false -> model
+            | false, false -> 
+              let _p = V2d(p) / model.correlationPlot.svgOptions.zoom.zoomFactor  
+              let _cpapp = CorrelationPlot.update annoApp model.correlationPlot (CorrelationPlot.MouseMove _p)
+              {model with correlationPlot = _cpapp}
         | Clear -> 
           {model with correlationPlot =
                         CorrelationPlot.update annoApp model.correlationPlot CorrelationPlot.Clear

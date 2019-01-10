@@ -11,14 +11,14 @@
 
     type Action =
       | ButtonMessage       of Button.Action
-      | MouseMoved          of V2i
+      | MouseMoved          of V2d
       | ConnectionMessage   of (ConnectionId * Connection.Action)
 
     let init : ConnectionApp =
       {
         connections = HMap.empty
         connecting  = None
-        mouseposition = V2i(0)
+        mouseposition = V2d(0)
       }
 
     let hasConnection (model : ConnectionApp) (p : IMod<V2d>) =
@@ -79,7 +79,7 @@
         alist {
           let! connecting = model.connecting
           if connecting.IsSome then
-            let mouse = Mod.map (fun (m : V2i)-> V2d m) model.mouseposition
+            let mouse = model.mouseposition
             let p1 = connecting.Value
             let! p1 = p1
             let! m = mouse

@@ -14,6 +14,7 @@
 
     type Action =
       | RectangleMessage of (RectangleId * Rectangle.Action)
+      | ResetPosition    of V2d
       | AddRectangle     of Rectangle
       | HeaderMessage    of Header.Action
       | UpdatePosition   of V2d
@@ -108,7 +109,7 @@
                 s.rectangles 
                   |> HMap.map (fun id r -> 
                                   let _x = v.X
-                                  let _y = r.pos.Y + v.Y
+                                  let _y = v.Y + r.pos.Y
                                   let _v = V2d (_x, _y)
                                   Rectangle.Lens.pos.Set (r, _v))
               let _header = Header.Lens.pos.Set (s.header, v) 
@@ -123,7 +124,7 @@
                 s.rectangles 
                   |> HMap.map (fun id r -> 
                                 let _x = v.X
-                                let _y = r.pos.Y + v.Y
+                                let _y = v.Y + r.pos.Y
                                 let _v = V2d (_x, _y)
                                 Rectangle.Lens.pos.Set (r, _v))
               let _header = Header.Lens.pos.Set (s.header, v) 
@@ -150,6 +151,18 @@
         HMap.fold (fun s k v -> s + v.dim.height) 0.0 model.rectangles
       folded
 
+    let resetPosition (model : RectangleStack) (v : V2d) =
+      let _rectangles = 
+        model.rectangles 
+          |> HMap.map (fun id r -> Rectangle.Lens.pos.Set (r, v))
+      let _header = Header.Lens.pos.Set (model.header, v)      
+      {
+        model with  rectangles = _rectangles
+                    header     = _header
+                    pos        = v
+      } |> stack
+
+
     let update (model : RectangleStack) (action : Action) =
       let updateRect (optr : option<Rectangle>) (m : Rectangle.Action) = 
         match optr with
@@ -157,6 +170,7 @@
           | None   -> Rectangle.init (RectangleId.newId ())    
 
       match action with 
+        | ResetPosition v -> resetPosition model v    
         | AddRectangle r -> 
           let _rectangles = model.rectangles.Add (r.id, r)
           {model with rectangles = _rectangles} |> stack

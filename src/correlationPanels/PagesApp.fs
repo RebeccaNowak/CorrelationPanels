@@ -15,7 +15,7 @@ module Pages =
       | CameraMessage                 of CameraController.Message
       | MouseDown                     of (MouseButtons * V2i)
       | MouseUp                       of (MouseButtons * V2i)
-      | MouseMove                     of V2i
+      | MouseMove                     of V2d
       | KeyDown                       of key : Keys
       | KeyUp                         of key : Keys     
       | CorrPlotMessage               of CorrelationPlotApp.Action
@@ -467,7 +467,7 @@ module Pages =
                             attribute "overflow-y" "hidden"; 
                             (onMouseDown (fun b p -> MouseDown (b,p)))
                             (onMouseUp (fun b p -> MouseUp (b,p)))
-                            (onMouseMove (fun p -> MouseMove p))
+                            (onMouseMove (fun p -> MouseMove (V2d p)))
                             onLayoutChanged UpdateConfig
                            ] [
                             CorrelationPlotApp.viewSvg model.annotationApp model.corrPlotApp 

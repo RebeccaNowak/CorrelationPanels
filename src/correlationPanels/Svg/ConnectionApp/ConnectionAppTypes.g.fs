@@ -156,7 +156,7 @@ module Mutable =
                     override x.Update(r,f) = { r with connecting = f r.connecting }
                 }
             let mouseposition =
-                { new Lens<Svgplus.CA.ConnectionApp, Aardvark.Base.V2i>() with
+                { new Lens<Svgplus.CA.ConnectionApp, Aardvark.Base.V2d>() with
                     override x.Get(r) = r.mouseposition
                     override x.Set(r,v) = { r with mouseposition = v }
                     override x.Update(r,f) = { r with mouseposition = f r.mouseposition }

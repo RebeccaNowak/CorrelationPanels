@@ -514,7 +514,7 @@ type CorrelationPlotApp = {
    semanticApp         : SemanticApp
    zooming             : bool
    dragging            : bool
-   lastMousePos        : V2i
+   lastMousePos        : V2d
    
 }
 

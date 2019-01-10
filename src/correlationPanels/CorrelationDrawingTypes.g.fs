@@ -1607,7 +1607,7 @@ module Mutable =
                     override x.Update(r,f) = { r with dragging = f r.dragging }
                 }
             let lastMousePos =
-                { new Lens<CorrelationDrawing.CorrelationPlotApp, Aardvark.Base.V2i>() with
+                { new Lens<CorrelationDrawing.CorrelationPlotApp, Aardvark.Base.V2d>() with
                     override x.Get(r) = r.lastMousePos
                     override x.Set(r,v) = { r with lastMousePos = v }
                     override x.Update(r,f) = { r with lastMousePos = f r.lastMousePos }

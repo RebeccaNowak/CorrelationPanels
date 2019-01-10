@@ -29,7 +29,7 @@
       | SetSecondaryLevel      of NodeLevel
       | ToggleFlag             of SvgFlags
       | DiagramMessage         of DiagramApp.Action
-      | MouseMove              of V2i
+      | MouseMove              of V2d
 
 
 
@@ -205,14 +205,15 @@
           {model with secondaryLvl = lvl}
         | ToggleFlag f ->
           {model with svgFlags = Flags.toggle f model.svgFlags}
-        | DiagramMessage m       -> 
-          let _d =
-            DiagramApp.update model.diagramApp m
-          {model with diagramApp = _d}
         | MouseMove m       -> 
           let _d =
             DiagramApp.update model.diagramApp (DiagramApp.MouseMove m)
           {model with diagramApp = _d}
+        | DiagramMessage m       -> 
+          let _d =
+            DiagramApp.update model.diagramApp m
+          {model with diagramApp = _d}
+
         
 
 
