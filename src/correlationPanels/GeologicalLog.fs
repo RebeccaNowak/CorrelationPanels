@@ -15,18 +15,15 @@
     open SimpleTypes
     open Svgplus.RS
     open Svgplus
+    open UIPlus
     
-
     type Action =
       | SetState                  of State
-      //| ChangeXAxis               of (AnnotationApp * SemanticId * float * SvgOptions)
       | LogNodeMessage            of (LogNodeId * LogNodes.Action)
       | SelectLogNode             of LogNodeId
-      | UpdateYOffset             of float
-      | TextInputMessage          of TextInput.Action
-      //| SetVisibility             of bool
-      //| MoveUp                    of LogId
-      //| MoveDown                  of LogId
+      | TextInputMessage          of (RectangleStackId * TextInput.Action)
+      | MoveUp                    of RectangleStackId
+      | MoveDown                  of RectangleStackId
 
     module Helpers = 
       let getMinLevel ( model : MGeologicalLog) = 
@@ -159,7 +156,10 @@
     ///////////////////////////////////////////////////// GENERATE ///////////////////////////////////////////////////////////////////////
     let initial      (selectedPoints  : hmap<AnnotationId, V3d>) 
                      (semApp          : SemanticApp)
-                     (annoApp         : AnnotationApp) = 
+                     (annoApp         : AnnotationApp)
+                     (xToSvg          : float)
+                     (yToSvg          : float)
+                     (defaultWidth    : float) = 
 
       let id = LogId.newId()
       let wInfNodes = (Generate.generateLevel //TODO make more compact by removing debug stuff
@@ -173,28 +173,28 @@
       let nodes = 
         LogNodes.Helper.replaceInfinity' wInfNodes annoApp
 
-      let nodeToRectangle (n : LogNode) : Rectangle =
+      let nodeToRectangle (n : LogNode) =
         let id = RectangleId.newId ()
-        let width = 
-          match LogNodes.Helper.calcMetricValue n annoApp with
-            | Some d -> d
-            | None   -> 50.0
+        let (dotted, width) = 
+          match LogNodes.Recursive.calcMetricValue n annoApp with
+            | Some d -> (false, d * xToSvg)
+            | None   -> (true, defaultWidth)
         
-        let height = (LogNodes.Helper.elevationRange n).range * 10.0
-        
-        {
-          Rectangle.init id with 
-            dim = {width = width; height = height}
-            draw = true
-        }
+        let height = (LogNodes.Helper.elevationRange n).range * yToSvg
+        let rectangle =
+          {
+            Rectangle.init id with 
+              dim = {width = width; height = height}
+              draw = true
+              dottedBorder = dotted
+          }
+
+        rectangle
 
       let rectangles = 
-        seq {
-          for n in PList.toSeq nodes do
-            yield nodeToRectangle n
-        } |> List.ofSeq
-        //nodes
-        //  |> PList.map (fun n -> nodeToRectangle n)
+        nodes
+         |> PList.toList
+         |> List.map (fun n -> nodeToRectangle n)
       
       let rmap = 
         rectangles 
@@ -203,23 +203,30 @@
           
       let order =
         rectangles 
-          |> PList.ofList
-          |> PList.map (fun r -> r.id)
+          |> List.map (fun r -> r.id)
 
       // let allNodes = LogNodes.Recursive.collectAll
       // WIP
+      let zipped = List.zip order (PList.toList nodes)
+      let _nodes = zipped 
+                    |> List.map (fun (r,n) -> {n with rectangleId = r})
+                    |> PList.ofList
 
       let stack = 
-        RectangleStack.init (RectangleStackId.newId ()) rmap order 
+        RectangleStack.init (RectangleStackId.newId ()) rmap (PList.ofList order)
 
       let log =
         {
-          id           = id
-          stackId      = stack.id
-          state        = State.Display
+          id             = id
+          stackId        = stack.id
+          state          = State.Display
 
-          nodes        = nodes
-          annoPoints   = selectedPoints    
+          xToSvg         =  xToSvg      
+          yToSvg         =  yToSvg      
+          defaultWidth   =  defaultWidth
+
+          nodes          = _nodes
+          annoPoints     = selectedPoints    
       
         }
 
@@ -237,84 +244,83 @@
                    (semApp      : MSemanticApp)
                    (annoApp     : MAnnotationApp)
                    (rowOnClick  : 'msg) 
-                   (mapper      : Action -> 'msg)   =
+                   (mapper      : Action -> 'msg)
+                   (stack       : MRectangleStack) =
 
-        //let labelEditNode textInput = 
-        //  (TextInput.view'' 
-        //    "box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.1) inset"
-        //    textInput)
+        let labelEditNode textInput = 
+          (TextInput.view'' 
+            "box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.1) inset"
+            textInput)
 
-        //let moveUpDown =
-        //  div [clazz "ui small vertical buttons"]
-        //    [
-        //      UIPlus.Buttons.iconButton' "angle up icon" "move up" 
-        //                             (fun _ -> MoveUp model.id)  
-        //                             (style "padding: 0px 2px 0px 2px")
-        //      div[style "padding: 1px 0px 1px 0px"][]
-        //      UIPlus.Buttons.iconButton' "angle down icon" "move down" 
-        //                             (fun _ -> MoveDown model.id) 
-        //                             (style "padding: 0px 2px 0px 2px")
-        //    ]
+        let moveUpDown =
+          div [clazz "ui small vertical buttons"]
+            [
+              UIPlus.Buttons.iconButton' "angle up icon" "move up" 
+                                     (fun _ -> MoveUp model.stackId)  
+                                     (style "padding: 0px 2px 0px 2px")
+              div[style "padding: 1px 0px 1px 0px"][]
+              UIPlus.Buttons.iconButton' "angle down icon" "move down" 
+                                     (fun _ -> MoveDown model.stackId) 
+                                     (style "padding: 0px 2px 0px 2px")
+            ]
         
-        //let viewNew (model : MGeologicalLog) : list<DomNode<'msg>> =
-        //    [
-        //      [
-        //        (labelEditNode model.label) 
-        //          |> UI.map Action.TextInputMessage 
-        //          |> UI.map mapper
-        //          |> Table.intoTd
-        //      ] |> Table.intoActiveTr rowOnClick      
-        //    ]
+        let viewNew  : list<DomNode<'msg>> =
+            [
+              [
+                (labelEditNode stack.header.label) 
+                  |> UI.map (fun m -> Action.TextInputMessage (stack.id, m))
+                  |> UI.map mapper
+                  |> Table.intoTd
+              ] |> Table.intoActiveTr rowOnClick      
+            ]
 
-        //let viewEdit (model : MGeologicalLog)  : list<DomNode<'msg>> =     
-        //  let nodesRow =
-        //    let viewFunction = 
-        //      (LogNodes.Debug.view 
-        //        semApp annoApp 
-        //        LogNodeMessage
-        //      ) >> AList.single
+        let viewEdit  : list<DomNode<'msg>> =     
+          let nodesRow =
+            let viewFunction = 
+              (LogNodes.Debug.view 
+                semApp annoApp 
+                LogNodeMessage
+              ) >> AList.single
                 
-        //    let domNodes = 
-        //      (LogNodes.Debug.viewAll' model.nodes (viewFunction))  
+            let domNodes = 
+              (LogNodes.Debug.viewAll' model.nodes (viewFunction))  
                         
-        //    let mapped = domNodes |> (UI.map mapper)
-        //    [mapped]
+            let mapped = domNodes |> (UI.map mapper)
+            [mapped]
               
 
-        //  [
-        //    [
-        //      (labelEditNode model.label) 
-        //        |> UI.map Action.TextInputMessage 
-        //        |> UI.map mapper
-        //        |> Table.intoTd
-        //      moveUpDown |> Table.intoTd |> UI.map mapper
+          [
+            [
+              (labelEditNode stack.header.label) 
+                |> UI.map (fun m -> Action.TextInputMessage (stack.id, m))
+                |> UI.map mapper
+                |> Table.intoTd
+              moveUpDown |> Table.intoTd |> UI.map mapper
 
-        //    ] |> Table.intoActiveTr rowOnClick
-        //    [
-        //      (div [] nodesRow) |> Table.intoTd 
-        //      //(div [] []) |> Table.intoTd |> UI.map mapper
+            ] |> Table.intoActiveTr rowOnClick
+            //[
+            //  (div [] nodesRow) |> Table.intoTd 
+            //] |> Table.intoActiveTr rowOnClick
+          ]          
 
-        //    ] |> Table.intoActiveTr rowOnClick
-        //  ]          
-
-        //let viewDisplay (model : MGeologicalLog) : list<DomNode<'msg>>  =
-        //  [
-        //    [
-        //      label [clazz "ui horizontal label"]
-        //            [Incremental.text (model.label.text)] |> UI.map mapper
-        //        |> Table.intoTd
-        //      moveUpDown |> Table.intoTd |> UI.map mapper
-        //    ] //@ [nodeViews] 
-        //    |> Table.intoTrOnClick rowOnClick
+        let viewDisplay  : list<DomNode<'msg>>  =
+          [
+            [
+              label [clazz "ui horizontal label"]
+                    [Incremental.text (stack.header.label.text)] |> UI.map mapper
+                |> Table.intoTd
+              moveUpDown |> Table.intoTd |> UI.map mapper
+            ] //@ [nodeViews] 
+            |> Table.intoTrOnClick rowOnClick
             
-        //  ] 
+          ] 
 
         model.state 
           |> Mod.map (fun state -> 
                         match state with
-                          | State.Display  -> [] //viewDisplay model 
-                          | State.Edit     -> [] //viewEdit model
-                          | State.New      -> []//viewNew model 
+                          | State.Display  -> viewDisplay 
+                          | State.Edit     -> viewEdit 
+                          | State.New      -> viewNew 
                      ) 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -396,15 +402,20 @@
                                 (LogNodes.Update.update (LogNodes.ToggleSelectNode n))
             }
         | SetState state      -> {model with state = state}
+        | MoveDown id -> model
+        | MoveUp id   -> model
+        | TextInputMessage m -> model
 
     let init = 
       {
-        id           = LogId.invalid
-        stackId      = Svgplus.RS.RectangleStackId.invalid
-        state        = State.Display
-
-        nodes        = PList.empty
-        annoPoints   = HMap.empty
+        id              = LogId.invalid
+        stackId         = Svgplus.RS.RectangleStackId.invalid
+        state           = State.Display
+        xToSvg          = 10.0
+        yToSvg          = 10.0
+        defaultWidth    = 50.0
+        nodes           = PList.empty
+        annoPoints      = HMap.empty
       
       }
 

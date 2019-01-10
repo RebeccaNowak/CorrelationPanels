@@ -36,6 +36,7 @@
 	<Compile Include="UI.CSS.fs" />
 	<Compile Include="UIPlus\UIPlus.fs" />
 	<Compile Include="UIPlus\UI.Tooltips.fs" />
+	<Compile Include="UIPlus\TextInputApp.fs" />
 	<Compile Include="UIPlus\UI.Menus.fs" />
 	<Compile Include="UIPlus\UI.Table.fs" />
 	<Compile Include="UIPlus\UI.Buttons.fs" />
@@ -85,7 +86,6 @@
 	<Compile Include="NumericExt.fs" />
 	<Compile Include="Utilities.fs" />
 	<Compile Include="Shaders.fs" />
-	<Compile Include="TextInputApp.fs" />
 	<Compile Include="DropdownApp.fs" />
 	<Compile Include="Semantic.fs" />
 	<Compile Include="SemanticApp.fs" />
@@ -116,6 +116,7 @@
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="NewFolder\" />
     <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

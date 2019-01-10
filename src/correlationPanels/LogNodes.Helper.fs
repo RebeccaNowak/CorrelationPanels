@@ -96,13 +96,13 @@ open CorrelationDrawing
       match anno with
         | None -> None
         | Some anno ->
-            let points = anno.points |> PList.toList
-            let h = List.tryHead points
-            let t = List.tryLast points
-            Option.map2 (fun (x : AnnotationPoint) (y : AnnotationPoint) -> 
-                            let x = x.point
-                            let y = y.point
-                            V3d.Distance(x,y)) h t
+          let points = anno.points |> PList.toList
+          let h = List.tryHead points
+          let t = List.tryLast points
+          Option.map2 (fun (x : AnnotationPoint) (y : AnnotationPoint) -> 
+                          let x = x.point
+                          let y = y.point
+                          V3d.Distance(x,y)) h t
     
     //TODO need to change for Pro3D integration
     let calcMetricValue' (n : MLogNode) (annoApp : MAnnotationApp) = 

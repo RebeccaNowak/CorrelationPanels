@@ -7,6 +7,7 @@ open Aardvark.UI
 open Aardvark.UI.Primitives
 open SimpleTypes
 open Svgplus
+open UIPlus
 
 //[<DomainType>]
 //type BorderedRectangle = {
@@ -21,15 +22,6 @@ open Svgplus
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// BEGIN GUI
-
-
-[<DomainType>]
-type TextInput = {
-    text      : string
-    disabled  : bool
-    bgColor   : C4b
-    size      : option<int>
- } 
 
 [<DomainType>]
 type DropdownList<'a> = {
@@ -396,10 +388,11 @@ type LogAxisConfigId = {
 type LogNode = {
     [<NonIncremental>]
     id            : LogNodeId
-
+    [<NonIncremental>]
+    rectangleId   : RectangleId
+    
     logId         : LogId
-    label         : string
-                  
+
     //[<NonIncremental>]
     nodeType           : LogNodeType
 
@@ -409,8 +402,6 @@ type LogNode = {
     annotation         : option<AnnotationId>
 
     children           : plist<LogNode>
-    //nativePos          : V2d
-    //nativeSize         : Size2D
     
     mainBody           : Svgplus.Rectangle
     roseDiagram        : RoseDiagram
@@ -447,12 +438,17 @@ type LogAxisApp = {
 [<DomainType>]
 type GeologicalLog = {
     [<NonIncremental;PrimaryKey>]
-    id          : LogId
-    stackId     : Svgplus.RS.RectangleStackId
-    state        : State
+    id              : LogId
 
-    nodes        : plist<LogNode>
-    annoPoints   : hmap<AnnotationId, V3d>
+    [<NonIncremental>]
+    stackId         : Svgplus.RS.RectangleStackId
+
+    state           : State
+    xToSvg          : float
+    yToSvg          : float
+    defaultWidth    : float
+    nodes           : plist<LogNode>
+    annoPoints      : hmap<AnnotationId, V3d>
 }
 
 [<DomainType>]

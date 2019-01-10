@@ -15,13 +15,13 @@ module Mutable =
         let mutable __current : Aardvark.Base.Incremental.IModRef<Svgplus.HeaderType.Header> = Aardvark.Base.Incremental.EqModRef<Svgplus.HeaderType.Header>(__initial) :> Aardvark.Base.Incremental.IModRef<Svgplus.HeaderType.Header>
         let _pos = ResetMod.Create(__initial.pos)
         let _dim = ResetMod.Create(__initial.dim)
-        let _label = ResetMod.Create(__initial.label)
+        let _label = UIPlus.Mutable.MTextInput.Create(__initial.label)
         let _leftButton = Svgplus.Mutable.MButton.Create(__initial.leftButton)
         let _rightButton = Svgplus.Mutable.MButton.Create(__initial.rightButton)
         
         member x.pos = _pos :> IMod<_>
         member x.dim = _dim :> IMod<_>
-        member x.label = _label :> IMod<_>
+        member x.label = _label
         member x.leftButton = _leftButton
         member x.rightButton = _rightButton
         
@@ -32,7 +32,7 @@ module Mutable =
                 
                 ResetMod.Update(_pos,v.pos)
                 ResetMod.Update(_dim,v.dim)
-                ResetMod.Update(_label,v.label)
+                UIPlus.Mutable.MTextInput.Update(_label, v.label)
                 Svgplus.Mutable.MButton.Update(_leftButton, v.leftButton)
                 Svgplus.Mutable.MButton.Update(_rightButton, v.rightButton)
                 
@@ -64,7 +64,7 @@ module Mutable =
                     override x.Update(r,f) = { r with dim = f r.dim }
                 }
             let label =
-                { new Lens<Svgplus.HeaderType.Header, System.String>() with
+                { new Lens<Svgplus.HeaderType.Header, UIPlus.TextInput>() with
                     override x.Get(r) = r.label
                     override x.Set(r,v) = { r with label = v }
                     override x.Update(r,f) = { r with label = f r.label }

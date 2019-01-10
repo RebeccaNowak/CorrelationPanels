@@ -8,16 +8,13 @@ open Aardvark.Base
 open Aardvark.UI
 
   type Action =
-  //| ChangeXAxis         of (AnnotationApp * SemanticId * float)
     | MouseOver           of LogNodeId
     | ToggleSelectNode    of LogNodeId
     | BorderMessage       of Border.Action
-    | DrawCorrelation     of BorderId
     | RectangleMessage    of Svgplus.Rectangle.Action
     | ColorPickerMessage  of ColorPicker.Action
     | RoseDiagramMessage  of Svgplus.RoseDiagram.Action
-  //| RoseDiagramMessage  of Svgplus.RoseDiagram.Action
-  //| CorrelationButton   of Svgplus.Button.Action
+
 
 
   module Lens = 
@@ -111,27 +108,22 @@ open Aardvark.UI
       {
         id           = LogNodeId.invalid
         logId        = LogId.invalid
-      //  isSelected   = false
-     //   hasDefaultX  = false
+        rectangleId  = RectangleId.invalid
+
         nodeType     = LogNodeType.Empty
-        label        = "log node"
         level        = NodeLevel.INVALID
         lBorder      = None
         uBorder      = None
         annotation   = None
         children     = plist.Empty
-        //svgPos.Y      = 0.0
-        //svgPos.X      = 0.0
-        //nativePos    = V2d.OO
-        //nativeSize   = Size2D.init
-       // svgPos       = V2d.OO
-      //  svgSize      = Size2D.init
 
         mainBody     = Svgplus.Rectangle.init (RectangleId.newId ())
         roseDiagram  = Svgplus.RoseDiagram.init
         buttonNorth  = Svgplus.Button.init
         buttonSouth  = Svgplus.Button.init
       }
+
+
 
 
     let topLevel 
@@ -156,7 +148,7 @@ open Aardvark.UI
           id          = nodeId
           logId       = logId
           nodeType    = nodeType
-          label       = "log node"
+          //label       = "log node"
           level       = level
           lBorder     = Some lBorder
           uBorder     = Some uBorder

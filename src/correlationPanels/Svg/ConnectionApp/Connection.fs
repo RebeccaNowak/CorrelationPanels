@@ -21,8 +21,8 @@
         colour = C4b.Black
         dotted = false
         weight = 5.0
-        dashLength = 2.0
-        dashDist   = 2.0
+        dashLength = 4.0
+        dashDist   = 1.0
       }
 
     let update (model : Connection) (a : Action) =

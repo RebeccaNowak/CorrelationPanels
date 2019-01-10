@@ -11,9 +11,12 @@
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module RectangleStack =
     open System.Windows.Interop
+    open Aardvark.SceneGraph
+    open UIPlus
 
     type Action =
       | RectangleMessage of (RectangleId * Rectangle.Action)
+      | ChangeLabel      of TextInput.Action
       | ResetPosition    of V2d
       | AddRectangle     of Rectangle
       | HeaderMessage    of Header.Action
@@ -26,6 +29,7 @@
           let clean = 
             model.rectangles
               |> HMap.map (fun id r -> Rectangle.Lens.pos.Set (r, V2d 0.0))
+          
 
           let f (prev : Rectangle) (curr : Rectangle) =
             let cposy = prev.pos.Y + prev.dim.height
@@ -109,7 +113,7 @@
                 s.rectangles 
                   |> HMap.map (fun id r -> 
                                   let _x = v.X
-                                  let _y = v.Y + r.pos.Y
+                                  let _y = v.Y + r.pos.Y + s.header.dim.height
                                   let _v = V2d (_x, _y)
                                   Rectangle.Lens.pos.Set (r, _v))
               let _header = Header.Lens.pos.Set (s.header, v) 
@@ -181,34 +185,23 @@
           let _rects = model.rectangles 
                         |> HMap.update id (fun x -> updateRect x m)
           {model with rectangles    = _rects}
-        | HeaderMessage msg -> model
+        | HeaderMessage msg ->
+          let _header = Header.update model.header msg
+          {model with header = _header}
+        | ChangeLabel msg ->
+          let _header = Header.update model.header (Header.ChangeLabel msg)
+          {model with header = _header}
           
 
 
     let view (model : MRectangleStack) =
-
-        //    let createHeader (model   : MGeologicalLog) =
-        //alist {
-        //  let label = 
-        //    Aardvark.UI.Incremental.Svg.text 
-        //      (AttributeMap.ofAMap 
-        //        (amap {
-        //        let! y = model.yOffset
-        //        yield (Svgplus.Attributes.atf "y" y)
-        //        yield (Svgplus.Attributes.atf "x" 0.0)
-        //        yield (Svgplus.Attributes.ats "font-weight" "bold")
-        //      })) model.label.text
-        //  yield label 
-
-
-        //}
 
       let viewMap = 
         Svgplus.Rectangle.view >> UIMapping.mapAListId  
     
       let content =
         alist {
-          //yield (Header.view model.header) |> UI.map HeaderMessage
+          yield (Header.view model.header) |> UI.map HeaderMessage
           for id in model.order do
             let! r = AMap.find id model.rectangles 
             yield! (viewMap r id RectangleMessage)

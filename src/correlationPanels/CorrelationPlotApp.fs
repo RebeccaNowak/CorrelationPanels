@@ -15,7 +15,6 @@
       | MouseUp of (MouseButtons * V2i)
       | MouseMove of V2d
       | CorrelationPlotMessage of CorrelationPlot.Action
-      | AxisMessage of LogAxisApp.Action
       | Clear
 
     let defaultZoomFactor = 1.0
@@ -111,27 +110,27 @@
           }
         | CorrelationPlotMessage lm -> 
           {model with correlationPlot = CorrelationPlot.update annoApp model.correlationPlot lm}
-        | AxisMessage m -> 
-          {model with correlationPlot = CorrelationPlot.update annoApp model.correlationPlot (m |> CorrelationPlot.LogAxisAppMessage)} //TODO refactor
+        //| AxisMessage m -> 
+        //  {model with correlationPlot = CorrelationPlot.update annoApp model.correlationPlot (m |> CorrelationPlot.LogAxisAppMessage)} //TODO refactor
 
 
     let viewSvg (annoApp : MAnnotationApp) (model : MCorrelationPlotApp) =
      
-      let menu = 
-          let axisSel = ((LogAxisApp.view model.correlationPlot.logAxisApp) |> AList.map (UI.map AxisMessage))
+      //let menu = 
+      //    let axisSel = ((LogAxisApp.view model.correlationPlot.logAxisApp) |> AList.map (UI.map AxisMessage))
             
-          div [
-               style "float:right; vertical-align: top"
-               attribute "position" "sticky"
-               attribute "top" "5"
-              ]
-              [
-                div []
-                    [
-                      Incremental.div (AttributeMap.ofList [style "display:inline"])
-                                      axisSel
-                ];
-              ]
+      //    div [
+      //         style "float:right; vertical-align: top"
+      //         attribute "position" "sticky"
+      //         attribute "top" "5"
+      //        ]
+      //        [
+      //          div []
+      //              [
+      //                Incremental.div (AttributeMap.ofList [style "display:inline"])
+      //                                axisSel
+      //          ];
+      //        ]
               
         
       let domNode = 
@@ -144,86 +143,31 @@
 
     // Log Debug View
 
- //     let mapper (log : MGeologicalLog) = (fun a -> CorrelationPlot.LogMessage (log.id, a))
-      
-      //let logList (model : MCorrelationPlotApp) 
-      //            (semApp : MSemanticApp)
-      //            (annoApp : MAnnotationApp) =
-      //  let rows = 
-      //    alist {
-      //      for log in model.correlationPlot.logs do
-      //        let! tmp = 
-      //          Log.View.listView log semApp annoApp 
-      //                            (CorrelationPlot.Action.SelectLog log.id) 
-      //                            (mapper log)
-      //        let tmp = tmp
-      //                    |> List.map (UI.map (fun a -> Action.CorrelationPlotMessage a))
-                                                      
-      //        let! state = log.state
-      //        for row in tmp do
-      //          let dNodeRow = 
-      //            row
-      //              //|> UI.map (fun m -> (CorrelationPlot.LogMessage (log.id, m)))
-      //              //|> UI.map CorrelationPlotMessage
-      //          yield dNodeRow
-      //          if state = State.New then
-      //            let menu = 
-      //              (UIPlus.Menus.saveCancelMenu 
-      //                (CorrelationPlot.Action.SaveLog log.id)
-      //                (CorrelationPlot.Action.DeleteLog log.id) 
-      //                 |> UI.map CorrelationPlotMessage)
-      //            yield Table.intoTr [(Table.intoTd' menu tmp.Length)]
-                                  
-      //    }
-
-      //  Table.toTableView (div[][]) rows ["Label";"Order"]
 
 
-      //let view  (model    : MCorrelationPlotApp) 
-      //          (annoApp  : MAnnotationApp) 
-      //          (semApp   : MSemanticApp) =
-        //let domList =
-        //  alist {            
-        //    let! xAxis = model.correlationPlot.xAxis
-        //    for log in model.correlationPlot.logs do
-        //      let! sel = model.correlationPlot.selectedLog
-        //      let isSelected = 
-        //        match sel with
-        //          | Some s  -> s = log.id
-        //          | None    -> false
-              
-        //      yield
-        //        div [clazz "item"][
-        //          div [clazz "content"] [
-        //            div [clazz "header"; 
-        //                 style "text-align: center"; 
-        //                 onMouseClick (fun _ -> CorrelationPlot.ToggleSelectLog (Some log.id))] 
-        //                [
-        //                  i [clazz "yellow arrow alternate circle down icon"] [] |> UI.ToolTips.wrapToolTip "select"
-        //                ] |> UI.map (Action.CorrelationPlotMessage)
-        //            div [] 
-        //                [
-        //                  (
-        //                      logList model semApp annoApp
-        //                  )
-        //                ]        
-        //          ]
-        //        ]
-        //  }   
+
+    let view  (model    : MCorrelationPlotApp) 
+              (annoApp  : MAnnotationApp) 
+              (semApp   : MSemanticApp) =
 
 
-        //let domNode =
-        //  require (GUI.CSS.myCss) (
-        //    body [style "overflow: auto"] [
-        //      div [] [
-        //       // menu |> UI.map CorrelationPlotMessage
-        //        Incremental.div (AttributeMap.ofList [clazz "ui inverted segment"])
-        //                        domList
-        //      ]
-        //    ]
-        //  )
 
-        //domNode
+      let domnode =
+        let domNode = (CorrelationPlot.listView model.correlationPlot semApp annoApp) 
+                        |> UI.map Action.CorrelationPlotMessage
+
+        require (GUI.CSS.myCss) (
+          body [style "overflow: auto"] [
+            div [] [
+              // menu |> ui.map correlationplotmessage
+              Incremental.div (AttributeMap.ofList [clazz "ui inverted segment"])
+                              (AList.single domNode)
+                              
+            ]
+          ]
+        )
+
+      domnode
     
 
 

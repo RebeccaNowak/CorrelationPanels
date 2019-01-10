@@ -214,6 +214,13 @@ open CorrelationDrawing
 
 
           
+    let calcMetricValue (model : LogNode) (annoApp : AnnotationApp) =
+      let mc = metricChildren model
+      let someVals = mc |> List.map (fun n -> LogNodes.Helper.calcMetricValue n annoApp)
+      let vals = someVals |> DS.List.filterNone
+      match vals.IsEmptyOrNull () with
+        | true  -> None
+        | false -> Some (vals |> List.max)
 
 
      

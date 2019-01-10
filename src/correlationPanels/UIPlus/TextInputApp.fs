@@ -1,11 +1,13 @@
-﻿namespace CorrelationDrawing
+﻿namespace UIPlus
 
 open Aardvark.Base.Incremental
+open Aardvark.Base
+open Aardvark.UI
+open UIPlus
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module TextInput =
-  open Aardvark.Base
-  open Aardvark.UI
+
 
   type Action =
     | ChangeText of string

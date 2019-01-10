@@ -10,27 +10,27 @@
     open Aardvark.UI.Primitives
     open Svgplus.DA
     open Svgplus
+    open Svgplus.RS
 
     type Action = 
       | Clear
      // | ToggleSelectLog        of option<LogId>
       | SelectLog              of LogId
       //| NewLog                 
-      | TogglePoint            of (V3d * AnnotationId)
+   //   | TogglePoint            of (V3d * AnnotationId)
       | FinishLog              
-      | SaveLog                of LogId              
+   //   | SaveLog                of LogId              
       | DeleteLog              of LogId
       | LogMessage             of (LogId * Log.Action)
       | ChangeView             of CorrelationPlotViewType
-      | ChangeXAxis            of (AnnotationApp * SemanticId)
-      | LogAxisAppMessage      of LogAxisApp.Action
-      | NoMessage              of obj
+      //| ChangeXAxis            of (AnnotationApp * SemanticId)
+      //| LogAxisAppMessage      of LogAxisApp.Action
+     // | NoMessage              of obj
       | ToggleEditCorrelations
       | SetSecondaryLevel      of NodeLevel
       | ToggleFlag             of SvgFlags
       | DiagramMessage         of DiagramApp.Action
       | MouseMove              of V2d
-
 
 
 
@@ -114,6 +114,9 @@
             model.selectedPoints
             model.semanticApp 
             annoApp
+            10.0
+            10.0
+            50.0
 
       let diagram =
         DiagramApp.update model.diagramApp (DiagramApp.AddStack stack)
@@ -151,7 +154,20 @@
                       currrentYMapping = None
                       selectedBorder   = None
           }
+        | LogMessage (id, logmsg) ->
+          let _dApp =
+            match logmsg with
+              | Log.TextInputMessage (sid, m) ->
+                 DiagramApp.update model.diagramApp (DiagramApp.RectStackMessage (sid, RectangleStack.ChangeLabel m))
+              | Log.MoveDown id ->
+                DiagramApp.update model.diagramApp (DiagramApp.MoveRight id)
+              | Log.MoveUp id ->
+                DiagramApp.update model.diagramApp (DiagramApp.MoveLeft id)
+              | _ -> model.diagramApp
 
+          {model with logs       = updateLog id logmsg model.logs
+                      diagramApp = _dApp
+          }
         | SelectLog id ->
           let hasNew = not (model.logs |> HMap.forall (fun id x -> x.state <> State.New))
           if hasNew then
@@ -196,8 +212,8 @@
           _model
         | DeleteLog id        -> deleteLog id model
           
-        | LogAxisAppMessage m -> 
-          {model with logAxisApp  = (LogAxisApp.update model.logAxisApp m)}
+        //| LogAxisAppMessage m -> 
+        //  {model with logAxisApp  = (LogAxisApp.update model.logAxisApp m)}
         | ChangeView m          -> {model with viewType = m}
         | ToggleEditCorrelations  -> 
           {model with editCorrelations = not model.editCorrelations}
@@ -249,8 +265,65 @@
         )
       ]
 
-                                        
-                           
+                                       
+    let listView  (model : MCorrelationPlot) 
+                  (semApp : MSemanticApp)
+                  (annoApp : MAnnotationApp) =
+
+      let mapper (log : MGeologicalLog) = (fun a -> Action.LogMessage (log.id, a))
+      
+      let logList =
+        let rows = 
+          let logs = DS.AMap.valuesToAList model.logs
+          let stacks = model.diagramApp.rectangleStacks
+          alist {
+            for log in logs do
+              let! stack =  (AMap.find log.stackId stacks)
+              let! tmp = 
+                Log.View.listView log semApp annoApp 
+                                  (Action.SelectLog log.id) 
+                                  (mapper log)        
+                                  stack
+               //|> List.map (UI.map Action.SelectLog)
+              //let! state = log.state
+              for row in tmp do
+                yield row
+              //  if state = State.New then
+              //    let menu = 
+              //      (UIPlus.Menus.saveCancelMenu 
+              //        (Action.SaveLog log.id)
+              //        (Action.DeleteLog log.id) 
+              //      )
+              //    yield Table.intoTr [(Table.intoTd' menu tmp.Length)]     
+          }
+        
+        Table.toTableView (div[][]) rows ["label";"order"]
+      logList
+      
+
+
+
+        //    div [clazz "item"][
+        //      div [clazz "content"] [
+        //        div [clazz "header"; 
+        //              style "text-align: center"; 
+        //              onMouseClick (fun _ -> Action.SelectLog log.id)
+        //            ] 
+        //            [
+        //              i [clazz "yellow arrow alternate circle down icon"] [] |> ui.tooltips.wraptooltip "select"
+        //            ] |> ui.map (action.correlationplotmessage)
+        //        div [] 
+        //            [
+        //              (
+        //                  loglist model semapp annoapp
+        //              )
+        //            ]        
+        //      ]
+        //    ]
+        //}   
+        
+
+
 
     //////////////////////
     //let getLogConnectionSgs 

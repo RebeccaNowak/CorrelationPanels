@@ -8,70 +8,6 @@ open CorrelationDrawing
 [<AutoOpen>]
 module Mutable =
 
-    
-    
-    type MTextInput(__initial : CorrelationDrawing.TextInput) =
-        inherit obj()
-        let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.TextInput> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.TextInput>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.TextInput>
-        let _text = ResetMod.Create(__initial.text)
-        let _disabled = ResetMod.Create(__initial.disabled)
-        let _bgColor = ResetMod.Create(__initial.bgColor)
-        let _size = MOption.Create(__initial.size)
-        
-        member x.text = _text :> IMod<_>
-        member x.disabled = _disabled :> IMod<_>
-        member x.bgColor = _bgColor :> IMod<_>
-        member x.size = _size :> IMod<_>
-        
-        member x.Current = __current :> IMod<_>
-        member x.Update(v : CorrelationDrawing.TextInput) =
-            if not (System.Object.ReferenceEquals(__current.Value, v)) then
-                __current.Value <- v
-                
-                ResetMod.Update(_text,v.text)
-                ResetMod.Update(_disabled,v.disabled)
-                ResetMod.Update(_bgColor,v.bgColor)
-                MOption.Update(_size, v.size)
-                
-        
-        static member Create(__initial : CorrelationDrawing.TextInput) : MTextInput = MTextInput(__initial)
-        static member Update(m : MTextInput, v : CorrelationDrawing.TextInput) = m.Update(v)
-        
-        override x.ToString() = __current.Value.ToString()
-        member x.AsString = sprintf "%A" __current.Value
-        interface IUpdatable<CorrelationDrawing.TextInput> with
-            member x.Update v = x.Update v
-    
-    
-    
-    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module TextInput =
-        [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-        module Lens =
-            let text =
-                { new Lens<CorrelationDrawing.TextInput, System.String>() with
-                    override x.Get(r) = r.text
-                    override x.Set(r,v) = { r with text = v }
-                    override x.Update(r,f) = { r with text = f r.text }
-                }
-            let disabled =
-                { new Lens<CorrelationDrawing.TextInput, System.Boolean>() with
-                    override x.Get(r) = r.disabled
-                    override x.Set(r,v) = { r with disabled = v }
-                    override x.Update(r,f) = { r with disabled = f r.disabled }
-                }
-            let bgColor =
-                { new Lens<CorrelationDrawing.TextInput, Aardvark.Base.C4b>() with
-                    override x.Get(r) = r.bgColor
-                    override x.Set(r,v) = { r with bgColor = v }
-                    override x.Update(r,f) = { r with bgColor = f r.bgColor }
-                }
-            let size =
-                { new Lens<CorrelationDrawing.TextInput, Microsoft.FSharp.Core.Option<System.Int32>>() with
-                    override x.Get(r) = r.size
-                    override x.Set(r,v) = { r with size = v }
-                    override x.Update(r,f) = { r with size = f r.size }
-                }
     [<AbstractClass; StructuredFormatDisplay("{AsString}")>]
     type MDropdownList<'va,'na>() = 
         abstract member valueList : Aardvark.Base.Incremental.alist<'na>
@@ -278,7 +214,7 @@ module Mutable =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.Semantic> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.Semantic>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.Semantic>
         let _state = ResetMod.Create(__initial.state)
-        let _label = MTextInput.Create(__initial.label)
+        let _label = UIPlus.Mutable.MTextInput.Create(__initial.label)
         let _size = ResetMod.Create(__initial.size)
         let _style = MStyle.Create(__initial.style)
         let _semanticType = ResetMod.Create(__initial.semanticType)
@@ -301,7 +237,7 @@ module Mutable =
                 __current.Value <- v
                 
                 ResetMod.Update(_state,v.state)
-                MTextInput.Update(_label, v.label)
+                UIPlus.Mutable.MTextInput.Update(_label, v.label)
                 ResetMod.Update(_size,v.size)
                 MStyle.Update(_style, v.style)
                 ResetMod.Update(_semanticType,v.semanticType)
@@ -342,7 +278,7 @@ module Mutable =
                     override x.Update(r,f) = { r with state = f r.state }
                 }
             let label =
-                { new Lens<CorrelationDrawing.Semantic, CorrelationDrawing.TextInput>() with
+                { new Lens<CorrelationDrawing.Semantic, UIPlus.TextInput>() with
                     override x.Get(r) = r.label
                     override x.Set(r,v) = { r with label = v }
                     override x.Update(r,f) = { r with label = f r.label }
@@ -852,7 +788,6 @@ module Mutable =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.LogNode> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.LogNode>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.LogNode>
         let _logId = ResetMod.Create(__initial.logId)
-        let _label = ResetMod.Create(__initial.label)
         let _nodeType = ResetMod.Create(__initial.nodeType)
         let _level = ResetMod.Create(__initial.level)
         let _lBorder = MOption.Create(__initial.lBorder, (fun v -> MBorder.Create(v)), (fun (m,v) -> MBorder.Update(m, v)), (fun v -> v))
@@ -865,8 +800,8 @@ module Mutable =
         let _buttonSouth = Svgplus.Mutable.MButton.Create(__initial.buttonSouth)
         
         member x.id = __current.Value.id
+        member x.rectangleId = __current.Value.rectangleId
         member x.logId = _logId :> IMod<_>
-        member x.label = _label :> IMod<_>
         member x.nodeType = _nodeType :> IMod<_>
         member x.level = _level :> IMod<_>
         member x.lBorder = _lBorder :> IMod<_>
@@ -884,7 +819,6 @@ module Mutable =
                 __current.Value <- v
                 
                 ResetMod.Update(_logId,v.logId)
-                ResetMod.Update(_label,v.label)
                 ResetMod.Update(_nodeType,v.nodeType)
                 ResetMod.Update(_level,v.level)
                 MOption.Update(_lBorder, v.lBorder)
@@ -917,17 +851,17 @@ module Mutable =
                     override x.Set(r,v) = { r with id = v }
                     override x.Update(r,f) = { r with id = f r.id }
                 }
+            let rectangleId =
+                { new Lens<CorrelationDrawing.LogNode, Svgplus.RectangleId>() with
+                    override x.Get(r) = r.rectangleId
+                    override x.Set(r,v) = { r with rectangleId = v }
+                    override x.Update(r,f) = { r with rectangleId = f r.rectangleId }
+                }
             let logId =
                 { new Lens<CorrelationDrawing.LogNode, CorrelationDrawing.LogId>() with
                     override x.Get(r) = r.logId
                     override x.Set(r,v) = { r with logId = v }
                     override x.Update(r,f) = { r with logId = f r.logId }
-                }
-            let label =
-                { new Lens<CorrelationDrawing.LogNode, System.String>() with
-                    override x.Get(r) = r.label
-                    override x.Set(r,v) = { r with label = v }
-                    override x.Update(r,f) = { r with label = f r.label }
                 }
             let nodeType =
                 { new Lens<CorrelationDrawing.LogNode, CorrelationDrawing.LogNodeType>() with
@@ -1101,14 +1035,19 @@ module Mutable =
     type MGeologicalLog(__initial : CorrelationDrawing.GeologicalLog) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.GeologicalLog> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.GeologicalLog>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.GeologicalLog>
-        let _stackId = ResetMod.Create(__initial.stackId)
         let _state = ResetMod.Create(__initial.state)
+        let _xToSvg = ResetMod.Create(__initial.xToSvg)
+        let _yToSvg = ResetMod.Create(__initial.yToSvg)
+        let _defaultWidth = ResetMod.Create(__initial.defaultWidth)
         let _nodes = MList.Create(__initial.nodes, (fun v -> MLogNode.Create(v)), (fun (m,v) -> MLogNode.Update(m, v)), (fun v -> v))
         let _annoPoints = MMap.Create(__initial.annoPoints)
         
         member x.id = __current.Value.id
-        member x.stackId = _stackId :> IMod<_>
+        member x.stackId = __current.Value.stackId
         member x.state = _state :> IMod<_>
+        member x.xToSvg = _xToSvg :> IMod<_>
+        member x.yToSvg = _yToSvg :> IMod<_>
+        member x.defaultWidth = _defaultWidth :> IMod<_>
         member x.nodes = _nodes :> alist<_>
         member x.annoPoints = _annoPoints :> amap<_,_>
         
@@ -1117,8 +1056,10 @@ module Mutable =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
-                ResetMod.Update(_stackId,v.stackId)
                 ResetMod.Update(_state,v.state)
+                ResetMod.Update(_xToSvg,v.xToSvg)
+                ResetMod.Update(_yToSvg,v.yToSvg)
+                ResetMod.Update(_defaultWidth,v.defaultWidth)
                 MList.Update(_nodes, v.nodes)
                 MMap.Update(_annoPoints, v.annoPoints)
                 
@@ -1154,6 +1095,24 @@ module Mutable =
                     override x.Get(r) = r.state
                     override x.Set(r,v) = { r with state = v }
                     override x.Update(r,f) = { r with state = f r.state }
+                }
+            let xToSvg =
+                { new Lens<CorrelationDrawing.GeologicalLog, System.Double>() with
+                    override x.Get(r) = r.xToSvg
+                    override x.Set(r,v) = { r with xToSvg = v }
+                    override x.Update(r,f) = { r with xToSvg = f r.xToSvg }
+                }
+            let yToSvg =
+                { new Lens<CorrelationDrawing.GeologicalLog, System.Double>() with
+                    override x.Get(r) = r.yToSvg
+                    override x.Set(r,v) = { r with yToSvg = v }
+                    override x.Update(r,f) = { r with yToSvg = f r.yToSvg }
+                }
+            let defaultWidth =
+                { new Lens<CorrelationDrawing.GeologicalLog, System.Double>() with
+                    override x.Get(r) = r.defaultWidth
+                    override x.Set(r,v) = { r with defaultWidth = v }
+                    override x.Update(r,f) = { r with defaultWidth = f r.defaultWidth }
                 }
             let nodes =
                 { new Lens<CorrelationDrawing.GeologicalLog, Aardvark.Base.plist<CorrelationDrawing.LogNode>>() with

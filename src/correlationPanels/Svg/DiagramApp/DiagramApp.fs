@@ -13,13 +13,14 @@ open Svgplus.RS
   module DiagramApp = 
 
     type Action =
-        | RectStackMessage  of (RectangleStackId * RectangleStack.Action)
-        //| HeaderMessage     of Header.Action
-        | MouseMove         of V2d
-        | ConnectionMessage of ConnectionApp.Action
-        | AddStack          of RectangleStack
+      | RectStackMessage  of (RectangleStackId * RectangleStack.Action)
+      //| HeaderMessage     of Header.Action
+      | MouseMove         of V2d
+      | ConnectionMessage of ConnectionApp.Action
+      | AddStack          of RectangleStack
+      | MoveLeft          of RectangleStackId
+      | MoveRight         of RectangleStackId
         
-
     let init : DiagramApp = 
       {
         rectangleStacks    = HMap.empty
@@ -90,9 +91,25 @@ open Svgplus.RS
           | Some r -> RectangleStack.update r m
           | None   -> RectangleStack.initSample (RectangleStackId.newId ())
 
-      let updateConnections model msg =
-        ConnectionApp.update model.connectionApp 
-                              (ConnectionApp.Action.ButtonMessage msg)
+      let updateConnections model message = 
+        let upd model msg =
+          ConnectionApp.update model.connectionApp 
+                               (ConnectionApp.Action.ButtonMessage msg)
+        match message with 
+            | id, RectangleStack.RectangleMessage rm ->
+              match rm with
+                | id, Rectangle.NWButtonMessage m -> 
+                  upd model m
+                | id, Rectangle.SWButtonMessage m ->
+                  upd model m
+                | id, Rectangle.NEButtonMessage m ->
+                  upd model m
+                | id, Rectangle.SEButtonMessage m ->
+                  upd model m
+                | _ -> model.connectionApp
+            | _ -> model.connectionApp
+
+
 
       match msg with
         | AddStack r ->
@@ -107,28 +124,22 @@ open Svgplus.RS
           let (id, m) = msg
           let _rects = model.rectangleStacks 
                         |> HMap.update id (fun x -> updateRect x m)
-          let _cons  = 
-            match msg with 
-              | id, RectangleStack.RectangleMessage rm ->
-                match rm with
-                  | id, Rectangle.Action.NWButtonMessage m -> 
-                    updateConnections model m
-                  | id, Rectangle.Action.SWButtonMessage m ->
-                    updateConnections model m
-                  | id, Rectangle.Action.NEButtonMessage m ->
-                    updateConnections model m
-                  | id, Rectangle.Action.SEButtonMessage m ->
-                    updateConnections model m
-                  | _ -> model.connectionApp
-              | _ -> model.connectionApp
-           
+          let _cons  = updateConnections model msg
           {model with rectangleStacks   = _rects
                       connectionApp     = _cons}
 
         | ConnectionMessage msg -> 
           {model with connectionApp = ConnectionApp.update model.connectionApp msg}
         | MouseMove p -> 
-          {model with connectionApp = ConnectionApp.update model.connectionApp (ConnectionApp.Action.MouseMoved p)}
+          let _conApp = ConnectionApp.update 
+                          model.connectionApp 
+                          (ConnectionApp.Action.MouseMoved p)
+          {model with connectionApp = _conApp}
+        | MoveLeft id ->
+          {model with order = DS.PList.moveLeft id model.order}
+        | MoveRight id ->
+          {model with order = DS.PList.moveRight id model.order}
+
 
     let view (model : MDiagramApp) =
       let rectangles = 
@@ -143,7 +154,6 @@ open Svgplus.RS
           |> UIMapping.mapAList (Action.ConnectionMessage)
 
       let content = rectangles 
-                      //|> AList.append headers
                       |> AList.append connections
                       
       content
@@ -151,11 +161,15 @@ open Svgplus.RS
     let standaloneView (model : MDiagramApp) =
 
       let rectangles = 
-        let foo = 
-          RectangleStack.view >> UIMapping.mapAListId  
-        model.rectangleStacks 
-                    |> AMap.map (fun k r -> foo r k RectStackMessage) 
-                    |> DS.AMap.toFlatAList
+
+        alist {
+          for id in model.order do
+            let! rstack = AMap.find id model.rectangleStacks
+            let vlst = RectangleStack.view rstack
+            let mapped = vlst |> AList.map (fun el -> UI.map (fun a -> Action.RectStackMessage (id, a)) el)
+            
+            yield! mapped
+        }
 
       let connections = 
         (ConnectionApp.view model.connectionApp) 
@@ -182,6 +196,9 @@ open Svgplus.RS
 
       require (GUI.CSS.myCss) (
         body [] [
-            Incremental.Svg.svg svgAtts content
+          div [attribute "contenteditable" "true"]
+              [
+                Incremental.Svg.svg svgAtts content
+              ]
         ]
       )      

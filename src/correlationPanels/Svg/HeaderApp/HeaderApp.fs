@@ -9,11 +9,14 @@
     open Svgplus.HeaderType
     open Svgplus
     open Attributes
+    open UIPlus
 
 
     type Action =
-      | LeftArrowMessage of Button.Action
+      | LeftArrowMessage  of Button.Action
       | RightArrowMessage of Button.Action
+      | MouseMessage      of MouseAction
+      | ChangeLabel       of TextInput.Action
 
     let init : Header =
       let left = 
@@ -24,7 +27,7 @@
       {
         pos           = V2d.OO
         dim           = {width = 50.0; height = 50.0}
-        label         = "label"
+        label         = {TextInput.init with text = "label"}
         leftButton    = left
         rightButton   = right
       }
@@ -59,24 +62,41 @@
               {r with dim = {height = f r.dim.width; width = r.dim.width}}
         }
 
+    let update (model : Header) (action : Action) =
+      match action with
+        | MouseMessage m -> model
+        | ChangeLabel  m ->
+          let _label = TextInput.update model.label m
+          {model with label = _label}
+          //match m with
+          //  | MouseAction.OnLeftClick -> {model with 
+          //  | _ -> model
+
 
 
     let view (model : MHeader) =
+      let bold = 
+        amap {
+            yield (Svgplus.Attributes.ats "font-weight" "bold")
+            
+        } |> AttributeMap.ofAMap
+
+      let mouseActions =
+        (MouseActions.init ()) |> AttributeMap.ofAMap
       let atts = 
         (Incremental.xywh model.pos model.dim)
           |> AttributeMap.ofAMap
-        
-      let content =
-        alist {
-          yield ((Button.view model.leftButton)  |> UI.map LeftArrowMessage)
-          yield ((Button.view model.rightButton) |> UI.map LeftArrowMessage)
-        }
-      content
+          |> AttributeMap.union bold
+          |> AttributeMap.union mouseActions
 
-     
+      let label = 
+        Aardvark.UI.Incremental.Svg.text atts model.label.text
+
+      label |> UI.map MouseMessage
 
 
 
+    
 
       //let namesp =
       //  [attribute "xmlns" "http://www.w3.org/1999/xhtml"] |> AttributeMap.ofList
