@@ -14,14 +14,14 @@
 
     type Action = 
       | Clear
-     // | ToggleSelectLog        of option<LogId>
-      | SelectLog              of LogId
+     // | ToggleSelectLog        of option<RectangleStackId>
+      | SelectLog              of RectangleStackId
       //| NewLog                 
    //   | TogglePoint            of (V3d * AnnotationId)
       | FinishLog              
-   //   | SaveLog                of LogId              
-      | DeleteLog              of LogId
-      | LogMessage             of (LogId * Log.Action)
+   //   | SaveLog                of RectangleStackId              
+      | DeleteLog              of RectangleStackId
+      | LogMessage             of (RectangleStackId * Log.Action)
       | ChangeView             of CorrelationPlotViewType
       //| ChangeXAxis            of (AnnotationApp * SemanticId)
       //| LogAxisAppMessage      of LogAxisApp.Action
@@ -64,7 +64,7 @@
 
       }
 
-    let getPointsOfLog (model : CorrelationPlot) (logId : LogId) =
+    let getPointsOfLog (model : CorrelationPlot) (logId : RectangleStackId) =
       let opt = HMap.tryFind logId model.logs
       match opt with
         | Some log -> log.annoPoints
@@ -131,14 +131,40 @@
 ///////////////////////////////////////////////////////////// UPDATE ////////////////////////////////////////////////////
     
     
-    let deleteLog (id : LogId) (model : CorrelationPlot) =
+    let deleteLog (id : RectangleStackId) (model : CorrelationPlot) =
       let _logs = (HMap.remove id model.logs)
       {model with logs = _logs}
 
-      
-
-    let updateLog  index (message : Log.Action) (logs : hmap<LogId, GeologicalLog>) =
+    let updateLog  index (message : Log.Action) (logs : hmap<RectangleStackId, GeologicalLog>) =
        HMap.update index (fun (x : option<GeologicalLog>) -> Log.update x.Value message) logs//hack
+
+    let selectLog (id       : RectangleStackId)
+                  (annoApp  : AnnotationApp) 
+                  (model    : CorrelationPlot) =
+      let hasNew = not (model.logs |> HMap.forall (fun id x -> x.state <> State.New))
+      if hasNew then
+        model
+      else
+        let (_logs, _sel) =
+          match model.selectedLog with
+            | None -> 
+              let _logs = 
+                model.logs
+                  |> updateLog id (Log.Action.SetState State.Edit)
+              (_logs, Some id)
+            | Some logId when logId = id ->
+              let _logs = 
+                model.logs
+                  |> updateLog id (Log.Action.SetState State.Display)
+              (_logs, None)
+            | Some logId ->
+              let _logs = 
+                model.logs
+                    |> updateLog logId (Log.Action.SetState State.Display)
+                    |> updateLog id (Log.Action.SetState State.Edit)
+              (_logs, Some id)
+        {model with logs        = _logs
+                    selectedLog = _sel}
 
     let update (annoApp  : AnnotationApp)
                (model    : CorrelationPlot) 
@@ -168,33 +194,7 @@
           {model with logs       = updateLog id logmsg model.logs
                       diagramApp = _dApp
           }
-        | SelectLog id ->
-          let hasNew = not (model.logs |> HMap.forall (fun id x -> x.state <> State.New))
-          if hasNew then
-            model
-          else
-            let (_logs, _sel) =
-              match model.selectedLog with
-                | None -> 
-                  let _logs = 
-                    model.logs
-                      |> updateLog id (Log.Action.SetState State.Edit)
-                  (_logs, Some id)
-                | Some logId when logId = id ->
-                  let _logs = 
-                    model.logs
-                      |> updateLog id (Log.Action.SetState State.Display)
-                  (_logs, None)
-                | Some logId ->
-                  let _logs = 
-                    model.logs
-                        |> updateLog logId (Log.Action.SetState State.Display)
-                        |> updateLog id (Log.Action.SetState State.Edit)
-                  (_logs, Some id)
-            {model with logs        = _logs
-                        selectedLog = _sel}
-          
-          
+        | SelectLog id -> selectLog id annoApp model
         //| NewLog             -> 
         //  {model with creatingNew     = true
         //              selectedPoints  = List<(V3d * Annotation)>.Empty}
@@ -228,7 +228,23 @@
         | DiagramMessage m       -> 
           let _d =
             DiagramApp.update model.diagramApp m
-          {model with diagramApp = _d}
+
+          let _cp = 
+            match m with 
+              | DiagramApp.RectStackMessage (id, ra) ->
+                match ra with 
+                  | RectangleStack.HeaderMessage sm ->
+                    match sm with
+                      | Header.MouseMessage mm ->
+                        match mm with 
+                          | MouseAction.OnLeftClick ->
+                            selectLog id annoApp model
+                          | _ -> model
+                      | _ -> model
+                  | _ -> model
+              | _ -> model
+
+          {_cp with diagramApp = _d}
 
         
 
@@ -274,11 +290,11 @@
       
       let logList =
         let rows = 
-          let logs = DS.AMap.valuesToAList model.logs
           let stacks = model.diagramApp.rectangleStacks
           alist {
-            for log in logs do
-              let! stack =  (AMap.find log.stackId stacks)
+            for id in model.diagramApp.order do
+              let! stack = AMap.find id stacks
+              let! log   = AMap.find id model.logs
               let! tmp = 
                 Log.View.listView log semApp annoApp 
                                   (Action.SelectLog log.id) 

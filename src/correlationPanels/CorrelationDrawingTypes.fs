@@ -8,6 +8,7 @@ open Aardvark.UI.Primitives
 open SimpleTypes
 open Svgplus
 open UIPlus
+open Svgplus.RS
 
 //[<DomainType>]
 //type BorderedRectangle = {
@@ -142,14 +143,14 @@ module BorderId =
   let newId unit : BorderId  = 
     {id = System.Guid.NewGuid().ToString()}
 
-type LogId = {
-  id        : string 
-} with
-  member this.isValid = (this.id <> "")
-module LogId = 
-  let invalid = {id = ""}
-  let newId unit : LogId  = 
-    {id = System.Guid.NewGuid().ToString()}
+//type LogId = {
+//  id        : string 
+//} with
+//  member this.isValid = (this.id <> "")
+//module LogId = 
+//  let invalid = {id = ""}
+//  let newId unit : LogId  = 
+//    {id = System.Guid.NewGuid().ToString()}
 
 type LogNodeId = {
   id        : string 
@@ -352,7 +353,7 @@ type Border = {
     id            : BorderId
 
     nodeId        : LogNodeId
-    logId         : LogId
+    logId         : RectangleStackId
     isSelected    : bool
     correlation   : Option<BorderId>
     annotationId  : AnnotationId
@@ -391,7 +392,7 @@ type LogNode = {
     [<NonIncremental>]
     rectangleId   : RectangleId
     
-    logId         : LogId
+    logId         : RectangleStackId
 
     //[<NonIncremental>]
     nodeType           : LogNodeType
@@ -438,10 +439,7 @@ type LogAxisApp = {
 [<DomainType>]
 type GeologicalLog = {
     [<NonIncremental;PrimaryKey>]
-    id              : LogId
-
-    [<NonIncremental>]
-    stackId         : Svgplus.RS.RectangleStackId
+    id              : Svgplus.RS.RectangleStackId
 
     state           : State
     xToSvg          : float
@@ -481,7 +479,7 @@ type SvgOptions = {
 [<DomainType>]
 type CorrelationPlot = {
    diagramApp          : Svgplus.DA.DiagramApp
-   logs                : hmap<LogId, GeologicalLog>
+   logs                : hmap<Svgplus.RS.RectangleStackId, GeologicalLog>
    correlations        : plist<Correlation>
    selectedBorder      : Option<Border>
    //aardvark dies: selectedBorder      : Option<(Border * V2d)>
@@ -489,7 +487,7 @@ type CorrelationPlot = {
    editCorrelations    : bool
    selectedPoints      : hmap<AnnotationId, V3d>
    //annotations         : hmap<AnnotationId, Annotation>
-   selectedLog         : option<LogId>
+   selectedLog         : option<RectangleStackId>
    secondaryLvl        : NodeLevel
    //creatingNew         : bool
    viewType            : CorrelationPlotViewType

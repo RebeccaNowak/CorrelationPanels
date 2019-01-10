@@ -16,9 +16,11 @@
     open Svgplus.RS
     open Svgplus
     open UIPlus
+    open Aardvark.Base.IL.Serializer
     
     type Action =
       | SetState                  of State
+      | ToggleState                  
       | LogNodeMessage            of (LogNodeId * LogNodes.Action)
       | SelectLogNode             of LogNodeId
       | TextInputMessage          of (RectangleStackId * TextInput.Action)
@@ -56,7 +58,7 @@
         }
 
     module Generate = 
-      let generateNonLevelNodes (logId : LogId) 
+      let generateNonLevelNodes (logId : RectangleStackId) 
                                 (annos : plist<Annotation>) 
                                 (lp, la) (up, ua) 
                                 (level : NodeLevel)
@@ -65,7 +67,7 @@
           |> PList.map (fun a ->
               LogNodes.Init.fromSemanticType a semApp logId lp up level)
 
-      let rec generateLevel (logId          : LogId)
+      let rec generateLevel (logId          : RectangleStackId)
                             (selectedPoints : hmap<AnnotationId, V3d>) 
                             (annoApp        : AnnotationApp)
                             (semApp         : SemanticApp) 
@@ -159,9 +161,9 @@
                      (annoApp         : AnnotationApp)
                      (xToSvg          : float)
                      (yToSvg          : float)
-                     (defaultWidth    : float) = 
+                     (defaultWidth    : float) : (RectangleStack * GeologicalLog) = 
 
-      let id = LogId.newId()
+      let id = RectangleStackId.newId()
       let wInfNodes = (Generate.generateLevel //TODO make more compact by removing debug stuff
                         id
                         selectedPoints 
@@ -213,12 +215,11 @@
                     |> PList.ofList
 
       let stack = 
-        RectangleStack.init (RectangleStackId.newId ()) rmap (PList.ofList order)
+        RectangleStack.init id rmap (PList.ofList order)
 
       let log =
         {
           id             = id
-          stackId        = stack.id
           state          = State.Display
 
           xToSvg         =  xToSvg      
@@ -256,11 +257,11 @@
           div [clazz "ui small vertical buttons"]
             [
               UIPlus.Buttons.iconButton' "angle up icon" "move up" 
-                                     (fun _ -> MoveUp model.stackId)  
+                                     (fun _ -> MoveUp model.id)  
                                      (style "padding: 0px 2px 0px 2px")
               div[style "padding: 1px 0px 1px 0px"][]
               UIPlus.Buttons.iconButton' "angle down icon" "move down" 
-                                     (fun _ -> MoveDown model.stackId) 
+                                     (fun _ -> MoveDown model.id) 
                                      (style "padding: 0px 2px 0px 2px")
             ]
         
@@ -271,7 +272,7 @@
                   |> UI.map (fun m -> Action.TextInputMessage (stack.id, m))
                   |> UI.map mapper
                   |> Table.intoTd
-              ] |> Table.intoActiveTr rowOnClick      
+              ] |> Table.intoTr // |> Table.intoActiveTr rowOnClick      
             ]
 
         let viewEdit  : list<DomNode<'msg>> =     
@@ -297,7 +298,7 @@
                 |> Table.intoTd
               moveUpDown |> Table.intoTd |> UI.map mapper
 
-            ] |> Table.intoActiveTr rowOnClick
+            ] |> Table.intoTr//|> Table.intoActiveTr rowOnClick  
             //[
             //  (div [] nodesRow) |> Table.intoTd 
             //] |> Table.intoActiveTr rowOnClick
@@ -307,11 +308,12 @@
           [
             [
               label [clazz "ui horizontal label"]
-                    [Incremental.text (stack.header.label.text)] |> UI.map mapper
+                    [Incremental.text (stack.header.label.text)] ///|> UI.map mapper
                 |> Table.intoTd
               moveUpDown |> Table.intoTd |> UI.map mapper
             ] //@ [nodeViews] 
-            |> Table.intoTrOnClick rowOnClick
+           // |> Table.intoTrOnClick rowOnClick  
+            |> Table.intoTr
             
           ] 
 
@@ -384,6 +386,9 @@
 
     let update (model : GeologicalLog) (action : Action) =
       match action with
+        | MoveDown id -> model
+        | MoveUp id   -> model
+        | TextInputMessage m -> model
         | LogNodeMessage (id, m) -> 
             {model with 
               nodes = 
@@ -402,14 +407,17 @@
                                 (LogNodes.Update.update (LogNodes.ToggleSelectNode n))
             }
         | SetState state      -> {model with state = state}
-        | MoveDown id -> model
-        | MoveUp id   -> model
-        | TextInputMessage m -> model
+        | ToggleState         -> 
+          let _state =
+            match model.state with
+              | State.New | State.Edit -> State.Display
+              | State.Display -> State.Edit
+          {model with state = _state}
+
 
     let init = 
       {
-        id              = LogId.invalid
-        stackId         = Svgplus.RS.RectangleStackId.invalid
+        id              = RectangleStackId.invalid
         state           = State.Display
         xToSvg          = 10.0
         yToSvg          = 10.0

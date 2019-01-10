@@ -42,6 +42,34 @@ module Pages =
   //  let camView = CameraView.lookAt camPos V3d.OOO Mars.Terrain.upReal
   //  {CameraController.initial with view = camView}
 
+  let defaultLayout = 
+    config {
+                  content (
+                    // element {id "render"; title "Render View"; weight 5}
+                    horizontal 0.1 [
+                      element { id "controls"; title "Controls"; weight 0.08 }
+                      vertical 0.6 [
+                        horizontal 1.0 [
+                          element {id "render"; title "Render View"; weight 1.0}
+                          stack 0.1 (Some "semanticsMini") [
+                            dockelement {id "semanticsMini"; title "Simple view"; weight 1.0}
+                            dockelement {id "semantics"; title "Expert view"; weight 1.0}
+                          ]
+                        ]
+                        stack 1.0 (Some "svg") [
+                          dockelement { id "svg"; title "Correlation Panel"; weight 0.5}
+                          //stack 1.0 (Some "render") [dockelement {id "logs"; title "Logs"; weight 5};
+                          //                           dockelement {id "debug"; title "Debug"; weight 1}]
+                          dockelement { id "logs"; title "Logs: Debug"; weight 0.5}
+                            //dockelement { id "annotations"; title "Annotations"; weight 1.0}
+                        ]
+                      ]
+                    ]
+                  )
+                  appName "CDPages"
+                  useCachedConfig false
+              }
+
   let initial   = 
     let semApp  = SemanticApp.getInitialWithSamples
     {   
@@ -53,33 +81,7 @@ module Pages =
       appFlags    = AppFlags.None
       sgFlags     = SgFlags.None
       rendering   = RenderingPars.initial
-      dockConfig  =
-          config {
-              content (
-                // element {id "render"; title "Render View"; weight 5}
-                horizontal 0.1 [
-                  element { id "controls"; title "Controls"; weight 0.08 }
-                  vertical 0.6 [
-                    horizontal 1.0 [
-                      element {id "render"; title "Render View"; weight 1.0}
-                      stack 0.1 (Some "semanticsMini") [
-                        dockelement {id "semanticsMini"; title "Simple view"; weight 1.0}
-                        dockelement {id "semantics"; title "Expert view"; weight 1.0}
-                      ]
-                    ]
-                    stack 1.0 (Some "svg") [
-                      dockelement { id "svg"; title "Correlation Panel"; weight 0.5}
-                      //stack 1.0 (Some "render") [dockelement {id "logs"; title "Logs"; weight 5};
-                      //                           dockelement {id "debug"; title "Debug"; weight 1}]
-                      dockelement { id "logs"; title "Logs: Debug"; weight 0.5}
-                        //dockelement { id "annotations"; title "Annotations"; weight 1.0}
-                    ]
-                  ]
-                ]
-              )
-              appName "CDPages"
-              useCachedConfig false
-          }
+      dockConfig  = defaultLayout
       annotationApp = AnnotationApp.initial
       semanticApp   = semApp
       drawingApp    = CorrelationDrawing.initial 
@@ -171,6 +173,12 @@ module Pages =
             }
 
       | KeyDown k, _       -> 
+        let _model =
+          match k with
+            | Keys.R  -> 
+              {model with dockConfig = defaultLayout}
+            | _ -> model
+
         let annoApp = 
           match k with
             | Keys.C -> 

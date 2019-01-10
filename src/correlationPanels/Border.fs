@@ -7,6 +7,7 @@ module Border =
   open Aardvark.Base.Incremental
   open Aardvark.UI
   open Aardvark.Rendering.Text
+  open Svgplus.RS
 
   let posInf = V3d.PositiveInfinity
   let negInf = V3d(0.0)
@@ -16,7 +17,7 @@ module Border =
     {
       id          = BorderId.invalid
       nodeId      = LogNodeId.invalid
-      logId       = LogId.invalid
+      logId       = RectangleStackId.invalid
       isSelected  = false
       correlation = None
       annotationId = AnnotationId.invalid

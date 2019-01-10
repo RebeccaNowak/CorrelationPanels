@@ -6,6 +6,7 @@ open CorrelationDrawing
 open Svgplus
 open Aardvark.Base
 open Aardvark.UI
+open Svgplus.RS
 
   type Action =
     | MouseOver           of LogNodeId
@@ -107,7 +108,7 @@ open Aardvark.UI
  
       {
         id           = LogNodeId.invalid
-        logId        = LogId.invalid
+        logId        = RectangleStackId.invalid
         rectangleId  = RectangleId.invalid
 
         nodeType     = LogNodeType.Empty
@@ -127,7 +128,7 @@ open Aardvark.UI
 
 
     let topLevel 
-      (logId    : LogId)
+      (logId    : RectangleStackId)
       ((up, ua) : (V3d * AnnotationId)) 
       ((lp, la) : (V3d * AnnotationId)) 
       (children : plist<LogNode>)
@@ -157,7 +158,7 @@ open Aardvark.UI
 
     let topLevelWithId
       (nodeId   : LogNodeId)
-      (logId    : LogId)
+      (logId    : RectangleStackId)
       ((up, ua)  : (V3d * AnnotationId)) 
       ((lp, la) : (V3d * AnnotationId)) 
       (children : plist<LogNode>)
@@ -174,7 +175,7 @@ open Aardvark.UI
 
     // TODO add level
     let hierarchicalLeaf 
-      (logId    : LogId)
+      (logId    : RectangleStackId)
       (anno     : AnnotationId) 
       (lp       : V3d ) 
       (up       : V3d )  =
@@ -187,7 +188,7 @@ open Aardvark.UI
         uBorder   = Some (Border.initial anno up nodeId logId)
       }
 
-    let metric (logId : LogId)  (anno : Annotation) (level : NodeLevel) =
+    let metric (logId : RectangleStackId)  (anno : Annotation) (level : NodeLevel) =
       let nodeId = LogNodeId.newId ()
       let lowestPoint = Annotation.lowestPoint anno
       let highestPoint = Annotation.highestPoint anno
@@ -201,7 +202,7 @@ open Aardvark.UI
         level = level
       }
 
-    let angular (logId : LogId) (anno : Annotation) (level : NodeLevel) =
+    let angular (logId : RectangleStackId) (anno : Annotation) (level : NodeLevel) =
       let nodeId = LogNodeId.newId ()
       let lowestPoint = Annotation.lowestPoint anno
       let highestPoint = Annotation.highestPoint anno
@@ -217,7 +218,7 @@ open Aardvark.UI
 
         //////////////////////////////////////////
     let fromSemanticType (a : Annotation) (semApp : SemanticApp) 
-                         (logId : LogId) 
+                         (logId : RectangleStackId) 
                          (lp : V3d) (up : V3d)
                          (level : NodeLevel) =   
       let semType = Annotation.getType semApp a

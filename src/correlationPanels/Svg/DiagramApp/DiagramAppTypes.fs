@@ -16,6 +16,5 @@ open Svgplus.HeaderType
     rstackGap       : float
     marginLeft      : float
     marginTop       : float
-
   }
 

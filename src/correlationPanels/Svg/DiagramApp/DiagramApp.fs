@@ -142,18 +142,24 @@ open Svgplus.RS
 
 
     let view (model : MDiagramApp) =
-      let rectangles = 
-        let foo = 
-          RectangleStack.view >> UIMapping.mapAListId  
-        model.rectangleStacks 
-                    |> AMap.map (fun k r -> foo r k RectStackMessage) 
-                    |> DS.AMap.toFlatAList
+      //let foo = 
+      //    RectangleStack.view >> UIMapping.mapAListId  
+      let stacks = 
+        alist {
+          for id in model.order do
+            let! stack = 
+              (AMap.find id model.rectangleStacks)
+            let stackView =
+              RectangleStack.view stack
+            yield! (UIMapping.mapAListId stackView id Action.RectStackMessage)
+        }
+
 
       let connections = 
         (ConnectionApp.view model.connectionApp) 
           |> UIMapping.mapAList (Action.ConnectionMessage)
 
-      let content = rectangles 
+      let content = stacks 
                       |> AList.append connections
                       
       content

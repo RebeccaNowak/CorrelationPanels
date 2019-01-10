@@ -53,24 +53,53 @@ module PList =
         |> List.map f
         |> List.min
 
-  let moveLeft (a : 'a) (lst : plist<'a>)  =
+
+  let moveLeft (shiftLeft : 'a) (lst : plist<'a>)  =
     let f (ind : Index) (current : 'a) =
       match lst.TryGet (ind.After ()), lst.TryGet (ind.Before ()) with
-        | Some next, _ -> 
-          if a == next then
+        | Some next, None -> 
+          if shiftLeft = next then
             next
           else
             current
-        | _, Some prev ->
-          if a = prev then
+        | None, Some prev ->
+          if shiftLeft = current then
+            prev
+          else
+            current
+        | Some next, Some prev ->
+          if shiftLeft = next then
+            next
+          elif shiftLeft = current then
             prev
           else
             current
         | None, None   -> current
     PList.mapi f lst
 
-  let moveRight (a : 'a) (lst : plist<'a>)  =
-    lst
+  let moveRight (shiftRight : 'a) (lst : plist<'a>)  =
+    let f (ind : Index) (current : 'a) =
+      match lst.TryGet (ind.After ()), lst.TryGet (ind.Before ()) with
+        | Some next, None -> 
+          if shiftRight = current then
+            next
+          else
+            current
+        | None, Some prev ->
+          if shiftRight = prev then
+            prev
+          else
+            current
+        | Some next, Some prev ->
+          if shiftRight = current then
+            prev
+          elif shiftRight = prev then
+            prev
+          else
+            current
+        | None, None   -> current
+    PList.mapi f lst
+
 
   let minBy (f : 'a -> 'b) (lst : plist<'a>) : 'a =
     lst

@@ -674,7 +674,7 @@ module Mutable =
                     override x.Update(r,f) = { r with nodeId = f r.nodeId }
                 }
             let logId =
-                { new Lens<CorrelationDrawing.Border, CorrelationDrawing.LogId>() with
+                { new Lens<CorrelationDrawing.Border, Svgplus.RS.RectangleStackId>() with
                     override x.Get(r) = r.logId
                     override x.Set(r,v) = { r with logId = v }
                     override x.Update(r,f) = { r with logId = f r.logId }
@@ -858,7 +858,7 @@ module Mutable =
                     override x.Update(r,f) = { r with rectangleId = f r.rectangleId }
                 }
             let logId =
-                { new Lens<CorrelationDrawing.LogNode, CorrelationDrawing.LogId>() with
+                { new Lens<CorrelationDrawing.LogNode, Svgplus.RS.RectangleStackId>() with
                     override x.Get(r) = r.logId
                     override x.Set(r,v) = { r with logId = v }
                     override x.Update(r,f) = { r with logId = f r.logId }
@@ -1043,7 +1043,6 @@ module Mutable =
         let _annoPoints = MMap.Create(__initial.annoPoints)
         
         member x.id = __current.Value.id
-        member x.stackId = __current.Value.stackId
         member x.state = _state :> IMod<_>
         member x.xToSvg = _xToSvg :> IMod<_>
         member x.yToSvg = _yToSvg :> IMod<_>
@@ -1079,16 +1078,10 @@ module Mutable =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
             let id =
-                { new Lens<CorrelationDrawing.GeologicalLog, CorrelationDrawing.LogId>() with
+                { new Lens<CorrelationDrawing.GeologicalLog, Svgplus.RS.RectangleStackId>() with
                     override x.Get(r) = r.id
                     override x.Set(r,v) = { r with id = v }
                     override x.Update(r,f) = { r with id = f r.id }
-                }
-            let stackId =
-                { new Lens<CorrelationDrawing.GeologicalLog, Svgplus.RS.RectangleStackId>() with
-                    override x.Get(r) = r.stackId
-                    override x.Set(r,v) = { r with stackId = v }
-                    override x.Update(r,f) = { r with stackId = f r.stackId }
                 }
             let state =
                 { new Lens<CorrelationDrawing.GeologicalLog, CorrelationDrawing.State>() with
@@ -1409,7 +1402,7 @@ module Mutable =
                     override x.Update(r,f) = { r with diagramApp = f r.diagramApp }
                 }
             let logs =
-                { new Lens<CorrelationDrawing.CorrelationPlot, Aardvark.Base.hmap<CorrelationDrawing.LogId,CorrelationDrawing.GeologicalLog>>() with
+                { new Lens<CorrelationDrawing.CorrelationPlot, Aardvark.Base.hmap<Svgplus.RS.RectangleStackId,CorrelationDrawing.GeologicalLog>>() with
                     override x.Get(r) = r.logs
                     override x.Set(r,v) = { r with logs = v }
                     override x.Update(r,f) = { r with logs = f r.logs }
@@ -1439,7 +1432,7 @@ module Mutable =
                     override x.Update(r,f) = { r with selectedPoints = f r.selectedPoints }
                 }
             let selectedLog =
-                { new Lens<CorrelationDrawing.CorrelationPlot, Microsoft.FSharp.Core.Option<CorrelationDrawing.LogId>>() with
+                { new Lens<CorrelationDrawing.CorrelationPlot, Microsoft.FSharp.Core.Option<Svgplus.RS.RectangleStackId>>() with
                     override x.Get(r) = r.selectedLog
                     override x.Set(r,v) = { r with selectedLog = v }
                     override x.Update(r,f) = { r with selectedLog = f r.selectedLog }
