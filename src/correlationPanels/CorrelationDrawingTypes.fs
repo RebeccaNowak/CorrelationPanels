@@ -479,6 +479,7 @@ type SvgOptions = {
 [<DomainType>]
 type CorrelationPlot = {
    diagramApp          : Svgplus.DA.DiagramApp
+   colourMapApp        : ColourMap
    logs                : hmap<Svgplus.RS.RectangleStackId, GeologicalLog>
    correlations        : plist<Correlation>
    selectedBorder      : Option<Border>
@@ -500,6 +501,10 @@ type CorrelationPlot = {
    semanticApp         : SemanticApp
    currrentYMapping    : Option<float>
    yRange              : Rangef
+
+   xToSvg              : float
+   yToSvg              : float
+   defaultWidth        : float
 }
 
 [<DomainType>]

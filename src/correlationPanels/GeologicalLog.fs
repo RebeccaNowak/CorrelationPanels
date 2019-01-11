@@ -161,7 +161,8 @@
                      (annoApp         : AnnotationApp)
                      (xToSvg          : float)
                      (yToSvg          : float)
-                     (defaultWidth    : float) : (RectangleStack * GeologicalLog) = 
+                     (defaultWidth    : float)
+                     (colourMap       : ColourMap) : (RectangleStack * GeologicalLog) = 
 
       let id = RectangleStackId.newId()
       let wInfNodes = (Generate.generateLevel //TODO make more compact by removing debug stuff
@@ -176,12 +177,23 @@
         LogNodes.Helper.replaceInfinity' wInfNodes annoApp
 
       let nodeToRectangle (n : LogNode) =
+        let metricVal = LogNodes.Recursive.calcMetricValue n annoApp
+
+
+          
         let id = RectangleId.newId ()
         let (dotted, width) = 
-          match LogNodes.Recursive.calcMetricValue n annoApp with
-            | Some d -> (false, d * xToSvg)
+          match metricVal  with
+            | Some d -> 
+              (false, d * xToSvg)
             | None   -> (true, defaultWidth)
         
+        let colour = 
+          let opt = ColourMap.valueToColourPicker' colourMap width
+          match opt with
+            | Some c -> c
+            | None -> {ColorPicker.init with c = C4b.White}
+
         let height = (LogNodes.Helper.elevationRange n).range * yToSvg
         let rectangle =
           {
@@ -189,6 +201,7 @@
               dim = {width = width; height = height}
               draw = true
               dottedBorder = dotted
+              colour = colour
           }
 
         rectangle
@@ -256,13 +269,15 @@
         let moveUpDown =
           div [clazz "ui small vertical buttons"]
             [
-              UIPlus.Buttons.iconButton' "angle up icon" "move up" 
-                                     (fun _ -> MoveUp model.id)  
-                                     (style "padding: 0px 2px 0px 2px")
+              UIPlus.Buttons.iconButtonNoTooltip 
+                  "angle up icon" 
+                  (fun _ -> MoveUp model.id)  
+                  (style "padding: 0px 2px 0px 2px")
               div[style "padding: 1px 0px 1px 0px"][]
-              UIPlus.Buttons.iconButton' "angle down icon" "move down" 
-                                     (fun _ -> MoveDown model.id) 
-                                     (style "padding: 0px 2px 0px 2px")
+              UIPlus.Buttons.iconButtonNoTooltip 
+                  "angle down icon" 
+                  (fun _ -> MoveDown model.id) 
+                  (style "padding: 0px 2px 0px 2px")
             ]
         
         let viewNew  : list<DomNode<'msg>> =

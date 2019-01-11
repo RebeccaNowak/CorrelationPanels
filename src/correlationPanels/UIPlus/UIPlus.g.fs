@@ -125,3 +125,111 @@ module Mutable =
                     override x.Set(r,v) = { r with size = v }
                     override x.Update(r,f) = { r with size = f r.size }
                 }
+    
+    
+    type MColourMapItem(__initial : UIPlus.ColourMapItem) =
+        inherit obj()
+        let mutable __current : Aardvark.Base.Incremental.IModRef<UIPlus.ColourMapItem> = Aardvark.Base.Incremental.EqModRef<UIPlus.ColourMapItem>(__initial) :> Aardvark.Base.Incremental.IModRef<UIPlus.ColourMapItem>
+        let _upper = Aardvark.UI.Mutable.MNumericInput.Create(__initial.upper)
+        let _colour = Aardvark.UI.Mutable.MColorInput.Create(__initial.colour)
+        let _label = MTextInput.Create(__initial.label)
+        
+        member x.id = __current.Value.id
+        member x.upper = _upper
+        member x.colour = _colour
+        member x.label = _label
+        
+        member x.Current = __current :> IMod<_>
+        member x.Update(v : UIPlus.ColourMapItem) =
+            if not (System.Object.ReferenceEquals(__current.Value, v)) then
+                __current.Value <- v
+                
+                Aardvark.UI.Mutable.MNumericInput.Update(_upper, v.upper)
+                Aardvark.UI.Mutable.MColorInput.Update(_colour, v.colour)
+                MTextInput.Update(_label, v.label)
+                
+        
+        static member Create(__initial : UIPlus.ColourMapItem) : MColourMapItem = MColourMapItem(__initial)
+        static member Update(m : MColourMapItem, v : UIPlus.ColourMapItem) = m.Update(v)
+        
+        override x.ToString() = __current.Value.ToString()
+        member x.AsString = sprintf "%A" __current.Value
+        interface IUpdatable<UIPlus.ColourMapItem> with
+            member x.Update v = x.Update v
+    
+    
+    
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module ColourMapItem =
+        [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+        module Lens =
+            let id =
+                { new Lens<UIPlus.ColourMapItem, UIPlus.CMItemId>() with
+                    override x.Get(r) = r.id
+                    override x.Set(r,v) = { r with id = v }
+                    override x.Update(r,f) = { r with id = f r.id }
+                }
+            let upper =
+                { new Lens<UIPlus.ColourMapItem, Aardvark.UI.NumericInput>() with
+                    override x.Get(r) = r.upper
+                    override x.Set(r,v) = { r with upper = v }
+                    override x.Update(r,f) = { r with upper = f r.upper }
+                }
+            let colour =
+                { new Lens<UIPlus.ColourMapItem, Aardvark.UI.ColorInput>() with
+                    override x.Get(r) = r.colour
+                    override x.Set(r,v) = { r with colour = v }
+                    override x.Update(r,f) = { r with colour = f r.colour }
+                }
+            let label =
+                { new Lens<UIPlus.ColourMapItem, UIPlus.TextInput>() with
+                    override x.Get(r) = r.label
+                    override x.Set(r,v) = { r with label = v }
+                    override x.Update(r,f) = { r with label = f r.label }
+                }
+    
+    
+    type MColourMap(__initial : UIPlus.ColourMap) =
+        inherit obj()
+        let mutable __current : Aardvark.Base.Incremental.IModRef<UIPlus.ColourMap> = Aardvark.Base.Incremental.EqModRef<UIPlus.ColourMap>(__initial) :> Aardvark.Base.Incremental.IModRef<UIPlus.ColourMap>
+        let _mappings = MList.Create(__initial.mappings, (fun v -> MColourMapItem.Create(v)), (fun (m,v) -> MColourMapItem.Update(m, v)), (fun v -> v))
+        let _factor = ResetMod.Create(__initial.factor)
+        
+        member x.mappings = _mappings :> alist<_>
+        member x.factor = _factor :> IMod<_>
+        
+        member x.Current = __current :> IMod<_>
+        member x.Update(v : UIPlus.ColourMap) =
+            if not (System.Object.ReferenceEquals(__current.Value, v)) then
+                __current.Value <- v
+                
+                MList.Update(_mappings, v.mappings)
+                ResetMod.Update(_factor,v.factor)
+                
+        
+        static member Create(__initial : UIPlus.ColourMap) : MColourMap = MColourMap(__initial)
+        static member Update(m : MColourMap, v : UIPlus.ColourMap) = m.Update(v)
+        
+        override x.ToString() = __current.Value.ToString()
+        member x.AsString = sprintf "%A" __current.Value
+        interface IUpdatable<UIPlus.ColourMap> with
+            member x.Update v = x.Update v
+    
+    
+    
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module ColourMap =
+        [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+        module Lens =
+            let mappings =
+                { new Lens<UIPlus.ColourMap, Aardvark.Base.plist<UIPlus.ColourMapItem>>() with
+                    override x.Get(r) = r.mappings
+                    override x.Set(r,v) = { r with mappings = v }
+                    override x.Update(r,f) = { r with mappings = f r.mappings }
+                }
+            let factor =
+                { new Lens<UIPlus.ColourMap, System.Double>() with
+                    override x.Get(r) = r.factor
+                    override x.Set(r,v) = { r with factor = v }
+                    override x.Update(r,f) = { r with factor = f r.factor }
+                }

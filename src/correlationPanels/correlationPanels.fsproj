@@ -34,6 +34,7 @@
 	<Compile Include="Math.fs" />
 	<Compile Include="UIEvents.fs" />
 	<Compile Include="UI.CSS.fs" />
+	<Compile Include="NumericExt.fs" />
 	<Compile Include="UIPlus\UIPlus.fs" />
 	<Compile Include="UIPlus\UI.Tooltips.fs" />
 	<Compile Include="UIPlus\TextInputApp.fs" />
@@ -42,6 +43,7 @@
 	<Compile Include="UIPlus\UI.Buttons.fs" />
 	<Compile Include="UIPlus\UI.Flags.fs" />
 	<Compile Include="UIPlus\UI.Labels.fs" />
+	<Compile Include="UIPlus\ColourMapApp\ColourMapApp.fs" />
 	<Compile Include="UIPlus\ArrowButton\ArrowButtonApp.fs" />
 	<Compile Include="Svg\Svgplus.fs" />
 	<Compile Include="Svg\SvgTags.fs" />
@@ -83,7 +85,6 @@
 	<Compile Include="Mars.fs" />
 	<Compile Include="CorrelationDrawingTypes.fs" />
 	<Compile Include="SvgOptions.fs" />
-	<Compile Include="NumericExt.fs" />
 	<Compile Include="Utilities.fs" />
 	<Compile Include="Shaders.fs" />
 	<Compile Include="DropdownApp.fs" />

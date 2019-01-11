@@ -31,6 +31,8 @@
       | ToggleFlag             of SvgFlags
       | DiagramMessage         of DiagramApp.Action
       | MouseMove              of V2d
+      | ColourMapMessage       of ColourMap.Action
+      
 
 
 
@@ -38,13 +40,17 @@
     //  float (index * 10 + index * 250)
 
     let initial : CorrelationPlot  = 
+      let xToSvg              = 30.0
+      let yToSvg              = 30.0
+      let defaultWidth        = 50.0
+
       {
         diagramApp          = Svgplus.DiagramApp.init
         logs                = HMap.empty
         correlations        = PList.empty
         selectedBorder      = None
         editCorrelations    = false
-
+        colourMapApp        = ColourMap.initial xToSvg
         selectedPoints      = hmap<AnnotationId, V3d>.Empty
         selectedLog         = None
         secondaryLvl        = NodeLevel.init 1
@@ -62,6 +68,9 @@
         yRange              = Rangef.init
         currrentYMapping    = None
 
+        xToSvg              = xToSvg      
+        yToSvg              = yToSvg      
+        defaultWidth        = defaultWidth
       }
 
     let getPointsOfLog (model : CorrelationPlot) (logId : RectangleStackId) =
@@ -108,15 +117,16 @@
       let foo = opt.logPadding + (yRange.max - y) * (opt.logHeight / yRange.range)
       foo
 
-    let createNewLog (model : CorrelationPlot) (annoApp : AnnotationApp) =
+    let createNewLog (model : CorrelationPlot) (annoApp : AnnotationApp) (colourMap : ColourMap) =
       let (stack, newLog) = 
         Log.initial 
             model.selectedPoints
             model.semanticApp 
             annoApp
-            10.0
-            10.0
-            50.0
+            model.xToSvg
+            model.yToSvg
+            model.defaultWidth
+            colourMap
 
       let diagram =
         DiagramApp.update model.diagramApp (DiagramApp.AddStack stack)
@@ -208,7 +218,7 @@
                 let updLogs =
                   model.logs
                     |> HMap.map (fun id log -> {log with state = State.Display})
-                (createNewLog {model with logs = updLogs} annoApp)
+                (createNewLog {model with logs = updLogs} annoApp model.colourMapApp)
           _model
         | DeleteLog id        -> deleteLog id model
           
@@ -245,6 +255,13 @@
               | _ -> model
 
           {_cp with diagramApp = _d}
+
+        | ColourMapMessage m -> 
+          let _cmap = ColourMap.update model.colourMapApp m
+          let _dapp = DiagramApp.update model.diagramApp (DiagramApp.UpdateColour _cmap)
+          {model with colourMapApp = _cmap
+                      diagramApp   = _dapp}
+
 
         
 

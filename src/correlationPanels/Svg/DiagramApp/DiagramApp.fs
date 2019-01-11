@@ -8,6 +8,7 @@ open Aardvark.UI.Primitives
 open Svgplus.CA
 open Svgplus.DA
 open Svgplus.RS
+open UIPlus
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module DiagramApp = 
@@ -20,6 +21,7 @@ open Svgplus.RS
       | AddStack          of RectangleStack
       | MoveLeft          of RectangleStackId
       | MoveRight         of RectangleStackId
+      | UpdateColour      of ColourMap
         
     let init : DiagramApp = 
       {
@@ -109,8 +111,6 @@ open Svgplus.RS
                 | _ -> model.connectionApp
             | _ -> model.connectionApp
 
-
-
       match msg with
         | AddStack r ->
           let _r = model.rectangleStacks.Add (r.id,r)
@@ -136,9 +136,24 @@ open Svgplus.RS
                           (ConnectionApp.Action.MouseMoved p)
           {model with connectionApp = _conApp}
         | MoveLeft id ->
-          {model with order = DS.PList.moveLeft id model.order}
+          let _order = 
+            model.order 
+              |> PList.toList
+              |> DS.List.shiftLeft id 
+              |> PList.ofList
+          {model with order = _order }
         | MoveRight id ->
-          {model with order = DS.PList.moveRight id model.order}
+          let _order = 
+            model.order 
+              |> PList.toList
+              |> DS.List.shiftRight id 
+              |> PList.ofList
+          {model with order = _order }
+        | UpdateColour cmap ->
+          let _stacks =
+            model.rectangleStacks
+              |> HMap.map (fun id r -> RectangleStack.update r (RectangleStack.UpdateColour cmap) )
+          {model with rectangleStacks = _stacks}
 
 
     let view (model : MDiagramApp) =

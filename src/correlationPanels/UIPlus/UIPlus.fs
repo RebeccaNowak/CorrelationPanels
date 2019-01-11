@@ -1,7 +1,7 @@
 ﻿namespace UIPlus
   open Aardvark.Base
   open Aardvark.Base.Incremental
-
+  open Aardvark.UI
 
   type Direction =
   | Up
@@ -61,6 +61,31 @@
   type TextInput = {
       text      : string
       disabled  : bool
-      bgColor   : C4b
+      bgColor   : C4b  
       size      : option<int>
    } 
+
+  type CMItemId = {
+      id        : string 
+    } with
+      member this.isValid = (this.id <> "")
+  module CMItemId = 
+      let invalid = {id = ""}
+      let newId () : CMItemId  = 
+        let id = System.Guid.NewGuid ()
+        {id = id.ToString () }
+
+  [<DomainType>]
+  type ColourMapItem = {
+    [<NonIncremental>]
+    id     : CMItemId
+
+    upper  : NumericInput
+    colour : ColorInput
+    label  : TextInput
+  }
+  [<DomainType>]
+  type ColourMap = {
+    mappings : plist<ColourMapItem>
+    factor   : float
+  }

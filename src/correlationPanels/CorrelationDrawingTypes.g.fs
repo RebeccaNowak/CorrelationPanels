@@ -1325,6 +1325,7 @@ module Mutable =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlot> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.CorrelationPlot>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlot>
         let _diagramApp = Svgplus.DA.Mutable.MDiagramApp.Create(__initial.diagramApp)
+        let _colourMapApp = UIPlus.Mutable.MColourMap.Create(__initial.colourMapApp)
         let _logs = MMap.Create(__initial.logs, (fun v -> MGeologicalLog.Create(v)), (fun (m,v) -> MGeologicalLog.Update(m, v)), (fun v -> v))
         let _correlations = MList.Create(__initial.correlations, (fun v -> MCorrelation.Create(v)), (fun (m,v) -> MCorrelation.Update(m, v)), (fun v -> v))
         let _selectedBorder = MOption.Create(__initial.selectedBorder, (fun v -> MBorder.Create(v)), (fun (m,v) -> MBorder.Update(m, v)), (fun v -> v))
@@ -1340,8 +1341,12 @@ module Mutable =
         let _semanticApp = MSemanticApp.Create(__initial.semanticApp)
         let _currrentYMapping = MOption.Create(__initial.currrentYMapping)
         let _yRange = ResetMod.Create(__initial.yRange)
+        let _xToSvg = ResetMod.Create(__initial.xToSvg)
+        let _yToSvg = ResetMod.Create(__initial.yToSvg)
+        let _defaultWidth = ResetMod.Create(__initial.defaultWidth)
         
         member x.diagramApp = _diagramApp
+        member x.colourMapApp = _colourMapApp
         member x.logs = _logs :> amap<_,_>
         member x.correlations = _correlations :> alist<_>
         member x.selectedBorder = _selectedBorder :> IMod<_>
@@ -1357,6 +1362,9 @@ module Mutable =
         member x.semanticApp = _semanticApp
         member x.currrentYMapping = _currrentYMapping :> IMod<_>
         member x.yRange = _yRange :> IMod<_>
+        member x.xToSvg = _xToSvg :> IMod<_>
+        member x.yToSvg = _yToSvg :> IMod<_>
+        member x.defaultWidth = _defaultWidth :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : CorrelationDrawing.CorrelationPlot) =
@@ -1364,6 +1372,7 @@ module Mutable =
                 __current.Value <- v
                 
                 Svgplus.DA.Mutable.MDiagramApp.Update(_diagramApp, v.diagramApp)
+                UIPlus.Mutable.MColourMap.Update(_colourMapApp, v.colourMapApp)
                 MMap.Update(_logs, v.logs)
                 MList.Update(_correlations, v.correlations)
                 MOption.Update(_selectedBorder, v.selectedBorder)
@@ -1379,6 +1388,9 @@ module Mutable =
                 MSemanticApp.Update(_semanticApp, v.semanticApp)
                 MOption.Update(_currrentYMapping, v.currrentYMapping)
                 ResetMod.Update(_yRange,v.yRange)
+                ResetMod.Update(_xToSvg,v.xToSvg)
+                ResetMod.Update(_yToSvg,v.yToSvg)
+                ResetMod.Update(_defaultWidth,v.defaultWidth)
                 
         
         static member Create(__initial : CorrelationDrawing.CorrelationPlot) : MCorrelationPlot = MCorrelationPlot(__initial)
@@ -1400,6 +1412,12 @@ module Mutable =
                     override x.Get(r) = r.diagramApp
                     override x.Set(r,v) = { r with diagramApp = v }
                     override x.Update(r,f) = { r with diagramApp = f r.diagramApp }
+                }
+            let colourMapApp =
+                { new Lens<CorrelationDrawing.CorrelationPlot, UIPlus.ColourMap>() with
+                    override x.Get(r) = r.colourMapApp
+                    override x.Set(r,v) = { r with colourMapApp = v }
+                    override x.Update(r,f) = { r with colourMapApp = f r.colourMapApp }
                 }
             let logs =
                 { new Lens<CorrelationDrawing.CorrelationPlot, Aardvark.Base.hmap<Svgplus.RS.RectangleStackId,CorrelationDrawing.GeologicalLog>>() with
@@ -1490,6 +1508,24 @@ module Mutable =
                     override x.Get(r) = r.yRange
                     override x.Set(r,v) = { r with yRange = v }
                     override x.Update(r,f) = { r with yRange = f r.yRange }
+                }
+            let xToSvg =
+                { new Lens<CorrelationDrawing.CorrelationPlot, System.Double>() with
+                    override x.Get(r) = r.xToSvg
+                    override x.Set(r,v) = { r with xToSvg = v }
+                    override x.Update(r,f) = { r with xToSvg = f r.xToSvg }
+                }
+            let yToSvg =
+                { new Lens<CorrelationDrawing.CorrelationPlot, System.Double>() with
+                    override x.Get(r) = r.yToSvg
+                    override x.Set(r,v) = { r with yToSvg = v }
+                    override x.Update(r,f) = { r with yToSvg = f r.yToSvg }
+                }
+            let defaultWidth =
+                { new Lens<CorrelationDrawing.CorrelationPlot, System.Double>() with
+                    override x.Get(r) = r.defaultWidth
+                    override x.Set(r,v) = { r with defaultWidth = v }
+                    override x.Update(r,f) = { r with defaultWidth = f r.defaultWidth }
                 }
     
     

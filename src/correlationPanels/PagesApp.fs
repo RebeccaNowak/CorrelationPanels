@@ -22,6 +22,7 @@ module Pages =
       | SemanticAppMessage            of SemanticApp.Action
       | AnnotationAppMessage          of AnnotationApp.Action
       | CorrelationDrawingMessage     of CorrelationDrawing.Action
+      | ColourMapMessage              of ColourMap.Action
       | CentreScene
       | UpdateConfig                  of DockConfig
       | Export
@@ -35,6 +36,7 @@ module Pages =
       | TopLevelEvent
       | ToggleAppFlag                 of AppFlags
       | ToggleSgFlag                  of SgFlags    
+
 
   //let initialCameraMars = 
   //  let r = Trafo3d.RotateInto(V3d.OOI, Mars.Terrain.upReal)
@@ -52,15 +54,16 @@ module Pages =
                         horizontal 1.0 [
                           element {id "render"; title "Render View"; weight 1.0}
                           stack 0.1 (Some "semanticsMini") [
-                            dockelement {id "semanticsMini"; title "Simple view"; weight 1.0}
-                            dockelement {id "semantics"; title "Expert view"; weight 1.0}
+                            dockelement {id "semanticsMini"; title "Annotation Type"; weight 1.0}
+                            dockelement {id "semantics"; title "Annotation Type: Expert View"; weight 1.0}
+                            dockelement {id "mappings"; title "Mappings"; weight 1.0}
                           ]
                         ]
                         stack 1.0 (Some "svg") [
                           dockelement { id "svg"; title "Correlation Panel"; weight 0.5}
                           //stack 1.0 (Some "render") [dockelement {id "logs"; title "Logs"; weight 5};
                           //                           dockelement {id "debug"; title "Debug"; weight 1}]
-                          dockelement { id "logs"; title "Logs: Debug"; weight 0.5}
+                          dockelement { id "logs"; title "Logs"; weight 0.5}
                             //dockelement { id "annotations"; title "Annotations"; weight 1.0}
                         ]
                       ]
@@ -275,7 +278,18 @@ module Pages =
                 //model.semanticApp m
         {model with corrPlotApp = corrPlotApp
                     annotationApp = annoApp}
-
+      | ColourMapMessage m, _ -> 
+        let _cp = CorrelationPlot.update 
+                    model.annotationApp
+                    model.corrPlotApp.correlationPlot 
+                    (CorrelationPlot.ColourMapMessage m)
+        {model with 
+          corrPlotApp = 
+            {model.corrPlotApp with
+              correlationPlot = _cp
+            }
+        }
+            
       | CentreScene,  _ -> 
         centerScene model
 
@@ -496,8 +510,21 @@ module Pages =
                   | Some "semanticsMini" ->
                       SemanticApp.View.simpleView model.semanticApp 
                         |> UI.map SemanticAppMessage
-             
-             
+                  | Some "mappings" ->
+                     let domNode = (ColourMap.view model.corrPlotApp.correlationPlot.colourMapApp)
+                                      |> UI.map Action.ColourMapMessage
+                     require (GUI.CSS.myCss) (
+                       body [style "overflow: auto"] [
+                         div [] [
+                           // menu |> ui.map correlationplotmessage
+                           Incremental.div (AttributeMap.ofList [clazz "ui inverted segment"])
+                                           (AList.single domNode)
+                             
+                         ]
+                       ]
+                     )
+                      
+                        
                   | Some "annotations" ->
                     require (GUI.CSS.myCss) (
                       body [] [

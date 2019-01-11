@@ -68,9 +68,7 @@
         | ChangeLabel  m ->
           let _label = TextInput.update model.label m
           {model with label = _label}
-          //match m with
-          //  | MouseAction.OnLeftClick -> {model with 
-          //  | _ -> model
+        | _ -> model
 
 
 

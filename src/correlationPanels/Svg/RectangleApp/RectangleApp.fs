@@ -8,6 +8,8 @@ module Rectangle =
   open Svgplus
   open Svgplus.Base
   open SimpleTypes
+  open UIPlus
+  open UIPlus.Mutable
 
   let rand = System.Random ()
 
@@ -20,6 +22,7 @@ module Rectangle =
     | NEButtonMessage of Button.Action
     | SWButtonMessage of Button.Action
     | SEButtonMessage of Button.Action
+    | UpdateColour    of ColourMap
 
   module Lens =
     let width = 
@@ -176,6 +179,12 @@ module Rectangle =
       | NEButtonMessage m -> {model with northEastButton = Button.update model.northEastButton m}
       | SWButtonMessage m -> {model with southWestButton = Button.update model.southWestButton m}
       | SEButtonMessage m -> {model with southEastButton = Button.update model.southEastButton m}
+      | UpdateColour cmap ->
+        let opt = ColourMap.valueToColourPicker' cmap model.dim.width 
+        match opt with
+          | Some c -> {model with colour = c}
+          | None   -> model
+        
 
   let view (model : MRectangle) =
     alist {
@@ -198,3 +207,4 @@ module Rectangle =
         yield (Button.view model.southWestButton) |> UI.map SWButtonMessage
         yield (Button.view model.southEastButton) |> UI.map SEButtonMessage
     }
+

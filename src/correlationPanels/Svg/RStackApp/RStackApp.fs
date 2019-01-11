@@ -13,6 +13,7 @@
     open System.Windows.Interop
     open Aardvark.SceneGraph
     open UIPlus
+    open OpenTK.Graphics.OpenGL
 
     type Action =
       | RectangleMessage of (RectangleId * Rectangle.Action)
@@ -21,6 +22,7 @@
       | AddRectangle     of Rectangle
       | HeaderMessage    of Header.Action
       | UpdatePosition   of V2d
+      | UpdateColour     of ColourMap
       | Delete
 
     let stack (model : RectangleStack) =
@@ -191,7 +193,11 @@
         | ChangeLabel msg ->
           let _header = Header.update model.header (Header.ChangeLabel msg)
           {model with header = _header}
-          
+        | UpdateColour cmap ->
+          let _rects =
+            model.rectangles
+              |> HMap.map (fun id r -> Rectangle.update r (Rectangle.Action.UpdateColour cmap) )
+          {model with rectangles = _rects}
 
 
     let view (model : MRectangleStack) =

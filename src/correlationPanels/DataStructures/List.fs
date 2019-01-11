@@ -48,3 +48,40 @@
                             | None    -> false)
         |> List.map (fun el -> el.Value)
 
+
+    let _swap (indFirst : int) (indSec : int) (items : List<'a>) =
+       if    indFirst < 0 
+          || indSec   < 0 
+          || indFirst > items.Length - 1
+          || indSec   > items.Length - 1
+        then items
+        else
+          let _swap (first : int) (second : int) (i : int) =
+            match i with
+              | i when i = first -> List.item second items
+              | i when i = second -> List.item first items
+              | _ -> List.item i items
+
+          let shifted = List.mapi (fun i x -> _swap indFirst indSec i) items
+          shifted
+
+    let swap (first : 'a) (second : 'a) (items : List<'a>) =
+      let indFirst =
+          List.findIndex (fun x -> x = first) items
+      let indSec =
+          List.findIndex (fun x -> x = second) items
+      _swap indFirst indSec items
+
+    let shiftLeft (shift : 'a) (items : List<'a>) =
+      let indFirst =
+          List.findIndex (fun x -> x = shift) items
+      let indSec = indFirst - 1
+      _swap indFirst indSec items
+
+    let shiftRight (shift : 'a) (items : List<'a>) =
+      let indFirst =
+          List.findIndex (fun x -> x = shift) items
+      let indSec = indFirst + 1
+      _swap indFirst indSec items
+
+      
