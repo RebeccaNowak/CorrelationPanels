@@ -74,11 +74,13 @@ module Border =
   let annotationId (optModel : option<Border>)  =
     Option.map (fun (m : Border) -> m.annotationId) optModel
 
-  let tryElevation (model : Border) (annoApp : AnnotationApp) =  
-    (AnnotationApp.tryElevation annoApp model.annotationId)
+  //let tryElevation (model : Border) = // (annoApp : AnnotationApp) =  
+  //  model.point
+    //(AnnotationApp.tryElevation annoApp model.annotationId)
 
-  let elevation' (model : MBorder) (annoApp : MAnnotationApp) =
-    (AnnotationApp.elevation' annoApp model.annotationId)
+  let elevation' (model : MBorder) = // (annoApp : MAnnotationApp) =
+    model.point
+   // (AnnotationApp.elevation' annoApp model.annotationId)
 
   let colorOrDefault (model : IMod<Option<MBorder>>)  =
     Option.extractOrDefault model

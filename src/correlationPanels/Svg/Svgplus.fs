@@ -148,6 +148,7 @@ open Aardvark.UI
     [<NonIncremental>]
     id            : RectangleId
 
+    label         : UIPlus.TextInput
     pos           : V2d
     dim           : Size2D
     colour        : Aardvark.UI.ColorInput

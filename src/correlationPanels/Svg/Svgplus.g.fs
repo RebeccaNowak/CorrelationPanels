@@ -236,6 +236,7 @@ module Mutable =
     type MRectangle(__initial : Svgplus.Rectangle) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<Svgplus.Rectangle> = Aardvark.Base.Incremental.EqModRef<Svgplus.Rectangle>(__initial) :> Aardvark.Base.Incremental.IModRef<Svgplus.Rectangle>
+        let _label = UIPlus.Mutable.MTextInput.Create(__initial.label)
         let _pos = ResetMod.Create(__initial.pos)
         let _dim = ResetMod.Create(__initial.dim)
         let _colour = Aardvark.UI.Mutable.MColorInput.Create(__initial.colour)
@@ -251,6 +252,7 @@ module Mutable =
         let _southEastButton = MButton.Create(__initial.southEastButton)
         
         member x.id = __current.Value.id
+        member x.label = _label
         member x.pos = _pos :> IMod<_>
         member x.dim = _dim :> IMod<_>
         member x.colour = _colour
@@ -270,6 +272,7 @@ module Mutable =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
+                UIPlus.Mutable.MTextInput.Update(_label, v.label)
                 ResetMod.Update(_pos,v.pos)
                 ResetMod.Update(_dim,v.dim)
                 Aardvark.UI.Mutable.MColorInput.Update(_colour, v.colour)
@@ -304,6 +307,12 @@ module Mutable =
                     override x.Get(r) = r.id
                     override x.Set(r,v) = { r with id = v }
                     override x.Update(r,f) = { r with id = f r.id }
+                }
+            let label =
+                { new Lens<Svgplus.Rectangle, UIPlus.TextInput>() with
+                    override x.Get(r) = r.label
+                    override x.Set(r,v) = { r with label = v }
+                    override x.Update(r,f) = { r with label = f r.label }
                 }
             let pos =
                 { new Lens<Svgplus.Rectangle, Aardvark.Base.V2d>() with

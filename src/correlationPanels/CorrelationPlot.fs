@@ -189,6 +189,7 @@
                       //annotations      = hmap<AnnotationId, Annotation>.Empty
                       currrentYMapping = None
                       selectedBorder   = None
+                      diagramApp       = DiagramApp.init
           }
         | LogMessage (id, logmsg) ->
           let _dApp =

@@ -202,6 +202,7 @@
               draw = true
               dottedBorder = dotted
               colour = colour
+
           }
 
         rectangle
@@ -209,7 +210,9 @@
       let rectangles = 
         nodes
          |> PList.toList
+        // |> List.rev
          |> List.map (fun n -> nodeToRectangle n)
+
       
       let rmap = 
         rectangles 
@@ -219,6 +222,7 @@
       let order =
         rectangles 
           |> List.map (fun r -> r.id)
+
 
       // let allNodes = LogNodes.Recursive.collectAll
       // WIP

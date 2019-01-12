@@ -148,6 +148,8 @@ module Rectangle =
       dottedBorder  = true
       draw          = false
 
+      label         = {TextInput.init with text = "label"}
+
       northWestButton = Button.init
       northEastButton = Button.init
       southWestButton = Button.init
@@ -206,5 +208,7 @@ module Rectangle =
         yield (Button.view model.northEastButton) |> UI.map NEButtonMessage
         yield (Button.view model.southWestButton) |> UI.map SWButtonMessage
         yield (Button.view model.southEastButton) |> UI.map SEButtonMessage
+
+       
     }
 

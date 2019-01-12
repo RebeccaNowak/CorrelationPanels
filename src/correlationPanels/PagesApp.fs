@@ -136,6 +136,7 @@ module Pages =
       { model with  annotationApp = updateAnnotationApp (AnnotationApp.Clear)
                     drawingApp    = updateDrawingApp (CorrelationDrawing.Clear)
                     corrPlotApp   = updatePlot (CorrelationPlotApp.Clear) 
+                    
       } 
     let centerScene model =
       match Flags.isSet SgFlags.TestTerrain model.sgFlags with
@@ -327,22 +328,22 @@ module Pages =
       | Clear, _ -> 
         clear model
 
-        | Undo,_ ->
-            match model.past with
-                | Some p -> { p with future = Some model; camera = model.camera }
-                | None -> model
+      | Undo,_ ->
+          match model.past with
+              | Some p -> { p with future = Some model; camera = model.camera }
+              | None -> model
 
-        | Redo,_ ->
-            match model.future with
-                | Some f -> { f with past = Some model; camera = model.camera }
-                | None -> model
+      | Redo,_ ->
+          match model.future with
+              | Some f -> { f with past = Some model; camera = model.camera }
+              | None -> model
 
-        | CameraMessage m,_ -> 
-              { model with camera = updateCamera m }   
+      | CameraMessage m,_ -> 
+            { model with camera = updateCamera m }   
 
-        | TopLevelEvent, _ -> 
-              model
-        | _   -> model
+      | TopLevelEvent, _ -> 
+            model
+      | _   -> model
         
 
 
