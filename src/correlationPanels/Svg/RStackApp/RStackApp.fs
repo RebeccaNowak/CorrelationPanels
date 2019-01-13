@@ -168,6 +168,8 @@
                     pos        = v
       } |> stack
 
+    let tryfindRectangle (model : MRectangleStack) (id : RectangleId) =
+      AMap.tryFind id model.rectangles
 
     let update (model : RectangleStack) (action : Action) =
       let updateRect (optr : option<Rectangle>) (m : Rectangle.Action) = 

@@ -57,15 +57,16 @@ module Pages =
                             dockelement {id "semanticsMini"; title "Annotation Type"; weight 1.0}
                             dockelement {id "semantics"; title "Annotation Type: Expert View"; weight 1.0}
                             dockelement {id "mappings"; title "Mappings"; weight 1.0}
+                            dockelement { id "logs"; title "Logs"; weight 0.5}
                           ]
                         ]
-                        stack 1.0 (Some "svg") [
-                          dockelement { id "svg"; title "Correlation Panel"; weight 0.5}
+
+                        element { id "svg"; title "Correlation Panel"; weight 0.5}
                           //stack 1.0 (Some "render") [dockelement {id "logs"; title "Logs"; weight 5};
                           //                           dockelement {id "debug"; title "Debug"; weight 1}]
-                          dockelement { id "logs"; title "Logs"; weight 0.5}
+                          
                             //dockelement { id "annotations"; title "Annotations"; weight 1.0}
-                        ]
+                        
                       ]
                     ]
                   )
@@ -387,27 +388,27 @@ module Pages =
           newLogButton
           Buttons.iconButton "small save icon"          "save"    (fun _ -> Save)
           Buttons.iconButton "small file outline icon"  "clear"   (fun _ -> Clear)
-          Buttons.iconButton "small external icon"      "export"  (fun _ -> Export)
+          //Buttons.iconButton "small external icon"      "export"  (fun _ -> Export)
           Buttons.iconButton "small arrow left icon"    "undo"    (fun _ -> Undo)
           Buttons.iconButton "small arrow right icon"   "redo"    (fun _ -> Redo)
           Buttons.iconButton "small bullseye icon"      "centre"  (fun _ -> CentreScene)
-          Flags.toButtonGroup typeof<AppFlags> ToggleAppFlag //TODO css
-          Flags.toButtonGroup typeof<SgFlags> ToggleSgFlag
-          (Flags.toButtonGroup typeof<SvgFlags> CorrelationPlot.ToggleFlag) 
-            |> UI.map CorrelationPlotApp.CorrelationPlotMessage 
-            |> UI.map Action.CorrPlotMessage
+        //  Flags.toButtonGroup typeof<AppFlags> ToggleAppFlag //TODO css
+        //  Flags.toButtonGroup typeof<SgFlags> ToggleSgFlag
+        //  (Flags.toButtonGroup typeof<SvgFlags> CorrelationPlot.ToggleFlag) 
+        //    |> UI.map CorrelationPlotApp.CorrelationPlotMessage 
+        //    |> UI.map Action.CorrPlotMessage
 
-          div[clazz "ui label"] 
-              [
-                text "SecondaryLevel"
-                div[clazz "detail"] [Html.SemUi.dropDown' 
-                        NodeLevel.availableLevels
-                        model.corrPlotApp.correlationPlot.secondaryLvl 
-                        CorrelationPlot.SetSecondaryLevel 
-                        (fun (x : NodeLevel) -> sprintf "%i" x.level)
-                        |> UI.map CorrelationPlotApp.Action.CorrelationPlotMessage
-                        |> UI.map CorrPlotMessage]
-              ]
+        //  div[clazz "ui label"] 
+        //      [
+        //        text "SecondaryLevel"
+        //        div[clazz "detail"] [Html.SemUi.dropDown' 
+        //                NodeLevel.availableLevels
+        //                model.corrPlotApp.correlationPlot.secondaryLvl 
+        //                CorrelationPlot.SetSecondaryLevel 
+        //                (fun (x : NodeLevel) -> sprintf "%i" x.level)
+        //                |> UI.map CorrelationPlotApp.Action.CorrelationPlotMessage
+        //                |> UI.map CorrPlotMessage]
+        //      ]
         ] 
 
       body [style "width: 100%; height:100%; background: transparent; overflow: auto"] [

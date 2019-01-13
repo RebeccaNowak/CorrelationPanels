@@ -194,9 +194,11 @@ module Mutable =
         let mutable __current : Aardvark.Base.Incremental.IModRef<UIPlus.ColourMap> = Aardvark.Base.Incremental.EqModRef<UIPlus.ColourMap>(__initial) :> Aardvark.Base.Incremental.IModRef<UIPlus.ColourMap>
         let _mappings = MList.Create(__initial.mappings, (fun v -> MColourMapItem.Create(v)), (fun (m,v) -> MColourMapItem.Update(m, v)), (fun v -> v))
         let _factor = ResetMod.Create(__initial.factor)
+        let _unit = ResetMod.Create(__initial.unit)
         
         member x.mappings = _mappings :> alist<_>
         member x.factor = _factor :> IMod<_>
+        member x.unit = _unit :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : UIPlus.ColourMap) =
@@ -205,6 +207,7 @@ module Mutable =
                 
                 MList.Update(_mappings, v.mappings)
                 ResetMod.Update(_factor,v.factor)
+                ResetMod.Update(_unit,v.unit)
                 
         
         static member Create(__initial : UIPlus.ColourMap) : MColourMap = MColourMap(__initial)
@@ -232,4 +235,10 @@ module Mutable =
                     override x.Get(r) = r.factor
                     override x.Set(r,v) = { r with factor = v }
                     override x.Update(r,f) = { r with factor = f r.factor }
+                }
+            let unit =
+                { new Lens<UIPlus.ColourMap, UIPlus.Unit>() with
+                    override x.Get(r) = r.unit
+                    override x.Set(r,v) = { r with unit = v }
+                    override x.Update(r,f) = { r with unit = f r.unit }
                 }

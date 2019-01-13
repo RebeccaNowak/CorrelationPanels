@@ -84,8 +84,24 @@
     colour : ColorInput
     label  : TextInput
   }
+
+  type Unit =
+    | Metre
+    | Centimetre
+    | Millimetre
+    | Micrometre
+  with 
+    member this.fromMetre (x : float) =
+      match this with
+        | Metre -> x
+        | Centimetre -> x * 0.01
+        | Millimetre -> x * 0.001
+        | Micrometre -> x * 0.000001
+
+
   [<DomainType>]
   type ColourMap = {
     mappings : plist<ColourMapItem>
     factor   : float
+    unit     : Unit
   }

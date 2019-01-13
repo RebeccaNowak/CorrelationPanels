@@ -87,6 +87,41 @@ open UIPlus
           {model with rectangleStacks = _rs}
         | false -> model
 
+    let findRectangle (model : MDiagramApp) (id : RectangleId) =
+      let optList = 
+        AMap.map
+          (fun sid x -> 
+            RectangleStack.tryfindRectangle x id)
+          model.rectangleStacks
+
+      
+      let vals = DS.AMap.valuesToAList optList
+      let filtered = 
+        alist {
+          for s in vals do
+            let! s = s
+            if s.IsSome then yield s
+        }
+        
+        
+      let len = AList.count filtered
+
+      adaptive {
+        let! len = len
+        let! h = DS.AList.tryHead filtered
+        return 
+          match len with
+            | len when len <= 0 -> None
+            | len when len = 1 -> Option.flatten h
+            | len when len >= 2 -> None //TODO error message
+            | _ -> None
+      }
+
+      
+
+      
+      
+
     let update (model : DiagramApp) (msg : Action) =
       let updateRect (optr : option<RectangleStack>) (m : RectangleStack.Action) = 
         match optr with

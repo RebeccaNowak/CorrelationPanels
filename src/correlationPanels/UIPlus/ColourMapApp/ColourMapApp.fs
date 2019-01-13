@@ -21,22 +21,25 @@ module ColourMapItem =
       label  = {TextInput.init with text = "--"}
     }
 
-  let init id label colour upper : ColourMapItem =
+  let init id label colour upper: ColourMapItem =
     {
       id     = id
       upper  = {Numeric.init with min = 0.0
                                   max = System.Double.PositiveInfinity
                                   value = upper
-                                  step = 0.1
+                                  step = upper
+                                  format = "{0:0.######}"
+                                  
                }
       colour = {ColorPicker.init with c = colour}
       label  = {TextInput.init with text = label}
     }
 
-  let clay    = init (CMItemId.newId ()) "clay" (new C4b(99,99,99)) 0.1
-  let silt    = init (CMItemId.newId ()) "silt" (new C4b(255,247,188)) 1.0
-  let sand    = init (CMItemId.newId ()) "sand" (new C4b(254,196,79)) 10.0
-  let gravel  = init (CMItemId.newId ()) "gravel" (new C4b(217,95,14)) 1000.0
+  let clay    = init (CMItemId.newId ()) "clay" (new C4b(99,99,99)) 0.001
+  let silt    = init (CMItemId.newId ()) "silt" (new C4b(255,247,188)) 0.01
+  let sand    = init (CMItemId.newId ()) "sand" (new C4b(254,196,79)) 0.1
+  let gravel  = init (CMItemId.newId ()) "gravel" (new C4b(217,95,14)) 1.0
+  
 
   let update (model : ColourMapItem) (action : Action) =
     match action with
@@ -50,7 +53,7 @@ module ColourMapItem =
         let _n = Numeric.update model.upper m
         {model with upper = _n}
 
-  let view (model : MColourMapItem) = 
+  let view (model : MColourMapItem)  = 
       let labelNode = 
         (TextInput.view'' 
           "box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.1) inset"
@@ -60,7 +63,7 @@ module ColourMapItem =
                      NumericInputType.InputBox 
                      model.upper
                      (AttributeMap.ofList 
-                        [style "margin:auto; color:black; max-width:60px"])
+                        [style "margin:auto; color:black; max-width:100px"])
 
       [
 
@@ -75,6 +78,8 @@ module ColourMapItem =
           |> UI.map NumericMessage
       ]
 
+
+      /////////////////////////
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ColourMap =
@@ -92,6 +97,7 @@ module ColourMap =
     {
       mappings = _mappings
       factor   = factor
+      unit     = Unit.Micrometre
     }
 
   let update (model : ColourMap) (action : Action) =
@@ -127,6 +133,7 @@ module ColourMap =
     Option.map (fun x -> x.c) cp
 
   let view (model : MColourMap) =
+
     let domList =
       alist {                 
         for m in model.mappings do
@@ -137,4 +144,4 @@ module ColourMap =
                                 
       }
 
-    Table.toTableView (div[][]) domList ["Label";"Colour"]
+    Table.toTableView (div[][]) domList ["Label";"Colour";"Upper Limit (m)"]

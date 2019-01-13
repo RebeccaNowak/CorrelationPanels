@@ -102,6 +102,7 @@
 	<Compile Include="LogNodes.Svg.fs" />
 	<Compile Include="LogNodes.Update.fs" />
 	<Compile Include="LogNodes.Debug.fs" />
+	<Compile Include="LogNodes.View.fs" />
 	<Compile Include="GeologicalLog.fs" />
 	<Compile Include="GeologicalLogApp.fs" />
 	<Compile Include="Correlation.fs" />
