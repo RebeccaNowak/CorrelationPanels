@@ -40,8 +40,8 @@
     //  float (index * 10 + index * 250)
 
     let initial : CorrelationPlot  = 
-      let xToSvg              = 30.0
-      let yToSvg              = 30.0
+      let xToSvg              = 100.0
+      let yToSvg              = 25.0
       let defaultWidth        = 50.0
 
       {
@@ -331,7 +331,7 @@
               //    yield Table.intoTr [(Table.intoTd' menu tmp.Length)]     
           }
         
-        Table.toTableView (div[][]) rows ["label";"order"]
+        Table.toTableView (div[][]) rows ["Log Name";"Order"]
       logList
       
 

@@ -163,7 +163,7 @@ module CorrelationDrawing =
                 hovered |> Mod.map (function o -> match o with 
                                                     | Some t-> t
                                                     | None -> Trafo3d.Scale(V3d.Zero))
-            Sg.sphereDyn (color) (Mod.constant 0.1) |> Sg.trafo(trafo) // TODO hardcoded stuff
+            Sg.sphereDyn (color) (Mod.constant 0.05) |> Sg.trafo(trafo) // TODO hardcoded stuff
        
         let view (model         : MCorrelationDrawingModel)
                  (semanticApp   : MSemanticApp) 
