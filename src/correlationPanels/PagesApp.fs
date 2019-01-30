@@ -45,34 +45,39 @@ module Pages =
   //  {CameraController.initial with view = camView}
 
   let defaultLayout = 
-    config {
-                  content (
-                    // element {id "render"; title "Render View"; weight 5}
-                    horizontal 0.1 [
-                      element { id "controls"; title "Controls"; weight 0.08 }
-                      vertical 0.6 [
-                        horizontal 1.0 [
-                          element {id "render"; title "Render View"; weight 1.0}
-                          stack 0.1 (Some "semanticsMini") [
-                            dockelement {id "semanticsMini"; title "Annotation Type"; weight 1.0}
-                            dockelement {id "semantics"; title "Annotation Type: Expert View"; weight 1.0}
-                            dockelement {id "mappings"; title "Mappings"; weight 1.0}
-                            dockelement { id "logs"; title "Logs"; weight 0.5}
-                          ]
-                        ]
+    let stackitems = 
+      [
+        dockelement {id "semanticsMini"; title "Annotation Type";               weight 1.0}
+        dockelement {id "semantics";     title "Annotation Type: Expert View";  weight 1.0}
+        dockelement {id "mappings";      title "Mappings";                      weight 1.0}
+        dockelement {id "logs";          title "Logs";                          weight 1.0}
+        dockelement {id "lognode";       title "Selected Layer";                weight 1.0}
+      ]
 
-                        element { id "svg"; title "Correlation Panel"; weight 0.5}
-                          //stack 1.0 (Some "render") [dockelement {id "logs"; title "Logs"; weight 5};
-                          //                           dockelement {id "debug"; title "Debug"; weight 1}]
+    config 
+      {
+        content (
+          // element {id "render"; title "Render View"; weight 5}
+          horizontal 0.1 [
+            element { id "controls"; title "Controls"; weight 0.08 }
+            vertical 0.6 [
+              horizontal 1.0 [
+                element {id "render"; title "Render View"; weight 1.0}
+                stack 0.1 (Some "semanticsMini") stackitems
+              ]
+
+              element { id "svg"; title "Correlation Panel"; weight 0.5}
+                //stack 1.0 (Some "render") [dockelement {id "logs"; title "Logs"; weight 5};
+                //                           dockelement {id "debug"; title "Debug"; weight 1}]
                           
-                            //dockelement { id "annotations"; title "Annotations"; weight 1.0}
+                  //dockelement { id "annotations"; title "Annotations"; weight 1.0}
                         
-                      ]
-                    ]
-                  )
-                  appName "CDPages"
-                  useCachedConfig false
-              }
+            ]
+          ]
+        )
+        appName "CDPages"
+        useCachedConfig false
+      }
 
   let initial   = 
     let semApp  = SemanticApp.getInitialWithSamples
@@ -525,6 +530,19 @@ module Pages =
                          ]
                        ]
                      )
+
+                  | Some "lognode" -> body [] []
+                    //adaptive {
+                    //  let! optSel = model.selectedNode
+                    //  match optSel with
+                    //    | Some sel ->
+                    //      let node = LogNodes.Helper. m odel.corrPlotApp
+                    //      LogNodes.View.listViewSingle 
+                    //    | None -> body [] []
+
+                    //}
+
+                  
                       
                         
                   | Some "annotations" ->

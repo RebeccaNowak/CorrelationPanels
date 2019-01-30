@@ -130,23 +130,26 @@ module Mutable =
     type MColourMapItem(__initial : UIPlus.ColourMapItem) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<UIPlus.ColourMapItem> = Aardvark.Base.Incremental.EqModRef<UIPlus.ColourMapItem>(__initial) :> Aardvark.Base.Incremental.IModRef<UIPlus.ColourMapItem>
-        let _upper = Aardvark.UI.Mutable.MNumericInput.Create(__initial.upper)
+        let _upper = ResetMod.Create(__initial.upper)
+        let _upperStr = ResetMod.Create(__initial.upperStr)
         let _colour = Aardvark.UI.Mutable.MColorInput.Create(__initial.colour)
-        let _label = MTextInput.Create(__initial.label)
+        let _label = ResetMod.Create(__initial.label)
         
         member x.id = __current.Value.id
-        member x.upper = _upper
+        member x.upper = _upper :> IMod<_>
+        member x.upperStr = _upperStr :> IMod<_>
         member x.colour = _colour
-        member x.label = _label
+        member x.label = _label :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : UIPlus.ColourMapItem) =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
-                Aardvark.UI.Mutable.MNumericInput.Update(_upper, v.upper)
+                ResetMod.Update(_upper,v.upper)
+                ResetMod.Update(_upperStr,v.upperStr)
                 Aardvark.UI.Mutable.MColorInput.Update(_colour, v.colour)
-                MTextInput.Update(_label, v.label)
+                ResetMod.Update(_label,v.label)
                 
         
         static member Create(__initial : UIPlus.ColourMapItem) : MColourMapItem = MColourMapItem(__initial)
@@ -170,10 +173,16 @@ module Mutable =
                     override x.Update(r,f) = { r with id = f r.id }
                 }
             let upper =
-                { new Lens<UIPlus.ColourMapItem, Aardvark.UI.NumericInput>() with
+                { new Lens<UIPlus.ColourMapItem, System.Double>() with
                     override x.Get(r) = r.upper
                     override x.Set(r,v) = { r with upper = v }
                     override x.Update(r,f) = { r with upper = f r.upper }
+                }
+            let upperStr =
+                { new Lens<UIPlus.ColourMapItem, System.String>() with
+                    override x.Get(r) = r.upperStr
+                    override x.Set(r,v) = { r with upperStr = v }
+                    override x.Update(r,f) = { r with upperStr = f r.upperStr }
                 }
             let colour =
                 { new Lens<UIPlus.ColourMapItem, Aardvark.UI.ColorInput>() with
@@ -182,7 +191,7 @@ module Mutable =
                     override x.Update(r,f) = { r with colour = f r.colour }
                 }
             let label =
-                { new Lens<UIPlus.ColourMapItem, UIPlus.TextInput>() with
+                { new Lens<UIPlus.ColourMapItem, System.String>() with
                     override x.Get(r) = r.label
                     override x.Set(r,v) = { r with label = v }
                     override x.Update(r,f) = { r with label = f r.label }

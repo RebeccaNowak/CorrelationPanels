@@ -484,10 +484,10 @@ type CorrelationPlot = {
    correlations        : plist<Correlation>
    selectedBorder      : Option<Border>
    //aardvark dies: selectedBorder      : Option<(Border * V2d)>
-
+   
    editCorrelations    : bool
    selectedPoints      : hmap<AnnotationId, V3d>
-   //annotations         : hmap<AnnotationId, Annotation>
+   selectedNode        : option<LogNodeId>
    selectedLog         : option<RectangleStackId>
    secondaryLvl        : NodeLevel
    //creatingNew         : bool

@@ -10,35 +10,43 @@ open UIPlus.Table
 module ColourMapItem =
   type Action =
     | ColourMessage of ColorPicker.Action
-    | TextMessage   of TextInput.Action
-    | NumericMessage of Numeric.Action
+    //| TextMessage   of TextInput.Action
+    //| NumericMessage of Numeric.Action
 
   let empty : ColourMapItem =
     {
-      id     = CMItemId.invalid
-      upper  = Numeric.init
-      colour = {ColorPicker.init with c = C4b.Gray}
-      label  = {TextInput.init with text = "--"}
+      id        = CMItemId.invalid
+      upper     = 0.0
+      upperStr  = ""
+      colour    = {ColorPicker.init with c = C4b.Gray}
+      label     = ""
     }
 
-  let init id label colour upper: ColourMapItem =
+  let init id label colour upper upperStr: ColourMapItem =
     {
-      id     = id
-      upper  = {Numeric.init with min = 0.0
-                                  max = System.Double.PositiveInfinity
-                                  value = upper
-                                  step = upper
-                                  format = "{0:0.######}"
-                                  
-               }
-      colour = {ColorPicker.init with c = colour}
-      label  = {TextInput.init with text = label}
+      id        = id
+      upper     = upper
+      upperStr  = upperStr
+      colour    = {ColorPicker.init with c = colour}
+      label     = label
     }
 
-  let clay    = init (CMItemId.newId ()) "clay" (new C4b(99,99,99)) 0.001
-  let silt    = init (CMItemId.newId ()) "silt" (new C4b(255,247,188)) 0.01
-  let sand    = init (CMItemId.newId ()) "sand" (new C4b(254,196,79)) 0.1
-  let gravel  = init (CMItemId.newId ()) "gravel" (new C4b(217,95,14)) 1.0
+  // default values
+  let boulder   = init (CMItemId.newId ()) "boulder"            (new C4b(217,95,14)) 100.0       "< -8    "
+  let cobble    = init (CMItemId.newId ()) "cobble"             (new C4b(217,95,14)) 0.256       "-6 to -8"
+  let vcGravel  = init (CMItemId.newId ()) "very coarse gravel" (new C4b(217,95,14)) 0.064       "-5 to -6"
+  let cGravel   = init (CMItemId.newId ()) "coarse gravel"      (new C4b(217,95,14)) 0.032       "-3 to -4"
+  let mGravel   = init (CMItemId.newId ()) "medium gravel"      (new C4b(217,95,14)) 0.016       "-2 to -3"
+  let fGravel   = init (CMItemId.newId ()) "fine gravel"        (new C4b(217,95,14)) 0.008       "-1 to 0 "
+  let vfGravel  = init (CMItemId.newId ()) "very fine gravel"   (new C4b(217,95,14)) 0.004       " 0 to 1 "
+  let vcSand    = init (CMItemId.newId ()) "very coarse sand"   (new C4b(254,196,79)) 0.002      " 1 to 2 "
+  let cSand     = init (CMItemId.newId ()) "coarse sand"        (new C4b(254,196,79)) 0.001      " 2 to 3 "
+  let mSand     = init (CMItemId.newId ()) "medium sand"        (new C4b(254,196,79)) 0.0005     " 3 to 4 "
+  let fSand     = init (CMItemId.newId ()) "fine sand"          (new C4b(254,196,79)) 0.00025    " 4 to 5 "
+  let vfSand    = init (CMItemId.newId ()) "very fine sand"     (new C4b(254,196,79)) 0.000125   " 5 to 6 "
+  let silt      = init (CMItemId.newId ()) "silt"               (new C4b(255,247,188)) 0.0000625 " 6 to 7 "
+  let clay      = init (CMItemId.newId ()) "clay"               (new C4b(99,99,99)) 0.0000039    " 7 to 8 "
+  let colloid   = init (CMItemId.newId ()) "colloid"            (new C4b(99,99,99)) 0.00000098   " 8 to 9 "
   
 
   let update (model : ColourMapItem) (action : Action) =
@@ -46,37 +54,23 @@ module ColourMapItem =
       | ColourMessage m -> 
         let _c = ColorPicker.update model.colour m
         {model with colour = _c}
-      | TextMessage m   ->
-        let _t = TextInput.update model.label m
-        {model with label = _t}
-      | NumericMessage m -> 
-        let _n = Numeric.update model.upper m
-        {model with upper = _n}
+      //| TextMessage m   ->
+      //  let _t = TextInput.update model.label m
+      //  {model with label = _t}
+      //| NumericMessage m -> 
+      //  let _n = Numeric.update model.upper m
+      //  {model with upper = _n}
 
   let view (model : MColourMapItem)  = 
-      let labelNode = 
-        (TextInput.view'' 
-          "box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.1) inset"
-          model.label)
-
-      let thNode = Numeric.view'' 
-                     NumericInputType.InputBox 
-                     model.upper
-                     (AttributeMap.ofList 
-                        [style "margin:auto; color:black; max-width:100px"])
-
-      [
-
-        labelNode
-          |> intoTd
-          |> UI.map TextMessage
-        ColorPicker.view model.colour
-          |> intoTd
-          |> UI.map ColourMessage
-        thNode
-          |> intoTd
-          |> UI.map NumericMessage
-      ]
+    [
+      (div [] [Incremental.text model.label])
+        |> intoLeftAlignedTd
+      ColorPicker.view model.colour
+        |> intoTd
+        |> UI.map ColourMessage
+      (div [] [Incremental.text model.upperStr])
+        |> intoLeftAlignedTd
+    ]
 
 
       /////////////////////////
@@ -86,13 +80,26 @@ module ColourMap =
 
   type Action =
     | ItemMessage of (CMItemId * ColourMapItem.Action)
+    | SelectItem  of CMItemId
 
 
   let initial factor : ColourMap = 
-    let _mappings = [ColourMapItem.clay
-                     ColourMapItem.silt
-                     ColourMapItem.sand
-                     ColourMapItem.gravel] |> PList.ofList
+    let _mappings = [ColourMapItem.boulder 
+                     ColourMapItem.cobble  
+                     ColourMapItem.vcGravel
+                     ColourMapItem.cGravel 
+                     ColourMapItem.mGravel 
+                     ColourMapItem.fGravel 
+                     ColourMapItem.vfGravel
+                     ColourMapItem.vcSand  
+                     ColourMapItem.cSand   
+                     ColourMapItem.mSand   
+                     ColourMapItem.fSand   
+                     ColourMapItem.vfSand  
+                     ColourMapItem.silt    
+                     ColourMapItem.clay    
+                     ColourMapItem.colloid 
+                    ] |> PList.ofList
 
     {
       mappings = _mappings
@@ -110,11 +117,12 @@ module ColourMap =
         let _mappings = 
           PList.map upd model.mappings
         {model with mappings = _mappings}
+      
 
   let valueToColourPicker' (model : ColourMap) (value : float) =
     let filtered = 
       model.mappings
-        |> PList.filter (fun m -> (value / model.factor < m.upper.value))
+        |> PList.filter (fun m -> (value / model.factor < m.upper))
     let first =
       filtered
         |> PList.tryAt 0
@@ -140,8 +148,8 @@ module ColourMap =
           let mapper = UI.map (fun a -> Action.ItemMessage (m.id, a) ) 
           let _v = (ColourMapItem.view m) 
                       |> List.map mapper
-          yield Table.intoTr _v
+          yield Table.intoTrOnClick (Action.SelectItem m.id) _v
                                 
       }
 
-    Table.toTableView (div[][]) domList ["Label";"Colour";"Upper Limit (m)"]
+    Table.toTableView (div[][]) domList ["Grain size";"Colour";"φ-scale"]

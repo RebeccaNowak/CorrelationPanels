@@ -48,11 +48,13 @@
         diagramApp          = Svgplus.DiagramApp.init
         logs                = HMap.empty
         correlations        = PList.empty
-        selectedBorder      = None
+        
         editCorrelations    = false
         colourMapApp        = ColourMap.initial xToSvg
         selectedPoints      = hmap<AnnotationId, V3d>.Empty
         selectedLog         = None
+        selectedNode        = None
+        selectedBorder      = None
         secondaryLvl        = NodeLevel.init 1
 
         //creatingNew         = false
@@ -202,8 +204,14 @@
                 DiagramApp.update model.diagramApp (DiagramApp.MoveLeft id)
               | _ -> model.diagramApp
 
-          {model with logs       = updateLog id logmsg model.logs
-                      diagramApp = _dApp
+          let _model = 
+            match logmsg with
+              | Log.SelectLogNode nid ->
+                selectLog id annoApp model
+              | _ -> model
+
+          {_model with logs       = updateLog id logmsg _model.logs
+                       diagramApp = _dApp
           }
         | SelectLog id -> selectLog id annoApp model
         //| NewLog             -> 

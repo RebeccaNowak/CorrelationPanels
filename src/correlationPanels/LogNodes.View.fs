@@ -8,7 +8,7 @@ open UIPlus
 open UIPlus.Table
 
 module View =
-  let listViewSIngle (model : MLogNode) 
+  let listViewSingle (model : MLogNode) 
                      (diagramApp : MDiagramApp) =
       
     let atts = 

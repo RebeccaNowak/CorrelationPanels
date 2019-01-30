@@ -75,14 +75,50 @@
         let id = System.Guid.NewGuid ()
         {id = id.ToString () }
 
+  type GrainSize =
+    | Boulder  
+    | Cobble   
+    | VcGravel 
+    | CGravel  
+    | MGravel  
+    | FGravel  
+    | VfGravel 
+    | VcSand   
+    | CSand    
+    | MSand    
+    | FSand    
+    | VfSand   
+    | Silt     
+    | Clay     
+    | Colloid  
+  with 
+    member this.toString =
+      match this with
+      | Boulder  -> "boulder"           
+      | Cobble   -> "cobble"            
+      | VcGravel -> "very coarse gravel"
+      | CGravel  -> "coarse gravel"     
+      | MGravel  -> "medium gravel"     
+      | FGravel  -> "fine gravel"       
+      | VfGravel -> "very fine gravel"  
+      | VcSand   -> "very coarse sand"  
+      | CSand    -> "coarse sand"       
+      | MSand    -> "medium sand"       
+      | FSand    -> "fine sand"         
+      | VfSand   -> "very fine sand"    
+      | Silt     -> "silt"              
+      | Clay     -> "clay"              
+      | Colloid  -> "colloid"                 
+
   [<DomainType>]
   type ColourMapItem = {
     [<NonIncremental>]
-    id     : CMItemId
+    id        : CMItemId
 
-    upper  : NumericInput
-    colour : ColorInput
-    label  : TextInput
+    upper     : float
+    upperStr  : string
+    colour    : ColorInput
+    label   : string
   }
 
   type Unit =

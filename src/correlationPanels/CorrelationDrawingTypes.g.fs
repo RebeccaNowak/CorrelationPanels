@@ -1331,6 +1331,7 @@ module Mutable =
         let _selectedBorder = MOption.Create(__initial.selectedBorder, (fun v -> MBorder.Create(v)), (fun (m,v) -> MBorder.Update(m, v)), (fun v -> v))
         let _editCorrelations = ResetMod.Create(__initial.editCorrelations)
         let _selectedPoints = MMap.Create(__initial.selectedPoints)
+        let _selectedNode = MOption.Create(__initial.selectedNode)
         let _selectedLog = MOption.Create(__initial.selectedLog)
         let _secondaryLvl = ResetMod.Create(__initial.secondaryLvl)
         let _viewType = ResetMod.Create(__initial.viewType)
@@ -1352,6 +1353,7 @@ module Mutable =
         member x.selectedBorder = _selectedBorder :> IMod<_>
         member x.editCorrelations = _editCorrelations :> IMod<_>
         member x.selectedPoints = _selectedPoints :> amap<_,_>
+        member x.selectedNode = _selectedNode :> IMod<_>
         member x.selectedLog = _selectedLog :> IMod<_>
         member x.secondaryLvl = _secondaryLvl :> IMod<_>
         member x.viewType = _viewType :> IMod<_>
@@ -1378,6 +1380,7 @@ module Mutable =
                 MOption.Update(_selectedBorder, v.selectedBorder)
                 ResetMod.Update(_editCorrelations,v.editCorrelations)
                 MMap.Update(_selectedPoints, v.selectedPoints)
+                MOption.Update(_selectedNode, v.selectedNode)
                 MOption.Update(_selectedLog, v.selectedLog)
                 ResetMod.Update(_secondaryLvl,v.secondaryLvl)
                 ResetMod.Update(_viewType,v.viewType)
@@ -1448,6 +1451,12 @@ module Mutable =
                     override x.Get(r) = r.selectedPoints
                     override x.Set(r,v) = { r with selectedPoints = v }
                     override x.Update(r,f) = { r with selectedPoints = f r.selectedPoints }
+                }
+            let selectedNode =
+                { new Lens<CorrelationDrawing.CorrelationPlot, Microsoft.FSharp.Core.Option<CorrelationDrawing.LogNodeId>>() with
+                    override x.Get(r) = r.selectedNode
+                    override x.Set(r,v) = { r with selectedNode = v }
+                    override x.Update(r,f) = { r with selectedNode = f r.selectedNode }
                 }
             let selectedLog =
                 { new Lens<CorrelationDrawing.CorrelationPlot, Microsoft.FSharp.Core.Option<Svgplus.RS.RectangleStackId>>() with
