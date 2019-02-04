@@ -8,8 +8,7 @@
               [attribute "title" text
                attribute "data-position" "top center"
                attribute "data-variation" "mini" ] 
-                  |> AttributeMap.ofList
-                  |> AttributeMap.union dom.Attributes                
+                  |> AttributeMap.ofList             
                 
           onBoot "$('#__ID__').popup({inline:true,hoverable:true});" (       
               dom.WithAttributes attr     
@@ -21,8 +20,7 @@
               [ attribute "title" text
                 attribute "data-position" "right center"
                 attribute "data-variation" "mini"] 
-                  |> AttributeMap.ofList
-                  |> AttributeMap.union dom.Attributes                
+                  |> AttributeMap.ofList             
                 
           onBoot "$('#__ID__').popup({inline:true,hoverable:true});" (       
               dom.WithAttributes attr     
@@ -34,8 +32,7 @@
               [ attribute "title" text
                 attribute "data-position" "bottom center"
                 attribute "data-variation" "mini"] 
-                  |> AttributeMap.ofList
-                  |> AttributeMap.union dom.Attributes                
+                  |> AttributeMap.ofList              
                 
           onBoot "$('#__ID__').popup({inline:true,hoverable:true});" (       
               dom.WithAttributes attr     

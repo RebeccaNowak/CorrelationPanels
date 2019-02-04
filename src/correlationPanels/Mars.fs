@@ -65,7 +65,7 @@ module Terrain =
         [ 
             for h in patchHierarchies do
                 //let p = Path.combine [h; @"Patches\patchhierarchy.xml" ]
-                yield PatchHierarchy.load pickle unpickle h
+                yield PatchHierarchy.load pickle unpickle (OpcPaths h)
         ]
     
     type OPCScene =
@@ -126,7 +126,7 @@ module Terrain =
     
 
     let mkISg() =
-        Sg2.createFlatISg pickle unpickle patchHierarchies
+        Sg2.createFlatISg pickle unpickle (patchHierarchies |> Seq.map OpcPaths |> Seq.toList)
         |> Sg.noEvents
         |> Sg.transform preTransform
     
@@ -204,11 +204,11 @@ module Terrain =
     let leaves =
         pHs
         |> List.collect(fun x ->
-            x.tree |> QTree.getLeaves |> Seq.toList |> List.map(fun y -> (x.baseDir, y)))
+            x.tree |> QTree.getLeaves |> Seq.toList |> List.map(fun y -> (x.opcPaths.Opc_DirAbsPath, y)))
     
     let kdTrees =
         leaves
-        |> List.map(fun (dir,patch) -> (Patch.load dir patch.info, dir, patch.info))
+        |> List.map(fun (dir,patch) -> (Patch.load (OpcPaths dir) ViewerModality.XYZ patch.info, dir, patch.info))
         |> List.map(fun ((a,_),c,d) -> (a,c,d))
         |> List.map ( fun (g,dir,info) ->
             buildKDTree g info.Local2Global
@@ -216,7 +216,7 @@ module Terrain =
     
     let pickSg events =
         leaves
-        |> List.map(fun (dir,patch) -> (Patch.load dir patch.info, dir, patch.info))
+        |> List.map(fun (dir,patch) -> (Patch.load (OpcPaths dir) ViewerModality.XYZ patch.info, dir, patch.info))
         |> List.map(fun ((a,_),c,d) -> (a,c,d))
         |> List.map2 ( fun t (g,dir,info) ->
             let pckShp = t |> PickShape.Triangles

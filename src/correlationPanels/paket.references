@@ -27,9 +27,5 @@ nuget Suave
 
 nuget Aardium                              
 
-nuget Another.Unofficial.Xilium.CefGlue                          
-nuget Another.Unofficial.Xilium.CefGlue.UnpackNativeDependencies 
-nuget Another.Unofficial.Xilium.CefGlue.WindowsForms             
-
 nuget Aardvark.SceneGraph.Opc 
 nuget Aardvark.Application.Slim

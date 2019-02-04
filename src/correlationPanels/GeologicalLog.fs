@@ -79,6 +79,7 @@
             let currentLevel =
               selectedPoints
                 |> HMap.keys
+                |> HSet.toList
                 |> List.map (fun id -> AnnotationApp.getLevel' annoApp semApp id)
                 |> List.min
 
