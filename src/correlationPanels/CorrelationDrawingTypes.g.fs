@@ -794,7 +794,7 @@ module Mutable =
         let _uBorder = MOption.Create(__initial.uBorder, (fun v -> MBorder.Create(v)), (fun (m,v) -> MBorder.Update(m, v)), (fun v -> v))
         let _annotation = MOption.Create(__initial.annotation)
         let _children = MList.Create(__initial.children, (fun v -> MLogNode.Create(v)), (fun (m,v) -> MLogNode.Update(m, v)), (fun v -> v))
-        let _mainBody = Svgplus.Mutable.MRectangle.Create(__initial.mainBody)
+        let _mainBody = Svgplus.RectangleType.Mutable.MRectangle.Create(__initial.mainBody)
         let _roseDiagram = Svgplus.Mutable.MRoseDiagram.Create(__initial.roseDiagram)
         let _buttonNorth = Svgplus.Mutable.MButton.Create(__initial.buttonNorth)
         let _buttonSouth = Svgplus.Mutable.MButton.Create(__initial.buttonSouth)
@@ -825,7 +825,7 @@ module Mutable =
                 MOption.Update(_uBorder, v.uBorder)
                 MOption.Update(_annotation, v.annotation)
                 MList.Update(_children, v.children)
-                Svgplus.Mutable.MRectangle.Update(_mainBody, v.mainBody)
+                Svgplus.RectangleType.Mutable.MRectangle.Update(_mainBody, v.mainBody)
                 Svgplus.Mutable.MRoseDiagram.Update(_roseDiagram, v.roseDiagram)
                 Svgplus.Mutable.MButton.Update(_buttonNorth, v.buttonNorth)
                 Svgplus.Mutable.MButton.Update(_buttonSouth, v.buttonSouth)
@@ -852,7 +852,7 @@ module Mutable =
                     override x.Update(r,f) = { r with id = f r.id }
                 }
             let rectangleId =
-                { new Lens<CorrelationDrawing.LogNode, Svgplus.RectangleId>() with
+                { new Lens<CorrelationDrawing.LogNode, Svgplus.RectangleType.RectangleId>() with
                     override x.Get(r) = r.rectangleId
                     override x.Set(r,v) = { r with rectangleId = v }
                     override x.Update(r,f) = { r with rectangleId = f r.rectangleId }
@@ -900,7 +900,7 @@ module Mutable =
                     override x.Update(r,f) = { r with children = f r.children }
                 }
             let mainBody =
-                { new Lens<CorrelationDrawing.LogNode, Svgplus.Rectangle>() with
+                { new Lens<CorrelationDrawing.LogNode, Svgplus.RectangleType.Rectangle>() with
                     override x.Get(r) = r.mainBody
                     override x.Set(r,v) = { r with mainBody = v }
                     override x.Update(r,f) = { r with mainBody = f r.mainBody }

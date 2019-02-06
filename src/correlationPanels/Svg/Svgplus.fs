@@ -133,39 +133,6 @@ open Aardvark.UI
 
 
 
-  type RectangleId = {
-    id        : string 
-  } with
-    member this.isValid = (this.id <> "")
-  module RectangleId = 
-    let invalid = {id = ""}
-    let newId () : RectangleId  = 
-      let id = System.Guid.NewGuid ()
-      {id = id.ToString () }
-
-  [<DomainType>]
-  type Rectangle = {
-    [<NonIncremental>]
-    id            : RectangleId
-
-    label         : UIPlus.TextInput
-    pos           : V2d
-    dim           : Size2D
-    colour        : Aardvark.UI.ColorInput
-    borderColour  : C4b
-    isToggled     : bool
-    colChange     : V3i
-    isHovering    : bool
-    dottedBorder  : bool
-    draw          : bool
-
-    northWestButton : Button
-    northEastButton : Button
-    southWestButton : Button
-    southEastButton : Button
-  }
-
-
 
 
 

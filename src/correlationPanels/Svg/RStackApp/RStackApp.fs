@@ -4,6 +4,7 @@
   open Aardvark.Base
   open Aardvark.Base.Incremental
   open Aardvark.UI
+  open Svgplus.RectangleType // always import this before importing Svgplus, so correct Lenses are used //TODO
   open Svgplus
 
 

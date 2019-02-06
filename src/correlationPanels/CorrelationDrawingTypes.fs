@@ -9,6 +9,7 @@ open SimpleTypes
 open Svgplus
 open UIPlus
 open Svgplus.RS
+open Svgplus.RectangleType
 
 //[<DomainType>]
 //type BorderedRectangle = {
@@ -404,7 +405,7 @@ type LogNode = {
 
     children           : plist<LogNode>
     
-    mainBody           : Svgplus.Rectangle
+    mainBody           : Rectangle
     roseDiagram        : RoseDiagram
     buttonNorth        : Svgplus.Button
     buttonSouth        : Svgplus.Button

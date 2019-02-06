@@ -5,6 +5,7 @@ open Aardvark.Base
 open Aardvark.Base.Incremental
 open Aardvark.UI
 open Aardvark.UI.Primitives
+open Svgplus.RectangleType
 open Svgplus.CA
 open Svgplus.DA
 open Svgplus.RS

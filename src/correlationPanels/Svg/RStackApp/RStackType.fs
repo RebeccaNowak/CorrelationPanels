@@ -3,6 +3,7 @@
 open Aardvark.Base
 open Aardvark.Base.Incremental
 open Svgplus
+open Svgplus.RectangleType
 
   type RectangleStackId = {
     id        : string 

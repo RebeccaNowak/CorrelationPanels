@@ -15,6 +15,7 @@
     open SimpleTypes
     open Svgplus.RS
     open Svgplus
+    open Svgplus.RectangleType
     open UIPlus
     open Aardvark.Base.IL.Serializer
     

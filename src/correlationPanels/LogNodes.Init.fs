@@ -7,6 +7,7 @@ open Svgplus
 open Aardvark.Base
 open Aardvark.UI
 open Svgplus.RS
+open Svgplus.RectangleType
 
   type Action =
     | MouseOver           of LogNodeId
@@ -59,9 +60,9 @@ open Svgplus.RS
       { new Lens<CorrelationDrawing.LogNode, C4b>() with
         override x.Get(r)   = r.mainBody.colour.c
         override x.Set(r,v) = 
-          { r with mainBody = Rectangle.Lens.colour.Set(r.mainBody,v)}
+          { r with mainBody = Rectangle.Lens.col.Set(r.mainBody, v)}//Rectangle.Lens.colour.Set(r.mainBody,v)}
         override x.Update(r,f) = 
-          {r with mainBody = Rectangle.Lens.colour.Update(r.mainBody, f)}
+          {r with mainBody = Rectangle.Lens.col.Update(r.mainBody, f)}
       }
     
     let hasAverageWidth =

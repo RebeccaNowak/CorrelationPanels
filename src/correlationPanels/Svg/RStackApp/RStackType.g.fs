@@ -13,7 +13,7 @@ module Mutable =
     type MRectangleStack(__initial : Svgplus.RS.RectangleStack) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<Svgplus.RS.RectangleStack> = Aardvark.Base.Incremental.EqModRef<Svgplus.RS.RectangleStack>(__initial) :> Aardvark.Base.Incremental.IModRef<Svgplus.RS.RectangleStack>
-        let _rectangles = MMap.Create(__initial.rectangles, (fun v -> Svgplus.Mutable.MRectangle.Create(v)), (fun (m,v) -> Svgplus.Mutable.MRectangle.Update(m, v)), (fun v -> v))
+        let _rectangles = MMap.Create(__initial.rectangles, (fun v -> Svgplus.RectangleType.Mutable.MRectangle.Create(v)), (fun (m,v) -> Svgplus.RectangleType.Mutable.MRectangle.Update(m, v)), (fun v -> v))
         let _header = Svgplus.HeaderType.Mutable.MHeader.Create(__initial.header)
         let _order = MList.Create(__initial.order)
         let _pos = ResetMod.Create(__initial.pos)
@@ -56,7 +56,7 @@ module Mutable =
                     override x.Update(r,f) = { r with id = f r.id }
                 }
             let rectangles =
-                { new Lens<Svgplus.RS.RectangleStack, Aardvark.Base.hmap<Svgplus.RectangleId,Svgplus.Rectangle>>() with
+                { new Lens<Svgplus.RS.RectangleStack, Aardvark.Base.hmap<Svgplus.RectangleType.RectangleId,Svgplus.RectangleType.Rectangle>>() with
                     override x.Get(r) = r.rectangles
                     override x.Set(r,v) = { r with rectangles = v }
                     override x.Update(r,f) = { r with rectangles = f r.rectangles }
@@ -68,7 +68,7 @@ module Mutable =
                     override x.Update(r,f) = { r with header = f r.header }
                 }
             let order =
-                { new Lens<Svgplus.RS.RectangleStack, Aardvark.Base.plist<Svgplus.RectangleId>>() with
+                { new Lens<Svgplus.RS.RectangleStack, Aardvark.Base.plist<Svgplus.RectangleType.RectangleId>>() with
                     override x.Get(r) = r.order
                     override x.Set(r,v) = { r with order = v }
                     override x.Update(r,f) = { r with order = f r.order }
