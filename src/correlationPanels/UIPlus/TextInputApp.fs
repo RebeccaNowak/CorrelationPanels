@@ -1,11 +1,13 @@
-﻿namespace CorrelationDrawing
+﻿namespace UIPlus
 
 open Aardvark.Base.Incremental
+open Aardvark.Base
+open Aardvark.UI
+open UIPlus
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module TextInput =
-  open Aardvark.Base
-  open Aardvark.UI
+
 
   type Action =
     | ChangeText of string
@@ -43,6 +45,8 @@ module TextInput =
       }
     div [clazz "ui icon input"] [(Incremental.input (AttributeMap.ofAMap (AMap.union attr1 attributes)))]
     //style "height: 1.4285em"
+
+
 
   let view'' (styleStr : string) (model : MTextInput): DomNode<Action> = 
     let attr1 =

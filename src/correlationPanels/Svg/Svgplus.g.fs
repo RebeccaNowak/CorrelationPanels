@@ -21,6 +21,7 @@ module Mutable =
         let _weight = ResetMod.Create(__initial.weight)
         let _countPerBin = MList.Create(__initial.countPerBin)
         
+        member x.id = __current.Value.id
         member x.centre = _centre :> IMod<_>
         member x.outerRadius = _outerRadius :> IMod<_>
         member x.innerRadius = _innerRadius :> IMod<_>
@@ -57,6 +58,12 @@ module Mutable =
     module RoseDiagram =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
+            let id =
+                { new Lens<Svgplus.RoseDiagram, Svgplus.RoseDiagramId>() with
+                    override x.Get(r) = r.id
+                    override x.Set(r,v) = { r with id = v }
+                    override x.Update(r,f) = { r with id = f r.id }
+                }
             let centre =
                 { new Lens<Svgplus.RoseDiagram, Aardvark.Base.V2d>() with
                     override x.Get(r) = r.centre
@@ -115,6 +122,7 @@ module Mutable =
         let _isHovering = ResetMod.Create(__initial.isHovering)
         let _transitionSec = ResetMod.Create(__initial.transitionSec)
         
+        member x.id = __current.Value.id
         member x.pos = _pos :> IMod<_>
         member x.radius = _radius :> IMod<_>
         member x.rHoverChange = _rHoverChange :> IMod<_>
@@ -157,6 +165,12 @@ module Mutable =
     module Button =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
+            let id =
+                { new Lens<Svgplus.Button, Svgplus.ButtonId>() with
+                    override x.Get(r) = r.id
+                    override x.Set(r,v) = { r with id = v }
+                    override x.Update(r,f) = { r with id = f r.id }
+                }
             let pos =
                 { new Lens<Svgplus.Button, Aardvark.Base.V2d>() with
                     override x.Get(r) = r.pos
@@ -216,113 +230,4 @@ module Mutable =
                     override x.Get(r) = r.transitionSec
                     override x.Set(r,v) = { r with transitionSec = v }
                     override x.Update(r,f) = { r with transitionSec = f r.transitionSec }
-                }
-    
-    
-    type MRectangle(__initial : Svgplus.Rectangle) =
-        inherit obj()
-        let mutable __current : Aardvark.Base.Incremental.IModRef<Svgplus.Rectangle> = Aardvark.Base.Incremental.EqModRef<Svgplus.Rectangle>(__initial) :> Aardvark.Base.Incremental.IModRef<Svgplus.Rectangle>
-        let _pos = ResetMod.Create(__initial.pos)
-        let _dim = ResetMod.Create(__initial.dim)
-        let _colour = Aardvark.UI.Mutable.MColorInput.Create(__initial.colour)
-        let _borderColour = ResetMod.Create(__initial.borderColour)
-        let _isToggled = ResetMod.Create(__initial.isToggled)
-        let _colChange = ResetMod.Create(__initial.colChange)
-        let _isHovering = ResetMod.Create(__initial.isHovering)
-        let _dottedBorder = ResetMod.Create(__initial.dottedBorder)
-        let _draw = ResetMod.Create(__initial.draw)
-        
-        member x.pos = _pos :> IMod<_>
-        member x.dim = _dim :> IMod<_>
-        member x.colour = _colour
-        member x.borderColour = _borderColour :> IMod<_>
-        member x.isToggled = _isToggled :> IMod<_>
-        member x.colChange = _colChange :> IMod<_>
-        member x.isHovering = _isHovering :> IMod<_>
-        member x.dottedBorder = _dottedBorder :> IMod<_>
-        member x.draw = _draw :> IMod<_>
-        
-        member x.Current = __current :> IMod<_>
-        member x.Update(v : Svgplus.Rectangle) =
-            if not (System.Object.ReferenceEquals(__current.Value, v)) then
-                __current.Value <- v
-                
-                ResetMod.Update(_pos,v.pos)
-                ResetMod.Update(_dim,v.dim)
-                Aardvark.UI.Mutable.MColorInput.Update(_colour, v.colour)
-                ResetMod.Update(_borderColour,v.borderColour)
-                ResetMod.Update(_isToggled,v.isToggled)
-                ResetMod.Update(_colChange,v.colChange)
-                ResetMod.Update(_isHovering,v.isHovering)
-                ResetMod.Update(_dottedBorder,v.dottedBorder)
-                ResetMod.Update(_draw,v.draw)
-                
-        
-        static member Create(__initial : Svgplus.Rectangle) : MRectangle = MRectangle(__initial)
-        static member Update(m : MRectangle, v : Svgplus.Rectangle) = m.Update(v)
-        
-        override x.ToString() = __current.Value.ToString()
-        member x.AsString = sprintf "%A" __current.Value
-        interface IUpdatable<Svgplus.Rectangle> with
-            member x.Update v = x.Update v
-    
-    
-    
-    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module Rectangle =
-        [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-        module Lens =
-            let pos =
-                { new Lens<Svgplus.Rectangle, Aardvark.Base.V2d>() with
-                    override x.Get(r) = r.pos
-                    override x.Set(r,v) = { r with pos = v }
-                    override x.Update(r,f) = { r with pos = f r.pos }
-                }
-            let dim =
-                { new Lens<Svgplus.Rectangle, SimpleTypes.Size2D>() with
-                    override x.Get(r) = r.dim
-                    override x.Set(r,v) = { r with dim = v }
-                    override x.Update(r,f) = { r with dim = f r.dim }
-                }
-            let colour =
-                { new Lens<Svgplus.Rectangle, Aardvark.UI.ColorInput>() with
-                    override x.Get(r) = r.colour
-                    override x.Set(r,v) = { r with colour = v }
-                    override x.Update(r,f) = { r with colour = f r.colour }
-                }
-            let borderColour =
-                { new Lens<Svgplus.Rectangle, Aardvark.Base.C4b>() with
-                    override x.Get(r) = r.borderColour
-                    override x.Set(r,v) = { r with borderColour = v }
-                    override x.Update(r,f) = { r with borderColour = f r.borderColour }
-                }
-            let isToggled =
-                { new Lens<Svgplus.Rectangle, System.Boolean>() with
-                    override x.Get(r) = r.isToggled
-                    override x.Set(r,v) = { r with isToggled = v }
-                    override x.Update(r,f) = { r with isToggled = f r.isToggled }
-                }
-            let colChange =
-                { new Lens<Svgplus.Rectangle, Aardvark.Base.V3i>() with
-                    override x.Get(r) = r.colChange
-                    override x.Set(r,v) = { r with colChange = v }
-                    override x.Update(r,f) = { r with colChange = f r.colChange }
-                }
-            let isHovering =
-                { new Lens<Svgplus.Rectangle, System.Boolean>() with
-                    override x.Get(r) = r.isHovering
-                    override x.Set(r,v) = { r with isHovering = v }
-                    override x.Update(r,f) = { r with isHovering = f r.isHovering }
-                }
-            let dottedBorder =
-                { new Lens<Svgplus.Rectangle, System.Boolean>() with
-                    override x.Get(r) = r.dottedBorder
-                    override x.Set(r,v) = { r with dottedBorder = v }
-                    override x.Update(r,f) = { r with dottedBorder = f r.dottedBorder }
-                }
-            let draw =
-                { new Lens<Svgplus.Rectangle, System.Boolean>() with
-                    override x.Get(r) = r.draw
-                    override x.Set(r,v) = { r with draw = v }
-                    override x.Update(r,f) = { r with draw = f r.draw }
                 }

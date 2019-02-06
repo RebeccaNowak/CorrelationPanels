@@ -115,7 +115,7 @@ module SemanticApp =
 
   let getSortedList (list    : hmap<SemanticId, Semantic>) 
                     (sortBy  : SemanticsSortingOption) =
-    HMap.toSortedPlist list (sortFunction sortBy)
+    DS.HMap.toSortedPlist list (sortFunction sortBy)
 
   let deleteSemantic (model : SemanticApp)=
       let getAKey (m : hmap<SemanticId, 'a>) =
@@ -161,6 +161,7 @@ module SemanticApp =
         |> insertSemantic (Semantic.initialHorizon4   (System.Guid.NewGuid().ToString())) State.Display
         |> insertSemantic (Semantic.initialCrossbed   (System.Guid.NewGuid().ToString())) State.Display
         //|> insertSemantic (Semantic.initialGrainSize  (System.Guid.NewGuid().ToString())) State.Display
+        |> insertSemantic (Semantic.impactBreccia (System.Guid.NewGuid().ToString())) State.Display
         |> insertSemantic (Semantic.initialGrainSize2 (System.Guid.NewGuid().ToString())) State.Edit
 
   let deselectAllSemantics (semantics : hmap<SemanticId, Semantic>) =
@@ -225,11 +226,12 @@ module SemanticApp =
 
   let save (model : SemanticApp) (savename : string) =
     let arr = binarySerializer.Pickle model.semantics
+    
     System.IO.File.WriteAllBytes
       (
         sprintf "%s%s" "./" savename, arr
       )
-    printf "write file" 
+    printf "write file: %s" savename
     model
 
   let load (model : SemanticApp) (savename : string) =
@@ -238,22 +240,57 @@ module SemanticApp =
         (
           sprintf "%s%s" "./" savename
         ) //"./semantics.save");
-    let semantics = binarySerializer.UnPickle(bytes) //TODO catch unpickle exceptions
-    printf "load file" 
-    let newModel =
-      match HMap.isEmpty semantics with
-        | true  -> getInitialWithSamples
-        | _     ->
-          let deselected = deselectAllSemantics semantics
-          let upd =
-            {model with semantics        = deselected
-                        semanticsList    = getSortedList deselected model.sortBy
-            }
-          update upd (Action.SetSemantic ((upd.semanticsList.TryGet 0) |> Option.map (fun s -> s.id)))
-    newModel
+
+    let semantics = 
+      try 
+        Some (binarySerializer.UnPickle(bytes)) //TODO catch unpickle exceptions
+      with 
+        | :? MBrace.FsPickler.FsPicklerException -> None
+    match semantics with
+      | Some semantics ->
+        printf "load file" 
+        let newModel =
+          match HMap.isEmpty semantics with
+            | true  -> getInitialWithSamples
+            | _     ->
+              let deselected = deselectAllSemantics semantics
+              let upd =
+                {model with semantics        = deselected
+                            semanticsList    = getSortedList deselected model.sortBy
+                }
+              update upd (Action.SetSemantic ((upd.semanticsList.TryGet 0) |> Option.map (fun s -> s.id)))
+        newModel
+      | None -> 
+        printfn "could not load semantics"
+        model
                     
   ///////////////////////////////// VIEW ///////////////////
   module View = 
+    let simpleView (model : MSemanticApp) =
+      let domList = 
+        alist {                 
+          for mSem in model.semanticsList do
+            let! state = mSem.state
+           // match state with 
+            let! col = mSem.style.color.c
+            let textCol = Table.textColorFromBackground col
+            let st = 
+              match state with
+                | State.Display -> []
+                | State.Edit | State.New ->
+                  [style (sprintf "background: %s;%s" (GUI.CSS.colorToHexStr col) textCol)]
+             
+            let domNodes = Semantic.View.miniView mSem
+            let domNodes = domNodes |> List.map (UI.map SemanticMessage)
+
+
+            yield tr 
+                     (st@[onClick (fun str -> SetSemantic (Some mSem.id))])
+                      domNodes
+        } 
+        
+      Table.toTableView (div[][]) domList ["Annotation Type"]
+
     let expertGUI (model : MSemanticApp) = 
       let menu = 
         div [clazz "ui horizontal inverted menu";

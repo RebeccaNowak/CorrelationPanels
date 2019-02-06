@@ -8,6 +8,7 @@ open Aardvark.UI
 open UIPlus
 open UIPlus.Table
 
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Semantic = 
 
@@ -106,6 +107,7 @@ module Semantic =
       style         = {Style.color      = {c = new C4b(252,141,98)}
                        Style.thickness  = {Numeric.init with value = 1.0}}
       semanticType  = SemanticType.Metric
+      geometryType  = GeometryType.Line
       level         = NodeLevel.INVALID
     }
 
@@ -115,6 +117,7 @@ module Semantic =
       style         = {Style.color      = {c = new C4b(247,252,185)}
                        Style.thickness  = {Numeric.init with value = 1.0}}
       semanticType  = SemanticType.Metric
+      geometryType  = GeometryType.Line
       level         = NodeLevel.INVALID
     }
 
@@ -124,6 +127,7 @@ module Semantic =
       style         = {Style.color      = {c = new C4b(231,138,195)}
                        Style.thickness  = {Numeric.init with value = 1.0}}
       semanticType  = SemanticType.Angular
+      geometryType  = GeometryType.Line
       level         = NodeLevel.INVALID
     }
 
@@ -133,6 +137,7 @@ module Semantic =
       style         = {Style.color      = {c = new C4b(166,216,84)}
                        Style.thickness  = {Numeric.init with value = 1.0}}
       semanticType  = SemanticType.Angular
+      geometryType  = GeometryType.Line
       level         = NodeLevel.INVALID
     }
     
@@ -212,6 +217,19 @@ module Semantic =
 ////////////////////////////////// VIEW NEW ///////////////////////////////////////     
 
   module View =
+    let miniView (model : MSemantic) = 
+      let domNodeLbl =
+          Incremental.label 
+            (AttributeMap.union 
+               (AttributeMap.ofList [clazz "ui horizontal label"]) 
+               (AttributeMap.ofAMap (GUI.CSS.incrBgColorAMap model.style.color.c)))
+            (AList.ofList [Incremental.text (model.label.text)])
+          |> intoLeftAlignedTd
+          
+      [domNodeLbl]
+         
+         
+      //labelNode |> UI.map Action.TextInputMessage
 
     let viewNew (model : MSemantic) =
       let thNode = Numeric.view'' 

@@ -18,13 +18,15 @@
       
 
       {
-        centre     = V2d (200.0, 200.0)
+        id            = RoseDiagramId.newId ()
+        centre        = V2d (200.0, 200.0)
         outerRadius   = 50.0
         innerRadius   = 10.0
         colour        = [for i in 0 .. 15 -> (gradient_blue_green.Item i)]
         nrCircles     = 5
         weight        = 0.5
         countPerBin   = PList.ofList [for i in 0 .. 15 -> Bin.init i ((rnd.Next ())%5) (gradient_blue_green.Item i)]
+
         // countPerBin   = PList.ofList [for i in 0 .. 15 -> Bin.init i 0]
       }
 

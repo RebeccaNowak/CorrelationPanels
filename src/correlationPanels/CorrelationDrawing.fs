@@ -98,6 +98,12 @@ module CorrelationDrawing =
                 { model with isDrawing = true }
             | KeyUp Keys.LeftCtrl, _   -> 
                 {model with isDrawing = false; hoverPosition = None }
+            | KeyUp Keys.Delete, _   -> 
+                {model with 
+                  working   = None;
+                  isDrawing = false;
+                  hoverPosition = None 
+                }
             | Move p, true -> 
                 { model with hoverPosition = Some (Trafo3d.Translation p) }
             | AddPoint m, true         -> 
@@ -157,7 +163,7 @@ module CorrelationDrawing =
                 hovered |> Mod.map (function o -> match o with 
                                                     | Some t-> t
                                                     | None -> Trafo3d.Scale(V3d.Zero))
-            Sg.sphereDyn (color) (Mod.constant 0.1) |> Sg.trafo(trafo) // TODO hardcoded stuff
+            Sg.sphereDyn (color) (Mod.constant 0.05) |> Sg.trafo(trafo) // TODO hardcoded stuff
        
         let view (model         : MCorrelationDrawingModel)
                  (semanticApp   : MSemanticApp) 
@@ -181,9 +187,10 @@ module CorrelationDrawing =
                       Mars.Terrain.CapeDesire.getRealMars events
                 ) |> Sg.dynamic
           let sgWorking = 
+            
             model.working |> Mod.map (fun x ->
               match x with
-                | Some a -> (Annotation.Sg.view a cam semanticApp) 
+                | Some a -> (Annotation.Sg.view a cam semanticApp true) 
                               |> ASet.map (fun sg -> sg |> Sg.map AnnotationMessage)
                               |> Sg.set
                 | None   -> Sg.ofList [])

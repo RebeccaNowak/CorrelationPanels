@@ -4,6 +4,7 @@ open System
 open Aardvark.Base
 open Aardvark.Base.Incremental
 open Aardvark.UI.Primitives
+open Svgplus
 
 type Primitive =
     | Box
@@ -17,5 +18,5 @@ type TestModel =
         cameraState     : CameraControllerState
         svgButton       : Svgplus.Button
         roseDiagram     : Svgplus.RoseDiagram
-        rectangle       : Svgplus.Rectangle
+        diagramApp      : Svgplus.DA.DiagramApp
     }

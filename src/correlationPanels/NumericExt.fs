@@ -17,7 +17,10 @@ module Numeric =
       
       onEvent' "onwheel" ["{ X: event.deltaX.toFixed(10), Y: event.deltaY.toFixed(10)  }"] (serverClick >> f)
 
-    let numericField'<'msg> ( f : Action -> seq<'msg> ) ( atts : AttributeMap<'msg> ) ( model : MNumericInput ) inputType =         
+    // let numericField'<'msg> ( f : Action -> seq<'msg> ) ( atts : AttributeMap<'msg> ) ( model : MNumericInput ) inputType =         
+    let numericField'<'msg> ( f : Action -> seq<'msg> )
+                            ( atts : AttributeMap<'msg> ) 
+                            ( model : MNumericInput ) inputType =         
 
       let tryParseAndClamp min max fallback s =
           let parsed = 0.0
@@ -59,4 +62,4 @@ module Numeric =
                (attributes : AttributeMap<Action>) :  DomNode<Action> =
         div [][(numericField' (Seq.singleton) attributes model inputType)] //(numericField (Seq.singleton) attributes model inputTypes )
 
-
+      

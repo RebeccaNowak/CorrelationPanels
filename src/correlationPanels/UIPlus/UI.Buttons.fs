@@ -16,6 +16,10 @@
       let iconButton' (iconStr : string) (tooltip : string) (onClick : V2i -> 'msg) st = 
         button [clazz "ui small icon button"; onMouseClick onClick; st] 
                 [i [clazz iconStr] [] ] |> ToolTips.wrapToolTip tooltip
+
+      let iconButtonNoTooltip (iconStr : string) (onClick : V2i -> 'msg) st = 
+        button [clazz "ui small icon button"; onMouseClick onClick; st] 
+                [i [clazz iconStr] [] ] 
           
       let toggleButton (str : string) (onClick : list<string> -> 'msg) = 
         Incremental.button
@@ -25,6 +29,7 @@
                                 ]@(Event.toggleAttribute onClick)) 
                                )
           (AList.ofList [text str])
+
 
 
           

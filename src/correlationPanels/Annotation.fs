@@ -174,6 +174,8 @@ module Annotation =
         |> PList.tryAt 0
     sel |> Option.map (fun s -> (s, anno))
 
+  let isSelected (anno : Annotation) =
+    (getSelected anno).IsSome
 
 
   module View = 
@@ -251,9 +253,14 @@ module Annotation =
               | false -> viewDeselected model semanticApp)
  
   module Sg =
-    let view (model : MAnnotation) (cam : IMod<CameraView>) (semApp : MSemanticApp) =
+    let view (model : MAnnotation) 
+            (cam : IMod<CameraView>) 
+            (semApp : MSemanticApp)
+            (working : bool) =
+
+
       let annoPointToSg (point : MAnnotationPoint) (color : IMod<C4b>) (weight : IMod<float>) =  
-        let weight = weight |> Mod.map (fun w -> w * 0.5)
+        let weight = weight |> Mod.map (fun w -> w * 0.2)
         let trafo = (Mod.constant (Trafo3d.Translation(point.point))) //TODO dynamic
         let pickSg = 
            Sg.sphereWithEvents (Mod.constant C4b.White) weight 
@@ -285,14 +292,28 @@ module Annotation =
             color
             thickness
 
-      let dots =       
-        aset {
-          for p in model.points |> ASet.ofAList do
-            yield annoPointToSg
-                    p
-                    color 
-                    (thickness |> Mod.map  (fun x -> x * 0.1)) // (computeScale view (p.point) 5.0) 
+      let dots =      
+        let weight = (thickness |> Mod.map  (fun x -> x * 0.1))
+        alist {
+          let! count = (AList.count model.points)
+          let last = count - 1
+          let mutable i = 0
+          for p in model.points  do
+            if working then 
+              let (col, weight) = 
+                match  (i = last) with
+                  | true -> 
+                    let c = (Mod.constant C4b.Yellow )
+                    let w = (thickness |> Mod.map  (fun x -> x * 0.2))
+                    (c,w)
+                  | false -> 
+                    (color, weight)
+              yield annoPointToSg p col weight // (computeScale view (p.point) 5.0) 
+              i <- i + 1
+            else
+              yield annoPointToSg p color weight // (computeScale view (p.point) 5.0) 
         } 
+        |> ASet.ofAList
         |> Sg.set
 
       [
@@ -337,19 +358,19 @@ module Annotation =
 
   let lowestPoint (anno : Annotation) = //TODO unsafe
     anno.points 
-      |> PList.minBy (fun x -> V3d.elevation x.point)
+      |> DS.PList.minBy (fun x -> V3d.elevation x.point)
 
   let tryLowestPoint (anno : Annotation) =
     anno.points 
-      |> PList.tryMinBy (fun x ->V3d.elevation x.point)
+      |> DS.PList.tryMinBy (fun x ->V3d.elevation x.point)
 
   let highestPoint (anno : Annotation) = //TODO unsafe
     anno.points 
-      |> PList.maxBy (fun x -> V3d.elevation x.point)
+      |> DS.PList.maxBy (fun x -> V3d.elevation x.point)
 
   let tryHighestPoint (anno : Annotation) = 
     anno.points 
-      |> PList.tryMaxBy (fun x -> V3d.elevation x.point)
+      |> DS.PList.tryMaxBy (fun x -> V3d.elevation x.point)
   
 
   let elevation' (anno : MAnnotation) =

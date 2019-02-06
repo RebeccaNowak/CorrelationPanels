@@ -6,6 +6,8 @@
   module Attributes =
     open Aardvark.UI
     open Aardvark.Base.Incremental
+
+
       
     let inline atf (attributeName : string) (value : float) =
       attribute attributeName (sprintf "%.4f" value)
@@ -18,6 +20,8 @@
 
     let inline g'' a x = elemNS "g" Svg.svgNS a x
 
+
+
     let toGroup (content : List<DomNode<'a>>) (atts : List<Attribute<'a>>) =
       g'' ([clazz "g"] @ atts) content
 
@@ -25,6 +29,8 @@
 
 
     module Incremental =
+      open SimpleTypes
+
       let inline elemNS' (tagName : string) (ns : string) (attrs : AttributeMap<'msg>) (children : alist<DomNode<'msg>>) =
         DomNode.Node(tagName, ns, attrs, children)
 
@@ -43,6 +49,16 @@
           let! v = value
           yield atf "cx" v.X
           yield atf "cy" v.Y
+        }
+
+      let inline xywh (pos : IMod<V2d>) (dim : IMod<Size2D>) =
+        amap {
+          let! pos = pos
+          let! dim = dim
+          yield atf "x" pos.X
+          yield atf "y" pos.Y
+          yield atf "width"  dim.width
+          yield atf "height" dim.height
         }
 
       let inline stroke (color : IMod<C4b>)

@@ -15,13 +15,14 @@ module Pages =
       | CameraMessage                 of CameraController.Message
       | MouseDown                     of (MouseButtons * V2i)
       | MouseUp                       of (MouseButtons * V2i)
-      | MouseMove                     of V2i
+      | MouseMove                     of V2d
       | KeyDown                       of key : Keys
       | KeyUp                         of key : Keys     
       | CorrPlotMessage               of CorrelationPlotApp.Action
       | SemanticAppMessage            of SemanticApp.Action
       | AnnotationAppMessage          of AnnotationApp.Action
       | CorrelationDrawingMessage     of CorrelationDrawing.Action
+      | ColourMapMessage              of ColourMap.Action
       | CentreScene
       | UpdateConfig                  of DockConfig
       | Export
@@ -36,11 +37,47 @@ module Pages =
       | ToggleAppFlag                 of AppFlags
       | ToggleSgFlag                  of SgFlags    
 
+
   //let initialCameraMars = 
   //  let r = Trafo3d.RotateInto(V3d.OOI, Mars.Terrain.upReal)
   //  let camPos  = r.Forward.TransformPos( V3d(8.0, 8.0, 6.0) )
   //  let camView = CameraView.lookAt camPos V3d.OOO Mars.Terrain.upReal
   //  {CameraController.initial with view = camView}
+
+  let defaultLayout = 
+    let stackitems = 
+      [
+        dockelement {id "semanticsMini"; title "Annotation Type";               weight 1.0}
+        dockelement {id "semantics";     title "Annotation Type: Expert View";  weight 1.0}
+        dockelement {id "mappings";      title "Mappings";                      weight 1.0}
+        dockelement {id "logs";          title "Logs";                          weight 1.0}
+        dockelement {id "lognode";       title "Selected Layer";                weight 1.0}
+      ]
+
+    config 
+      {
+        content (
+          // element {id "render"; title "Render View"; weight 5}
+          horizontal 0.1 [
+            element { id "controls"; title "Controls"; weight 0.08 }
+            vertical 0.6 [
+              horizontal 1.0 [
+                element {id "render"; title "Render View"; weight 1.0}
+                stack 0.1 (Some "semanticsMini") stackitems
+              ]
+
+              element { id "svg"; title "Correlation Panel"; weight 0.5}
+                //stack 1.0 (Some "render") [dockelement {id "logs"; title "Logs"; weight 5};
+                //                           dockelement {id "debug"; title "Debug"; weight 1}]
+                          
+                  //dockelement { id "annotations"; title "Annotations"; weight 1.0}
+                        
+            ]
+          ]
+        )
+        appName "CDPages"
+        useCachedConfig false
+      }
 
   let initial   = 
     let semApp  = SemanticApp.getInitialWithSamples
@@ -53,30 +90,7 @@ module Pages =
       appFlags    = AppFlags.None
       sgFlags     = SgFlags.None
       rendering   = RenderingPars.initial
-      dockConfig  =
-          config {
-              content (
-                // element {id "render"; title "Render View"; weight 5}
-                horizontal 0.1 [
-                  element { id "controls"; title "Controls"; weight 0.08 }
-                  vertical 0.5 [
-                    horizontal 0.5 [
-                      element {id "render"; title "Render View"; weight 0.4}
-                      element {id "semantics"; title "Semantics"; weight 0.6}
-                    ]
-                    horizontal 0.5 [
-                      element { id "svg"; title "Correlation Panel"; weight 0.5}
-                      //stack 1.0 (Some "render") [dockelement {id "logs"; title "Logs"; weight 5};
-                      //                           dockelement {id "debug"; title "Debug"; weight 1}]
-                      element { id "logs"; title "Logs: Debug"; weight 0.5}
-                        //dockelement { id "annotations"; title "Annotations"; weight 1.0}
-                    ]
-                  ]
-                ]
-              )
-              appName "CDPages"
-              useCachedConfig false
-          }
+      dockConfig  = defaultLayout
       annotationApp = AnnotationApp.initial
       semanticApp   = semApp
       drawingApp    = CorrelationDrawing.initial 
@@ -128,6 +142,7 @@ module Pages =
       { model with  annotationApp = updateAnnotationApp (AnnotationApp.Clear)
                     drawingApp    = updateDrawingApp (CorrelationDrawing.Clear)
                     corrPlotApp   = updatePlot (CorrelationPlotApp.Clear) 
+                    
       } 
     let centerScene model =
       match Flags.isSet SgFlags.TestTerrain model.sgFlags with
@@ -168,6 +183,12 @@ module Pages =
             }
 
       | KeyDown k, _       -> 
+        let _model =
+          match k with
+            | Keys.R  -> 
+              {model with dockConfig = defaultLayout}
+            | _ -> model
+
         let annoApp = 
           match k with
             | Keys.C -> 
@@ -180,8 +201,8 @@ module Pages =
             | _ -> model.annotationApp
         {
           model with 
-            drawingApp = updateDrawingApp (CorrelationDrawing.KeyDown k)
-            annotationApp = annoApp
+            drawingApp    = updateDrawingApp (CorrelationDrawing.KeyDown k)
+            annotationApp = AnnotationApp.update annoApp (AnnotationApp.KeyDown k)
             camera     = updateCamera (CameraController.Message.KeyDown k)
         }
 
@@ -240,8 +261,9 @@ module Pages =
           let updModel = //TODO refactor
             {model.corrPlotApp with 
               correlationPlot = {model.corrPlotApp.correlationPlot with selectedPoints = sel}}
-                                                                        //annotations    = model.annotationApp.annotations}}
-          CorrelationPlotApp.update model.annotationApp updModel m
+          let _corrPlot = 
+            CorrelationPlotApp.update model.annotationApp updModel m
+          _corrPlot
 
         let (annoApp, corrPlotApp) =
           match m with 
@@ -251,9 +273,6 @@ module Pages =
                   let selPoints = CorrelationPlot.getPointsOfLog model.corrPlotApp.correlationPlot id
                   let upd =
                     AnnotationApp.update model.annotationApp AnnotationApp.DeselectAllPoints
-                  let selPoints =
-                    selPoints
-                     // |> List.map (fun ((p : V3d),(a : AnnotationId)) -> (p, a))
                   let annoApp = 
                     AnnotationApp.update upd (AnnotationApp.SelectPoints selPoints)
                   let cPlot =
@@ -266,7 +285,18 @@ module Pages =
                 //model.semanticApp m
         {model with corrPlotApp = corrPlotApp
                     annotationApp = annoApp}
-
+      | ColourMapMessage m, _ -> 
+        let _cp = CorrelationPlot.update 
+                    model.annotationApp
+                    model.corrPlotApp.correlationPlot 
+                    (CorrelationPlot.ColourMapMessage m)
+        {model with 
+          corrPlotApp = 
+            {model.corrPlotApp with
+              correlationPlot = _cp
+            }
+        }
+            
       | CentreScene,  _ -> 
         centerScene model
 
@@ -304,22 +334,22 @@ module Pages =
       | Clear, _ -> 
         clear model
 
-        | Undo,_ ->
-            match model.past with
-                | Some p -> { p with future = Some model; camera = model.camera }
-                | None -> model
+      | Undo,_ ->
+          match model.past with
+              | Some p -> { p with future = Some model; camera = model.camera }
+              | None -> model
 
-        | Redo,_ ->
-            match model.future with
-                | Some f -> { f with past = Some model; camera = model.camera }
-                | None -> model
+      | Redo,_ ->
+          match model.future with
+              | Some f -> { f with past = Some model; camera = model.camera }
+              | None -> model
 
-        | CameraMessage m,_ -> 
-              { model with camera = updateCamera m }   
+      | CameraMessage m,_ -> 
+            { model with camera = updateCamera m }   
 
-        | TopLevelEvent, _ -> 
-              model
-        | _   -> model
+      | TopLevelEvent, _ -> 
+            model
+      | _   -> model
         
 
 
@@ -363,27 +393,27 @@ module Pages =
           newLogButton
           Buttons.iconButton "small save icon"          "save"    (fun _ -> Save)
           Buttons.iconButton "small file outline icon"  "clear"   (fun _ -> Clear)
-          Buttons.iconButton "small external icon"      "export"  (fun _ -> Export)
+          //Buttons.iconButton "small external icon"      "export"  (fun _ -> Export)
           Buttons.iconButton "small arrow left icon"    "undo"    (fun _ -> Undo)
           Buttons.iconButton "small arrow right icon"   "redo"    (fun _ -> Redo)
           Buttons.iconButton "small bullseye icon"      "centre"  (fun _ -> CentreScene)
-          Flags.toButtonGroup typeof<AppFlags> ToggleAppFlag //TODO css
-          Flags.toButtonGroup typeof<SgFlags> ToggleSgFlag
-          (Flags.toButtonGroup typeof<SvgFlags> CorrelationPlot.ToggleFlag) 
-            |> UI.map CorrelationPlotApp.CorrelationPlotMessage 
-            |> UI.map Action.CorrPlotMessage
+        //  Flags.toButtonGroup typeof<AppFlags> ToggleAppFlag //TODO css
+        //  Flags.toButtonGroup typeof<SgFlags> ToggleSgFlag
+        //  (Flags.toButtonGroup typeof<SvgFlags> CorrelationPlot.ToggleFlag) 
+        //    |> UI.map CorrelationPlotApp.CorrelationPlotMessage 
+        //    |> UI.map Action.CorrPlotMessage
 
-          div[clazz "ui label"] 
-              [
-                text "SecondaryLevel"
-                div[clazz "detail"] [Html.SemUi.dropDown' 
-                        NodeLevel.availableLevels
-                        model.corrPlotApp.correlationPlot.secondaryLvl 
-                        CorrelationPlot.SetSecondaryLevel 
-                        (fun (x : NodeLevel) -> sprintf "%i" x.level)
-                        |> UI.map CorrelationPlotApp.Action.CorrelationPlotMessage
-                        |> UI.map CorrPlotMessage]
-              ]
+        //  div[clazz "ui label"] 
+        //      [
+        //        text "SecondaryLevel"
+        //        div[clazz "detail"] [Html.SemUi.dropDown' 
+        //                NodeLevel.availableLevels
+        //                model.corrPlotApp.correlationPlot.secondaryLvl 
+        //                CorrelationPlot.SetSecondaryLevel 
+        //                (fun (x : NodeLevel) -> sprintf "%i" x.level)
+        //                |> UI.map CorrelationPlotApp.Action.CorrelationPlotMessage
+        //                |> UI.map CorrPlotMessage]
+        //      ]
         ] 
 
       body [style "width: 100%; height:100%; background: transparent; overflow: auto"] [
@@ -408,11 +438,11 @@ module Pages =
           model.camera.view 
           model.sgFlags) |> List.map (fun x -> x |> Sg.map CorrelationDrawingMessage) 
 
-      let corrSg = 
-        (CorrelationPlot.getLogConnectionSgs 
-          model.corrPlotApp.correlationPlot 
-          model.semanticApp 
-          model.camera) |> Sg.map CorrPlotMessage
+      //let corrSg = 
+      //  (CorrelationPlot.getLogConnectionSgs 
+      //    model.corrPlotApp.correlationPlot 
+      //    model.semanticApp 
+      //    model.camera) |> Sg.map CorrPlotMessage
       let frustum = Mod.constant (Frustum.perspective 60.0 0.1 100.0 1.0)
       
       require (GUI.CSS.myCss) (
@@ -432,7 +462,7 @@ module Pages =
                                     attribute "style" "width:100%; height: 100%; float: left;"]
                         )
 
-                        (drawingSgList @ [annoSg; corrSg]
+                        (drawingSgList @ [annoSg]//; corrSg]
                           |> Sg.ofList 
                           |> Sg.fillMode (model.rendering.fillMode)     
                           |> Sg.cullMode (model.rendering.cullMode))                                                                                                             
@@ -466,7 +496,7 @@ module Pages =
                             attribute "overflow-y" "hidden"; 
                             (onMouseDown (fun b p -> MouseDown (b,p)))
                             (onMouseUp (fun b p -> MouseUp (b,p)))
-                            (onMouseMove (fun p -> MouseMove p))
+                            (onMouseMove (fun p -> MouseMove (V2d p)))
                             onLayoutChanged UpdateConfig
                            ] [
                             CorrelationPlotApp.viewSvg model.annotationApp model.corrPlotApp 
@@ -475,17 +505,46 @@ module Pages =
                     )
 
                   | Some "logs" -> //DEBUG
-                      CorrelationPlotApp.View.logList model.corrPlotApp model.semanticApp model.annotationApp
+                      CorrelationPlotApp.view model.corrPlotApp model.annotationApp model.semanticApp
                         |> UI.map CorrPlotMessage
-                      //CorrelationPlotApp.view model.corrPlotApp
-                      //  |> UI.map CorrPlotMessage
                   //| Some "Debug" ->
                   //    CorrelationPlotApp.View.view model.corrPlotApp model.annotationApp model.semanticApp
                   //      |> UI.map CorrPlotMessage
                   | Some "semantics" ->
                       SemanticApp.View.expertGUI model.semanticApp 
                         |> UI.map SemanticAppMessage
-             
+
+                  | Some "semanticsMini" ->
+                      SemanticApp.View.simpleView model.semanticApp 
+                        |> UI.map SemanticAppMessage
+                  | Some "mappings" ->
+                     let domNode = (ColourMap.view model.corrPlotApp.correlationPlot.colourMapApp)
+                                      |> UI.map Action.ColourMapMessage
+                     require (GUI.CSS.myCss) (
+                       body [style "overflow: auto"] [
+                         div [] [
+                           // menu |> ui.map correlationplotmessage
+                           Incremental.div (AttributeMap.ofList [clazz "ui inverted segment"])
+                                           (AList.single domNode)
+                             
+                         ]
+                       ]
+                     )
+
+                  | Some "lognode" -> body [] []
+                    //adaptive {
+                    //  let! optSel = model.selectedNode
+                    //  match optSel with
+                    //    | Some sel ->
+                    //      let node = LogNodes.Helper. m odel.corrPlotApp
+                    //      LogNodes.View.listViewSingle 
+                    //    | None -> body [] []
+
+                    //}
+
+                  
+                      
+                        
                   | Some "annotations" ->
                     require (GUI.CSS.myCss) (
                       body [] [

@@ -4,6 +4,7 @@ namespace CorrelationDrawing
   open Aardvark.Base.Incremental
   open Aardvark.SceneGraph
   open Aardvark.UI
+  open Aardvark.Application
   open UIPlus
 
 
@@ -16,6 +17,7 @@ namespace CorrelationDrawing
       | AddAnnotation           of Annotation
       | DeselectAllPoints       
       | SelectPoints            of hmap<AnnotationId, V3d>
+      | KeyDown                 of key : Keys 
 
 
     let initial : AnnotationApp = {
@@ -89,7 +91,7 @@ namespace CorrelationDrawing
     let getSelectedPoints' (model : AnnotationApp) =
         model.annotations
           |> HMap.map (fun k a -> Annotation.getSelected a)
-          |> HMap.filterNone
+          |> DS.HMap.filterNone
           |> HMap.map (fun k (p,a) -> p.point)
 
  
@@ -124,6 +126,16 @@ namespace CorrelationDrawing
         | Clear                -> {model with annotations        = HMap.empty
                                               selectedAnnotation = None
                                   }
+
+        | KeyDown k ->
+          match k with 
+            | Keys.Delete ->
+              {model with 
+                annotations = 
+                  HMap.filter (fun id a -> not (Annotation.isSelected a)) model.annotations
+              }
+            | _ -> model
+
         | AnnotationMessage m  -> 
             {model with annotations = model.annotations 
                                         |> HMap.map (fun k a -> Annotation.update m a)}
@@ -164,13 +176,22 @@ namespace CorrelationDrawing
           (
             sprintf "%s%s" "./" savename 
           )
-      let annos = binarySerializer.UnPickle(bytes)
-      printf "load file" 
-      {model with annotations = annos}
+      let annos = 
+        try 
+           Some (binarySerializer.UnPickle(bytes)) //TODO catch unpickle exceptions
+         with 
+           | :? MBrace.FsPickler.FsPicklerException -> None
+      match annos with
+        | Some annos ->
+          printf "load file" 
+          {model with annotations = annos}
+        | None -> 
+          printfn "could not load annotations"
+          model
     
  
     let view (model : MAnnotationApp)  (semanticApp : MSemanticApp)  =
-      let annos = AMap.valuesToAList model.annotations
+      let annos = DS.AMap.valuesToAList model.annotations
       let domList = 
         alist {
           for a in annos do
@@ -203,11 +224,11 @@ namespace CorrelationDrawing
                (semApp        : MSemanticApp) 
                (cam           : IMod<CameraView>) =    
         
-        let annoSet = AMap.valuesToASet model.annotations
+        let annoSet = DS.AMap.valuesToASet model.annotations
                
         aset {
           for a in annoSet do
-                yield! ((Annotation.Sg.view a cam semApp) 
+                yield! ((Annotation.Sg.view a cam semApp false) 
                            |> ASet.map (fun x -> x |> Sg.map AnnotationMessage))
         } |> Sg.set        
         

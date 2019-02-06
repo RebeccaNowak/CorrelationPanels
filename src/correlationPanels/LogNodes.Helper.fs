@@ -8,7 +8,7 @@ open CorrelationDrawing
 
 
     let hasChildren (model : MLogNode) =
-      let isEmpty = AList.isEmpty model.children
+      let isEmpty = DS.AList.isEmpty model.children
       Mod.map (fun x -> not x) isEmpty
 
     let hasNodeType (model : MLogNode) (t : LogNodeType) =
@@ -31,63 +31,20 @@ open CorrelationDrawing
 
     let elevation  (model : LogNode) (annoApp : AnnotationApp) =
       match model.lBorder, model.uBorder, model.annotation with
-        | Some lb, Some ub, _ ->
-          Option.map2 (fun a b -> a + b * 0.5)
-            (Border.tryElevation lb annoApp) 
-            (Border.tryElevation ub annoApp)
+        | Some lb, Some ub, _ -> 
+          let el = (lb.point + ub.point) * 0.5
+          el.Length
         | _,_, Some a -> 
-          AnnotationApp.tryElevation annoApp a
+         let el = AnnotationApp.tryElevation annoApp a
+         match el with
+           | Some e -> e
+           | None   -> 
+              printf "node has neither annotation nor border"
+              0.0
+          
         | _,_,_ -> 
           printf "could not calculate elevation" //TODO proper error handling
-          None
-
-    let elevation'  (model : MLogNode) (annoApp : MAnnotationApp) =
-      let hasAnno = Option.modIsSome model.annotation
-      let hasLb   = Option.modIsSome model.lBorder
-      let hasUb   = Option.modIsSome model.uBorder
-
-      adaptive {
-        let! hasLb = hasLb
-        let! hasUb = hasUb
-        let! hasAnno = hasAnno
-
-        match hasLb, hasUb, hasAnno with
-          | true, true,  _ ->
-              let! lb = model.lBorder
-              let lb = lb.Value
-              let! ub = model.uBorder
-              let ub = ub.Value
-              let! lbel = Border.elevation' lb annoApp
-              let! ubel = Border.elevation' ub annoApp
-              return lbel + ubel * 0.5
-          | _,_, true -> 
-              let a = model.annotation |> Mod.map (fun a -> a.Value)
-              return! AnnotationApp.elevation' annoApp a
-          | _,_,_ -> 
-            printf "could not calculate elevation" //TODO proper error handling
-            return 0.0
-      }
-    //let elevation'  (model : MLogNode) (annoApp : MAnnotationApp) = 
-    //  adaptive {
-    //    let! lb = model.lBorder
-    //    let! lu = model.uBorder
-    //    let! a = model.annotation
-    //    return 
-    //      match lb , lu, a with
-    //        | Some lb, Some ub, _ ->
-    //            (Border.elevation' lb annoApp) 
-    //              + (Border.elevation' ub annoApp) * 0.5
-    //        | _,_, Some a -> 
-    //          AnnotationApp.elevation' annoApp a
-    //        | _,_,_ -> 
-    //          printf "could not calculate elevation" //TODO proper error handling
-    //          0.0
-      
-        
-    //      //let! lowerBorderElevation = (Border.elevation' model.lBorder annoApp) 
-    //      //let! upperBorderElevation = (Border.elevation' model.uBorder annoApp)
-    //      //return (lowerBorderElevation + upperBorderElevation) * 0.5
-    //  }         
+          0.0
 
 
     //TODO need to change for Pro3D integration
@@ -96,13 +53,13 @@ open CorrelationDrawing
       match anno with
         | None -> None
         | Some anno ->
-            let points = anno.points |> PList.toList
-            let h = List.tryHead points
-            let t = List.tryLast points
-            Option.map2 (fun (x : AnnotationPoint) (y : AnnotationPoint) -> 
-                            let x = x.point
-                            let y = y.point
-                            V3d.Distance(x,y)) h t
+          let points = anno.points |> PList.toList
+          let h = List.tryHead points
+          let t = List.tryLast points
+          Option.map2 (fun (x : AnnotationPoint) (y : AnnotationPoint) -> 
+                          let x = x.point
+                          let y = y.point
+                          V3d.Distance(x,y)) h t
     
     //TODO need to change for Pro3D integration
     let calcMetricValue' (n : MLogNode) (annoApp : MAnnotationApp) = 
@@ -143,19 +100,19 @@ open CorrelationDrawing
 
     let tryLowestBorder (lst : plist<LogNode>) (annoApp : AnnotationApp)  =
         lst |> PList.map (fun p -> p.lBorder) 
-            |> PList.filterNone
-            |> PList.tryMinBy (fun b -> Border.tryElevation b annoApp)
+            |> DS.PList.filterNone
+            |> DS.PList.tryMinBy (fun b -> b.point.Length)
 
     let tryHighestBorder (lst : plist<LogNode>) (annoApp : AnnotationApp) =
         lst |> PList.map (fun p -> p.uBorder) 
-            |> PList.filterNone
-            |> PList.tryMaxBy (fun b -> Border.tryElevation b annoApp)
+            |> DS.PList.filterNone
+            |> DS.PList.tryMaxBy (fun b -> b.point.Length)
 
     let findLowestNode (lst : plist<LogNode>) (annoApp : AnnotationApp)  =
-      lst |> PList.tryMaxBy (fun n -> elevation n annoApp)
+      lst |> DS.PList.tryMaxBy (fun n -> elevation n annoApp)
 
     let findHighestNode (lst : plist<LogNode>) (annoApp : AnnotationApp)  =
-      lst |> PList.tryMinBy (fun n -> elevation n annoApp)      
+      lst |> DS.PList.tryMinBy (fun n -> elevation n annoApp)      
 
 
 /////////////////////////////////////////////////////////////
@@ -222,12 +179,6 @@ open CorrelationDrawing
 
       _nodes
         
-
-      
-
-
-      
-      
 ///////////////////////////////////////////      
 
 

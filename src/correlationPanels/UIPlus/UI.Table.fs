@@ -16,6 +16,9 @@
       let intoTd (domNode) = 
         td [clazz "center aligned"] [domNode]
 
+      let intoLeftAlignedTd (domNode) =
+        td [clazz "left aligned"] [domNode]
+
       let intoTd' domNode colSpan = 
         td [clazz "center aligned";
             style GUI.CSS.lrPadding;
@@ -59,3 +62,16 @@
         )
 
 
+      let toDisplayLabel (str : IMod<string>) =
+        Incremental.label 
+          (AttributeMap.ofList [clazz "ui horizontal label"]) 
+          (AList.ofList [Incremental.text str])
+
+      let toDisplayLabelCol (str : string) (bgColour : IMod<C4b>) =
+        Incremental.label 
+          (AttributeMap.union 
+              (AttributeMap.ofList [clazz "ui horizontal label"]) 
+              (AttributeMap.ofAMap (GUI.CSS.incrBgColorAMap bgColour)))
+          (AList.ofList [text str])
+
+      

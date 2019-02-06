@@ -23,21 +23,6 @@
                 | true -> LogNodes.Lens.isSelected.Update(n, not) //{n with isSelected = not n.isSelected}
                 | false -> n)
           apply model  res
-        | DrawCorrelation id -> 
-          match model.lBorder, model.uBorder with
-            | Some lb, Some ub ->
-              match (id = lb.id), (id = ub.id) with
-                | true, true -> model //TODO debug output
-                | true, false -> 
-                  {model with 
-                    lBorder = 
-                      updateOpt model.lBorder 
-                                (Border.Correlate id)
-                      
-                  } //TODO Lens 
-                | false, true -> {model with uBorder = (updateOpt model.uBorder (Border.Correlate id))}
-                | false, false -> model
-            | _,_ -> model
         | BorderMessage m -> //TODO performance! stop messages sooner
           let f model = {model with lBorder = (updateOpt model.lBorder m)
                                     uBorder = (updateOpt model.uBorder m)}

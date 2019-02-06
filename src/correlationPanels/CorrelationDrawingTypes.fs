@@ -7,6 +7,9 @@ open Aardvark.UI
 open Aardvark.UI.Primitives
 open SimpleTypes
 open Svgplus
+open UIPlus
+open Svgplus.RS
+open Svgplus.RectangleType
 
 //[<DomainType>]
 //type BorderedRectangle = {
@@ -21,15 +24,6 @@ open Svgplus
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// BEGIN GUI
-
-
-[<DomainType>]
-type TextInput = {
-    text      : string
-    disabled  : bool
-    bgColor   : C4b
-    size      : option<int>
- } 
 
 [<DomainType>]
 type DropdownList<'a> = {
@@ -150,14 +144,14 @@ module BorderId =
   let newId unit : BorderId  = 
     {id = System.Guid.NewGuid().ToString()}
 
-type LogId = {
-  id        : string 
-} with
-  member this.isValid = (this.id <> "")
-module LogId = 
-  let invalid = {id = ""}
-  let newId unit : LogId  = 
-    {id = System.Guid.NewGuid().ToString()}
+//type LogId = {
+//  id        : string 
+//} with
+//  member this.isValid = (this.id <> "")
+//module LogId = 
+//  let invalid = {id = ""}
+//  let newId unit : LogId  = 
+//    {id = System.Guid.NewGuid().ToString()}
 
 type LogNodeId = {
   id        : string 
@@ -360,7 +354,7 @@ type Border = {
     id            : BorderId
 
     nodeId        : LogNodeId
-    logId         : LogId
+    logId         : RectangleStackId
     isSelected    : bool
     correlation   : Option<BorderId>
     annotationId  : AnnotationId
@@ -396,10 +390,11 @@ type LogAxisConfigId = {
 type LogNode = {
     [<NonIncremental>]
     id            : LogNodeId
+    [<NonIncremental>]
+    rectangleId   : RectangleId
+    
+    logId         : RectangleStackId
 
-    logId         : LogId
-    label         : string
-                  
     //[<NonIncremental>]
     nodeType           : LogNodeType
 
@@ -409,10 +404,8 @@ type LogNode = {
     annotation         : option<AnnotationId>
 
     children           : plist<LogNode>
-    //nativePos          : V2d
-    //nativeSize         : Size2D
     
-    mainBody           : Svgplus.Rectangle
+    mainBody           : Rectangle
     roseDiagram        : RoseDiagram
     buttonNorth        : Svgplus.Button
     buttonSouth        : Svgplus.Button
@@ -447,24 +440,14 @@ type LogAxisApp = {
 [<DomainType>]
 type GeologicalLog = {
     [<NonIncremental;PrimaryKey>]
-    id          : LogId
+    id              : Svgplus.RS.RectangleStackId
 
-    index       : int
-
-    state        : State
-    isVisible    : bool
-
-    isSelected   : bool
-    label        : TextInput
-    annoPoints   : hmap<AnnotationId, V3d>
-    nodes        : plist<LogNode>
-    nativeYRange : Rangef
-    svgMaxX      : float
-    camera       : CameraControllerState
-
-    semanticApp  : SemanticApp
-    xAxis        : SemanticId
-    yOffset      : float
+    state           : State
+    xToSvg          : float
+    yToSvg          : float
+    defaultWidth    : float
+    nodes           : plist<LogNode>
+    annoPoints      : hmap<AnnotationId, V3d>
 }
 
 [<DomainType>]
@@ -496,15 +479,17 @@ type SvgOptions = {
 
 [<DomainType>]
 type CorrelationPlot = {
-   logs                : plist<GeologicalLog>
+   diagramApp          : Svgplus.DA.DiagramApp
+   colourMapApp        : ColourMap
+   logs                : hmap<Svgplus.RS.RectangleStackId, GeologicalLog>
    correlations        : plist<Correlation>
    selectedBorder      : Option<Border>
    //aardvark dies: selectedBorder      : Option<(Border * V2d)>
-
+   
    editCorrelations    : bool
    selectedPoints      : hmap<AnnotationId, V3d>
-   //annotations         : hmap<AnnotationId, Annotation>
-   selectedLog         : option<LogId>
+   selectedNode        : option<LogNodeId>
+   selectedLog         : option<RectangleStackId>
    secondaryLvl        : NodeLevel
    //creatingNew         : bool
    viewType            : CorrelationPlotViewType
@@ -517,6 +502,10 @@ type CorrelationPlot = {
    semanticApp         : SemanticApp
    currrentYMapping    : Option<float>
    yRange              : Rangef
+
+   xToSvg              : float
+   yToSvg              : float
+   defaultWidth        : float
 }
 
 [<DomainType>]
@@ -525,7 +514,7 @@ type CorrelationPlotApp = {
    semanticApp         : SemanticApp
    zooming             : bool
    dragging            : bool
-   lastMousePos        : V2i
+   lastMousePos        : V2d
    
 }
 

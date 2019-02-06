@@ -153,7 +153,7 @@ open CorrelationDrawing
       | other ->  
           (f n) || (n.children 
                     |> PList.map (fun n -> (hasChildrenWith n f))
-                    |> PList.anyTrue (fun x -> x)
+                    |> DS.PList.anyTrue (fun x -> x)
                    )
 
 
@@ -166,7 +166,7 @@ open CorrelationDrawing
         | other -> 
           Mod.map2 (fun bThis bChildren -> bThis || bChildren)
                     (f (lst.Item 0))
-                    (hasNodesWith' (PList.tail lst) f)
+                    (hasNodesWith' (DS.PList.tail lst) f)
 
     let hasHierarchicalNodes' (model : MLogNode) =
       adaptive {
@@ -214,6 +214,13 @@ open CorrelationDrawing
 
 
           
+    let calcMetricValue (model : LogNode) (annoApp : AnnotationApp) =
+      let mc = metricChildren model
+      let someVals = mc |> List.map (fun n -> LogNodes.Helper.calcMetricValue n annoApp)
+      let vals = someVals |> DS.List.filterNone
+      match vals.IsEmptyOrNull () with
+        | true  -> None
+        | false -> Some (vals |> List.max)
 
 
      
@@ -247,7 +254,7 @@ open CorrelationDrawing
                                   sId = xAxis
                               )
         let metricValues = metricNodes |> List.map (fun n -> calcMetricValue n annoApp)
-        let sizeX = (metricValues |> List.filterNone |> List.maxOrZero) * xAxisScaleFactor
+        let sizeX = (metricValues |> DS.List.filterNone |> DS.List.maxOrZero) * xAxisScaleFactor
         {model with 
           mainBody = 
             {model.mainBody with dim = {width = sizeX; height = model.mainBody.dim.height}}
@@ -265,7 +272,7 @@ open CorrelationDrawing
 
       if sizes.Count = 0 then Debug.warn "calc svg x size failed" //TODO if list empty //TODO bug/refactor
       let avg = 
-        match (PList.averageOrZero sizes) with
+        match (DS.PList.averageOrZero sizes) with
           | n when n = 0.0 -> 10.0 //TODO hardcoded size if no grain size annotations in log
           | n -> n
       let updNodes =
