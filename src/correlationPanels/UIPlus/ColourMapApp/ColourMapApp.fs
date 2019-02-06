@@ -105,6 +105,7 @@ module ColourMap =
       mappings = _mappings
       factor   = factor
       unit     = Unit.Micrometre
+      selected = None
     }
 
   let update (model : ColourMap) (action : Action) =
@@ -117,6 +118,8 @@ module ColourMap =
         let _mappings = 
           PList.map upd model.mappings
         {model with mappings = _mappings}
+      | SelectItem id ->
+        {model with selected = Some id}
       
 
   let valueToColourPicker' (model : ColourMap) (value : float) =
@@ -148,8 +151,15 @@ module ColourMap =
           let mapper = UI.map (fun a -> Action.ItemMessage (m.id, a) ) 
           let _v = (ColourMapItem.view m) 
                       |> List.map mapper
-          yield Table.intoTrOnClick (Action.SelectItem m.id) _v
-                                
+          let! selid = model.selected
+          match selid with
+            | Some id  -> 
+              if id = m.id then
+                yield Table.intoActiveTr (Action.SelectItem m.id) _v           
+              else
+                yield Table.intoTrOnClick (Action.SelectItem m.id) _v
+            | None ->
+              yield Table.intoTrOnClick (Action.SelectItem m.id) _v              
       }
 
     Table.toTableView (div[][]) domList ["Grain size";"Colour";"φ-scale"]

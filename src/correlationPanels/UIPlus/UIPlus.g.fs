@@ -204,10 +204,12 @@ module Mutable =
         let _mappings = MList.Create(__initial.mappings, (fun v -> MColourMapItem.Create(v)), (fun (m,v) -> MColourMapItem.Update(m, v)), (fun v -> v))
         let _factor = ResetMod.Create(__initial.factor)
         let _unit = ResetMod.Create(__initial.unit)
+        let _selected = MOption.Create(__initial.selected)
         
         member x.mappings = _mappings :> alist<_>
         member x.factor = _factor :> IMod<_>
         member x.unit = _unit :> IMod<_>
+        member x.selected = _selected :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : UIPlus.ColourMap) =
@@ -217,6 +219,7 @@ module Mutable =
                 MList.Update(_mappings, v.mappings)
                 ResetMod.Update(_factor,v.factor)
                 ResetMod.Update(_unit,v.unit)
+                MOption.Update(_selected, v.selected)
                 
         
         static member Create(__initial : UIPlus.ColourMap) : MColourMap = MColourMap(__initial)
@@ -250,4 +253,10 @@ module Mutable =
                     override x.Get(r) = r.unit
                     override x.Set(r,v) = { r with unit = v }
                     override x.Update(r,f) = { r with unit = f r.unit }
+                }
+            let selected =
+                { new Lens<UIPlus.ColourMap, Microsoft.FSharp.Core.Option<UIPlus.CMItemId>>() with
+                    override x.Get(r) = r.selected
+                    override x.Set(r,v) = { r with selected = v }
+                    override x.Update(r,f) = { r with selected = f r.selected }
                 }

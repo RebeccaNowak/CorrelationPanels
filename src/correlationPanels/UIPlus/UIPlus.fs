@@ -140,4 +140,5 @@
     mappings : plist<ColourMapItem>
     factor   : float
     unit     : Unit
+    selected : option<CMItemId>
   }
