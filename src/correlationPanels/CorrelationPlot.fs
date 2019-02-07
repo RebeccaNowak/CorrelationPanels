@@ -119,7 +119,7 @@
       let foo = opt.logPadding + (yRange.max - y) * (opt.logHeight / yRange.range)
       foo
 
-    let createNewLog (model : CorrelationPlot) (annoApp : AnnotationApp) (colourMap : ColourMap) =
+    let createNewLog (model : CorrelationPlot) (annoApp : AnnotationModel) (colourMap : ColourMap) =
       let (stack, newLog) = 
         Log.initial 
             model.selectedPoints
@@ -151,7 +151,7 @@
        HMap.update index (fun (x : option<GeologicalLog>) -> Log.update x.Value message) logs//hack
 
     let selectLog (id       : RectangleStackId)
-                  (annoApp  : AnnotationApp) 
+                  (annoApp  : AnnotationModel) 
                   (model    : CorrelationPlot) =
       let hasNew = not (model.logs |> HMap.forall (fun id x -> x.state <> State.New))
       if hasNew then
@@ -178,7 +178,7 @@
         {model with logs        = _logs
                     selectedLog = _sel}
 
-    let update (annoApp  : AnnotationApp)
+    let update (annoApp  : AnnotationModel)
                (model    : CorrelationPlot) 
                (action   : Action) = 
                
@@ -275,7 +275,7 @@
         
 
 
-    let viewSvg (annoApp : MAnnotationApp) (model : MCorrelationPlot)  = //TODO refactor
+    let viewSvg (annoApp : MAnnotationModel) (model : MCorrelationPlot)  = //TODO refactor
       let attsRoot = 
         [
           clazz "svgRoot"
@@ -310,7 +310,7 @@
                                        
     let listView  (model : MCorrelationPlot) 
                   (semApp : MSemanticApp)
-                  (annoApp : MAnnotationApp) =
+                  (annoApp : MAnnotationModel) =
 
       let mapper (log : MGeologicalLog) = (fun a -> Action.LogMessage (log.id, a))
       
@@ -400,7 +400,7 @@
 
 
 
-    let app (annoApp : AnnotationApp) (mAnnoApp : MAnnotationApp) : App<CorrelationPlot,MCorrelationPlot,Action> =
+    let app (annoApp : AnnotationModel) (mAnnoApp : MAnnotationModel) : App<CorrelationPlot,MCorrelationPlot,Action> =
           {
               unpersist = Unpersist.instance
               threads = threads
@@ -409,5 +409,5 @@
               view = (viewSvg mAnnoApp)
           }
 
-    let start (annoApp : AnnotationApp) (mAnnoApp : MAnnotationApp) =
+    let start (annoApp : AnnotationModel) (mAnnoApp : MAnnotationModel) =
       App.start (app annoApp mAnnoApp)

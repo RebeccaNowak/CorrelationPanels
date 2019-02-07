@@ -29,7 +29,7 @@
 
       let calcDim (xScaleFactor     : float)
                   (yScaleFactor     : float) 
-                  (annoApp          : AnnotationApp)
+                  (annoApp          : AnnotationModel)
                   (node             : LogNode) =
 
         let _height = calcSvgHeight node yScaleFactor
@@ -61,7 +61,7 @@
 
       let rec calcPosition (startAtY         : float) 
                            (startAtX         : float)
-                           (annoApp          : AnnotationApp)
+                           (annoApp          : AnnotationModel)
                            (thisLevel        : plist<LogNode>) = 
 
         let thisLevelWithPos =
@@ -86,7 +86,7 @@
                      (availableHeight  : float) 
                      (xScaleFactor     : float)
                      (yScaleFactor     : Option<float>) 
-                     (annoApp          : AnnotationApp)
+                     (annoApp          : AnnotationModel)
                      (nodes            : plist<LogNode>) = 
         match nodes.IsEmptyOrNull () with
           | true  -> (PList.empty, 0.0)
@@ -107,7 +107,7 @@
                   (flags        : IMod<SvgFlags>)
                   (options      : MSvgOptions)
                  // (styleFun     : float -> IMod<LogAxisSection>)
-                  (annoApp      : MAnnotationApp) =
+                  (annoApp      : MAnnotationModel) =
       let childrenView = 
         model.children
           |> AList.map (fun c -> view c flags options annoApp)  

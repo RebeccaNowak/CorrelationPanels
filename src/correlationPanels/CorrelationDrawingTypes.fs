@@ -339,7 +339,7 @@ type Annotation = {
 }
 
 [<DomainType>]
-type AnnotationApp = {
+type AnnotationModel = {
   annotations         : hmap<AnnotationId, Annotation>
   selectedAnnotation  : option<AnnotationId>
 }
@@ -509,7 +509,7 @@ type CorrelationPlot = {
 }
 
 [<DomainType>]
-type CorrelationPlotApp = {
+type CorrelationPlotModel = {
    correlationPlot     : CorrelationPlot
    semanticApp         : SemanticApp
    zooming             : bool
@@ -601,7 +601,7 @@ type Pages =
         dockConfig    : DockConfig
 
         drawingApp    : CorrelationDrawingModel
-        annotationApp : AnnotationApp
+        annotationApp : AnnotationModel
         semanticApp   : SemanticApp
-        corrPlotApp   : CorrelationPlotApp
+        corrPlot      : CorrelationPlotModel
     }

@@ -214,7 +214,7 @@ open CorrelationDrawing
 
 
           
-    let calcMetricValue (model : LogNode) (annoApp : AnnotationApp) =
+    let calcMetricValue (model : LogNode) (annoApp : AnnotationModel) =
       let mc = metricChildren model
       let someVals = mc |> List.map (fun n -> LogNodes.Helper.calcMetricValue n annoApp)
       let vals = someVals |> DS.List.filterNone
@@ -244,9 +244,9 @@ open CorrelationDrawing
     let calcDimX (nodes : plist<LogNode>)
                  (xAxis : SemanticId) 
                  (xAxisScaleFactor : float) 
-                 (annoApp : AnnotationApp) =
+                 (annoApp : AnnotationModel) =
       let calcDimX (model : LogNode)          (xAxis : SemanticId) 
-                   (xAxisScaleFactor : float) (annoApp : AnnotationApp) = 
+                   (xAxisScaleFactor : float) (annoApp : AnnotationModel) = 
         
         let metricNodes = 
           childrenWith model (fun n -> 

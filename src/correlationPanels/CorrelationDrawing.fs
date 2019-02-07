@@ -58,35 +58,29 @@ module CorrelationDrawing =
             | GeometryType.Point -> true
             | _ -> false
 
-    let addPoint  (model : CorrelationDrawingModel) 
-                  (semanticApp : SemanticApp)
-                  (point : V3d) =
+    let newPoint p = {AnnotationPoint.initial with point = p; selected = false}  
+    let addPoint  (model : CorrelationDrawingModel) (semanticApp : SemanticApp) (point : V3d) =
       let geometryType = (SemanticApp.getSelectedSemantic semanticApp).geometryType
       let working = 
         match model.working with
-          | Some w  ->                                     
-              let newAnno = 
-                {w with points = w.points 
-                                  |> PList.append {AnnotationPoint.initial with point = point
-                                                                                selected = false} 
-                        geometry = geometryType
-                }
-              newAnno
-          | None    -> 
-              let newAnno = {Annotation.initial geometryType with
-                              points        = PList.ofList [{AnnotationPoint.initial with point = point
-                                                                                          selected = false}];  
-                              semanticId    = semanticApp.selectedSemantic
-                              //geometry      = model.geometry
-                              projection    = model.projection
-                            }//add annotation states
-              newAnno
+        | Some w ->
+          {
+            w with 
+              points   = w.points |> PList.append (newPoint point)
+              geometry = geometryType
+          } |> Some
+          
+        | None ->             
+          {
+            Annotation.initial geometryType with
+              points        = PList.single (newPoint point)
+              semanticId    = semanticApp.selectedSemantic                
+              projection    = model.projection
+          } |> Some //add annotation states
+            
+      { model with working = working }
 
-      {model with working  = Some working}
-
-    let update (model : CorrelationDrawingModel) 
-               (semanticApp : SemanticApp) 
-               (act : Action)  =
+    let update (model : CorrelationDrawingModel) (semanticApp : SemanticApp) (act : Action)  =
         match (act, model.isDrawing) with
             | Clear, _         ->
                 {model with isDrawing = false

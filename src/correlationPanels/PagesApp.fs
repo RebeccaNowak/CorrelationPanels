@@ -94,10 +94,57 @@ module Pages =
       annotationApp = AnnotationApp.initial
       semanticApp   = semApp
       drawingApp    = CorrelationDrawing.initial 
-      corrPlotApp   = CorrelationPlotApp.initial
+      corrPlot   = CorrelationPlotApp.initial
       saveIndices   = SaveIndex.findSavedIndices ()
     }
 
+  let updateSemantics action model = 
+    let updSemApp = SemanticApp.update model.semanticApp action
+
+    { model with 
+        semanticApp = updSemApp //TODO refactor
+        corrPlot = {
+          model.corrPlot with 
+            semanticApp = updSemApp
+            correlationPlot = {model.corrPlot.correlationPlot with semanticApp = updSemApp }
+        }
+    }
+  
+  let loadSemantics (ind : SaveIndex) model = //TODO refactor
+    let updSemApp = SemanticApp.load model.semanticApp (ind.filename SaveType.Semantics)
+
+    { model with 
+        semanticApp = updSemApp 
+        corrPlot = { 
+          model.corrPlot with 
+            semanticApp = updSemApp
+            correlationPlot = {model.corrPlot.correlationPlot with semanticApp = updSemApp}
+        }
+    }
+
+  let loadAnnotations (ind : SaveIndex) model = 
+      let annoApp = AnnotationApp.load model.annotationApp (ind.filename SaveType.Annotations)
+      let updCPA = (CorrelationPlotApp.update model.annotationApp model.corrPlot CorrelationPlotApp.Clear)
+      {model with   
+         annotationApp = annoApp
+         corrPlot   = updCPA
+      }
+
+  let clear model = 
+      { model with  
+         annotationApp = AnnotationApp.update model.annotationApp (AnnotationApp.Clear)
+         drawingApp    = CorrelationDrawing.update model.drawingApp model.semanticApp (CorrelationDrawing.Clear)
+         corrPlot   = CorrelationPlotApp.update model.annotationApp model.corrPlot (CorrelationPlotApp.Clear)                     
+      } 
+
+  let centerScene model =
+      match Flags.isSet SgFlags.TestTerrain model.sgFlags with
+        | true ->
+          { model with camera = Mars.Terrain.Test.initialCameraDummy }
+        | false ->
+          { model with camera = Mars.Terrain.CapeDesire.initialCamera }
+
+ // let 
 
   let update (model : Pages) (msg : Action) = //TODO model always last?
     let printCameraDebugInformation () =
@@ -110,64 +157,30 @@ module Pages =
 
     let updateDrawingApp =
       CorrelationDrawing.update model.drawingApp model.semanticApp
+
     let updateAnnotationApp =
       AnnotationApp.update model.annotationApp 
+
     let updateCamera =
       CameraController.update model.camera 
-    let updatePlot =
-      CorrelationPlotApp.update model.annotationApp model.corrPlotApp
-    let updateSemantics m model = 
-      let updSemApp = SemanticApp.update model.semanticApp m
-      {model with semanticApp = updSemApp //TODO refactor
-                  corrPlotApp = {model.corrPlotApp with semanticApp     = updSemApp
-                                                        correlationPlot = {model.corrPlotApp.correlationPlot with semanticApp = updSemApp}
-                                }
-      }
-    let loadSemantics (ind : SaveIndex) model = //TODO refactor
-      let updSemApp = SemanticApp.load model.semanticApp (ind.filename SaveType.Semantics)
-      {model with semanticApp = updSemApp 
-                  corrPlotApp = {model.corrPlotApp with semanticApp     = updSemApp
-                                                        correlationPlot = {model.corrPlotApp.correlationPlot with semanticApp = updSemApp}
-                            }
-      }
-    let loadAnnotations (ind : SaveIndex) model = 
-      let annoApp = AnnotationApp.load model.annotationApp (ind.filename SaveType.Annotations)
-      let updCPA = (CorrelationPlotApp.update model.annotationApp model.corrPlotApp CorrelationPlotApp.Clear)
-      {model with   
-              annotationApp = annoApp
-              corrPlotApp   = updCPA
-      }
-
-    let clear model = 
-      { model with  annotationApp = updateAnnotationApp (AnnotationApp.Clear)
-                    drawingApp    = updateDrawingApp (CorrelationDrawing.Clear)
-                    corrPlotApp   = updatePlot (CorrelationPlotApp.Clear) 
-                    
-      } 
-    let centerScene model =
-      match Flags.isSet SgFlags.TestTerrain model.sgFlags with
-        | true ->
-          { model with camera = Mars.Terrain.Test.initialCameraDummy }
-        | false ->
-          { model with camera = Mars.Terrain.CapeDesire.initialCamera }
-
+        
     match msg, model.drawingApp.isDrawing with
       | MouseDown bp,_ ->
         {model with 
-          corrPlotApp = 
-           CorrelationPlotApp.update model.annotationApp model.corrPlotApp 
+          corrPlot = 
+           CorrelationPlotApp.update model.annotationApp model.corrPlot 
                                      (CorrelationPlotApp.Action.MouseDown bp)
         }
       | MouseUp bp,_ -> 
         {model with 
-          corrPlotApp = 
-           CorrelationPlotApp.update model.annotationApp model.corrPlotApp 
+          corrPlot = 
+           CorrelationPlotApp.update model.annotationApp model.corrPlot 
                                      (CorrelationPlotApp.Action.MouseUp bp)
         }
       | MouseMove p,_ -> 
         {model with 
-          corrPlotApp = 
-           CorrelationPlotApp.update model.annotationApp model.corrPlotApp 
+          corrPlot = 
+           CorrelationPlotApp.update model.annotationApp model.corrPlot 
                                      (CorrelationPlotApp.Action.MouseMove p)
         }
       | KeyDown Keys.Enter, true ->                          
@@ -176,12 +189,9 @@ module Pages =
           | Some w ->
             {
               model with 
-                drawingApp    = updateDrawingApp 
-                                  (CorrelationDrawing.KeyDown Keys.Enter)
-                annotationApp = updateAnnotationApp 
-                                  (AnnotationApp.AddAnnotation w)
+                drawingApp    = updateDrawingApp (CorrelationDrawing.KeyDown Keys.Enter)
+                annotationApp = updateAnnotationApp (AnnotationApp.AddAnnotation w)
             }
-
       | KeyDown k, _       -> 
         let _model =
           match k with
@@ -205,28 +215,22 @@ module Pages =
             annotationApp = AnnotationApp.update annoApp (AnnotationApp.KeyDown k)
             camera     = updateCamera (CameraController.Message.KeyDown k)
         }
-
       | KeyUp k, _         -> 
         {  
           model with 
             drawingApp = updateDrawingApp (CorrelationDrawing.KeyUp k)
             camera     = updateCamera (CameraController.Message.KeyUp k)
         }
-
-      | SemanticAppMessage m, false ->
-        updateSemantics m model
+      | SemanticAppMessage a, false ->
+        updateSemantics a model
 
       | AnnotationAppMessage m, _ -> 
-        let updAnnoApp = updateAnnotationApp m
-        let updCorrPlotApp m = 
-          let sel      = AnnotationApp.getSelectedPoints' model.annotationApp
-          {model.corrPlotApp with 
-            correlationPlot = {model.corrPlotApp.correlationPlot with selectedPoints = sel}}
-                                                                      //annotations    = model.annotationApp.annotations}}
-
-        {model with annotationApp = updAnnoApp
-                    corrPlotApp   = updCorrPlotApp m}
-
+        let _selectedPoints = 
+          Pages.Lens.corrPlot |. CorrelationPlotModel.Lens.correlationPlot |. CorrelationPlot.Lens.selectedPoints
+        
+        let sel = AnnotationApp.getSelectedPoints' model.annotationApp
+       
+        { model with annotationApp = updateAnnotationApp m } |> Lenses.set _selectedPoints sel 
       | CorrelationDrawingMessage m, _ ->
         let (corrApp, drawingApp, annoApp) =               
             match m with
@@ -236,31 +240,34 @@ module Pages =
                     | true  -> 
                       let da = CorrelationDrawing.addPoint model.drawingApp model.semanticApp p
                       let aa = updateAnnotationApp (AnnotationApp.AddAnnotation da.working.Value) //TODO safe but  maybe do this differently
-                      let da = {da with working   = None
-                                        isDrawing = false}
+                      let da = 
+                        { da with 
+                            working   = None
+                            isDrawing = false }
                       (da, aa)
                     | false -> (updateDrawingApp m, model.annotationApp)
                 (
-                  model.corrPlotApp, 
+                  model.corrPlot, 
                   drawingApp,
                   annoApp
                 ) 
               | _  -> 
                 (
-                  model.corrPlotApp, 
+                  model.corrPlot, 
                   updateDrawingApp m,
                   model.annotationApp
                 )
-        {model with drawingApp    = drawingApp
-                    corrPlotApp   = corrApp
-                    annotationApp = annoApp}
+        {model with 
+          drawingApp    = drawingApp
+          corrPlot      = corrApp
+          annotationApp = annoApp}
 
       | CorrPlotMessage m, false -> // TODO refactor
         let updCorrPlotApp m = 
           let sel      = AnnotationApp.getSelectedPoints' model.annotationApp
           let updModel = //TODO refactor
-            {model.corrPlotApp with 
-              correlationPlot = {model.corrPlotApp.correlationPlot with selectedPoints = sel}}
+            {model.corrPlot with 
+              correlationPlot = {model.corrPlot.correlationPlot with selectedPoints = sel}}
           let _corrPlot = 
             CorrelationPlotApp.update model.annotationApp updModel m
           _corrPlot
@@ -270,29 +277,29 @@ module Pages =
             | CorrelationPlotApp.CorrelationPlotMessage cpa ->
               match cpa with
                 | CorrelationPlot.SelectLog id ->
-                  let selPoints = CorrelationPlot.getPointsOfLog model.corrPlotApp.correlationPlot id
+                  let selPoints = CorrelationPlot.getPointsOfLog model.corrPlot.correlationPlot id
                   let upd =
                     AnnotationApp.update model.annotationApp AnnotationApp.DeselectAllPoints
                   let annoApp = 
                     AnnotationApp.update upd (AnnotationApp.SelectPoints selPoints)
                   let cPlot =
-                    CorrelationPlot.update model.annotationApp model.corrPlotApp.correlationPlot (CorrelationPlot.SelectLog id)
-                  (annoApp, {model.corrPlotApp with correlationPlot = cPlot})
+                    CorrelationPlot.update model.annotationApp model.corrPlot.correlationPlot (CorrelationPlot.SelectLog id)
+                  (annoApp, {model.corrPlot with correlationPlot = cPlot})
                 | _ -> (model.annotationApp, updCorrPlotApp m)
             | _ -> (model.annotationApp, updCorrPlotApp m)
         
                 //model.annotationApp.annotations
                 //model.semanticApp m
-        {model with corrPlotApp = corrPlotApp
+        {model with corrPlot = corrPlotApp
                     annotationApp = annoApp}
       | ColourMapMessage m, _ -> 
         let _cp = CorrelationPlot.update 
                     model.annotationApp
-                    model.corrPlotApp.correlationPlot 
+                    model.corrPlot.correlationPlot 
                     (CorrelationPlot.ColourMapMessage m)
         {model with 
-          corrPlotApp = 
-            {model.corrPlotApp with
+          corrPlot = 
+            {model.corrPlot with
               correlationPlot = _cp
             }
         }
@@ -499,13 +506,13 @@ module Pages =
                             (onMouseMove (fun p -> MouseMove (V2d p)))
                             onLayoutChanged UpdateConfig
                            ] [
-                            CorrelationPlotApp.viewSvg model.annotationApp model.corrPlotApp 
+                            CorrelationPlotApp.viewSvg model.annotationApp model.corrPlot
                               |> (UI.map CorrPlotMessage)
                       ]
                     )
 
                   | Some "logs" -> //DEBUG
-                      CorrelationPlotApp.view model.corrPlotApp model.annotationApp model.semanticApp
+                      CorrelationPlotApp.view model.corrPlot model.annotationApp model.semanticApp
                         |> UI.map CorrPlotMessage
                   //| Some "Debug" ->
                   //    CorrelationPlotApp.View.view model.corrPlotApp model.annotationApp model.semanticApp
@@ -518,8 +525,10 @@ module Pages =
                       SemanticApp.View.simpleView model.semanticApp 
                         |> UI.map SemanticAppMessage
                   | Some "mappings" ->
-                     let domNode = (ColourMap.view model.corrPlotApp.correlationPlot.colourMapApp)
-                                      |> UI.map Action.ColourMapMessage
+                     let domNode = 
+                       (ColourMap.view model.corrPlot.correlationPlot.colourMapApp)
+                         |> UI.map Action.ColourMapMessage
+
                      require (GUI.CSS.myCss) (
                        body [style "overflow: auto"] [
                          div [] [
@@ -566,7 +575,7 @@ module Pages =
 
   let threads (model : Pages) = 
       CameraController.threads model.camera |> ThreadPool.map CameraMessage
-        |> ThreadPool.union (CorrelationPlotApp.threads model.corrPlotApp)
+        |> ThreadPool.union (CorrelationPlotApp.threads model.corrPlot)
         |> ThreadPool.union (SemanticApp.threads model.semanticApp)
 
   let start (runtime: IRuntime) =

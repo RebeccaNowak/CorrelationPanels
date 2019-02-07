@@ -43,7 +43,7 @@ open CorrelationDrawing
       Table.toTableView (div[][]) rows ["Nodes"]
 
     let view (semApp  : MSemanticApp) 
-             (annoApp : MAnnotationApp)
+             (annoApp : MAnnotationModel)
              (lifter  : (LogNodeId * Action) -> 'a)
              (model   : MLogNode) =
       
