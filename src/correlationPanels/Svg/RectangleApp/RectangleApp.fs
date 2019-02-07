@@ -16,7 +16,8 @@
     let rand = System.Random ()
 
     type Action =
-      | OnLeftClick
+      | Select          of RectangleId
+      | Deselect        of RectangleId
       | OnMouseEnter
       | OnMouseLeave
       | ToggleDraw
@@ -167,12 +168,24 @@
 
     let update (model : Rectangle) (action : Action) =
       match action with
-        | OnLeftClick  -> 
-          let newCol = (model.colour.c -- model.colChange)
-          {model with isToggled  = (not model.isToggled)
-                      colour      = {c = newCol}
-                      colChange  = -model.colChange
-          }
+        | Select  id   -> 
+          match model.isToggled with
+            | true -> model
+            | false ->
+              let newCol = (model.colour.c -- model.colChange)
+              {model with isToggled  = (not model.isToggled)
+                          colour      = {c = newCol}
+                          colChange  = -model.colChange
+              }
+        | Deselect  id   -> 
+          match model.isToggled with
+            | true -> 
+              let newCol = (model.colour.c -- model.colChange)
+              {model with isToggled  = false
+                          colour     = {c = newCol}
+                          colChange  = -model.colChange
+              }
+            | false -> model
         | OnMouseEnter -> 
           {model with isHovering = true}
         | OnMouseLeave  -> 
@@ -204,7 +217,7 @@
                     pos dim c1
                     C4b.Black C4b.Black
                     SvgWeight.init
-                    (fun _ -> OnLeftClick)
+                    (fun _ -> Select model.id)
                     sel db)
           yield (Button.view model.northWestButton) |> UI.map NWButtonMessage
           yield (Button.view model.northEastButton) |> UI.map NEButtonMessage

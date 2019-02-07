@@ -19,6 +19,10 @@ module Mutable =
         let _rstackGap = ResetMod.Create(__initial.rstackGap)
         let _marginLeft = ResetMod.Create(__initial.marginLeft)
         let _marginTop = ResetMod.Create(__initial.marginTop)
+        let _selectedRectangle = MOption.Create(__initial.selectedRectangle, (fun v -> let (item0,item1) = v in (ResetMod.Create(item0),ResetMod.Create(item1))), (fun (m,v) -> let (item_v0,item_v1) = v
+let (item_m0,item_m1) = m
+ResetMod.Update(item_m0,item_v0)
+ResetMod.Update(item_m1,item_v1)), (fun v -> let (v_item0,v_item1) = v in (v_item0 :> IMod<_>,v_item1 :> IMod<_>)))
         
         member x.rectangleStacks = _rectangleStacks :> amap<_,_>
         member x.order = _order :> alist<_>
@@ -26,6 +30,7 @@ module Mutable =
         member x.rstackGap = _rstackGap :> IMod<_>
         member x.marginLeft = _marginLeft :> IMod<_>
         member x.marginTop = _marginTop :> IMod<_>
+        member x.selectedRectangle = _selectedRectangle :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : Svgplus.DA.DiagramApp) =
@@ -38,6 +43,7 @@ module Mutable =
                 ResetMod.Update(_rstackGap,v.rstackGap)
                 ResetMod.Update(_marginLeft,v.marginLeft)
                 ResetMod.Update(_marginTop,v.marginTop)
+                MOption.Update(_selectedRectangle, v.selectedRectangle)
                 
         
         static member Create(__initial : Svgplus.DA.DiagramApp) : MDiagramApp = MDiagramApp(__initial)
@@ -89,4 +95,10 @@ module Mutable =
                     override x.Get(r) = r.marginTop
                     override x.Set(r,v) = { r with marginTop = v }
                     override x.Update(r,f) = { r with marginTop = f r.marginTop }
+                }
+            let selectedRectangle =
+                { new Lens<Svgplus.DA.DiagramApp, Microsoft.FSharp.Core.Option<(Svgplus.RectangleType.RectangleId * Svgplus.RS.RectangleStackId)>>() with
+                    override x.Get(r) = r.selectedRectangle
+                    override x.Set(r,v) = { r with selectedRectangle = v }
+                    override x.Update(r,f) = { r with selectedRectangle = f r.selectedRectangle }
                 }

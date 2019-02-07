@@ -23,6 +23,8 @@ open UIPlus
       | MoveLeft          of RectangleStackId
       | MoveRight         of RectangleStackId
       | UpdateColour      of ColourMap
+
+
         
     let init : DiagramApp = 
       {
@@ -32,6 +34,7 @@ open UIPlus
         rstackGap          = 50.0
         marginLeft         = 50.0
         marginTop          = 50.0
+        selectedRectangle  = None
       }
 
     let sampleInit : DiagramApp =
@@ -113,21 +116,25 @@ open UIPlus
         return 
           match len with
             | len when len <= 0 -> None
-            | len when len = 1 -> Option.flatten h
+            | len when len = 1  -> Option.flatten h
             | len when len >= 2 -> None //TODO error message
             | _ -> None
       }
 
       
 
-      
+
       
 
     let update (model : DiagramApp) (msg : Action) =
-      let updateRect (optr : option<RectangleStack>) (m : RectangleStack.Action) = 
+      let updateRStack (optr : option<RectangleStack>) (m : RectangleStack.Action) = 
         match optr with
           | Some r -> RectangleStack.update r m
           | None   -> RectangleStack.initSample (RectangleStackId.newId ())
+
+      let updateRStackFromId (id : RectangleStackId) (m : RectangleStack.Action) =
+        model.rectangleStacks
+         |> HMap.update id (fun optr -> updateRStack optr m)
 
       let updateConnections model message = 
         let upd model msg =
@@ -157,12 +164,31 @@ open UIPlus
           } |> layout
 
         | RectStackMessage msg -> 
-          let (id, m) = msg
-          let _rects = model.rectangleStacks 
-                        |> HMap.update id (fun x -> updateRect x m)
+          let (sid, m) = msg
+
+          let (_sel, rstacks) = 
+            match m with 
+              | RectangleStack.RectangleMessage (rid, m) -> 
+                match m with
+                  | Rectangle.Select rid ->
+                    match model.selectedRectangle with
+                      | Some (oldr, olds) -> 
+                        let _m = RectangleStack.RectangleMessage (oldr, (Rectangle.Deselect oldr))
+                        let rstacks = updateRStackFromId olds _m
+                        (Some (rid, sid), rstacks)
+                      | None ->
+                        (Some (rid, sid), model.rectangleStacks)
+                    
+                  | _ -> 
+                    (model.selectedRectangle, model.rectangleStacks)
+              | _ -> (model.selectedRectangle, model.rectangleStacks)
+
+          let _rstacks = rstacks 
+                          |> HMap.update sid (fun x -> updateRStack x m)
           let _cons  = updateConnections model msg
-          {model with rectangleStacks   = _rects
-                      connectionApp     = _cons}
+          {model with rectangleStacks   = _rstacks
+                      connectionApp     = _cons
+                      selectedRectangle = _sel}
 
         | ConnectionMessage msg -> 
           {model with connectionApp = ConnectionApp.update model.connectionApp msg}
