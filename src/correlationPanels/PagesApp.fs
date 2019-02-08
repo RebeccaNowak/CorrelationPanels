@@ -189,7 +189,7 @@ module Pages =
           | Some w ->
             {
               model with 
-                drawingApp    = updateDrawingApp (CorrelationDrawing.KeyDown Keys.Enter)
+                drawingApp    = updateCorrelationDrawing (CorrelationDrawing.KeyDown Keys.Enter)
                 annotationApp = updateAnnotationApp (AnnotationApp.AddAnnotation w)
             }
       | KeyDown k, _       -> 
@@ -211,14 +211,14 @@ module Pages =
             | _ -> model.annotationApp
         {
           model with 
-            drawingApp    = updateDrawingApp (CorrelationDrawing.KeyDown k)
+            drawingApp    = updateCorrelationDrawing (CorrelationDrawing.KeyDown k)
             annotationApp = AnnotationApp.update annoApp (AnnotationApp.KeyDown k)
             camera     = updateCamera (CameraController.Message.KeyDown k)
         }
       | KeyUp k, _         -> 
         {  
           model with 
-            drawingApp = updateDrawingApp (CorrelationDrawing.KeyUp k)
+            drawingApp = updateCorrelationDrawing (CorrelationDrawing.KeyUp k)
             camera     = updateCamera (CameraController.Message.KeyUp k)
         }
       | SemanticAppMessage a, false ->
