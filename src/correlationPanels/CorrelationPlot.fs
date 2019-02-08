@@ -122,8 +122,8 @@
     let createNewLog (model : CorrelationPlot) (annoApp : AnnotationModel) (colourMap : ColourMap) =
       let (stack, newLog) = 
         Log.initial 
-            model.selectedPoints
-            model.semanticApp 
+            model.selectedPoints  //selected points
+            model.semanticApp     //selected
             annoApp
             model.xToSvg
             model.yToSvg
@@ -132,6 +132,7 @@
 
       let diagram =
         DiagramApp.update model.diagramApp (DiagramApp.AddStack stack)
+
       {
         model with 
           diagramApp       = diagram

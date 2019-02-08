@@ -155,7 +155,7 @@ module Pages =
       printfn "Forward: %s" 
               (String.fromV3d model.camera.view.Forward)
 
-    let updateDrawingApp =
+    let updateCorrelationDrawing =
       CorrelationDrawing.update model.drawingApp model.semanticApp
 
     let updateAnnotationApp =
@@ -226,40 +226,41 @@ module Pages =
 
       | AnnotationAppMessage m, _ -> 
         let _selectedPoints = 
-          Pages.Lens.corrPlot |. CorrelationPlotModel.Lens.correlationPlot |. CorrelationPlot.Lens.selectedPoints
+          Pages.Lens.corrPlot |. 
+          CorrelationPlotModel.Lens.correlationPlot |. 
+          CorrelationPlot.Lens.selectedPoints
         
         let sel = AnnotationApp.getSelectedPoints' model.annotationApp
        
         { model with annotationApp = updateAnnotationApp m } |> Lenses.set _selectedPoints sel 
       | CorrelationDrawingMessage m, _ ->
-        let (corrApp, drawingApp, annoApp) =               
+        let (drawingApp, annoApp) =               
             match m with
               | CorrelationDrawing.AddPoint p -> 
                 let (drawingApp, annoApp) =
                   match CorrelationDrawing.isDone model.drawingApp model.semanticApp with
                     | true  -> 
-                      let da = CorrelationDrawing.addPoint model.drawingApp model.semanticApp p
-                      let aa = updateAnnotationApp (AnnotationApp.AddAnnotation da.working.Value) //TODO safe but  maybe do this differently
-                      let da = 
-                        { da with 
-                            working   = None
-                            isDrawing = false }
-                      (da, aa)
-                    | false -> (updateDrawingApp m, model.annotationApp)
-                (
-                  model.corrPlot, 
+                      let correlationDrawing = CorrelationDrawing.addPoint model.drawingApp model.semanticApp p
+                      let annotationModel = updateAnnotationApp (AnnotationApp.AddAnnotation correlationDrawing.working.Value) //TODO safe but  maybe do this differently
+
+                      //clear corr drawing state
+                      let correlationDrawing = { correlationDrawing with working = None; isDrawing = false }
+
+                      (correlationDrawing, annotationModel)
+                    | false -> 
+                      (updateCorrelationDrawing m, model.annotationApp)
+                (                 
                   drawingApp,
                   annoApp
                 ) 
               | _  -> 
-                (
-                  model.corrPlot, 
-                  updateDrawingApp m,
+                (                
+                  updateCorrelationDrawing m,
                   model.annotationApp
                 )
         {model with 
           drawingApp    = drawingApp
-          corrPlot      = corrApp
+          corrPlot      = model.corrPlot
           annotationApp = annoApp}
 
       | CorrPlotMessage m, false -> // TODO refactor
