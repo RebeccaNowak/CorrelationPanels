@@ -5,6 +5,7 @@
     open Aardvark.Base.Incremental
     open Aardvark.UI
     open CorrelationDrawing
+    open Svgplus.DA
 
     module Calc =
       open Aardvark.Base
@@ -103,14 +104,14 @@
             (_nodes, factor)
     
 
-    let rec view  (model        : MLogNode) 
-                  (flags        : IMod<SvgFlags>)
-                  (options      : MSvgOptions)
+    let rec view  (model        : MLogNode) =
+                  //(flags        : IMod<SvgFlags>)
+                  //(options      : MSvgOptions) =
                  // (styleFun     : float -> IMod<LogAxisSection>)
-                  (annoApp      : MAnnotationApp) =
+                  //(annoApp      : MAnnotationApp) =
       let childrenView = 
         model.children
-          |> AList.map (fun c -> view c flags options annoApp)  
+          |> AList.map (fun c -> view c)  
       alist {
         let! t = model.nodeType
         let! draw = model.mainBody.draw

@@ -8,7 +8,7 @@ open Aardvark.UI.Primitives
 open SimpleTypes
 open Svgplus
 open UIPlus
-open Svgplus.RS
+open Svgplus.RectangleStackTypes
 open Svgplus.RectangleType
 
 //[<DomainType>]
@@ -406,9 +406,9 @@ type LogNode = {
     children           : plist<LogNode>
     
     mainBody           : Rectangle
-    roseDiagram        : RoseDiagram
-    buttonNorth        : Svgplus.Button
-    buttonSouth        : Svgplus.Button
+    //roseDiagram        : RoseDiagram
+    //buttonNorth        : Svgplus.Button
+    //buttonSouth        : Svgplus.Button
 
 }
       
@@ -440,11 +440,11 @@ type LogAxisApp = {
 [<DomainType>]
 type GeologicalLog = {
     [<NonIncremental;PrimaryKey>]
-    id              : Svgplus.RS.RectangleStackId
+    id              : Svgplus.RectangleStackTypes.RectangleStackId
 
     state           : State
-    xToSvg          : float
-    yToSvg          : float
+    //xToSvg          : float -> float
+    //yToSvg          : float
     defaultWidth    : float
     nodes           : plist<LogNode>
     annoPoints      : hmap<AnnotationId, V3d>
@@ -481,7 +481,7 @@ type SvgOptions = {
 type CorrelationPlot = {
    diagramApp          : Svgplus.DA.DiagramApp
    colourMapApp        : ColourMap
-   logs                : hmap<Svgplus.RS.RectangleStackId, GeologicalLog>
+   logs                : hmap<Svgplus.RectangleStackTypes.RectangleStackId, GeologicalLog>
    correlations        : plist<Correlation>
    selectedBorder      : Option<Border>
    //aardvark dies: selectedBorder      : Option<(Border * V2d)>
@@ -503,7 +503,7 @@ type CorrelationPlot = {
    currrentYMapping    : Option<float>
    yRange              : Rangef
 
-   xToSvg              : float
+   xToSvg              : float -> float
    yToSvg              : float
    defaultWidth        : float
 }

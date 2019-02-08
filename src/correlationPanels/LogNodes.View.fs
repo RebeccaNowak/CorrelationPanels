@@ -33,7 +33,7 @@ module View =
                               model.nodeType)
       let domNodeLabel =
         alist {
-          let! rect = DiagramApp.findRectangle diagramApp model.rectangleId 
+          let! rect = DiagramApp.findRectangle_M diagramApp model.rectangleId 
           if rect.IsSome then
             let r = rect.Value
             let v = TextInput.view r.label

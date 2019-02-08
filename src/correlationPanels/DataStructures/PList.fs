@@ -43,6 +43,13 @@ module PList =
       |> PList.filter (fun (el : option<'a>) -> el.IsSome)
       |> PList.map (fun el -> el.Value)
 
+  let filterEmptyLists (lst : plist<list<'a>>) =
+    lst
+      |> PList.filter (fun a -> List.isEmpty a)
+
+
+
+
   let min (lst : plist<'a>) : 'a =
     lst
       |> PList.toList
@@ -155,6 +162,13 @@ module PList =
       | None           -> acc
       | Some h         -> 
         reduce f (f acc h) (tail lst)
+
+  let rec flattenLists (plst : plist<list<'a>>) =
+    let head = tryHead plst
+    match head with
+      | None  -> []
+      | Some lst -> 
+        lst @ (flattenLists (tail plst))
 
   let rec allTrueOrEmpty (f : 'a -> bool) (lst : plist<'a>) =
     match lst.IsEmptyOrNull () with

@@ -37,7 +37,7 @@ open CorrelationDrawing
       let rows = 
         alist {
           for el in lst do 
-            yield! Recursive.mapAndCollect' el f
+            yield! Recursive.mapAndCollect_M el f
         }  
         
       Table.toTableView (div[][]) rows ["Nodes"]

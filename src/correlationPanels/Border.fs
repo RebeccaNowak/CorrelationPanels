@@ -7,7 +7,7 @@ module Border =
   open Aardvark.Base.Incremental
   open Aardvark.UI
   open Aardvark.Rendering.Text
-  open Svgplus.RS
+  open Svgplus.RectangleStackTypes
 
   let posInf = V3d.PositiveInfinity
   let negInf = V3d(0.0)

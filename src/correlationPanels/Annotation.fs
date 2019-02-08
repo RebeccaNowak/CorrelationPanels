@@ -254,9 +254,9 @@ module Annotation =
  
   module Sg =
     let view (model : MAnnotation) 
-            (cam : IMod<CameraView>) 
-            (semApp : MSemanticApp)
-            (working : bool) =
+             (cam : IMod<CameraView>) 
+             (semApp : MSemanticApp)
+             (working : bool) =
 
 
       let annoPointToSg (point : MAnnotationPoint) (color : IMod<C4b>) (weight : IMod<float>) =  

@@ -6,7 +6,7 @@ open CorrelationDrawing
 open Svgplus
 open Aardvark.Base
 open Aardvark.UI
-open Svgplus.RS
+open Svgplus.RectangleStackTypes
 open Svgplus.RectangleType
 
   type Action =
@@ -120,9 +120,9 @@ open Svgplus.RectangleType
         children     = plist.Empty
 
         mainBody     = Svgplus.Rectangle.init (RectangleId.newId ())
-        roseDiagram  = Svgplus.RoseDiagram.init
-        buttonNorth  = Svgplus.Button.init
-        buttonSouth  = Svgplus.Button.init
+        //roseDiagram  = Svgplus.RoseDiagram.init
+        //buttonNorth  = Svgplus.Button.init
+        //buttonSouth  = Svgplus.Button.init
       }
 
 

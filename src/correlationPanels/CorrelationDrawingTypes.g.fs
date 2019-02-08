@@ -674,7 +674,7 @@ module Mutable =
                     override x.Update(r,f) = { r with nodeId = f r.nodeId }
                 }
             let logId =
-                { new Lens<CorrelationDrawing.Border, Svgplus.RS.RectangleStackId>() with
+                { new Lens<CorrelationDrawing.Border, Svgplus.RectangleStackTypes.RectangleStackId>() with
                     override x.Get(r) = r.logId
                     override x.Set(r,v) = { r with logId = v }
                     override x.Update(r,f) = { r with logId = f r.logId }
@@ -795,9 +795,6 @@ module Mutable =
         let _annotation = MOption.Create(__initial.annotation)
         let _children = MList.Create(__initial.children, (fun v -> MLogNode.Create(v)), (fun (m,v) -> MLogNode.Update(m, v)), (fun v -> v))
         let _mainBody = Svgplus.RectangleType.Mutable.MRectangle.Create(__initial.mainBody)
-        let _roseDiagram = Svgplus.Mutable.MRoseDiagram.Create(__initial.roseDiagram)
-        let _buttonNorth = Svgplus.Mutable.MButton.Create(__initial.buttonNorth)
-        let _buttonSouth = Svgplus.Mutable.MButton.Create(__initial.buttonSouth)
         
         member x.id = __current.Value.id
         member x.rectangleId = __current.Value.rectangleId
@@ -809,9 +806,6 @@ module Mutable =
         member x.annotation = _annotation :> IMod<_>
         member x.children = _children :> alist<_>
         member x.mainBody = _mainBody
-        member x.roseDiagram = _roseDiagram
-        member x.buttonNorth = _buttonNorth
-        member x.buttonSouth = _buttonSouth
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : CorrelationDrawing.LogNode) =
@@ -826,9 +820,6 @@ module Mutable =
                 MOption.Update(_annotation, v.annotation)
                 MList.Update(_children, v.children)
                 Svgplus.RectangleType.Mutable.MRectangle.Update(_mainBody, v.mainBody)
-                Svgplus.Mutable.MRoseDiagram.Update(_roseDiagram, v.roseDiagram)
-                Svgplus.Mutable.MButton.Update(_buttonNorth, v.buttonNorth)
-                Svgplus.Mutable.MButton.Update(_buttonSouth, v.buttonSouth)
                 
         
         static member Create(__initial : CorrelationDrawing.LogNode) : MLogNode = MLogNode(__initial)
@@ -858,7 +849,7 @@ module Mutable =
                     override x.Update(r,f) = { r with rectangleId = f r.rectangleId }
                 }
             let logId =
-                { new Lens<CorrelationDrawing.LogNode, Svgplus.RS.RectangleStackId>() with
+                { new Lens<CorrelationDrawing.LogNode, Svgplus.RectangleStackTypes.RectangleStackId>() with
                     override x.Get(r) = r.logId
                     override x.Set(r,v) = { r with logId = v }
                     override x.Update(r,f) = { r with logId = f r.logId }
@@ -904,24 +895,6 @@ module Mutable =
                     override x.Get(r) = r.mainBody
                     override x.Set(r,v) = { r with mainBody = v }
                     override x.Update(r,f) = { r with mainBody = f r.mainBody }
-                }
-            let roseDiagram =
-                { new Lens<CorrelationDrawing.LogNode, Svgplus.RoseDiagram>() with
-                    override x.Get(r) = r.roseDiagram
-                    override x.Set(r,v) = { r with roseDiagram = v }
-                    override x.Update(r,f) = { r with roseDiagram = f r.roseDiagram }
-                }
-            let buttonNorth =
-                { new Lens<CorrelationDrawing.LogNode, Svgplus.Button>() with
-                    override x.Get(r) = r.buttonNorth
-                    override x.Set(r,v) = { r with buttonNorth = v }
-                    override x.Update(r,f) = { r with buttonNorth = f r.buttonNorth }
-                }
-            let buttonSouth =
-                { new Lens<CorrelationDrawing.LogNode, Svgplus.Button>() with
-                    override x.Get(r) = r.buttonSouth
-                    override x.Set(r,v) = { r with buttonSouth = v }
-                    override x.Update(r,f) = { r with buttonSouth = f r.buttonSouth }
                 }
     
     
@@ -1036,16 +1009,12 @@ module Mutable =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.GeologicalLog> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.GeologicalLog>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.GeologicalLog>
         let _state = ResetMod.Create(__initial.state)
-        let _xToSvg = ResetMod.Create(__initial.xToSvg)
-        let _yToSvg = ResetMod.Create(__initial.yToSvg)
         let _defaultWidth = ResetMod.Create(__initial.defaultWidth)
         let _nodes = MList.Create(__initial.nodes, (fun v -> MLogNode.Create(v)), (fun (m,v) -> MLogNode.Update(m, v)), (fun v -> v))
         let _annoPoints = MMap.Create(__initial.annoPoints)
         
         member x.id = __current.Value.id
         member x.state = _state :> IMod<_>
-        member x.xToSvg = _xToSvg :> IMod<_>
-        member x.yToSvg = _yToSvg :> IMod<_>
         member x.defaultWidth = _defaultWidth :> IMod<_>
         member x.nodes = _nodes :> alist<_>
         member x.annoPoints = _annoPoints :> amap<_,_>
@@ -1056,8 +1025,6 @@ module Mutable =
                 __current.Value <- v
                 
                 ResetMod.Update(_state,v.state)
-                ResetMod.Update(_xToSvg,v.xToSvg)
-                ResetMod.Update(_yToSvg,v.yToSvg)
                 ResetMod.Update(_defaultWidth,v.defaultWidth)
                 MList.Update(_nodes, v.nodes)
                 MMap.Update(_annoPoints, v.annoPoints)
@@ -1078,7 +1045,7 @@ module Mutable =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
             let id =
-                { new Lens<CorrelationDrawing.GeologicalLog, Svgplus.RS.RectangleStackId>() with
+                { new Lens<CorrelationDrawing.GeologicalLog, Svgplus.RectangleStackTypes.RectangleStackId>() with
                     override x.Get(r) = r.id
                     override x.Set(r,v) = { r with id = v }
                     override x.Update(r,f) = { r with id = f r.id }
@@ -1088,18 +1055,6 @@ module Mutable =
                     override x.Get(r) = r.state
                     override x.Set(r,v) = { r with state = v }
                     override x.Update(r,f) = { r with state = f r.state }
-                }
-            let xToSvg =
-                { new Lens<CorrelationDrawing.GeologicalLog, System.Double>() with
-                    override x.Get(r) = r.xToSvg
-                    override x.Set(r,v) = { r with xToSvg = v }
-                    override x.Update(r,f) = { r with xToSvg = f r.xToSvg }
-                }
-            let yToSvg =
-                { new Lens<CorrelationDrawing.GeologicalLog, System.Double>() with
-                    override x.Get(r) = r.yToSvg
-                    override x.Set(r,v) = { r with yToSvg = v }
-                    override x.Update(r,f) = { r with yToSvg = f r.yToSvg }
                 }
             let defaultWidth =
                 { new Lens<CorrelationDrawing.GeologicalLog, System.Double>() with
@@ -1423,7 +1378,7 @@ module Mutable =
                     override x.Update(r,f) = { r with colourMapApp = f r.colourMapApp }
                 }
             let logs =
-                { new Lens<CorrelationDrawing.CorrelationPlot, Aardvark.Base.hmap<Svgplus.RS.RectangleStackId,CorrelationDrawing.GeologicalLog>>() with
+                { new Lens<CorrelationDrawing.CorrelationPlot, Aardvark.Base.hmap<Svgplus.RectangleStackTypes.RectangleStackId,CorrelationDrawing.GeologicalLog>>() with
                     override x.Get(r) = r.logs
                     override x.Set(r,v) = { r with logs = v }
                     override x.Update(r,f) = { r with logs = f r.logs }
@@ -1459,7 +1414,7 @@ module Mutable =
                     override x.Update(r,f) = { r with selectedNode = f r.selectedNode }
                 }
             let selectedLog =
-                { new Lens<CorrelationDrawing.CorrelationPlot, Microsoft.FSharp.Core.Option<Svgplus.RS.RectangleStackId>>() with
+                { new Lens<CorrelationDrawing.CorrelationPlot, Microsoft.FSharp.Core.Option<Svgplus.RectangleStackTypes.RectangleStackId>>() with
                     override x.Get(r) = r.selectedLog
                     override x.Set(r,v) = { r with selectedLog = v }
                     override x.Update(r,f) = { r with selectedLog = f r.selectedLog }
@@ -1519,7 +1474,7 @@ module Mutable =
                     override x.Update(r,f) = { r with yRange = f r.yRange }
                 }
             let xToSvg =
-                { new Lens<CorrelationDrawing.CorrelationPlot, System.Double>() with
+                { new Lens<CorrelationDrawing.CorrelationPlot, System.Double -> System.Double>() with
                     override x.Get(r) = r.xToSvg
                     override x.Set(r,v) = { r with xToSvg = v }
                     override x.Update(r,f) = { r with xToSvg = f r.xToSvg }

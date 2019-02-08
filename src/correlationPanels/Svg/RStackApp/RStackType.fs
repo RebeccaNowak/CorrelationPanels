@@ -1,4 +1,4 @@
-﻿namespace Svgplus.RS
+﻿namespace Svgplus.RectangleStackTypes
 
 open Aardvark.Base
 open Aardvark.Base.Incremental

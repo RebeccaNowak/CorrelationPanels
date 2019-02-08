@@ -202,12 +202,14 @@ module Mutable =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<UIPlus.ColourMap> = Aardvark.Base.Incremental.EqModRef<UIPlus.ColourMap>(__initial) :> Aardvark.Base.Incremental.IModRef<UIPlus.ColourMap>
         let _mappings = MList.Create(__initial.mappings, (fun v -> MColourMapItem.Create(v)), (fun (m,v) -> MColourMapItem.Update(m, v)), (fun v -> v))
-        let _factor = ResetMod.Create(__initial.factor)
+        let _dataToSvg = ResetMod.Create(__initial.dataToSvg)
+        let _svgToData = ResetMod.Create(__initial.svgToData)
         let _unit = ResetMod.Create(__initial.unit)
         let _selected = MOption.Create(__initial.selected)
         
         member x.mappings = _mappings :> alist<_>
-        member x.factor = _factor :> IMod<_>
+        member x.dataToSvg = _dataToSvg :> IMod<_>
+        member x.svgToData = _svgToData :> IMod<_>
         member x.unit = _unit :> IMod<_>
         member x.selected = _selected :> IMod<_>
         
@@ -217,7 +219,8 @@ module Mutable =
                 __current.Value <- v
                 
                 MList.Update(_mappings, v.mappings)
-                ResetMod.Update(_factor,v.factor)
+                ResetMod.Update(_dataToSvg,v.dataToSvg)
+                ResetMod.Update(_svgToData,v.svgToData)
                 ResetMod.Update(_unit,v.unit)
                 MOption.Update(_selected, v.selected)
                 
@@ -242,11 +245,17 @@ module Mutable =
                     override x.Set(r,v) = { r with mappings = v }
                     override x.Update(r,f) = { r with mappings = f r.mappings }
                 }
-            let factor =
-                { new Lens<UIPlus.ColourMap, System.Double>() with
-                    override x.Get(r) = r.factor
-                    override x.Set(r,v) = { r with factor = v }
-                    override x.Update(r,f) = { r with factor = f r.factor }
+            let dataToSvg =
+                { new Lens<UIPlus.ColourMap, System.Double -> System.Double>() with
+                    override x.Get(r) = r.dataToSvg
+                    override x.Set(r,v) = { r with dataToSvg = v }
+                    override x.Update(r,f) = { r with dataToSvg = f r.dataToSvg }
+                }
+            let svgToData =
+                { new Lens<UIPlus.ColourMap, System.Double -> System.Double>() with
+                    override x.Get(r) = r.svgToData
+                    override x.Set(r,v) = { r with svgToData = v }
+                    override x.Update(r,f) = { r with svgToData = f r.svgToData }
                 }
             let unit =
                 { new Lens<UIPlus.ColourMap, UIPlus.Unit>() with

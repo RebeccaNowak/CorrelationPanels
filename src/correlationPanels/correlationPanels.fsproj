@@ -105,7 +105,6 @@
 	<Compile Include="LogNodes.Debug.fs" />
 	<Compile Include="LogNodes.View.fs" />
 	<Compile Include="GeologicalLog.fs" />
-	<Compile Include="GeologicalLogApp.fs" />
 	<Compile Include="Correlation.fs" />
 	<Compile Include="CorrelationPlot.fs" />
 	<Compile Include="CorrelationPlotApp.fs" />

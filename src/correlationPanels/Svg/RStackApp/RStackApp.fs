@@ -1,10 +1,11 @@
-﻿namespace Svgplus.RS
+﻿namespace Svgplus
 
   open System
   open Aardvark.Base
   open Aardvark.Base.Incremental
   open Aardvark.UI
   open Svgplus.RectangleType // always import this before importing Svgplus, so correct Lenses are used //TODO
+  open Svgplus.RectangleStackTypes
   open Svgplus
 
 
@@ -169,8 +170,11 @@
                     pos        = v
       } |> stack
 
-    let tryfindRectangle (model : MRectangleStack) (id : RectangleId) =
+    let tryfindRectangle_M (model : MRectangleStack) (id : RectangleId) =
       AMap.tryFind id model.rectangles
+
+    let tryfindRectangle (model : RectangleStack) (id : RectangleId) =
+      HMap.tryFind id model.rectangles
 
     let update (model : RectangleStack) (action : Action) =
       let updateRect (optr : option<Rectangle>) (m : Rectangle.Action) = 

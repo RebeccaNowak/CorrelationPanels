@@ -8,7 +8,7 @@ open Aardvark.UI.Primitives
 open Svgplus.RectangleType
 open Svgplus.CA
 open Svgplus.DA
-open Svgplus.RS
+open Svgplus.RectangleStackTypes
 open UIPlus
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -91,14 +91,13 @@ open UIPlus
           {model with rectangleStacks = _rs}
         | false -> model
 
-    let findRectangle (model : MDiagramApp) (id : RectangleId) =
+    let findRectangle_M (model : MDiagramApp) (id : RectangleId) =
       let optList = 
         AMap.map
           (fun sid x -> 
-            RectangleStack.tryfindRectangle x id)
+            RectangleStack.tryfindRectangle_M x id)
           model.rectangleStacks
 
-      
       let vals = DS.AMap.valuesToAList optList
       let filtered = 
         alist {
@@ -121,10 +120,25 @@ open UIPlus
             | _ -> None
       }
 
+    let tryFindRectangleFromId (model : DiagramApp) (rid : RectangleId) =
+      let foundmany = 
+        HMap.map (fun sid rs -> 
+                    match ((RectangleStack.tryfindRectangle rs rid) ) with
+                      | Some r -> Some (sid, r)
+                      | None   -> None
+                 ) model.rectangleStacks
+          |> DS.HMap.filterNone
+      foundmany
+        |> DS.HMap.values
+        |> List.tryHead
       
+    let tryFindRectangle  (model : DiagramApp) 
+                          (sid : RectangleStackId) 
+                          (rid : RectangleId) =
+      let optstack = HMap.tryFind sid model.rectangleStacks
+      Option.bind (fun s -> (RectangleStack.tryfindRectangle s rid)) optstack
 
-
-      
+     
 
     let update (model : DiagramApp) (msg : Action) =
       let updateRStack (optr : option<RectangleStack>) (m : RectangleStack.Action) = 
@@ -165,7 +179,6 @@ open UIPlus
 
         | RectStackMessage msg -> 
           let (sid, m) = msg
-
           let (_sel, rstacks) = 
             match m with 
               | RectangleStack.RectangleMessage (rid, m) -> 

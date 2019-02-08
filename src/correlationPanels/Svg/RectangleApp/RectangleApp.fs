@@ -26,6 +26,7 @@
       | SWButtonMessage of Button.Action
       | SEButtonMessage of Button.Action
       | UpdateColour    of ColourMap
+      | SetWidth        of float
 
     module Lens =
       let width = 
@@ -197,10 +198,12 @@
         | SWButtonMessage m -> {model with southWestButton = Button.update model.southWestButton m}
         | SEButtonMessage m -> {model with southEastButton = Button.update model.southEastButton m}
         | UpdateColour cmap ->
-          let opt = ColourMap.valueToColourPicker' cmap model.dim.width 
+          let opt = ColourMap.svgValueToColourPicker cmap model.dim.width 
           match opt with
             | Some c -> {model with colour = c}
             | None   -> model
+        | SetWidth w        -> 
+          Lens.width.Set (model, w)
         
 
     let view (model : MRectangle) =

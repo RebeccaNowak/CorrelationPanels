@@ -13,7 +13,7 @@
     open Aardvark.SceneGraph
     open Aardvark.Application
     open SimpleTypes
-    open Svgplus.RS
+    open Svgplus.RectangleStackTypes
     open Svgplus
     open Svgplus.RectangleType
     open UIPlus
@@ -27,6 +27,19 @@
       | TextInputMessage          of (RectangleStackId * TextInput.Action)
       | MoveUp                    of RectangleStackId
       | MoveDown                  of RectangleStackId
+
+    let findNode (model : GeologicalLog) (f : LogNode -> bool) =
+      let nodeList = 
+        model.nodes
+          |> PList.map (LogNodes.Recursive.filterAndCollect f)
+          |> DS.PList.flattenLists
+      let node = List.tryHead nodeList
+      node
+
+    let findNodeFromRectangleId (model : GeologicalLog)
+                                (rid   : RectangleId) =
+       findNode model (fun (n : LogNode) -> n.rectangleId = rid)
+
 
     module Helpers = 
       let getMinLevel ( model : MGeologicalLog) = 
@@ -154,7 +167,9 @@
 
     let printDebug nodes = 
       nodes 
-        |> PList.map (fun (x : LogNode) -> LogNodes.Recursive.filterAndCollect x (fun x -> x.nodeType = LogNodeType.Hierarchical))
+        |> PList.map (fun (x : LogNode) -> 
+                        LogNodes.Recursive.filterAndCollect (fun x -> 
+                          x.nodeType = LogNodeType.Hierarchical) x)
         |> List.concat
         |> List.map LogNodes.Debug.print
 
@@ -162,7 +177,7 @@
     let initial      (selectedPoints  : hmap<AnnotationId, V3d>) 
                      (semApp          : SemanticApp)
                      (annoApp         : AnnotationApp)
-                     (xToSvg          : float)
+                     (xToSvg          : float -> float)
                      (yToSvg          : float)
                      (defaultWidth    : float)
                      (colourMap       : ColourMap) : (RectangleStack * GeologicalLog) = 
@@ -188,11 +203,11 @@
         let (dotted, width) = 
           match metricVal  with
             | Some d -> 
-              (false, d * xToSvg)
+              (false, xToSvg d)
             | None   -> (true, defaultWidth)
         
         let colour = 
-          let opt = ColourMap.valueToColourPicker' colourMap width
+          let opt = ColourMap.svgValueToColourPicker colourMap width
           match opt with
             | Some c -> c
             | None -> {ColorPicker.init with c = C4b.White}
@@ -242,8 +257,8 @@
           id             = id
           state          = State.Display
 
-          xToSvg         =  xToSvg      
-          yToSvg         =  yToSvg      
+          //xToSvg         =  xToSvg      
+          //yToSvg         =  yToSvg      
           defaultWidth   =  defaultWidth
 
           nodes          = _nodes
@@ -435,14 +450,16 @@
               | State.New | State.Edit -> State.Display
               | State.Display -> State.Edit
           {model with state = _state}
+        
+
 
 
     let init = 
       {
         id              = RectangleStackId.invalid
         state           = State.Display
-        xToSvg          = 10.0
-        yToSvg          = 10.0
+        //xToSvg          = (fun x -> x)
+        //yToSvg          = 10.0
         defaultWidth    = 50.0
         nodes           = PList.empty
         annoPoints      = HMap.empty

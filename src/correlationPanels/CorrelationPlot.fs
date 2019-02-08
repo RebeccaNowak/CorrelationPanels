@@ -2,6 +2,7 @@
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module CorrelationPlot =
+    open System
     open Aardvark.Base.Incremental
     open Aardvark.Base
     open Aardvark.Application
@@ -10,7 +11,9 @@
     open Aardvark.UI.Primitives
     open Svgplus.DA
     open Svgplus
-    open Svgplus.RS
+    open Svgplus.RectangleStackTypes
+    open Svgplus.RectangleType
+
 
     type Action = 
       | Clear
@@ -40,9 +43,10 @@
     //  float (index * 10 + index * 250)
 
     let initial : CorrelationPlot  = 
-      let xToSvg              = 100.0
+      let xToSvg              = fun x -> Math.Log(x, 2.0) * Math.Pow(10.0, 4.0)
+      let svgToX              = fun x -> Math.Pow(x, 2.0) * Math.Pow(10.0, -4.0)
       let yToSvg              = 25.0
-      let defaultWidth        = 50.0
+      let defaultWidth        = 20.0
 
       {
         diagramApp          = Svgplus.DiagramApp.init
@@ -50,7 +54,7 @@
         correlations        = PList.empty
         
         editCorrelations    = false
-        colourMapApp        = ColourMap.initial xToSvg
+        colourMapApp        = ColourMap.initial xToSvg svgToX
         selectedPoints      = hmap<AnnotationId, V3d>.Empty
         selectedLog         = None
         selectedNode        = None
@@ -74,6 +78,18 @@
         yToSvg              = yToSvg      
         defaultWidth        = defaultWidth
       }
+
+    let tryFindLog (model : CorrelationPlot) (logId : RectangleStackId) =
+      HMap.tryFind logId model.logs
+
+    let tryFindNodeFromRectangleId (model : CorrelationPlot) 
+                                   (logId : RectangleStackId) 
+                                   (rId   : RectangleId) =
+      let log = tryFindLog model logId
+      Option.bind (fun lo -> 
+                    let on = Log.findNodeFromRectangleId lo rId
+                    Option.map (fun n -> (n, lo)) on
+                  ) log
 
     let getPointsOfLog (model : CorrelationPlot) (logId : RectangleStackId) =
       let opt = HMap.tryFind logId model.logs
@@ -140,6 +156,8 @@
       }
 
 
+      
+
 ///////////////////////////////////////////////////////////// UPDATE ////////////////////////////////////////////////////
     
     
@@ -178,10 +196,12 @@
         {model with logs        = _logs
                     selectedLog = _sel}
 
+    
+
     let update (annoApp  : AnnotationApp)
                (model    : CorrelationPlot) 
                (action   : Action) = 
-               
+      
       match action with
         | Clear                    ->
           {model with logs             = HMap.empty
@@ -267,9 +287,48 @@
 
         | ColourMapMessage m -> 
           let _cmap = ColourMap.update model.colourMapApp m
-          let _dapp = DiagramApp.update model.diagramApp (DiagramApp.UpdateColour _cmap)
+          let optselid = model.diagramApp.selectedRectangle //WIP
+          let (_logs, _diagram) = 
+            match m, optselid.IsSome with
+              | ColourMap.SelectItem cmitemid, true ->
+                let (selrid, selsid) = optselid.Value
+                let _grainsize =
+                  let item = ColourMap.tryfindItem model.colourMapApp cmitemid
+                  match item with
+                    | Some it -> it.upper - (abs (it.upper * 0.5))
+                    | None    -> 1.0
+                let optsel = 
+                  DiagramApp.tryFindRectangle model.diagramApp selsid selrid
+                match optsel with
+                  | Some r ->
+                    let w = model.xToSvg _grainsize
+                    let _optn = tryFindNodeFromRectangleId model selsid selrid
+                    match _optn with
+                      | Some (n, log) ->
+                        let _m = 
+                              (Log.LogNodeMessage 
+                                (n.id, LogNodes.RectangleMessage (Rectangle.SetWidth w))
+                              )
+                        let logs  = updateLog log.id _m model.logs
+                        let _diagrMessage = 
+                          DiagramApp.RectStackMessage
+                            (selsid, RectangleStack.RectangleMessage (selrid, Rectangle.SetWidth w))
+                        let diagr = DiagramApp.update model.diagramApp _diagrMessage
+                        (logs, diagr)
+                      | None -> (model.logs, model.diagramApp)
+                  | None   -> (model.logs, model.diagramApp)
+               | ColourMap.SelectItem cmitemid, false -> (model.logs, model.diagramApp)
+               | ColourMap.ItemMessage cmitemid, _ -> 
+                 let diagr = DiagramApp.update model.diagramApp (DiagramApp.UpdateColour _cmap)
+                 (model.logs, diagr)
+               
+               
+
+          
+          
           {model with colourMapApp = _cmap
-                      diagramApp   = _dapp}
+                      diagramApp   = _diagram
+                      logs         = _logs}
 
 
         

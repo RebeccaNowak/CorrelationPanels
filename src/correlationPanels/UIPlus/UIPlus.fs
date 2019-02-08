@@ -137,8 +137,9 @@
 
   [<DomainType>]
   type ColourMap = {
-    mappings : plist<ColourMapItem>
-    factor   : float
-    unit     : Unit
-    selected : option<CMItemId>
+    mappings    : plist<ColourMapItem>
+    dataToSvg   : float -> float
+    svgToData   : float -> float
+    unit        : Unit
+    selected    : option<CMItemId>
   }

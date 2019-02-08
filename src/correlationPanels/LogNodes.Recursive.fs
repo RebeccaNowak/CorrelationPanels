@@ -36,7 +36,7 @@ open CorrelationDrawing
               yield! collect' c
       }       
 
-    let rec collectAndFilterAll' (n : MLogNode) (f : MLogNode -> IMod<bool>) =
+    let rec collectAndFilterAll_M (n : MLogNode) (f : MLogNode -> IMod<bool>) =
       let filter' (lst: alist<MLogNode>) (f : MLogNode -> IMod<bool>) =
         alist {
           for el in lst do
@@ -53,10 +53,10 @@ open CorrelationDrawing
             yield! (filter' (AList.single n) f)
             let children = n.children
             for c in children do
-              yield! collectAndFilterAll' c f
+              yield! collectAndFilterAll_M c f
       }
 
-    let rec mapAndCollect' (n : MLogNode) (f : MLogNode -> 'a) =
+    let rec mapAndCollect_M (n : MLogNode) (f : MLogNode -> 'a) =
       alist {
         let! nr = AList.count n.children 
         match nr with
@@ -66,7 +66,7 @@ open CorrelationDrawing
             yield! f n
             let children = n.children
             for c in children do
-              yield! mapAndCollect' c f
+              yield! mapAndCollect_M c f
       }
 
     let rec mapAndCollect (n : LogNode) (f : LogNode -> 'a) =
@@ -130,7 +130,7 @@ open CorrelationDrawing
             | false ->
               updCurrentAndChildren ()
 
-    let rec filterAndCollect (n : LogNode) (f : LogNode -> bool) =
+    let rec filterAndCollect (f : LogNode -> bool) (n : LogNode) =
       match PList.count n.children, f n with
       | 0, true      -> [n]
       | 0, false     -> []
@@ -138,14 +138,14 @@ open CorrelationDrawing
         [n] @ 
           (n.children 
                 |> PList.toList
-                |> List.collect (fun (x : LogNode) -> filterAndCollect x f))
+                |> List.collect (fun (x : LogNode) -> filterAndCollect f x))
       | other, false -> 
         [] @  (n.children 
                 |> PList.toList
-                |> List.collect (fun (x : LogNode) -> filterAndCollect x f))
+                |> List.collect (fun (x : LogNode) -> filterAndCollect f x))
 
     let childrenWith (n : LogNode) (f : LogNode -> bool) =
-      filterAndCollect n f
+      filterAndCollect f n
 
     let rec hasChildrenWith (n : LogNode) (f : LogNode -> bool) =
       match PList.count n.children with
@@ -183,7 +183,7 @@ open CorrelationDrawing
 /////////////////////////////////////////////////////
 
     let angularChildren' (node : MLogNode) =
-       collectAndFilterAll' node 
+       collectAndFilterAll_M node 
          (fun n -> 
            Mod.map (fun (t : LogNodeType) -> 
                        t = LogNodeType.Angular) 
@@ -191,26 +191,26 @@ open CorrelationDrawing
          )
       
     let metricChildren' (node : MLogNode) =
-       collectAndFilterAll' node 
+       collectAndFilterAll_M node 
          (fun n -> 
            Mod.map (fun (t : LogNodeType) -> 
                      t = LogNodeType.Metric) 
                    n.nodeType
          )  
          
-    let defaultSizeXIfZero (model : LogNode) (defaultSizeX : float) =
-      let diz (node : LogNode) = 
-        match node with
-          | n when n.mainBody.dim.X = 0.0 -> 
-            let _n = LogNodes.Lens.svgWidth.Set(n, defaultSizeX)
-            LogNodes.Lens.hasAverageWidth.Set(_n, true)
-          | _ -> node
-      apply model diz
+    //let defaultSizeXIfZero (model : LogNode) (defaultSizeX : float) =
+    //  let diz (node : LogNode) = 
+    //    match node with
+    //      | n when n.mainBody.dim.X = 0.0 -> 
+    //        let _n = LogNodes.Lens.svgWidth.Set(n, defaultSizeX)
+    //        LogNodes.Lens.hasAverageWidth.Set(_n, true)
+    //      | _ -> node
+    //  apply model diz
 
-    let xRange (lst : plist<LogNode>) =
-      lst |> collectAll
-          |> List.map (fun (n : LogNode) -> n.mainBody.dim.X) //TODO only hier
-          |> List.max
+    //let xRange (lst : plist<LogNode>) =
+    //  lst |> collectAll
+    //      |> List.map (fun (n : LogNode) -> n.mainBody.dim.X) //TODO only hier
+    //      |> List.max
 
 
           
@@ -241,41 +241,41 @@ open CorrelationDrawing
         
           
 
-    let calcDimX (nodes : plist<LogNode>)
-                 (xAxis : SemanticId) 
-                 (xAxisScaleFactor : float) 
-                 (annoApp : AnnotationApp) =
-      let calcDimX (model : LogNode)          (xAxis : SemanticId) 
-                   (xAxisScaleFactor : float) (annoApp : AnnotationApp) = 
+    //let calcDimX (nodes : plist<LogNode>)
+    //             (xAxis : SemanticId) 
+    //             (xAxisScaleFactor : float) 
+    //             (annoApp : AnnotationApp) =
+    //  let calcDimX (model : LogNode)          (xAxis : SemanticId) 
+    //               (xAxisScaleFactor : float) (annoApp : AnnotationApp) = 
         
-        let metricNodes = 
-          childrenWith model (fun n -> 
-                                  let sId = LogNodes.Helper.semanticIdOrInvalid n annoApp
-                                  sId = xAxis
-                              )
-        let metricValues = metricNodes |> List.map (fun n -> calcMetricValue n annoApp)
-        let sizeX = (metricValues |> DS.List.filterNone |> DS.List.maxOrZero) * xAxisScaleFactor
-        {model with 
-          mainBody = 
-            {model.mainBody with dim = {width = sizeX; height = model.mainBody.dim.height}}
-        }    
+    //    let metricNodes = 
+    //      childrenWith model (fun n -> 
+    //                              let sId = LogNodes.Helper.semanticIdOrInvalid n annoApp
+    //                              sId = xAxis
+    //                          )
+    //    let metricValues = metricNodes |> List.map (fun n -> calcMetricValue n annoApp)
+    //    let sizeX = (metricValues |> DS.List.filterNone |> DS.List.maxOrZero) * xAxisScaleFactor
+    //    {model with 
+    //      mainBody = 
+    //        {model.mainBody with dim = {width = sizeX; height = model.mainBody.dim.height}}
+    //    }    
 
-      let updNodes = 
-        nodes 
-          |> applyAll (fun n -> (calcDimX n xAxis xAxisScaleFactor annoApp))
+    //  let updNodes = 
+    //    nodes 
+    //      |> applyAll (fun n -> (calcDimX n xAxis xAxisScaleFactor annoApp))
 
-      // nodes without grainsize/Annotations of x-Axis semantic type get avg
-      let sizes = 
-        updNodes
-          |> PList.filter (fun n -> n.mainBody.dim.X <> 0.0) 
-          |> PList.map (fun (n : LogNode) -> n.mainBody.dim.X)
+    //  // nodes without grainsize/Annotations of x-Axis semantic type get avg
+    //  let sizes = 
+    //    updNodes
+    //      |> PList.filter (fun n -> n.mainBody.dim.X <> 0.0) 
+    //      |> PList.map (fun (n : LogNode) -> n.mainBody.dim.X)
 
-      if sizes.Count = 0 then Debug.warn "calc svg x size failed" //TODO if list empty //TODO bug/refactor
-      let avg = 
-        match (DS.PList.averageOrZero sizes) with
-          | n when n = 0.0 -> 10.0 //TODO hardcoded size if no grain size annotations in log
-          | n -> n
-      let updNodes =
-        updNodes |> PList.map (fun n -> defaultSizeXIfZero n avg)
-      (updNodes, avg)
+    //  if sizes.Count = 0 then Debug.warn "calc svg x size failed" //TODO if list empty //TODO bug/refactor
+    //  let avg = 
+    //    match (DS.PList.averageOrZero sizes) with
+    //      | n when n = 0.0 -> 10.0 //TODO hardcoded size if no grain size annotations in log
+    //      | n -> n
+    //  let updNodes =
+    //    updNodes |> PList.map (fun n -> defaultSizeXIfZero n avg)
+    //  (updNodes, avg)
 

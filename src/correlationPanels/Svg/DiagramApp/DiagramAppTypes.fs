@@ -5,7 +5,7 @@ open Aardvark.Base.Incremental
 open Svgplus
 
 open Svgplus.RectangleType
-open Svgplus.RS
+open Svgplus.RectangleStackTypes
 open Svgplus.CA
 open Svgplus
 open Svgplus.HeaderType
@@ -14,8 +14,8 @@ open UIPlus
 
   [<DomainType>]
   type DiagramApp = {
-    rectangleStacks   : hmap<RS.RectangleStackId, RS.RectangleStack>
-    order             : plist<RS.RectangleStackId>
+    rectangleStacks   : hmap<RectangleStackTypes.RectangleStackId, RectangleStackTypes.RectangleStack>
+    order             : plist<RectangleStackTypes.RectangleStackId>
     connectionApp     : ConnectionApp
     rstackGap         : float
     marginLeft        : float
