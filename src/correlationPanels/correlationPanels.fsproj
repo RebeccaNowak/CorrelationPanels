@@ -21,6 +21,7 @@
     <EmbeddedResource Remove="NewFolder1\**" />
   </ItemGroup>
   <ItemGroup>
+	<Compile Include="NewFolder\tmp.fs" />
 	<Compile Include="DataStructures\Seq.fs" />
 	<Compile Include="DataStructures\List.fs" />
 	<Compile Include="DataStructures\PList.fs" />
@@ -118,7 +119,6 @@
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="NewFolder\" />
     <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

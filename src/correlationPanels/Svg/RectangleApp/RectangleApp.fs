@@ -26,7 +26,7 @@
       | SWButtonMessage of Button.Action
       | SEButtonMessage of Button.Action
       | UpdateColour    of ColourMap
-      | SetWidth        of float
+      | SetWidth        of (float * ColourMap)
 
     module Lens =
       let width = 
@@ -147,7 +147,7 @@
         colour        = {c = C4b.Gray}
         borderColour  = C4b.Black
         isToggled     = false
-        colChange     = V3i (30,30,30)
+        colChange     = V3i (0,0,0)
         isHovering    = false
         dottedBorder  = true
         draw          = false
@@ -168,6 +168,12 @@
       _new
 
     let update (model : Rectangle) (action : Action) =
+      let updateColour cmap r = 
+        let opt = ColourMap.svgValueToColourPicker cmap r.dim.width 
+        match opt with
+          | Some c -> {r with colour = c}
+          | None   -> r
+
       match action with
         | Select  id   -> 
           match model.isToggled with
@@ -197,13 +203,13 @@
         | NEButtonMessage m -> {model with northEastButton = Button.update model.northEastButton m}
         | SWButtonMessage m -> {model with southWestButton = Button.update model.southWestButton m}
         | SEButtonMessage m -> {model with southEastButton = Button.update model.southEastButton m}
-        | UpdateColour cmap ->
-          let opt = ColourMap.svgValueToColourPicker cmap model.dim.width 
-          match opt with
-            | Some c -> {model with colour = c}
-            | None   -> model
-        | SetWidth w        -> 
-          Lens.width.Set (model, w)
+        | UpdateColour cmap -> updateColour cmap model
+
+        | SetWidth (w, cmap)        -> 
+          let _model = Lens.width.Set (model, w)
+          updateColour cmap _model
+
+
         
 
     let view (model : MRectangle) =

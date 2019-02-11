@@ -113,12 +113,14 @@
   [<DomainType>]
   type ColourMapItem = {
     [<NonIncremental>]
-    id        : CMItemId
-
-    upper     : float
-    upperStr  : string
-    colour    : ColorInput
-    label   : string
+    id                  : CMItemId
+                       
+    upper               : float
+    defaultMiddle       : float
+    lower               : float
+    upperStr            : string
+    colour              : ColorInput
+    label               : string
   }
 
   type Unit =

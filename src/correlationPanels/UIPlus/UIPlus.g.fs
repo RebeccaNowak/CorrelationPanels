@@ -131,12 +131,16 @@ module Mutable =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<UIPlus.ColourMapItem> = Aardvark.Base.Incremental.EqModRef<UIPlus.ColourMapItem>(__initial) :> Aardvark.Base.Incremental.IModRef<UIPlus.ColourMapItem>
         let _upper = ResetMod.Create(__initial.upper)
+        let _defaultMiddle = ResetMod.Create(__initial.defaultMiddle)
+        let _lower = ResetMod.Create(__initial.lower)
         let _upperStr = ResetMod.Create(__initial.upperStr)
         let _colour = Aardvark.UI.Mutable.MColorInput.Create(__initial.colour)
         let _label = ResetMod.Create(__initial.label)
         
         member x.id = __current.Value.id
         member x.upper = _upper :> IMod<_>
+        member x.defaultMiddle = _defaultMiddle :> IMod<_>
+        member x.lower = _lower :> IMod<_>
         member x.upperStr = _upperStr :> IMod<_>
         member x.colour = _colour
         member x.label = _label :> IMod<_>
@@ -147,6 +151,8 @@ module Mutable =
                 __current.Value <- v
                 
                 ResetMod.Update(_upper,v.upper)
+                ResetMod.Update(_defaultMiddle,v.defaultMiddle)
+                ResetMod.Update(_lower,v.lower)
                 ResetMod.Update(_upperStr,v.upperStr)
                 Aardvark.UI.Mutable.MColorInput.Update(_colour, v.colour)
                 ResetMod.Update(_label,v.label)
@@ -177,6 +183,18 @@ module Mutable =
                     override x.Get(r) = r.upper
                     override x.Set(r,v) = { r with upper = v }
                     override x.Update(r,f) = { r with upper = f r.upper }
+                }
+            let defaultMiddle =
+                { new Lens<UIPlus.ColourMapItem, System.Double>() with
+                    override x.Get(r) = r.defaultMiddle
+                    override x.Set(r,v) = { r with defaultMiddle = v }
+                    override x.Update(r,f) = { r with defaultMiddle = f r.defaultMiddle }
+                }
+            let lower =
+                { new Lens<UIPlus.ColourMapItem, System.Double>() with
+                    override x.Get(r) = r.lower
+                    override x.Set(r,v) = { r with lower = v }
+                    override x.Update(r,f) = { r with lower = f r.lower }
                 }
             let upperStr =
                 { new Lens<UIPlus.ColourMapItem, System.String>() with

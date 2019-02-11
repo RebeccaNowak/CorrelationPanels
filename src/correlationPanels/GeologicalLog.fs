@@ -210,7 +210,7 @@
           let opt = ColourMap.svgValueToColourPicker colourMap width
           match opt with
             | Some c -> c
-            | None -> {ColorPicker.init with c = C4b.White}
+            | None -> {ColorPicker.init with c = C4b.Black}
 
         let height = (LogNodes.Helper.elevationRange n).range * yToSvg
         let rectangle =

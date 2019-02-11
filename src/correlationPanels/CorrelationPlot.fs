@@ -43,8 +43,8 @@
     //  float (index * 10 + index * 250)
 
     let initial : CorrelationPlot  = 
-      let xToSvg              = fun x -> Math.Log(x, 2.0) * Math.Pow(10.0, 4.0)
-      let svgToX              = fun x -> Math.Pow(x, 2.0) * Math.Pow(10.0, -4.0)
+      let xToSvg              = fun x -> (21.0 + Math.Log(x,2.0)) * 10.0
+      let svgToX              = fun x -> (Math.Pow (2.0, (x * 0.1 - 21.0)))
       let yToSvg              = 25.0
       let defaultWidth        = 20.0
 
@@ -305,16 +305,17 @@
                     let _optn = tryFindNodeFromRectangleId model selsid selrid
                     match _optn with
                       | Some (n, log) ->
-                        let _m = 
+                        let m = 
                               (Log.LogNodeMessage 
-                                (n.id, LogNodes.RectangleMessage (Rectangle.SetWidth w))
+                                (n.id, LogNodes.RectangleMessage (Rectangle.SetWidth (w, _cmap)))
                               )
-                        let logs  = updateLog log.id _m model.logs
+                        let _logs  = updateLog log.id m model.logs
                         let _diagrMessage = 
                           DiagramApp.RectStackMessage
-                            (selsid, RectangleStack.RectangleMessage (selrid, Rectangle.SetWidth w))
+                            (selsid, RectangleStack.RectangleMessage (selrid, Rectangle.SetWidth (w, _cmap)))
                         let diagr = DiagramApp.update model.diagramApp _diagrMessage
-                        (logs, diagr)
+
+                        (_logs, diagr)
                       | None -> (model.logs, model.diagramApp)
                   | None   -> (model.logs, model.diagramApp)
                | ColourMap.SelectItem cmitemid, false -> (model.logs, model.diagramApp)

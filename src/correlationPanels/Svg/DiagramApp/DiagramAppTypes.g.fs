@@ -20,9 +20,9 @@ module Mutable =
         let _marginLeft = ResetMod.Create(__initial.marginLeft)
         let _marginTop = ResetMod.Create(__initial.marginTop)
         let _selectedRectangle = MOption.Create(__initial.selectedRectangle, (fun v -> let (item0,item1) = v in (ResetMod.Create(item0),ResetMod.Create(item1))), (fun (m,v) -> let (item_v0,item_v1) = v
-                                                                                                                                                                                let (item_m0,item_m1) = m
-                                                                                                                                                                                ResetMod.Update(item_m0,item_v0)
-                                                                                                                                                                                ResetMod.Update(item_m1,item_v1)), (fun v -> let (v_item0,v_item1) = v in (v_item0 :> IMod<_>,v_item1 :> IMod<_>)))
+let (item_m0,item_m1) = m
+ResetMod.Update(item_m0,item_v0)
+ResetMod.Update(item_m1,item_v1)), (fun v -> let (v_item0,v_item1) = v in (v_item0 :> IMod<_>,v_item1 :> IMod<_>)))
         
         member x.rectangleStacks = _rectangleStacks :> amap<_,_>
         member x.order = _order :> alist<_>
