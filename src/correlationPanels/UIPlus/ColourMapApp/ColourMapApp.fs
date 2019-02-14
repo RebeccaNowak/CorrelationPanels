@@ -117,6 +117,9 @@ module ColourMap =
         let _mappings = 
           PList.map upd model.mappings
         {model with mappings = _mappings}
+      | SelectItem id ->
+        Log.error "selection of id: %A not implemented" id
+        model
       
 
   let valueToColourPicker' (model : ColourMap) (value : float) =
