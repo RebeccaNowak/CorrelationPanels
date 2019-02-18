@@ -83,11 +83,10 @@
       HMap.tryFind logId model.logs
 
     let tryFindNodeFromRectangleId (model : CorrelationPlot) 
-                                   (logId : RectangleStackId) 
-                                   (rId   : RectangleId) =
-      let log = tryFindLog model logId
+                                   (selRect : SelectedRectangle) =
+      let log = tryFindLog model selRect.stack
       Option.bind (fun lo -> 
-                    let on = Log.findNodeFromRectangleId lo rId
+                    let on = Log.findNodeFromRectangleId lo selRect.rectangle
                     Option.map (fun n -> (n, lo)) on
                   ) log
 
@@ -286,22 +285,22 @@
 
         | ColourMapMessage m -> 
           let _cmap = ColourMap.update model.colourMapApp m
-          let optselid = model.diagramApp.selectedRectangle //WIP
+          let optselid = model.diagramApp.selectedRectangle 
           let (_logs, _diagram) = 
             match m, optselid.IsSome with
               | ColourMap.SelectItem cmitemid, true ->
-                let (selrid, selsid) = optselid.Value
+                let selRect = optselid.Value
                 let _grainsize =
                   let item = ColourMap.tryfindItem model.colourMapApp cmitemid
                   match item with
                     | Some it -> it.upper - (abs (it.upper * 0.5))
                     | None    -> 1.0
                 let optsel = 
-                  DiagramApp.tryFindRectangle model.diagramApp selsid selrid
+                  DiagramApp.tryFindRectangle model.diagramApp selRect
                 match optsel with
                   | Some r ->
                     let w = model.xToSvg _grainsize
-                    let _optn = tryFindNodeFromRectangleId model selsid selrid
+                    let _optn = tryFindNodeFromRectangleId model selRect
                     match _optn with
                       | Some (n, log) ->
                         let m = 
@@ -311,7 +310,8 @@
                         let _logs  = updateLog log.id m model.logs
                         let _diagrMessage = 
                           DiagramApp.RectStackMessage
-                            (selsid, RectangleStack.RectangleMessage (selrid, Rectangle.SetWidth (w, _cmap)))
+                            (optselid.Value.stack, RectangleStack.RectangleMessage 
+                              (optselid.Value.rectangle, Rectangle.SetWidth (w, _cmap)))
                         let diagr = DiagramApp.update model.diagramApp _diagrMessage
 
                         (_logs, diagr)

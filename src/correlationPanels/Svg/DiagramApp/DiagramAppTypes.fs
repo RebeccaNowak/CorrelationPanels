@@ -11,6 +11,11 @@ open Svgplus
 open Svgplus.HeaderType
 open UIPlus
 
+  type SelectedRectangle = {
+    rectangle : RectangleId
+    stack     : RectangleStackId
+  }
+
 
   [<DomainType>]
   type DiagramApp = {
@@ -20,7 +25,7 @@ open UIPlus
     rstackGap         : float
     marginLeft        : float
     marginTop         : float
-    selectedRectangle : option<RectangleId * RectangleStackId>
+    selectedRectangle : option<SelectedRectangle>
   }
 
   

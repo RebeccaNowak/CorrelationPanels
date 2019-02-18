@@ -133,10 +133,9 @@ open UIPlus
         |> List.tryHead
       
     let tryFindRectangle  (model : DiagramApp) 
-                          (sid : RectangleStackId) 
-                          (rid : RectangleId) =
-      let optstack = HMap.tryFind sid model.rectangleStacks
-      Option.bind (fun s -> (RectangleStack.tryfindRectangle s rid)) optstack
+                          (selRect : SelectedRectangle) =
+      let optstack = HMap.tryFind selRect.stack model.rectangleStacks
+      Option.bind (fun s -> (RectangleStack.tryfindRectangle s selRect.rectangle)) optstack
 
      
 
@@ -179,24 +178,26 @@ open UIPlus
 
         | RectStackMessage msg -> 
           let (sid, m) = msg
-          let (_sel, rstacks) = 
+          let (_sel, _stacks) = 
             match m with 
               | RectangleStack.RectangleMessage (rid, m) -> 
                 match m with
                   | Rectangle.Select rid ->
                     match model.selectedRectangle with
-                      | Some (oldr, olds) -> 
+                      | Some selr -> 
+                        let oldr = selr.rectangle
+                        let olds = selr.stack
                         let _m = RectangleStack.RectangleMessage (oldr, (Rectangle.Deselect oldr))
                         let rstacks = updateRStackFromId olds _m
-                        (Some (rid, sid), rstacks)
+                        (Some {rectangle = rid; stack = sid}, rstacks)
                       | None ->
-                        (Some (rid, sid), model.rectangleStacks)
+                        (Some {rectangle = rid; stack = sid}, model.rectangleStacks)
                     
-                  | _ -> 
-                    (model.selectedRectangle, model.rectangleStacks)
+                  | _ -> (model.selectedRectangle, model.rectangleStacks)
+                    
               | _ -> (model.selectedRectangle, model.rectangleStacks)
 
-          let _rstacks = rstacks 
+          let _rstacks = _stacks 
                           |> HMap.update sid (fun x -> updateRStack x m)
           let _cons  = updateConnections model msg
           {model with rectangleStacks   = _rstacks

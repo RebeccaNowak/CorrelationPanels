@@ -1,4 +1,4 @@
-8DF726C5CE84E7AA299587191B176695
+2BA283101F115732305C13EC98F2FEE3
 DataStructures\Seq.fs|false|5248536631609827749|EoSpheTA2+uuAghFRrj75A==|false
 DataStructures\List.fs|false|5248536631609733333|QsA0mopSVd2yY9PCRHEfwg==|false
 DataStructures\PList.fs|false|5248540989971082258|Y5uir4yazDV/UwYaxkpaZQ==|false
@@ -29,8 +29,8 @@ Svg\Svg.Attributes.fs|false|5248536631610737348|Hii3Srs/nqMZ9NMUpGrrfQ==|false
 Svg\Svg.Paths.fs|false|5248477693741059511|u9k3fnF6RTZkT9uzeTtUuQ==|false
 Svg\Svg.Base.fs|false|5248536631610777256|hfRFvnsRDrx7HknANnyuiA==|false
 Svg\Svg.Incremental.fs|false|5248536631610806329|jmQQpj8Pows2LUVK13wNZA==|false
-Svg\RoseDiagramApp\RoseDiagramModel.fs|true|5248546922629668969|2ljoOxcE0NLgO1QXocnYwA==|false
-Svg\RoseDiagramApp\Svg.RoseDiagramApp.fs|false|5248546922151582686|A48GC/wUJRiW60ZvRJDfRQ==|false
+Svg\RoseDiagram\RoseDiagramModel.fs|true|5248546922629668969|2ljoOxcE0NLgO1QXocnYwA==|false
+Svg\RoseDiagram\RoseDiagram.fs|false|5248546922151582686|A48GC/wUJRiW60ZvRJDfRQ==|false
 Svg\SvgButtonApp\Svg.ButtonApp.fs|false|5248536631610839026|wDr+LBiujMtbtNMbLbpr9w==|false
 Svg\ConnectionApp\ConnectionAppTypes.fs|true|5248536631610507460|XDzLWoU9hapbAykvd0Mfww==|false
 Svg\ConnectionApp\Connection.fs|false|5248536631610432873|YHtKCjwpn623epPBTeQPNA==|false
@@ -41,8 +41,8 @@ Svg\HeaderApp\HeaderType.fs|true|5248536631610616391|RxXTTIUUG002ZqQhOzUPQQ==|fa
 Svg\HeaderApp\HeaderApp.fs|false|5248536631610588794|fwaIur3ejq790W2AS+K0bA==|false
 Svg\RStackApp\RStackType.fs|true|5248540989971471216|Tsq34jmhSueUxVb1nwZdoQ==|false
 Svg\RStackApp\RStackApp.fs|false|5248540989971431582|tDrkD/9EjFZbGMJBlRqNig==|false
-Svg\DiagramApp\DiagramAppTypes.fs|true|5248540989971391424|42XVcCnZUWSRCmaf7fu1AA==|false
-Svg\DiagramApp\DiagramApp.fs|false|5248540989971291973|dtNRGvrCKK/px1FHXpaDXA==|false
+Svg\DiagramApp\DiagramAppTypes.fs|true|5248546932682653723|ShmBbhOCmOFzY+J00u7xuA==|false
+Svg\DiagramApp\DiagramApp.fs|false|5248546940449929528|D5eRTC2MTxkq4GmCIv/lxg==|false
 Debug.fs|false|5248465593201933071|73GovZhzzghLJCS3fALywg==|false
 tmpAList.fs|false|5248427726003343119|Gcsf+aAKTmorl2FE0rRuVw==|false
 V2d.fs|false|5248417274498195225|LZSb21YEbzP7A7XJ/MzuBQ==|false
@@ -73,7 +73,7 @@ LogNodes.Debug.fs|false|5248546926488627122|3Go4zYTZE9zpQ4h+c3fi+Q==|false
 LogNodes.View.fs|false|5248540989971251798|TLy++VfcReuLo7BquIZebg==|false
 GeologicalLog.fs|false|5248546929586892294|CsW4O1v5nptCi1je0NvOUQ==|false
 Correlation.fs|false|5248488906114104517|GFMPyjOmMX7iP7n8Estnsg==|false
-CorrelationPlot.fs|false|5248546928417566872|rUENmo5HvNBl+cBISSh3sQ==|false
+CorrelationPlot.fs|false|5248546941475584708|HchE+agsFLEMLTCZXbxn1A==|false
 CorrelationPlotApp.fs|false|5248546926488036862|KFHKoRBldPjlsjOHxQanNg==|false
 CorrelationDrawing.fs|false|5248546926487995453|d6pDxmaXSBO6tmihszzllg==|false
 CorrelationDrawingApp.fs|false|5248366238662343948|WZmIeG6TRH9ei+LxVFO6+A==|false
