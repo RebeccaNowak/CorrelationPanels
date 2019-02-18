@@ -560,9 +560,9 @@ module Mutable =
                 }
     
     
-    type MAnnotationApp(__initial : CorrelationDrawing.AnnotationApp) =
+    type MAnnotationModel(__initial : CorrelationDrawing.AnnotationModel) =
         inherit obj()
-        let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.AnnotationApp> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.AnnotationApp>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.AnnotationApp>
+        let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.AnnotationModel> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.AnnotationModel>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.AnnotationModel>
         let _annotations = MMap.Create(__initial.annotations, (fun v -> MAnnotation.Create(v)), (fun (m,v) -> MAnnotation.Update(m, v)), (fun v -> v))
         let _selectedAnnotation = MOption.Create(__initial.selectedAnnotation)
         
@@ -570,7 +570,7 @@ module Mutable =
         member x.selectedAnnotation = _selectedAnnotation :> IMod<_>
         
         member x.Current = __current :> IMod<_>
-        member x.Update(v : CorrelationDrawing.AnnotationApp) =
+        member x.Update(v : CorrelationDrawing.AnnotationModel) =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
@@ -578,28 +578,28 @@ module Mutable =
                 MOption.Update(_selectedAnnotation, v.selectedAnnotation)
                 
         
-        static member Create(__initial : CorrelationDrawing.AnnotationApp) : MAnnotationApp = MAnnotationApp(__initial)
-        static member Update(m : MAnnotationApp, v : CorrelationDrawing.AnnotationApp) = m.Update(v)
+        static member Create(__initial : CorrelationDrawing.AnnotationModel) : MAnnotationModel = MAnnotationModel(__initial)
+        static member Update(m : MAnnotationModel, v : CorrelationDrawing.AnnotationModel) = m.Update(v)
         
         override x.ToString() = __current.Value.ToString()
         member x.AsString = sprintf "%A" __current.Value
-        interface IUpdatable<CorrelationDrawing.AnnotationApp> with
+        interface IUpdatable<CorrelationDrawing.AnnotationModel> with
             member x.Update v = x.Update v
     
     
     
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module AnnotationApp =
+    module AnnotationModel =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
             let annotations =
-                { new Lens<CorrelationDrawing.AnnotationApp, Aardvark.Base.hmap<CorrelationDrawing.AnnotationId,CorrelationDrawing.Annotation>>() with
+                { new Lens<CorrelationDrawing.AnnotationModel, Aardvark.Base.hmap<CorrelationDrawing.AnnotationId,CorrelationDrawing.Annotation>>() with
                     override x.Get(r) = r.annotations
                     override x.Set(r,v) = { r with annotations = v }
                     override x.Update(r,f) = { r with annotations = f r.annotations }
                 }
             let selectedAnnotation =
-                { new Lens<CorrelationDrawing.AnnotationApp, Microsoft.FSharp.Core.Option<CorrelationDrawing.AnnotationId>>() with
+                { new Lens<CorrelationDrawing.AnnotationModel, Microsoft.FSharp.Core.Option<CorrelationDrawing.AnnotationId>>() with
                     override x.Get(r) = r.selectedAnnotation
                     override x.Set(r,v) = { r with selectedAnnotation = v }
                     override x.Update(r,f) = { r with selectedAnnotation = f r.selectedAnnotation }
@@ -1493,9 +1493,9 @@ module Mutable =
                 }
     
     
-    type MCorrelationPlotApp(__initial : CorrelationDrawing.CorrelationPlotApp) =
+    type MCorrelationPlotModel(__initial : CorrelationDrawing.CorrelationPlotModel) =
         inherit obj()
-        let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlotApp> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.CorrelationPlotApp>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlotApp>
+        let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlotModel> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.CorrelationPlotModel>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlotModel>
         let _correlationPlot = MCorrelationPlot.Create(__initial.correlationPlot)
         let _semanticApp = MSemanticApp.Create(__initial.semanticApp)
         let _zooming = ResetMod.Create(__initial.zooming)
@@ -1509,7 +1509,7 @@ module Mutable =
         member x.lastMousePos = _lastMousePos :> IMod<_>
         
         member x.Current = __current :> IMod<_>
-        member x.Update(v : CorrelationDrawing.CorrelationPlotApp) =
+        member x.Update(v : CorrelationDrawing.CorrelationPlotModel) =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
@@ -1520,46 +1520,46 @@ module Mutable =
                 ResetMod.Update(_lastMousePos,v.lastMousePos)
                 
         
-        static member Create(__initial : CorrelationDrawing.CorrelationPlotApp) : MCorrelationPlotApp = MCorrelationPlotApp(__initial)
-        static member Update(m : MCorrelationPlotApp, v : CorrelationDrawing.CorrelationPlotApp) = m.Update(v)
+        static member Create(__initial : CorrelationDrawing.CorrelationPlotModel) : MCorrelationPlotModel = MCorrelationPlotModel(__initial)
+        static member Update(m : MCorrelationPlotModel, v : CorrelationDrawing.CorrelationPlotModel) = m.Update(v)
         
         override x.ToString() = __current.Value.ToString()
         member x.AsString = sprintf "%A" __current.Value
-        interface IUpdatable<CorrelationDrawing.CorrelationPlotApp> with
+        interface IUpdatable<CorrelationDrawing.CorrelationPlotModel> with
             member x.Update v = x.Update v
     
     
     
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module CorrelationPlotApp =
+    module CorrelationPlotModel =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
             let correlationPlot =
-                { new Lens<CorrelationDrawing.CorrelationPlotApp, CorrelationDrawing.CorrelationPlot>() with
+                { new Lens<CorrelationDrawing.CorrelationPlotModel, CorrelationDrawing.CorrelationPlot>() with
                     override x.Get(r) = r.correlationPlot
                     override x.Set(r,v) = { r with correlationPlot = v }
                     override x.Update(r,f) = { r with correlationPlot = f r.correlationPlot }
                 }
             let semanticApp =
-                { new Lens<CorrelationDrawing.CorrelationPlotApp, CorrelationDrawing.SemanticApp>() with
+                { new Lens<CorrelationDrawing.CorrelationPlotModel, CorrelationDrawing.SemanticApp>() with
                     override x.Get(r) = r.semanticApp
                     override x.Set(r,v) = { r with semanticApp = v }
                     override x.Update(r,f) = { r with semanticApp = f r.semanticApp }
                 }
             let zooming =
-                { new Lens<CorrelationDrawing.CorrelationPlotApp, System.Boolean>() with
+                { new Lens<CorrelationDrawing.CorrelationPlotModel, System.Boolean>() with
                     override x.Get(r) = r.zooming
                     override x.Set(r,v) = { r with zooming = v }
                     override x.Update(r,f) = { r with zooming = f r.zooming }
                 }
             let dragging =
-                { new Lens<CorrelationDrawing.CorrelationPlotApp, System.Boolean>() with
+                { new Lens<CorrelationDrawing.CorrelationPlotModel, System.Boolean>() with
                     override x.Get(r) = r.dragging
                     override x.Set(r,v) = { r with dragging = v }
                     override x.Update(r,f) = { r with dragging = f r.dragging }
                 }
             let lastMousePos =
-                { new Lens<CorrelationDrawing.CorrelationPlotApp, Aardvark.Base.V2d>() with
+                { new Lens<CorrelationDrawing.CorrelationPlotModel, Aardvark.Base.V2d>() with
                     override x.Get(r) = r.lastMousePos
                     override x.Set(r,v) = { r with lastMousePos = v }
                     override x.Update(r,f) = { r with lastMousePos = f r.lastMousePos }
@@ -1651,9 +1651,9 @@ module Mutable =
         let _rendering = MRenderingParameters.Create(__initial.rendering)
         let _dockConfig = ResetMod.Create(__initial.dockConfig)
         let _drawingApp = MCorrelationDrawingModel.Create(__initial.drawingApp)
-        let _annotationApp = MAnnotationApp.Create(__initial.annotationApp)
+        let _annotationApp = MAnnotationModel.Create(__initial.annotationApp)
         let _semanticApp = MSemanticApp.Create(__initial.semanticApp)
-        let _corrPlotApp = MCorrelationPlotApp.Create(__initial.corrPlotApp)
+        let _corrPlot = MCorrelationPlotModel.Create(__initial.corrPlot)
         
         member x.past = __current.Value.past
         member x.saveIndices = _saveIndices :> IMod<_>
@@ -1668,7 +1668,7 @@ module Mutable =
         member x.drawingApp = _drawingApp
         member x.annotationApp = _annotationApp
         member x.semanticApp = _semanticApp
-        member x.corrPlotApp = _corrPlotApp
+        member x.corrPlot = _corrPlot
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : CorrelationDrawing.Pages) =
@@ -1684,9 +1684,9 @@ module Mutable =
                 MRenderingParameters.Update(_rendering, v.rendering)
                 ResetMod.Update(_dockConfig,v.dockConfig)
                 MCorrelationDrawingModel.Update(_drawingApp, v.drawingApp)
-                MAnnotationApp.Update(_annotationApp, v.annotationApp)
+                MAnnotationModel.Update(_annotationApp, v.annotationApp)
                 MSemanticApp.Update(_semanticApp, v.semanticApp)
-                MCorrelationPlotApp.Update(_corrPlotApp, v.corrPlotApp)
+                MCorrelationPlotModel.Update(_corrPlot, v.corrPlot)
                 
         
         static member Create(__initial : CorrelationDrawing.Pages) : MPages = MPages(__initial)
@@ -1770,7 +1770,7 @@ module Mutable =
                     override x.Update(r,f) = { r with drawingApp = f r.drawingApp }
                 }
             let annotationApp =
-                { new Lens<CorrelationDrawing.Pages, CorrelationDrawing.AnnotationApp>() with
+                { new Lens<CorrelationDrawing.Pages, CorrelationDrawing.AnnotationModel>() with
                     override x.Get(r) = r.annotationApp
                     override x.Set(r,v) = { r with annotationApp = v }
                     override x.Update(r,f) = { r with annotationApp = f r.annotationApp }
@@ -1781,9 +1781,9 @@ module Mutable =
                     override x.Set(r,v) = { r with semanticApp = v }
                     override x.Update(r,f) = { r with semanticApp = f r.semanticApp }
                 }
-            let corrPlotApp =
-                { new Lens<CorrelationDrawing.Pages, CorrelationDrawing.CorrelationPlotApp>() with
-                    override x.Get(r) = r.corrPlotApp
-                    override x.Set(r,v) = { r with corrPlotApp = v }
-                    override x.Update(r,f) = { r with corrPlotApp = f r.corrPlotApp }
+            let corrPlot =
+                { new Lens<CorrelationDrawing.Pages, CorrelationDrawing.CorrelationPlotModel>() with
+                    override x.Get(r) = r.corrPlot
+                    override x.Set(r,v) = { r with corrPlot = v }
+                    override x.Update(r,f) = { r with corrPlot = f r.corrPlot }
                 }

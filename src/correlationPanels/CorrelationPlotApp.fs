@@ -20,7 +20,7 @@
     let defaultZoomFactor = 1.0
     let defaultOffset     = V2d.OO
 
-    let initial : CorrelationPlotApp  = 
+    let initial : CorrelationPlotModel  = 
       {
         correlationPlot     = CorrelationPlot.initial
         semanticApp         = SemanticApp.initial
@@ -29,8 +29,8 @@
         lastMousePos        = V2d.OO
       }
 
-    let update (annoApp : AnnotationApp)
-               (model : CorrelationPlotApp)
+    let update (annoApp : AnnotationModel)
+               (model : CorrelationPlotModel)
                (action : Action) = 
                
       match action with
@@ -114,7 +114,7 @@
         //  {model with correlationPlot = CorrelationPlot.update annoApp model.correlationPlot (m |> CorrelationPlot.LogAxisAppMessage)} //TODO refactor
 
 
-    let viewSvg (annoApp : MAnnotationApp) (model : MCorrelationPlotApp) =
+    let viewSvg (annoApp : MAnnotationModel) (model : MCorrelationPlotModel) =
      
       //let menu = 
       //    let axisSel = ((LogAxisApp.view model.correlationPlot.logAxisApp) |> AList.map (UI.map AxisMessage))
@@ -146,8 +146,8 @@
 
 
 
-    let view  (model    : MCorrelationPlotApp) 
-              (annoApp  : MAnnotationApp) 
+    let view  (model    : MCorrelationPlotModel) 
+              (annoApp  : MAnnotationModel) 
               (semApp   : MSemanticApp) =
 
 
@@ -172,10 +172,10 @@
 
 
 
-    let threads (model : CorrelationPlotApp) =
+    let threads (model : CorrelationPlotModel) =
       CorrelationPlot.threads model.correlationPlot
         
-    let app (annoApp : MAnnotationApp) (mAnnoApp : AnnotationApp) : App<CorrelationPlotApp,MCorrelationPlotApp,Action> =
+    let app (annoApp : MAnnotationModel) (mAnnoApp : AnnotationModel) : App<CorrelationPlotModel,MCorrelationPlotModel,Action> =
           {
               unpersist = Unpersist.instance
               threads = threads

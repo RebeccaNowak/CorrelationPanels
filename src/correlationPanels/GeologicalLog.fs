@@ -83,7 +83,7 @@
 
       let rec generateLevel (logId          : RectangleStackId)
                             (selectedPoints : hmap<AnnotationId, V3d>) 
-                            (annoApp        : AnnotationApp)
+                            (annoApp        : AnnotationModel)
                             (semApp         : SemanticApp) 
                             (lowerBorder    : Border) //TODO could pass point and anno
                             (upperBorder    : Border) =
@@ -176,7 +176,7 @@
     ///////////////////////////////////////////////////// GENERATE ///////////////////////////////////////////////////////////////////////
     let initial      (selectedPoints  : hmap<AnnotationId, V3d>) 
                      (semApp          : SemanticApp)
-                     (annoApp         : AnnotationApp)
+                     (annoApp         : AnnotationModel)
                      (xToSvg          : float -> float)
                      (yToSvg          : float)
                      (defaultWidth    : float)
@@ -278,7 +278,7 @@
 
       let listView (model       : MGeologicalLog) 
                    (semApp      : MSemanticApp)
-                   (annoApp     : MAnnotationApp)
+                   (annoApp     : MAnnotationModel)
                    (rowOnClick  : 'msg) 
                    (mapper      : Action -> 'msg)
                    (stack       : MRectangleStack) =

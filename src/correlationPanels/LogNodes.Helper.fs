@@ -20,7 +20,7 @@ open CorrelationDrawing
     let annoIdOrInvalid (n : LogNode) =
       Option.defaultValue AnnotationId.invalid n.annotation 
 
-    let semanticIdOrInvalid (n : LogNode) ( annoApp : AnnotationApp) =
+    let semanticIdOrInvalid (n : LogNode) ( annoApp : AnnotationModel) =
       let anno = AnnotationApp.findAnnotation annoApp (annoIdOrInvalid n)
       match anno with
         | None -> SemanticId.invalid
@@ -29,7 +29,7 @@ open CorrelationDrawing
 
 /////////////////////////////////////////////////////////
 
-    let elevation  (model : LogNode) (annoApp : AnnotationApp) =
+    let elevation  (model : LogNode) (annoApp : AnnotationModel) =
       match model.lBorder, model.uBorder, model.annotation with
         | Some lb, Some ub, _ -> 
           let el = (lb.point + ub.point) * 0.5
@@ -48,7 +48,7 @@ open CorrelationDrawing
 
 
     //TODO need to change for Pro3D integration
-    let calcMetricValue (n : LogNode) (annoApp : AnnotationApp) =
+    let calcMetricValue (n : LogNode) (annoApp : AnnotationModel) =
       let anno = Option.bind (fun a -> AnnotationApp.findAnnotation annoApp a) n.annotation
       match anno with
         | None -> None
@@ -62,7 +62,7 @@ open CorrelationDrawing
                           V3d.Distance(x,y)) h t
     
     //TODO need to change for Pro3D integration
-    let calcMetricValue' (n : MLogNode) (annoApp : MAnnotationApp) = 
+    let calcMetricValue' (n : MLogNode) (annoApp : MAnnotationModel) = 
       adaptive {
         let! annoId = n.annotation
         let! anno =  AnnotationApp.findAnnotation'' annoApp annoId
@@ -81,7 +81,7 @@ open CorrelationDrawing
      
 
     //TODO need to change for Pro3D integration
-    let calcAngularValue' (n : MLogNode) (annoApp : MAnnotationApp) = 
+    let calcAngularValue' (n : MLogNode) (annoApp : MAnnotationModel) = 
       adaptive {
         let! id = n.annotation
         let! lowerAnno = AnnotationApp.findAnnotation'' annoApp id
@@ -98,20 +98,20 @@ open CorrelationDrawing
                               SimpleTypes.Math.Angle.init (V3d.Distance (x,y))) h t
       }
 
-    let tryLowestBorder (lst : plist<LogNode>) (annoApp : AnnotationApp)  =
+    let tryLowestBorder (lst : plist<LogNode>) (annoApp : AnnotationModel)  =
         lst |> PList.map (fun p -> p.lBorder) 
             |> DS.PList.filterNone
             |> DS.PList.tryMinBy (fun b -> b.point.Length)
 
-    let tryHighestBorder (lst : plist<LogNode>) (annoApp : AnnotationApp) =
+    let tryHighestBorder (lst : plist<LogNode>) (annoApp : AnnotationModel) =
         lst |> PList.map (fun p -> p.uBorder) 
             |> DS.PList.filterNone
             |> DS.PList.tryMaxBy (fun b -> b.point.Length)
 
-    let findLowestNode (lst : plist<LogNode>) (annoApp : AnnotationApp)  =
+    let findLowestNode (lst : plist<LogNode>) (annoApp : AnnotationModel)  =
       lst |> DS.PList.tryMaxBy (fun n -> elevation n annoApp)
 
-    let findHighestNode (lst : plist<LogNode>) (annoApp : AnnotationApp)  =
+    let findHighestNode (lst : plist<LogNode>) (annoApp : AnnotationModel)  =
       lst |> DS.PList.tryMinBy (fun n -> elevation n annoApp)      
 
 
@@ -135,7 +135,7 @@ open CorrelationDrawing
         
   
 
-    let rec replaceInfinity (model : LogNode) (annoApp : AnnotationApp) : (LogNode) =
+    let rec replaceInfinity (model : LogNode) (annoApp : AnnotationModel) : (LogNode) =
       let (newNode) =
         let notLeaf = not (isInfinityTypeLeaf model)  
         let noChildren = model.children.IsEmpty()
@@ -168,7 +168,7 @@ open CorrelationDrawing
       (newNode)
 
     let replaceInfinity' (nodes : plist<LogNode>) 
-                         (annoApp : AnnotationApp) : plist<LogNode> =
+                         (annoApp : AnnotationModel) : plist<LogNode> =
       let _nodes = 
         nodes
           |> PList.map (fun n -> (replaceInfinity n annoApp))

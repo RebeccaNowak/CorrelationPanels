@@ -214,7 +214,7 @@ open CorrelationDrawing
 
 
           
-    let calcMetricValue (model : LogNode) (annoApp : AnnotationApp) =
+    let calcMetricValue (model : LogNode) (annoApp : AnnotationModel) =
       let mc = metricChildren model
       let someVals = mc |> List.map (fun n -> LogNodes.Helper.calcMetricValue n annoApp)
       let vals = someVals |> DS.List.filterNone
