@@ -52,6 +52,7 @@
 	<Compile Include="Svg\Svg.Paths.fs" />
 	<Compile Include="Svg\Svg.Base.fs" />
 	<Compile Include="Svg\Svg.Incremental.fs" />
+	<Compile Include="Svg\RoseDiagramApp\RoseDiagramModel.fs" />
 	<Compile Include="Svg\RoseDiagramApp\Svg.RoseDiagramApp.fs" />
 	<Compile Include="Svg\SvgButtonApp\Svg.ButtonApp.fs" />
 	<Compile Include="Svg\ConnectionApp\ConnectionAppTypes.fs" />

@@ -7,6 +7,8 @@
     open Svgplus.Attributes
     open Aardvark.Base.Incremental
     open Svgplus.Base
+    open Svgplus.RoseDiagramModel
+    open Svgplus
 
     let rnd = System.Random()
 

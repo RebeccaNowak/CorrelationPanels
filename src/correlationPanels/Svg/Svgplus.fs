@@ -51,14 +51,12 @@ open Aardvark.UI
     //  actions
     //    |> AMap.union _left
 
-
-
-
   type Bin = {
     number : int
     value  : int
     colour : C4b
   }
+
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module Bin =
@@ -75,28 +73,7 @@ open Aardvark.UI
     colour     : C4b
   }
 
-  type RoseDiagramId = {
-    id        : string 
-  } with
-    member this.isValid = (this.id <> "")
-  module RoseDiagramId = 
-    let invalid = {id = ""}
-    let newId () : RoseDiagramId  = 
-      {id = System.Guid.NewGuid().ToString()}
 
-  [<DomainType>]
-  type RoseDiagram = {
-    [<NonIncremental>]
-    id            : RoseDiagramId
-
-    centre        : V2d
-    outerRadius   : float
-    innerRadius   : float
-    colour        : list<C4b>
-    nrCircles     : int
-    weight        : float
-    countPerBin   : plist<Bin>
-  }
 
   type ButtonId = {
     id        : string 

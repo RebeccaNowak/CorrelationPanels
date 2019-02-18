@@ -8,6 +8,9 @@ open Aardvark.UI.Primitives
 open Svgplus
 open Svgplus.CA
 open Svgplus.DA
+open Svgplus.RoseDiagramModel
+open Svgplus.RoseDiagram
+
 
 
 
@@ -79,7 +82,7 @@ module App =
           alist {
             yield (Svgplus.Button.view model.svgButton) |> UI.map ButtonMessage
           } 
-        let rose = ((Svgplus.RoseDiagram.view model.roseDiagram) 
+        let rose = ((RoseDiagram.view model.roseDiagram) 
                       |> AList.map (UI.map RDMessage))
       
         (DiagramApp.standaloneView model.diagramApp) |> UI.map Action.DiagramMessage
