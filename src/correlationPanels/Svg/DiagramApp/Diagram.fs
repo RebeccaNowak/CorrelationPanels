@@ -8,20 +8,19 @@ open Aardvark.UI.Primitives
 open Svgplus.RectangleType
 open Svgplus.CA
 open Svgplus.DA
-open Svgplus.RectangleStackTypes
 open UIPlus
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module Diagram = 
 
     type Action =
-      | RectStackMessage  of (RectangleStackId * RectangleStack.Action)
+      | RectStackMessage  of (RectangleStackTypes.RectangleStackId * RectangleStack.Action)
       //| HeaderMessage     of Header.Action
       | MouseMove         of V2d
       | ConnectionMessage of ConnectionApp.Action
-      | AddStack          of RectangleStack
-      | MoveLeft          of RectangleStackId
-      | MoveRight         of RectangleStackId
+      | AddStack          of RectangleStackTypes.RectangleStack
+      | MoveLeft          of RectangleStackTypes.RectangleStackId
+      | MoveRight         of RectangleStackTypes.RectangleStackId
       | UpdateColour      of ColourMap
       | UpdateRectangle   of (RectangleIdentification * Rectangle.Action)
 
@@ -78,9 +77,9 @@ open UIPlus
       }
 
     let sampleInit : Diagram =
-      let s1 = RectangleStack.initSample (RectangleStackId.newId ())
-      let s2 = RectangleStack.initSample (RectangleStackId.newId ())
-      let s3 = RectangleStack.initSample (RectangleStackId.newId ())
+      let s1 = RectangleStack.initSample (RectangleStackTypes.RectangleStackId.newId ())
+      let s2 = RectangleStack.initSample (RectangleStackTypes.RectangleStackId.newId ())
+      let s3 = RectangleStack.initSample (RectangleStackTypes.RectangleStackId.newId ())
 
       let _p1 = (V2d (0.0, 50.0))
       let _p2 = (V2d (RectangleStack.width s1 * 2.0, 50.0))
@@ -113,7 +112,7 @@ open UIPlus
               |> HMap.update (model.order.Item 0) 
                              (fun opts -> RectangleStack.Lens.pos.Set (opts.Value, V2d (model.marginLeft, model.marginTop))) //hack
 
-          let f (prev : RectangleStack) (curr : RectangleStack) =
+          let f (prev : RectangleStackTypes.RectangleStack) (curr : RectangleStackTypes.RectangleStack) =
             let _pos =
               let cx = model.rstackGap + prev.pos.X + (RectangleStack.width prev)
               V2d (cx,model.marginTop)
@@ -171,20 +170,20 @@ open UIPlus
       Option.bind (fun s -> (RectangleStack.tryfindRectangle s selRect.rid)) optstack
 
     let updateRStack (model : Diagram) 
-                      (optr : option<RectangleStack>) 
+                      (optr : option<RectangleStackTypes.RectangleStack>) 
                       (m : RectangleStack.Action) = 
       match optr with
         | Some r -> RectangleStack.update r m
-        | None   -> RectangleStack.initSample (RectangleStackId.newId ())
+        | None   -> RectangleStack.initSample (RectangleStackTypes.RectangleStackId.newId ())
 
     let updateRStackFromId (model : Diagram) 
-                            (id : RectangleStackId) 
+                            (id : RectangleStackTypes.RectangleStackId) 
                             (m : RectangleStack.Action) =
       model.rectangleStacks
         |> HMap.update id (fun optr -> updateRStack model optr m)
 
     let updateSelectedRectangle (model  : Diagram)
-                                (sid    : RectangleStackId)
+                                (sid    : RectangleStackTypes.RectangleStackId)
                                 (m      : RectangleStack.Action) =
       let (_sel, _stacks) = 
         match m with 

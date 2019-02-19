@@ -1,4 +1,4 @@
-3C55D68285D6888E690C0BACD82DD976
+181EA210A3AEBB487B5ACCEA568F2F91
 DataStructures\Seq.fs|false|5248536631609827749|EoSpheTA2+uuAghFRrj75A==|false
 DataStructures\List.fs|false|5248536631609733333|QsA0mopSVd2yY9PCRHEfwg==|false
 DataStructures\PList.fs|false|5248540989971082258|Y5uir4yazDV/UwYaxkpaZQ==|false
@@ -22,7 +22,7 @@ UIPlus\UI.Buttons.fs|false|5248536631611023360|ruVfEDDZHzEN2LiVwBr5TQ==|false
 UIPlus\UI.Flags.fs|false|5248507297692023245|567Oqd4IxlTT3V9CefS4Bg==|false
 UIPlus\UI.Labels.fs|false|5248536631611053278|BAU20ce+BC98jz98Hv3lVQ==|false
 UIPlus\ColourMapApp\ColourMapItem.fs|false|5248546991136763444|2+DQLyhkXr9OXRWa+LW76w==|false
-UIPlus\ColourMapApp\ColourMapApp.fs|false|5248547028377917559|rFBCJiey8Babv+PvjeFPGw==|false
+UIPlus\ColourMapApp\ColourMapApp.fs|false|5248547844696079128|zeGkRAqEmOWEQOrsPsvq2w==|false
 UIPlus\ArrowButton\ArrowButtonApp.fs|false|5248536631610943795|8zolwKflRpNzj2Z5aWe87w==|false
 Svg\Svgplus.fs|true|5248546921665551132|z7HeDNSjk9Z1VPETcXM4vw==|false
 Svg\SvgTags.fs|false|5248536631610873742|yXHs1DQYfR4nA5EpSkIwbA==|false
@@ -42,8 +42,8 @@ Svg\HeaderApp\HeaderType.fs|true|5248536631610616391|RxXTTIUUG002ZqQhOzUPQQ==|fa
 Svg\HeaderApp\HeaderApp.fs|false|5248536631610588794|fwaIur3ejq790W2AS+K0bA==|false
 Svg\RStack\RStackType.fs|true|5248540989971471216|Tsq34jmhSueUxVb1nwZdoQ==|false
 Svg\RStack\RStack.fs|false|5248546958326352669|tDrkD/9EjFZbGMJBlRqNig==|false
-Svg\DiagramApp\DiagramAppTypes.fs|true|5248546970135773846|VWIkcP7j9y9x3QH9O2GqDQ==|false
-Svg\DiagramApp\DiagramApp.fs|false|5248547834798759315|fxIOeZvvWbwW6V88d9JUrQ==|false
+Svg\DiagramApp\DiagramModel.fs|true|5248546970135773846|VWIkcP7j9y9x3QH9O2GqDQ==|false
+Svg\DiagramApp\Diagram.fs|false|5248547858935565332|IT5VfuoqRFQd+AZaXSzMaw==|false
 Debug.fs|false|5248465593201933071|73GovZhzzghLJCS3fALywg==|false
 tmpAList.fs|false|5248427726003343119|Gcsf+aAKTmorl2FE0rRuVw==|false
 V2d.fs|false|5248417274498195225|LZSb21YEbzP7A7XJ/MzuBQ==|false
@@ -65,7 +65,7 @@ AnnotationPoint.fs|false|5248536631609388086|I4+fRUU0HdGGrwCTRCv3Aw==|false
 Border.fs|false|5248540989970992741|6CMxgr0WXjny6KTbTPITYw==|false
 LogAxisSection.fs|false|5248366238662499917|3uJwj/O+yO2VXJ6C4Nh+uA==|false
 LogAxisApp.fs|false|5248488906113386435|NVA7bRX68MbcqiNRAyf1Iw==|false
-LogNodes.Init.fs|false|5248540989971152066|127YfDeToZWw6zGWKYromw==|false
+LogNodes.Init.fs|false|5248547822015827297|127YfDeToZWw6zGWKYromw==|false
 LogNodes.Helper.fs|false|5248546926488074443|2OpsQRBO8SuTG0mzeSJ/9A==|false
 LogNodes.Recursive.fs|false|5248546927574984897|AzmEmwrVqRJ2k998wMJsqw==|false
 LogNodes.Svg.fs|false|5248546927148296768|JnA5TzOeUydA8PNaVRaiSg==|false
@@ -74,7 +74,7 @@ LogNodes.Debug.fs|false|5248546926488627122|3Go4zYTZE9zpQ4h+c3fi+Q==|false
 LogNodes.View.fs|false|5248546972709826003|yD5ufVuifPFySz6ADpmGeA==|false
 GeologicalLog.fs|false|5248547825037496298|ahC2d0B04TtvGE5vDJ3svA==|false
 Correlation.fs|false|5248488906114104517|GFMPyjOmMX7iP7n8Estnsg==|false
-CorrelationPlot.fs|false|5248547834470713729|9uxGBoUnOKGjEbHFMLofNQ==|false
+CorrelationPlot.fs|false|5248547851177535573|A+c/pbXIDoMn7t6yM/6ktw==|false
 CorrelationPlotApp.fs|false|5248546926488036862|KFHKoRBldPjlsjOHxQanNg==|false
 CorrelationDrawing.fs|false|5248546926487995453|d6pDxmaXSBO6tmihszzllg==|false
 CorrelationDrawingApp.fs|false|5248366238662343948|WZmIeG6TRH9ei+LxVFO6+A==|false

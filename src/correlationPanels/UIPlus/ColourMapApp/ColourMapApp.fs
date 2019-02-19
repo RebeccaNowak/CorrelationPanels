@@ -112,4 +112,12 @@ module ColourMap =
 
   let tryfindItem (model : ColourMap) (iid : CMItemId) =
     PList.tryFind (fun ind it -> it.id = iid) model.mappings
+
+  let svgValueFromItemId model cmitemid =
+    let dataValue =
+      let item = tryfindItem model cmitemid
+      match item with
+        | Some it -> it.defaultMiddle
+        | None    -> 1.0
+    model.dataToSvg dataValue
     

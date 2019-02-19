@@ -65,8 +65,8 @@
 	<Compile Include="Svg\HeaderApp\HeaderApp.fs" />
 	<Compile Include="Svg\RStack\RStackType.fs" />
 	<Compile Include="Svg\RStack\RStack.fs" />
-	<Compile Include="Svg\DiagramApp\DiagramAppTypes.fs" />
-	<Compile Include="Svg\DiagramApp\DiagramApp.fs" />
+	<Compile Include="Svg\DiagramApp\DiagramModel.fs" />
+	<Compile Include="Svg\DiagramApp\Diagram.fs" />
 	<Content Include="docking.css">
 	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	</Content>

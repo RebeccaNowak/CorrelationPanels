@@ -321,28 +321,21 @@
                   Diagram.tryFindRectangle model.diagramApp selRect
                 match optsel with
                   | Some r ->
-                    let _grainsize =
-                      let item = ColourMap.tryfindItem model.colourMapApp cmitemid
-                      match item with
-                        | Some it -> it.upper - (abs (it.upper * 0.5))
-                        | None    -> 1.0
-                    let w = model.xToSvg _grainsize
+                    let width = ColourMap.svgValueFromItemId model.colourMapApp cmitemid
                     let _optn = tryFindNodeFromRectangleId model selRect
                     match _optn with
                       | Some (n, log) ->
                         let m = 
                               (Log.LogNodeMessage 
-                                (n.id, LogNodes.RectangleMessage (Rectangle.SetWidth (w, _cmap)))
+                                (n.id, LogNodes.RectangleMessage (Rectangle.SetWidth (width, _cmap)))
                               )
                         let _logs  = updateLog log.id m model.logs
                         let rectIds = {stackid = optselid.Value.stackid; rid = optselid.Value.rid}
-                        let rectMessage = Rectangle.SetWidth (w, _cmap)
+                        let rectMessage = Rectangle.SetWidth (width, _cmap)
                         let diagr = Diagram.update model.diagramApp (Diagram.UpdateRectangle (rectIds, rectMessage))
-
                         (_logs, diagr)
                       | None -> (model.logs, model.diagramApp)
                   | None   -> (model.logs, model.diagramApp)
-               | ColourMap.SelectItem cmitemid, false -> (model.logs, model.diagramApp)
                | ColourMap.ItemMessage cmitemid, _ -> 
                  let diagr = Diagram.update model.diagramApp (Diagram.UpdateColour _cmap)
                  (model.logs, diagr)
