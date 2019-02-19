@@ -233,7 +233,7 @@ module Pages =
         let sel = AnnotationApp.getSelectedPoints' model.annotationApp
        
         { model with annotationApp = updateAnnotationApp m } |> Lenses.set _selectedPoints sel 
-      | CorrelationDrawingMessage m, _ ->
+      | CorrelationDrawingMessage m, _ -> // used for drawing annotations
         let (drawingApp, annoApp) =               
             match m with
               | CorrelationDrawing.AddPoint p -> 
@@ -291,8 +291,7 @@ module Pages =
         
                 //model.annotationApp.annotations
                 //model.semanticApp m
-        {model with corrPlot = corrPlotApp
-                    annotationApp = annoApp}
+        {model with corrPlot = corrPlotApp; annotationApp = annoApp }
       | ColourMapMessage m, _ -> 
         let _cp = CorrelationPlot.update 
                     model.annotationApp

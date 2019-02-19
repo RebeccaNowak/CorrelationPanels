@@ -23,7 +23,7 @@
     let initial : CorrelationPlotModel  = 
       {
         correlationPlot     = CorrelationPlot.initial
-        semanticApp         = SemanticApp.initial
+        semanticApp         = SemanticApp.getInitialWithSamples //SemanticApp.initial
         zooming             = false
         dragging            = false
         lastMousePos        = V2d.OO
@@ -113,6 +113,8 @@
         //| AxisMessage m -> 
         //  {model with correlationPlot = CorrelationPlot.update annoApp model.correlationPlot (m |> CorrelationPlot.LogAxisAppMessage)} //TODO refactor
 
+    let update' (annos : hmap<AnnotationId, Annotation>) (model : CorrelationPlotModel) (action : Action) = 
+      update { annotations = annos; selectedAnnotation = None } model action
 
     let viewSvg (annoApp : MAnnotationModel) (model : MCorrelationPlotModel) =
      
