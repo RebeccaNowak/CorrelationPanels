@@ -236,10 +236,18 @@ open UIPlus
           let _model = updateSelectedRectangle model sid m
           let _rstacks = _model.rectangleStacks
                           |> HMap.update sid (fun x -> updateRStack model x m)
+          let needsLayouting = 
+            model.rectangleStacks
+              |> HMap.exists (fun key (stack : RectangleStackTypes.RectangleStack) -> stack.needsLayouting) 
           let _cons  = updateConnections model msg
-          {_model with rectangleStacks   = _rstacks
-                       connectionApp     = _cons}
-
+          let __model = 
+            {_model with rectangleStacks   = _rstacks
+                         connectionApp     = _cons}
+          match needsLayouting with
+            | true -> 
+              layout __model
+            | false -> __model
+                
         | ConnectionMessage msg -> 
           {model with connectionApp = ConnectionApp.update model.connectionApp msg}
         | MouseMove p -> 

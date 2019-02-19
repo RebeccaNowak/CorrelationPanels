@@ -60,6 +60,7 @@
       let rs = 
         {
           id            = id
+          needsLayouting = false
           rectangles    = rmap
           header        = header
           order         = order
@@ -99,6 +100,7 @@
       let rs = 
         {
           id            = id
+          needsLayouting = false
           rectangles    = rmap
           header        = header
           order         = PList.ofList order
@@ -152,7 +154,6 @@
           |> List.map (fun r -> Rectangle.Lens.width.Get r)
           |> List.max
       max
-      
 
     let height (model : RectangleStack) =
       let folded = 
@@ -165,9 +166,10 @@
           |> HMap.map (fun id r -> Rectangle.Lens.pos.Set (r, v))
       let _header = Header.Lens.pos.Set (model.header, v)      
       {
-        model with  rectangles = _rectangles
-                    header     = _header
-                    pos        = v
+        model with  rectangles     = _rectangles
+                    header         = _header
+                    pos            = v
+                    needsLayouting = false
       } |> stack
 
     let tryfindRectangle_M (model : MRectangleStack) (id : RectangleId) =
@@ -183,7 +185,8 @@
           | None   -> Rectangle.init (RectangleId.newId ())    
 
       match action with 
-        | ResetPosition v -> resetPosition model v    
+        | ResetPosition v ->
+          resetPosition model v    
         | AddRectangle r -> 
           let _rectangles = model.rectangles.Add (r.id, r)
           {model with rectangles = _rectangles} |> stack
@@ -193,7 +196,11 @@
           let (id, m) = msg
           let _rects = model.rectangles 
                         |> HMap.update id (fun x -> updateRect x m)
-          {model with rectangles    = _rects}
+          let needsLayoutingX = 
+            HMap.exists (fun key (rect : Rectangle) -> rect.needsLayoutingX) model.rectangles 
+
+          {model with rectangles     = _rects
+                      needsLayouting = true}
         | HeaderMessage msg ->
           let _header = Header.update model.header msg
           {model with header = _header}

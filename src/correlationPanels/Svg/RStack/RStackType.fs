@@ -18,10 +18,13 @@ open Svgplus.RectangleType
   [<DomainType>]
   type RectangleStack = {
     [<NonIncremental>]
-    id            : RectangleStackId
-    rectangles    : hmap<RectangleId, Rectangle>
-    header        : HeaderType.Header
-    order         : plist<RectangleId>
-    pos           : V2d
+    id              : RectangleStackId
+
+    needsLayouting  : bool
+
+    rectangles      : hmap<RectangleId, Rectangle>
+    header          : HeaderType.Header
+    order           : plist<RectangleId>
+    pos             : V2d
 
   }

@@ -19,9 +19,9 @@
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Remove="NewFolder1\**" />
+    <EmbeddedResource Remove="NewFolder\**" />
   </ItemGroup>
   <ItemGroup>
-	<Compile Include="NewFolder\tmp.fs" />
 	<Compile Include="DataStructures\Seq.fs" />
 	<Compile Include="DataStructures\List.fs" />
 	<Compile Include="DataStructures\PList.fs" />

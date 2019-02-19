@@ -27,6 +27,8 @@
       | SEButtonMessage of Button.Action
       | UpdateColour    of ColourMap
       | SetWidth        of (float * ColourMap)
+      | LayoutX          
+      | LayoutY
 
     module Lens =
       let width = 
@@ -36,11 +38,13 @@
             {r with dim = {r.dim with width = v}
                     northEastButton = Button.Lens.posX.Set (r.northEastButton, r.pos.X + v)
                     southEastButton = Button.Lens.posX.Set (r.southEastButton, r.pos.X + v)
+                    needsLayoutingX = true
             }
           override x.Update(r,f) = 
             {r with dim = {r.dim with width = f r.dim.width}
                     northEastButton = Button.Lens.posX.Set (r.northEastButton, r.pos.X + f r.dim.width)
                     southEastButton = Button.Lens.posX.Set (r.southEastButton, r.pos.X + f r.dim.width)
+                    needsLayoutingX = true
             }
         }
 
@@ -51,11 +55,13 @@
             {r with dim = {r.dim with height = v}
                     southWestButton = Button.Lens.posX.Set (r.southWestButton, r.pos.X + v)
                     southEastButton = Button.Lens.posX.Set (r.southEastButton, r.pos.X + v)
+                    needsLayoutingY = true
             }
           override x.Update(r,f) = 
             {r with dim = {r.dim with height = f r.dim.height}
                     southWestButton = Button.Lens.posX.Set (r.southWestButton, r.pos.X + f r.dim.height)
                     southEastButton = Button.Lens.posX.Set (r.southEastButton, r.pos.X + f r.dim.height)
+                    needsLayoutingY = true
             }
         }
 
@@ -141,23 +147,25 @@
     let init id = 
       let _new = 
         {
-        id            = id
-        pos           = V2d (0.0)
-        dim           = {width = 0.0; height = 0.0}
-        colour        = {c = C4b.Gray}
-        borderColour  = C4b.Black
-        isToggled     = false
-        colChange     = V3i (0,0,0)
-        isHovering    = false
-        dottedBorder  = true
-        draw          = false
+          id             = id
+          needsLayoutingX = false
+          needsLayoutingY = false
+          pos            = V2d (0.0)
+          dim            = {width = 0.0; height = 0.0}
+          colour         = {c = C4b.Gray}
+          borderColour   = C4b.Black
+          isToggled      = false
+          colChange      = V3i (0,0,0)
+          isHovering     = false
+          dottedBorder   = true
+          draw           = false
 
-        label         = {TextInput.init with text = "label"}
+          label          = {TextInput.init with text = "label"}
 
-        northWestButton = Button.init
-        northEastButton = Button.init
-        southWestButton = Button.init
-        southEastButton = Button.init
+          northWestButton = Button.init
+          northEastButton = Button.init
+          southWestButton = Button.init
+          southEastButton = Button.init
       } 
 
       let _new = Lens.width.Set (_new, 50.0)
@@ -204,7 +212,8 @@
         | SWButtonMessage m -> {model with southWestButton = Button.update model.southWestButton m}
         | SEButtonMessage m -> {model with southEastButton = Button.update model.southEastButton m}
         | UpdateColour cmap -> updateColour cmap model
-
+        | LayoutX            -> {model with needsLayoutingX = false}
+        | LayoutY            -> {model with needsLayoutingY = false}
         | SetWidth (w, cmap)        -> 
           let _model = Lens.width.Set (model, w)
           updateColour cmap _model

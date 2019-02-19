@@ -21,7 +21,10 @@
   [<DomainType>]
   type Rectangle = {
     [<NonIncremental>]
-    id            : RectangleId
+    id             : RectangleId
+
+    needsLayoutingX : bool
+    needsLayoutingY : bool
 
     label         : UIPlus.TextInput
     pos           : V2d

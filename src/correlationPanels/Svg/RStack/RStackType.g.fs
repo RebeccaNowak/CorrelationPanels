@@ -13,12 +13,14 @@ module Mutable =
     type MRectangleStack(__initial : Svgplus.RectangleStackTypes.RectangleStack) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<Svgplus.RectangleStackTypes.RectangleStack> = Aardvark.Base.Incremental.EqModRef<Svgplus.RectangleStackTypes.RectangleStack>(__initial) :> Aardvark.Base.Incremental.IModRef<Svgplus.RectangleStackTypes.RectangleStack>
+        let _needsLayouting = ResetMod.Create(__initial.needsLayouting)
         let _rectangles = MMap.Create(__initial.rectangles, (fun v -> Svgplus.RectangleType.Mutable.MRectangle.Create(v)), (fun (m,v) -> Svgplus.RectangleType.Mutable.MRectangle.Update(m, v)), (fun v -> v))
         let _header = Svgplus.HeaderType.Mutable.MHeader.Create(__initial.header)
         let _order = MList.Create(__initial.order)
         let _pos = ResetMod.Create(__initial.pos)
         
         member x.id = __current.Value.id
+        member x.needsLayouting = _needsLayouting :> IMod<_>
         member x.rectangles = _rectangles :> amap<_,_>
         member x.header = _header
         member x.order = _order :> alist<_>
@@ -29,6 +31,7 @@ module Mutable =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
+                ResetMod.Update(_needsLayouting,v.needsLayouting)
                 MMap.Update(_rectangles, v.rectangles)
                 Svgplus.HeaderType.Mutable.MHeader.Update(_header, v.header)
                 MList.Update(_order, v.order)
@@ -54,6 +57,12 @@ module Mutable =
                     override x.Get(r) = r.id
                     override x.Set(r,v) = { r with id = v }
                     override x.Update(r,f) = { r with id = f r.id }
+                }
+            let needsLayouting =
+                { new Lens<Svgplus.RectangleStackTypes.RectangleStack, System.Boolean>() with
+                    override x.Get(r) = r.needsLayouting
+                    override x.Set(r,v) = { r with needsLayouting = v }
+                    override x.Update(r,f) = { r with needsLayouting = f r.needsLayouting }
                 }
             let rectangles =
                 { new Lens<Svgplus.RectangleStackTypes.RectangleStack, Aardvark.Base.hmap<Svgplus.RectangleType.RectangleId,Svgplus.RectangleType.Rectangle>>() with
