@@ -8,8 +8,8 @@ open UIPlus
 open UIPlus.Table
 
 module View =
-  let listViewSingle (model : MLogNode) 
-                     (diagramApp : MDiagramApp) =
+  let listViewSingle (model       : MLogNode) 
+                     (diagramApp  : MDiagram) =
       
     let atts = 
       amap {
@@ -33,7 +33,7 @@ module View =
                               model.nodeType)
       let domNodeLabel =
         alist {
-          let! rect = DiagramApp.findRectangle_M diagramApp model.rectangleId 
+          let! rect = Diagram.findRectangle_M diagramApp model.rectangleId 
           if rect.IsSome then
             let r = rect.Value
             let v = TextInput.view r.label

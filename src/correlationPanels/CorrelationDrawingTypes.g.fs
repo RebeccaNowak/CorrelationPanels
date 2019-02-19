@@ -1279,7 +1279,7 @@ module Mutable =
     type MCorrelationPlot(__initial : CorrelationDrawing.CorrelationPlot) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlot> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.CorrelationPlot>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlot>
-        let _diagramApp = Svgplus.DA.Mutable.MDiagramApp.Create(__initial.diagramApp)
+        let _diagramApp = Svgplus.DA.Mutable.MDiagram.Create(__initial.diagramApp)
         let _colourMapApp = UIPlus.Mutable.MColourMap.Create(__initial.colourMapApp)
         let _logs = MMap.Create(__initial.logs, (fun v -> MGeologicalLog.Create(v)), (fun (m,v) -> MGeologicalLog.Update(m, v)), (fun v -> v))
         let _correlations = MList.Create(__initial.correlations, (fun v -> MCorrelation.Create(v)), (fun (m,v) -> MCorrelation.Update(m, v)), (fun v -> v))
@@ -1328,7 +1328,7 @@ module Mutable =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
-                Svgplus.DA.Mutable.MDiagramApp.Update(_diagramApp, v.diagramApp)
+                Svgplus.DA.Mutable.MDiagram.Update(_diagramApp, v.diagramApp)
                 UIPlus.Mutable.MColourMap.Update(_colourMapApp, v.colourMapApp)
                 MMap.Update(_logs, v.logs)
                 MList.Update(_correlations, v.correlations)
@@ -1366,7 +1366,7 @@ module Mutable =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
             let diagramApp =
-                { new Lens<CorrelationDrawing.CorrelationPlot, Svgplus.DA.DiagramApp>() with
+                { new Lens<CorrelationDrawing.CorrelationPlot, Svgplus.DA.Diagram>() with
                     override x.Get(r) = r.diagramApp
                     override x.Set(r,v) = { r with diagramApp = v }
                     override x.Update(r,f) = { r with diagramApp = f r.diagramApp }

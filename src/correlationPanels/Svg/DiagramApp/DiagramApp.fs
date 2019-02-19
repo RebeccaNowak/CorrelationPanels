@@ -12,7 +12,7 @@ open Svgplus.RectangleStackTypes
 open UIPlus
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-  module DiagramApp = 
+  module Diagram = 
 
     type Action =
       | RectStackMessage  of (RectangleStackId * RectangleStack.Action)
@@ -23,10 +23,50 @@ open UIPlus
       | MoveLeft          of RectangleStackId
       | MoveRight         of RectangleStackId
       | UpdateColour      of ColourMap
+      | UpdateRectangle   of (RectangleIdentification * Rectangle.Action)
+
+    type UnpackAction =
+      | MouseMessage      of MouseAction
+      | RectangleMessage  of Rectangle.Action
+    
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module UnpackAction =
+      let OnLeftClick =
+        UnpackAction.MouseMessage MouseAction.OnLeftClick
+      let SelectRectangle =
+        UnpackAction.RectangleMessage (Rectangle.Action.Select RectangleId.invalid)
+
+
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module Action =
+      let unpack (fromAction : Action) (toAction : UnpackAction) f (def : 'model) =
+        match fromAction, toAction with
+          | RectStackMessage (stackId,ra), _ -> 
+            match ra, toAction with 
+              | RectangleStack.HeaderMessage sm, toAction ->
+                match sm, toAction with
+                  | Header.MouseMessage mm, MouseMessage mm2 ->
+                    match mm, mm2 with 
+                      | MouseAction.OnLeftClick, MouseAction.OnLeftClick -> 
+                          f stackId RectangleId.invalid
+                      | MouseAction.OnMouseEnter, MouseAction.OnMouseEnter ->
+                          def
+                      | _ -> def
+                  | _ -> def
+              | RectangleStack.RectangleMessage (rid, rm), RectangleMessage rm2 -> 
+                match rm, rm2 with
+                  | Rectangle.Select rid,  Rectangle.Select dummy ->
+                    f stackId rid
+                  | _,_ -> def
+                | _ -> def
+              | _ -> def            
+          | _ -> def
+
+       
 
 
         
-    let init : DiagramApp = 
+    let init : Diagram = 
       {
         rectangleStacks    = HMap.empty
         order              = PList.empty
@@ -37,7 +77,7 @@ open UIPlus
         selectedRectangle  = None
       }
 
-    let sampleInit : DiagramApp =
+    let sampleInit : Diagram =
       let s1 = RectangleStack.initSample (RectangleStackId.newId ())
       let s2 = RectangleStack.initSample (RectangleStackId.newId ())
       let s3 = RectangleStack.initSample (RectangleStackId.newId ())
@@ -58,20 +98,13 @@ open UIPlus
 
       let order = [s1.id;s2.id;s3.id] |> PList.ofList
 
-      //let headers =
-      //  [
-      //    yield (s1.id, Header.init)
-      //    yield (s2.id, Header.init)
-      //    yield (s3.id, Header.init)
-      //  ] |> HMap.ofList
-
       {init with 
         rectangleStacks    = smap
         order              = order
         connectionApp      = ConnectionApp.init
       }
 
-    let layout (model : DiagramApp) =
+    let layout (model : Diagram) =
       match model.order.Count > 0 with
         | true ->
           let clean = 
@@ -91,7 +124,7 @@ open UIPlus
           {model with rectangleStacks = _rs}
         | false -> model
 
-    let findRectangle_M (model : MDiagramApp) (id : RectangleId) =
+    let findRectangle_M (model : MDiagram) (id : RectangleId) =
       let optList = 
         AMap.map
           (fun sid x -> 
@@ -120,7 +153,7 @@ open UIPlus
             | _ -> None
       }
 
-    let tryFindRectangleFromId (model : DiagramApp) (rid : RectangleId) =
+    let tryFindRectangleFromId (model : Diagram) (rid : RectangleId) =
       let foundmany = 
         HMap.map (fun sid rs -> 
                     match ((RectangleStack.tryfindRectangle rs rid) ) with
@@ -132,23 +165,49 @@ open UIPlus
         |> DS.HMap.values
         |> List.tryHead
       
-    let tryFindRectangle  (model : DiagramApp) 
-                          (selRect : SelectedRectangle) =
-      let optstack = HMap.tryFind selRect.stack model.rectangleStacks
-      Option.bind (fun s -> (RectangleStack.tryfindRectangle s selRect.rectangle)) optstack
+    let tryFindRectangle  (model : Diagram) 
+                          (selRect : RectangleIdentification) =
+      let optstack = HMap.tryFind selRect.stackid model.rectangleStacks
+      Option.bind (fun s -> (RectangleStack.tryfindRectangle s selRect.rid)) optstack
 
-     
+    let updateRStack (model : Diagram) 
+                      (optr : option<RectangleStack>) 
+                      (m : RectangleStack.Action) = 
+      match optr with
+        | Some r -> RectangleStack.update r m
+        | None   -> RectangleStack.initSample (RectangleStackId.newId ())
 
-    let update (model : DiagramApp) (msg : Action) =
-      let updateRStack (optr : option<RectangleStack>) (m : RectangleStack.Action) = 
-        match optr with
-          | Some r -> RectangleStack.update r m
-          | None   -> RectangleStack.initSample (RectangleStackId.newId ())
+    let updateRStackFromId (model : Diagram) 
+                            (id : RectangleStackId) 
+                            (m : RectangleStack.Action) =
+      model.rectangleStacks
+        |> HMap.update id (fun optr -> updateRStack model optr m)
 
-      let updateRStackFromId (id : RectangleStackId) (m : RectangleStack.Action) =
-        model.rectangleStacks
-         |> HMap.update id (fun optr -> updateRStack optr m)
+    let updateSelectedRectangle (model  : Diagram)
+                                (sid    : RectangleStackId)
+                                (m      : RectangleStack.Action) =
+      let (_sel, _stacks) = 
+        match m with 
+          | RectangleStack.RectangleMessage (rid, m) -> 
+            match m with
+              | Rectangle.Select rid ->
+                match model.selectedRectangle with
+                  | Some selr -> 
+                    let oldr = selr.rid
+                    let olds = selr.stackid
+                    let _m = RectangleStack.RectangleMessage (oldr, (Rectangle.Deselect oldr))
+                    let rstacks = updateRStackFromId model olds _m
+                    (Some {rid = rid; stackid = sid}, rstacks)
+                  | None ->
+                    (Some {rid = rid; stackid = sid}, model.rectangleStacks)
+              | _ -> (model.selectedRectangle, model.rectangleStacks)
+          | _ -> (model.selectedRectangle, model.rectangleStacks)
+      {
+        model with rectangleStacks   = _stacks
+                   selectedRectangle = _sel
+      }
 
+    let update (model : Diagram) (msg : Action) =
       let updateConnections model message = 
         let upd model msg =
           ConnectionApp.update model.connectionApp 
@@ -156,12 +215,9 @@ open UIPlus
         match message with 
             | id, RectangleStack.RectangleMessage rm ->
               match rm with
-                | id, Rectangle.NWButtonMessage m -> 
-                  upd model m
-                | id, Rectangle.SWButtonMessage m ->
-                  upd model m
-                | id, Rectangle.NEButtonMessage m ->
-                  upd model m
+                | id, Rectangle.NWButtonMessage m 
+                | id, Rectangle.SWButtonMessage m 
+                | id, Rectangle.NEButtonMessage m 
                 | id, Rectangle.SEButtonMessage m ->
                   upd model m
                 | _ -> model.connectionApp
@@ -178,31 +234,12 @@ open UIPlus
 
         | RectStackMessage msg -> 
           let (sid, m) = msg
-          let (_sel, _stacks) = 
-            match m with 
-              | RectangleStack.RectangleMessage (rid, m) -> 
-                match m with
-                  | Rectangle.Select rid ->
-                    match model.selectedRectangle with
-                      | Some selr -> 
-                        let oldr = selr.rectangle
-                        let olds = selr.stack
-                        let _m = RectangleStack.RectangleMessage (oldr, (Rectangle.Deselect oldr))
-                        let rstacks = updateRStackFromId olds _m
-                        (Some {rectangle = rid; stack = sid}, rstacks)
-                      | None ->
-                        (Some {rectangle = rid; stack = sid}, model.rectangleStacks)
-                    
-                  | _ -> (model.selectedRectangle, model.rectangleStacks)
-                    
-              | _ -> (model.selectedRectangle, model.rectangleStacks)
-
-          let _rstacks = _stacks 
-                          |> HMap.update sid (fun x -> updateRStack x m)
+          let _model = updateSelectedRectangle model sid m
+          let _rstacks = _model.rectangleStacks
+                          |> HMap.update sid (fun x -> updateRStack model x m)
           let _cons  = updateConnections model msg
-          {model with rectangleStacks   = _rstacks
-                      connectionApp     = _cons
-                      selectedRectangle = _sel}
+          {_model with rectangleStacks   = _rstacks
+                       connectionApp     = _cons}
 
         | ConnectionMessage msg -> 
           {model with connectionApp = ConnectionApp.update model.connectionApp msg}
@@ -230,9 +267,17 @@ open UIPlus
             model.rectangleStacks
               |> HMap.map (fun id r -> RectangleStack.update r (RectangleStack.UpdateColour cmap) )
           {model with rectangleStacks = _stacks}
+        | UpdateRectangle (id, m) ->
+            let stackMessage = 
+              RectangleStack.RectangleMessage 
+                (id.rid, m)
+            let _stacks = 
+              updateRStackFromId model id.stackid stackMessage
+            {model with rectangleStacks = _stacks}
 
 
-    let view (model : MDiagramApp) =
+
+    let view (model : MDiagram) =
       //let foo = 
       //    RectangleStack.view >> UIMapping.mapAListId  
       let stacks = 
@@ -255,7 +300,7 @@ open UIPlus
                       
       content
 
-    let standaloneView (model : MDiagramApp) =
+    let standaloneView (model : MDiagram) =
 
       let rectangles = 
 

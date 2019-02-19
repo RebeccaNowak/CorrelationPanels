@@ -154,14 +154,22 @@ module BorderId =
 //    {id = System.Guid.NewGuid().ToString()}
 
 type LogNodeId = {
-  id        : string 
+  id            : string 
+  rectangleId   : RectangleId
 } with
   member this.isValid = (this.id <> "")
 
 module LogNodeId = 
-  let invalid = {id = ""}
+  let invalid = 
+    {
+      id = ""
+      rectangleId = RectangleId.invalid
+    }
   let newId unit : LogNodeId  = 
-    {id = System.Guid.NewGuid().ToString()}
+    {
+      id = System.Guid.NewGuid().ToString()
+      rectangleId = RectangleId.newId unit
+    }
 /////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -479,7 +487,7 @@ type SvgOptions = {
 
 [<DomainType>]
 type CorrelationPlot = {
-   diagramApp          : Svgplus.DA.DiagramApp
+   diagramApp          : Svgplus.DA.Diagram
    colourMapApp        : ColourMap
    logs                : hmap<Svgplus.RectangleStackTypes.RectangleStackId, GeologicalLog>
    correlations        : plist<Correlation>

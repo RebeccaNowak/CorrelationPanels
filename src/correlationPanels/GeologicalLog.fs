@@ -18,6 +18,7 @@
     open Svgplus.RectangleType
     open UIPlus
     open Aardvark.Base.IL.Serializer
+    open System.Windows.Interop
     
     type Action =
       | SetState                  of State
@@ -27,6 +28,13 @@
       | TextInputMessage          of (RectangleStackId * TextInput.Action)
       | MoveUp                    of RectangleStackId
       | MoveDown                  of RectangleStackId
+
+    //[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    //module Action =
+    // let unpack fromAction toAction f def =
+    //    match fromAction, toAction with
+          
+         
 
     let findNode (model : GeologicalLog) (f : LogNode -> bool) =
       let nodeList = 
@@ -197,9 +205,6 @@
       let nodeToRectangle (n : LogNode) =
         let metricVal = LogNodes.Recursive.calcMetricValue n annoApp
 
-
-          
-        let id = RectangleId.newId ()
         let (dotted, width) = 
           match metricVal  with
             | Some d -> 
@@ -215,12 +220,11 @@
         let height = (LogNodes.Helper.elevationRange n).range * yToSvg
         let rectangle =
           {
-            Rectangle.init id with 
+            Rectangle.init n.id.rectangleId with 
               dim = {width = width; height = height}
               draw = true
               dottedBorder = dotted
               colour = colour
-
           }
 
         rectangle
@@ -450,8 +454,8 @@
               | State.New | State.Edit -> State.Display
               | State.Display -> State.Edit
           {model with state = _state}
-        
 
+          
 
 
     let init = 

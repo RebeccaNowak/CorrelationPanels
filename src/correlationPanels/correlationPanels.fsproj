@@ -44,6 +44,7 @@
 	<Compile Include="UIPlus\UI.Buttons.fs" />
 	<Compile Include="UIPlus\UI.Flags.fs" />
 	<Compile Include="UIPlus\UI.Labels.fs" />
+	<Compile Include="UIPlus\ColourMapApp\ColourMapItem.fs" />
 	<Compile Include="UIPlus\ColourMapApp\ColourMapApp.fs" />
 	<Compile Include="UIPlus\ArrowButton\ArrowButtonApp.fs" />
 	<Compile Include="Svg\Svgplus.fs" />
@@ -62,8 +63,8 @@
 	<Compile Include="Svg\RectangleApp\RectangleApp.fs" />
 	<Compile Include="Svg\HeaderApp\HeaderType.fs" />
 	<Compile Include="Svg\HeaderApp\HeaderApp.fs" />
-	<Compile Include="Svg\RStackApp\RStackType.fs" />
-	<Compile Include="Svg\RStackApp\RStackApp.fs" />
+	<Compile Include="Svg\RStack\RStackType.fs" />
+	<Compile Include="Svg\RStack\RStack.fs" />
 	<Compile Include="Svg\DiagramApp\DiagramAppTypes.fs" />
 	<Compile Include="Svg\DiagramApp\DiagramApp.fs" />
 	<Content Include="docking.css">

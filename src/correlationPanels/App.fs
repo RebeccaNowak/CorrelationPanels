@@ -19,7 +19,7 @@ type Action =
     | ButtonMessage   of Button.Action
     | CameraMessage   of CameraControllerMessage
     | RDMessage       of RoseDiagram.Action
-    | DiagramMessage  of DiagramApp.Action
+    | DiagramMessage  of Diagram.Action
     | MouseMove       of V2i
 
 module App =
@@ -33,7 +33,7 @@ module App =
         cameraState   = CameraController.initial
         svgButton     = {Button.init with pos = V2d (10.0)}
         roseDiagram   = {RoseDiagram.init with centre = V2d (100.0)}
-        diagramApp    = DiagramApp.init
+        diagramApp    = Diagram.init
       }
 
     let updateConnections model msg =
@@ -59,12 +59,12 @@ module App =
             
             | RDMessage msg -> {model with roseDiagram = Svgplus.RoseDiagram.update model.roseDiagram msg}
             | DiagramMessage msg -> 
-              {model with diagramApp = DiagramApp.update model.diagramApp msg}
+              {model with diagramApp = Diagram.update model.diagramApp msg}
               
             | MouseMove p -> 
               {model with diagramApp = 
-                            DiagramApp.update model.diagramApp 
-                                              (DiagramApp.Action.MouseMove (V2d p))
+                            Diagram.update model.diagramApp 
+                                              (Diagram.Action.MouseMove (V2d p))
               }
     let view (model : MTestModel) =
         //let svgAtts = 
@@ -85,7 +85,7 @@ module App =
         let rose = ((RoseDiagram.view model.roseDiagram) 
                       |> AList.map (UI.map RDMessage))
       
-        (DiagramApp.standaloneView model.diagramApp) |> UI.map Action.DiagramMessage
+        (Diagram.standaloneView model.diagramApp) |> UI.map Action.DiagramMessage
         //let content = 
         //  (DiagramApp.view model.diagramApp) 
         //    |> AList.map (fun d -> d |> UI.map Action.DiagramMessage)

@@ -32,7 +32,7 @@
       | ToggleEditCorrelations
       | SetSecondaryLevel      of NodeLevel
       | ToggleFlag             of SvgFlags
-      | DiagramMessage         of DiagramApp.Action
+      | DiagramMessage         of Diagram.Action
       | MouseMove              of V2d
       | ColourMapMessage       of ColourMap.Action
       
@@ -49,7 +49,7 @@
       let defaultWidth        = 20.0
 
       {
-        diagramApp          = Svgplus.DiagramApp.init
+        diagramApp          = Svgplus.Diagram.init
         logs                = HMap.empty
         correlations        = PList.empty
         
@@ -83,12 +83,28 @@
       HMap.tryFind logId model.logs
 
     let tryFindNodeFromRectangleId (model : CorrelationPlot) 
-                                   (selRect : SelectedRectangle) =
-      let log = tryFindLog model selRect.stack
+                                   (selRect : RectangleIdentification) =
+      let log = tryFindLog model selRect.stackid
       Option.bind (fun lo -> 
-                    let on = Log.findNodeFromRectangleId lo selRect.rectangle
+                    let on = Log.findNodeFromRectangleId lo selRect.rid
                     Option.map (fun n -> (n, lo)) on
                   ) log
+
+    let tryFindNode (model : CorrelationPlot) 
+                    (logId : RectangleStackId) 
+                    (nodeId : LogNodeId) =
+      let optLog = tryFindLog model logId
+      Option.bind
+        (fun log -> Log.findNode log (fun n -> n.id = nodeId)) optLog
+
+    let tryFindNodeFromRectId (model  : CorrelationPlot) 
+                              (logId  : RectangleStackId) 
+                              (rectId : RectangleId) =
+      let optLog = tryFindLog model logId
+      Option.bind
+        (fun log -> Log.findNode log (fun n -> n.id.rectangleId = rectId)) optLog
+        
+      
 
     let getPointsOfLog (model : CorrelationPlot) (logId : RectangleStackId) =
       let opt = HMap.tryFind logId model.logs
@@ -146,7 +162,7 @@
             colourMap
 
       let diagram =
-        DiagramApp.update model.diagramApp (DiagramApp.AddStack stack)
+        Diagram.update model.diagramApp (Diagram.AddStack stack)
 
       {
         model with 
@@ -168,9 +184,7 @@
     let updateLog  index (message : Log.Action) (logs : hmap<RectangleStackId, GeologicalLog>) =
        HMap.update index (fun (x : option<GeologicalLog>) -> Log.update x.Value message) logs//hack
 
-    let selectLog (id       : RectangleStackId)
-                  (annoApp  : AnnotationModel) 
-                  (model    : CorrelationPlot) =
+    let selectLog (model    : CorrelationPlot) (id       : RectangleStackId) =
       let hasNew = not (model.logs |> HMap.forall (fun id x -> x.state <> State.New))
       if hasNew then
         model
@@ -209,29 +223,37 @@
                       //annotations      = hmap<AnnotationId, Annotation>.Empty
                       currrentYMapping = None
                       selectedBorder   = None
-                      diagramApp       = DiagramApp.init
+                      diagramApp       = Diagram.init
           }
-        | LogMessage (id, logmsg) ->
+        | LogMessage (logId, logmsg) ->
           let _dApp =
             match logmsg with
               | Log.TextInputMessage (sid, m) ->
-                 DiagramApp.update model.diagramApp (DiagramApp.RectStackMessage (sid, RectangleStack.ChangeLabel m))
+                 Diagram.update model.diagramApp (Diagram.RectStackMessage (sid, RectangleStack.ChangeLabel m))
               | Log.MoveDown id ->
-                DiagramApp.update model.diagramApp (DiagramApp.MoveRight id)
+                Diagram.update model.diagramApp (Diagram.MoveRight id)
               | Log.MoveUp id ->
-                DiagramApp.update model.diagramApp (DiagramApp.MoveLeft id)
+                Diagram.update model.diagramApp (Diagram.MoveLeft id)
               | _ -> model.diagramApp
 
           let _model = 
             match logmsg with
               | Log.SelectLogNode nid ->
-                selectLog id annoApp model
+                let optNode = tryFindNode model logId nid
+                let _cmap = 
+                  match optNode with
+                    | Some node -> 
+                        ColourMap.update model.colourMapApp 
+                                         (ColourMap.SelectItemFromSvg (Rectangle.Lens.width.Get node.mainBody))
+                    | None -> model.colourMapApp
+                let _model = selectLog model logId
+                {_model with colourMapApp = _cmap}    
               | _ -> model
 
-          {_model with logs       = updateLog id logmsg _model.logs
+          {_model with logs       = updateLog logId logmsg _model.logs
                        diagramApp = _dApp
           }
-        | SelectLog id -> selectLog id annoApp model
+        | SelectLog id -> selectLog model id
         //| NewLog             -> 
         //  {model with creatingNew     = true
         //              selectedPoints  = List<(V3d * Annotation)>.Empty}
@@ -260,28 +282,33 @@
           {model with svgFlags = Flags.toggle f model.svgFlags}
         | MouseMove m       -> 
           let _d =
-            DiagramApp.update model.diagramApp (DiagramApp.MouseMove m)
+            Diagram.update model.diagramApp (Diagram.MouseMove m)
           {model with diagramApp = _d}
         | DiagramMessage m       -> 
           let _d =
-            DiagramApp.update model.diagramApp m
+            Diagram.update model.diagramApp m
 
           let _cp = 
-            match m with 
-              | DiagramApp.RectStackMessage (id, ra) ->
-                match ra with 
-                  | RectangleStack.HeaderMessage sm ->
-                    match sm with
-                      | Header.MouseMessage mm ->
-                        match mm with 
-                          | MouseAction.OnLeftClick ->
-                            selectLog id annoApp model
-                          | _ -> model
-                      | _ -> model
-                  | _ -> model
-              | _ -> model
-
-          {_cp with diagramApp = _d}
+            Diagram.Action.unpack m 
+                                  Diagram.UnpackAction.OnLeftClick
+                                  (fun stackid _ -> selectLog model stackid) 
+                                  model
+          let selectMap stackid rectId = 
+            let optnode = tryFindNodeFromRectId model stackid rectId
+            match optnode with
+              | Some node -> 
+                let width = (Rectangle.Lens.width.Get node.mainBody)
+                let _m  = ColourMap.SelectItemFromSvg width
+                ColourMap.update model.colourMapApp _m
+              | None      ->
+                model.colourMapApp
+          let _cmap =
+            Diagram.Action.unpack m 
+                                  Diagram.UnpackAction.SelectRectangle
+                                  selectMap
+                                  model.colourMapApp
+          {_cp with diagramApp   = _d
+                    colourMapApp = _cmap}
 
         | ColourMapMessage m -> 
           let _cmap = ColourMap.update model.colourMapApp m
@@ -290,15 +317,15 @@
             match m, optselid.IsSome with
               | ColourMap.SelectItem cmitemid, true ->
                 let selRect = optselid.Value
-                let _grainsize =
-                  let item = ColourMap.tryfindItem model.colourMapApp cmitemid
-                  match item with
-                    | Some it -> it.upper - (abs (it.upper * 0.5))
-                    | None    -> 1.0
                 let optsel = 
-                  DiagramApp.tryFindRectangle model.diagramApp selRect
+                  Diagram.tryFindRectangle model.diagramApp selRect
                 match optsel with
                   | Some r ->
+                    let _grainsize =
+                      let item = ColourMap.tryfindItem model.colourMapApp cmitemid
+                      match item with
+                        | Some it -> it.upper - (abs (it.upper * 0.5))
+                        | None    -> 1.0
                     let w = model.xToSvg _grainsize
                     let _optn = tryFindNodeFromRectangleId model selRect
                     match _optn with
@@ -308,19 +335,18 @@
                                 (n.id, LogNodes.RectangleMessage (Rectangle.SetWidth (w, _cmap)))
                               )
                         let _logs  = updateLog log.id m model.logs
-                        let _diagrMessage = 
-                          DiagramApp.RectStackMessage
-                            (optselid.Value.stack, RectangleStack.RectangleMessage 
-                              (optselid.Value.rectangle, Rectangle.SetWidth (w, _cmap)))
-                        let diagr = DiagramApp.update model.diagramApp _diagrMessage
+                        let rectIds = {stackid = optselid.Value.stackid; rid = optselid.Value.rid}
+                        let rectMessage = Rectangle.SetWidth (w, _cmap)
+                        let diagr = Diagram.update model.diagramApp (Diagram.UpdateRectangle (rectIds, rectMessage))
 
                         (_logs, diagr)
                       | None -> (model.logs, model.diagramApp)
                   | None   -> (model.logs, model.diagramApp)
                | ColourMap.SelectItem cmitemid, false -> (model.logs, model.diagramApp)
                | ColourMap.ItemMessage cmitemid, _ -> 
-                 let diagr = DiagramApp.update model.diagramApp (DiagramApp.UpdateColour _cmap)
+                 let diagr = Diagram.update model.diagramApp (Diagram.UpdateColour _cmap)
                  (model.logs, diagr)
+               | _,_ -> (model.logs, model.diagramApp)
                
                
 
@@ -356,7 +382,7 @@
         }
 
       let logSvgList =
-        (DiagramApp.view model.diagramApp)
+        (Diagram.view model.diagramApp)
           |> AList.map (fun x -> x |> UI.map DiagramMessage)
 
       Svg.svg attsRoot [

@@ -11,21 +11,21 @@ open Svgplus
 open Svgplus.HeaderType
 open UIPlus
 
-  type SelectedRectangle = {
-    rectangle : RectangleId
-    stack     : RectangleStackId
+  type RectangleIdentification = {
+    rid         : RectangleId
+    stackid     : RectangleStackId
   }
 
 
   [<DomainType>]
-  type DiagramApp = {
+  type Diagram = {
     rectangleStacks   : hmap<RectangleStackTypes.RectangleStackId, RectangleStackTypes.RectangleStack>
     order             : plist<RectangleStackTypes.RectangleStackId>
     connectionApp     : ConnectionApp
     rstackGap         : float
     marginLeft        : float
     marginTop         : float
-    selectedRectangle : option<SelectedRectangle>
+    selectedRectangle : option<RectangleIdentification>
   }
 
   
