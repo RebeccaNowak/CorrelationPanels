@@ -9,6 +9,7 @@ module Pages =
   open Aardvark.Base.Incremental
   open Aardvark.Base.Rendering
   open UIPlus
+  open Svgplus
 
 
   type Action =
@@ -103,11 +104,12 @@ module Pages =
 
     { model with 
         semanticApp = updSemApp //TODO refactor
-        corrPlot = {
-          model.corrPlot with 
-            semanticApp = updSemApp
-            correlationPlot = {model.corrPlot.correlationPlot with semanticApp = updSemApp }
-        }
+        corrPlot = 
+          {
+            model.corrPlot with 
+              semanticApp = updSemApp
+              correlationPlot = {model.corrPlot.correlationPlot with semanticApp = updSemApp }
+          }
     }
   
   let loadSemantics (ind : SaveIndex) model = //TODO refactor
@@ -115,11 +117,12 @@ module Pages =
 
     { model with 
         semanticApp = updSemApp 
-        corrPlot = { 
-          model.corrPlot with 
-            semanticApp = updSemApp
-            correlationPlot = {model.corrPlot.correlationPlot with semanticApp = updSemApp}
-        }
+        corrPlot = 
+          { 
+            model.corrPlot with 
+              semanticApp = updSemApp
+              correlationPlot = {model.corrPlot.correlationPlot with semanticApp = updSemApp}
+          }
     }
 
   let loadAnnotations (ind : SaveIndex) model = 
@@ -165,23 +168,43 @@ module Pages =
       CameraController.update model.camera 
         
     match msg, model.drawingApp.isDrawing with
-      | MouseDown bp,_ ->
+      | MouseUp bp,_ ->
+        let message =
+          (CorrelationPlotApp.Action.CorrelationPlotMessage 
+            (CorrelationPlot.Action.SvgCameraMessage 
+              (SvgCamera.Action.MouseUp bp)
+            )
+          )
         {model with 
           corrPlot = 
-           CorrelationPlotApp.update model.annotationApp model.corrPlot 
-                                     (CorrelationPlotApp.Action.MouseDown bp)
+           CorrelationPlotApp.update model.annotationApp 
+                                     model.corrPlot 
+                                     message
         }
-      | MouseUp bp,_ -> 
+      | MouseDown bp,_-> 
+        let message =
+          (CorrelationPlotApp.Action.CorrelationPlotMessage 
+            (CorrelationPlot.Action.SvgCameraMessage 
+              (SvgCamera.Action.MouseDown bp)
+            )
+          )
         {model with 
           corrPlot = 
-           CorrelationPlotApp.update model.annotationApp model.corrPlot 
-                                     (CorrelationPlotApp.Action.MouseUp bp)
+           CorrelationPlotApp.update model.annotationApp 
+                                     model.corrPlot 
+                                     message
         }
       | MouseMove p,_ -> 
+        let message =
+          (CorrelationPlotApp.Action.CorrelationPlotMessage 
+            (CorrelationPlot.Action.SvgCameraMessage 
+              (SvgCamera.Action.MouseMove p)
+            )
+          )
+                                           
         {model with 
           corrPlot = 
-           CorrelationPlotApp.update model.annotationApp model.corrPlot 
-                                     (CorrelationPlotApp.Action.MouseMove p)
+           CorrelationPlotApp.update model.annotationApp model.corrPlot message
         }
       | KeyDown Keys.Enter, true ->                          
         match model.drawingApp.working with

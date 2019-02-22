@@ -1,0 +1,157 @@
+﻿namespace Svgplus
+  open Svgplus.CameraType
+  open Aardvark.Base
+  open Aardvark.Application
+  open Aardvark.Base.Incremental
+  open Aardvark.UI
+  
+
+  [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+  module SvgCamera =
+
+    type Action =
+      | MouseDown     of (MouseButtons * V2i)
+      | MouseUp       of (MouseButtons * V2i)
+      | MouseMove     of V2d
+
+
+     
+    let init : SvgCamera =
+      {
+        zoomFactorX         = Zoom.init 1.0
+        zoomFactorY         = Zoom.init 1.0
+        dragging            = false
+        zoomingX            = false
+        zoomingY            = false
+        lastMousePos        = V2d(0.0)
+        offset              = V2d(0.0)
+        fontSize            = FontSize.init 10
+        transformedMousePos = V2d(0.0)
+      }
+
+    let mousePosition (model : SvgCamera) (origMousePosition : V2d) =
+      let _x = origMousePosition.X / model.zoomFactorX.factor
+      let _y = origMousePosition.Y / model.zoomFactorY.factor
+      V2d(_x, _y)
+
+    let zoomInY (model : SvgCamera)  (mousepos : V2d) = 
+      let diff = mousepos - model.lastMousePos
+      let factor = diff.OY.Length * 0.01 //TODO hardcoded zoom speed
+      let signum =
+        match diff.Y with
+          | a when a <= 0.0  -> -1.0
+          | b when b >  0.0  -> 1.0
+          | _                -> 1.0
+      let deltaZoom = factor * signum
+      let zoom = (model.zoomFactorY + deltaZoom)
+      //let deltaFontSIze = int -signum
+      let _fontSize = 
+        match zoom.factor with
+          | z when z < 1.0 -> 
+            FontSize.defaultSize.fontSize + (int (System.Math.Round ((1.0 - z) * 10.0)))
+          | z when z > 1.0 -> 
+            FontSize.defaultSize.fontSize - int (System.Math.Round z)
+          | _ -> FontSize.defaultSize.fontSize
+
+      {model with  //TODO refactor
+        zoomFactorY = zoom
+        fontSize = FontSize.init _fontSize
+        lastMousePos = mousepos
+      }
+
+    let zoomInX (model : SvgCamera) (mousepos : V2d) = 
+      let diff = mousepos - model.lastMousePos
+      let factor = diff.OY.Length * 0.01 //TODO hardcoded zoom speed
+      let signum =
+        match diff.Y with
+          | a when a <= 0.0  -> -1.0
+          | b when b >  0.0  -> 1.0
+          | _                -> 1.0
+      let deltaZoom = factor * signum
+      let zoom = (model.zoomFactorX + deltaZoom)
+      //let deltaFontSIze = int -signum
+      let _fontSize = 
+        match zoom.factor with
+          | z when z < 1.0 -> 
+            FontSize.defaultSize.fontSize + (int (System.Math.Round ((1.0 - z) * 10.0)))
+          | z when z > 1.0 -> 
+            FontSize.defaultSize.fontSize - int (System.Math.Round z)
+          | _ -> FontSize.defaultSize.fontSize
+
+      {model with  //TODO refactor
+        zoomFactorX = zoom
+        fontSize = FontSize.init _fontSize
+        lastMousePos = mousepos
+      }
+
+    let update (model : SvgCamera) (action : Action) =
+      match action with
+        | MouseDown (b,p) ->
+          let p = V2d p
+          match b with
+            | MouseButtons.Left   -> {model with  dragging = true
+                                                  lastMousePos = p}
+            | MouseButtons.Middle -> {model with  zoomingY = true
+                                                  lastMousePos = p}
+            | MouseButtons.Right  -> {model with  zoomingX = true
+                                                  lastMousePos = p}
+            | _ -> model
+          
+        | MouseUp (b,p) -> 
+          let p = V2d p
+          match b with
+            | MouseButtons.Left   -> {model with  dragging = false
+                                                  lastMousePos = p}
+            | MouseButtons.Middle -> {model with  zoomingY = false
+                                                  lastMousePos = p}
+            | MouseButtons.Right  -> {model with  zoomingX = false
+                                                  lastMousePos = p}
+              
+            | _ -> model
+        | MouseMove p ->
+          let _model = 
+            {model with
+              transformedMousePos = mousePosition model p
+            }
+
+          match model.dragging, model.zoomingX, model.zoomingY with //TODO refactor
+            | true, false, false ->
+              let _offset = model.offset + V2d(p - model.lastMousePos)
+              {_model with 
+                lastMousePos = p
+                offset       = _offset
+                
+              }            
+
+            | false, true, false  -> 
+              zoomInX _model p
+            | false, false, true  -> 
+              zoomInY _model p
+            | false, false, false -> 
+              _model
+            | _, _, _ -> 
+              {
+                _model with dragging = false
+                            zoomingX  = false
+                            zoomingY  = false
+              }
+
+
+
+    let transformationAttributes (model : MSvgCamera) =
+      let atts =
+        amap {
+          let! zfx = model.zoomFactorX
+          let! zfy = model.zoomFactorY
+          let! offset = model.offset
+          let! fs = model.fontSize
+          let transform = sprintf 
+                              "scale(%f,%f) translate(%f %f)" 
+                              zfx.factor 
+                              zfy.factor 
+                              offset.X 
+                              offset.Y
+          yield attribute "transform" transform
+          yield attribute "font-size" (sprintf "%ipx" fs.fontSize)
+        }
+      atts

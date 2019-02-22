@@ -17,6 +17,7 @@
 
     type Action = 
       | Clear
+      | SvgCameraMessage of SvgCamera.Action
      // | ToggleSelectLog        of option<RectangleStackId>
       | SelectLog              of RectangleStackId
       //| NewLog                 
@@ -66,8 +67,9 @@
 
         svgFlags            = SvgFlags.None
         svgOptions          = SvgOptions.init
+        svgCamera           = SvgCamera.init
 
-        logAxisApp          = LogAxisApp.initial
+        //logAxisApp          = LogAxisApp.initial
         xAxis               = SemanticId.invalid
         semanticApp         = SemanticApp.getInitialWithSamples
         //annotations         = hmap<AnnotationId, Annotation>.Empty
@@ -225,6 +227,9 @@
                       selectedBorder   = None
                       diagramApp       = Diagram.init
           }
+        | SvgCameraMessage m ->
+          let _svgCamera = SvgCamera.update model.svgCamera m
+          {model with svgCamera = _svgCamera}
         | LogMessage (logId, logmsg) ->
           let _dApp =
             match logmsg with
@@ -364,15 +369,15 @@
           attribute "width" "100%"
         ]
 
-      let attsGroup =
-        amap {
-          let! zf = model.svgOptions.zoom
-          let! offset = model.svgOptions.offset
-          let! fs = model.svgOptions.fontSize
-          let transform = sprintf "scale(%f) translate(%f %f)" zf.zoomFactor offset.X offset.Y
-          yield attribute "transform" transform
-          yield attribute "font-size" (sprintf "%ipx" fs.fontSize)
-        }
+      let attsGroup = SvgCamera.transformationAttributes model.svgCamera
+        //amap {
+        //  let! zf = model.svgOptions.zoom
+        //  let! offset = model.svgOptions.offset
+        //  let! fs = model.svgOptions.fontSize
+        //  let transform = sprintf "scale(%f) translate(%f %f)" zf.zoomFactor offset.X offset.Y
+        //  yield attribute "transform" transform
+        //  yield attribute "font-size" (sprintf "%ipx" fs.fontSize)
+        //}
 
       let logSvgList =
         (Diagram.view model.diagramApp)

@@ -57,8 +57,7 @@ open UIPlus
                   | Rectangle.Select rid,  Rectangle.Select dummy ->
                     f stackId rid
                   | _,_ -> def
-                | _ -> def
-              | _ -> def            
+                | _ -> def       
           | _ -> def
 
        
