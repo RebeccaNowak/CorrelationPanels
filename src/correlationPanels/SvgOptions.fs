@@ -18,9 +18,9 @@
         yAxisStep        = 1.0
         axisWeight       = 2.0
 
-        offset           = V2d.OO
-        zoom             = SvgZoom.defaultZoom
-        fontSize         = FontSize.defaultSize
+        //offset           = V2d.OO
+        //zoom             = SvgZoom.defaultZoom
+        //fontSize         = FontSize.defaultSize
     }
 
     let xAxisYPosition (model : SvgOptions) logHeight =

@@ -53,6 +53,8 @@
 	<Compile Include="Svg\Svg.Paths.fs" />
 	<Compile Include="Svg\Svg.Base.fs" />
 	<Compile Include="Svg\Svg.Incremental.fs" />
+	<Compile Include="Svg\Camera\SvgCameraTypes.fs" />
+	<Compile Include="Svg\Camera\SvgCamera.fs" />
 	<Compile Include="Svg\RoseDiagram\RoseDiagramModel.fs" />
 	<Compile Include="Svg\RoseDiagram\RoseDiagram.fs" />
 	<Compile Include="Svg\SvgButtonApp\Svg.ButtonApp.fs" />
@@ -112,7 +114,6 @@
 	<Compile Include="CorrelationPlot.fs" />
 	<Compile Include="CorrelationPlotApp.fs" />
 	<Compile Include="CorrelationDrawing.fs" />
-	<Compile Include="CorrelationDrawingApp.fs" />
 	<Compile Include="PagesApp.fs" />
 	<None Include="paket.references" />
 	<Compile Include="Model.fs" />
