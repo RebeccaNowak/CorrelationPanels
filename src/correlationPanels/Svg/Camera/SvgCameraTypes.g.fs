@@ -16,8 +16,8 @@ module Mutable =
         let _zoomFactorX = ResetMod.Create(__initial.zoomFactorX)
         let _zoomFactorY = ResetMod.Create(__initial.zoomFactorY)
         let _dragging = ResetMod.Create(__initial.dragging)
-        let _zoomingX = ResetMod.Create(__initial.zoomingX)
-        let _zoomingY = ResetMod.Create(__initial.zoomingY)
+        let _zooming = ResetMod.Create(__initial.zooming)
+        let _lockAspectRatio = ResetMod.Create(__initial.lockAspectRatio)
         let _lastMousePos = ResetMod.Create(__initial.lastMousePos)
         let _offset = ResetMod.Create(__initial.offset)
         let _fontSize = ResetMod.Create(__initial.fontSize)
@@ -26,8 +26,8 @@ module Mutable =
         member x.zoomFactorX = _zoomFactorX :> IMod<_>
         member x.zoomFactorY = _zoomFactorY :> IMod<_>
         member x.dragging = _dragging :> IMod<_>
-        member x.zoomingX = _zoomingX :> IMod<_>
-        member x.zoomingY = _zoomingY :> IMod<_>
+        member x.zooming = _zooming :> IMod<_>
+        member x.lockAspectRatio = _lockAspectRatio :> IMod<_>
         member x.lastMousePos = _lastMousePos :> IMod<_>
         member x.offset = _offset :> IMod<_>
         member x.fontSize = _fontSize :> IMod<_>
@@ -41,8 +41,8 @@ module Mutable =
                 ResetMod.Update(_zoomFactorX,v.zoomFactorX)
                 ResetMod.Update(_zoomFactorY,v.zoomFactorY)
                 ResetMod.Update(_dragging,v.dragging)
-                ResetMod.Update(_zoomingX,v.zoomingX)
-                ResetMod.Update(_zoomingY,v.zoomingY)
+                ResetMod.Update(_zooming,v.zooming)
+                ResetMod.Update(_lockAspectRatio,v.lockAspectRatio)
                 ResetMod.Update(_lastMousePos,v.lastMousePos)
                 ResetMod.Update(_offset,v.offset)
                 ResetMod.Update(_fontSize,v.fontSize)
@@ -81,17 +81,17 @@ module Mutable =
                     override x.Set(r,v) = { r with dragging = v }
                     override x.Update(r,f) = { r with dragging = f r.dragging }
                 }
-            let zoomingX =
+            let zooming =
                 { new Lens<Svgplus.CameraType.SvgCamera, System.Boolean>() with
-                    override x.Get(r) = r.zoomingX
-                    override x.Set(r,v) = { r with zoomingX = v }
-                    override x.Update(r,f) = { r with zoomingX = f r.zoomingX }
+                    override x.Get(r) = r.zooming
+                    override x.Set(r,v) = { r with zooming = v }
+                    override x.Update(r,f) = { r with zooming = f r.zooming }
                 }
-            let zoomingY =
+            let lockAspectRatio =
                 { new Lens<Svgplus.CameraType.SvgCamera, System.Boolean>() with
-                    override x.Get(r) = r.zoomingY
-                    override x.Set(r,v) = { r with zoomingY = v }
-                    override x.Update(r,f) = { r with zoomingY = f r.zoomingY }
+                    override x.Get(r) = r.lockAspectRatio
+                    override x.Set(r,v) = { r with lockAspectRatio = v }
+                    override x.Update(r,f) = { r with lockAspectRatio = f r.lockAspectRatio }
                 }
             let lastMousePos =
                 { new Lens<Svgplus.CameraType.SvgCamera, Aardvark.Base.V2d>() with

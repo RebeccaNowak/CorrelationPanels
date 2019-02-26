@@ -21,8 +21,8 @@
         zoomFactorX         = Zoom.init 1.0
         zoomFactorY         = Zoom.init 1.0
         dragging            = false
-        zoomingX            = false
-        zoomingY            = false
+        zooming             = false
+        lockAspectRatio     = true
         lastMousePos        = V2d(0.0)
         offset              = V2d(0.0)
         fontSize            = FontSize.init 10
@@ -34,52 +34,91 @@
       let _y = origMousePosition.Y / model.zoomFactorY.factor
       V2d(_x, _y)
 
-    let zoomInY (model : SvgCamera)  (mousepos : V2d) = 
+    //let zoomInY (model : SvgCamera)  (mousepos : V2d) = 
+    //  let diff = mousepos - model.lastMousePos
+    //  let factor = diff.OY.Length * 0.01 //TODO hardcoded zoom speed
+    //  let signum =
+    //    match diff.Y with
+    //      | a when a <= 0.0  -> -1.0
+    //      | b when b >  0.0  -> 1.0
+    //      | _                -> 1.0
+    //  let deltaZoom = factor * signum
+    //  let zoom = (model.zoomFactorY + deltaZoom)
+    //  //let deltaFontSIze = int -signum
+    //  let _fontSize = 
+    //    match zoom.factor with
+    //      | z when z < 1.0 -> 
+    //        FontSize.defaultSize.fontSize + (int (System.Math.Round ((1.0 - z) * 10.0)))
+    //      | z when z > 1.0 -> 
+    //        FontSize.defaultSize.fontSize - int (System.Math.Round z)
+    //      | _ -> FontSize.defaultSize.fontSize
+
+    //  {model with  //TODO refactor
+    //    zoomFactorY = zoom
+    //    fontSize = FontSize.init _fontSize
+    //    lastMousePos = mousepos
+    //  }
+
+    //let zoomInX (model : SvgCamera) (mousepos : V2d) = 
+    //  let diff = mousepos - model.lastMousePos
+    //  let factor = diff.XO.Length * 0.01 //TODO hardcoded zoom speed
+    //  let signum =
+    //    match diff.X with
+    //      | a when a <= 0.0  -> -1.0
+    //      | b when b >  0.0  -> 1.0
+    //      | _                -> 1.0
+    //  let deltaZoom = factor * signum
+    //  let zoom = (model.zoomFactorX + deltaZoom)
+    //  //let deltaFontSIze = int -signum
+    //  let _fontSize = 
+    //    match zoom.factor with
+    //      | z when z < 1.0 -> 
+    //        FontSize.defaultSize.fontSize + (int (System.Math.Round ((1.0 - z) * 10.0)))
+    //      | z when z > 1.0 -> 
+    //        FontSize.defaultSize.fontSize - int (System.Math.Round z)
+    //      | _ -> FontSize.defaultSize.fontSize
+
+    //  {model with  //TODO refactor
+    //    zoomFactorX = zoom
+    //    fontSize = FontSize.init _fontSize
+    //    lastMousePos = mousepos
+    //  }
+
+    let zoomIn (model : SvgCamera) (mousepos : V2d) = 
       let diff = mousepos - model.lastMousePos
-      let factor = diff.OY.Length * 0.01 //TODO hardcoded zoom speed
-      let signum =
+      let factorY = diff.OY.Length * 0.01 //TODO hardcoded zoom speed
+      let factorX = diff.XO.Length * 0.01 //TODO hardcoded zoom speed
+      let signumY =
         match diff.Y with
           | a when a <= 0.0  -> -1.0
           | b when b >  0.0  -> 1.0
           | _                -> 1.0
-      let deltaZoom = factor * signum
-      let zoom = (model.zoomFactorY + deltaZoom)
-      //let deltaFontSIze = int -signum
-      let _fontSize = 
-        match zoom.factor with
-          | z when z < 1.0 -> 
-            FontSize.defaultSize.fontSize + (int (System.Math.Round ((1.0 - z) * 10.0)))
-          | z when z > 1.0 -> 
-            FontSize.defaultSize.fontSize - int (System.Math.Round z)
-          | _ -> FontSize.defaultSize.fontSize
-
-      {model with  //TODO refactor
-        zoomFactorY = zoom
-        fontSize = FontSize.init _fontSize
-        lastMousePos = mousepos
-      }
-
-    let zoomInX (model : SvgCamera) (mousepos : V2d) = 
-      let diff = mousepos - model.lastMousePos
-      let factor = diff.OY.Length * 0.01 //TODO hardcoded zoom speed
-      let signum =
-        match diff.Y with
+      let signumX =
+        match diff.X with
           | a when a <= 0.0  -> -1.0
           | b when b >  0.0  -> 1.0
           | _                -> 1.0
-      let deltaZoom = factor * signum
-      let zoom = (model.zoomFactorX + deltaZoom)
-      //let deltaFontSIze = int -signum
+      let deltaZoomX = factorX * signumX
+      let deltaZoomY = factorY * signumY
+      let zoomX = (model.zoomFactorX + deltaZoomX)
+      let zoomY = (model.zoomFactorY + deltaZoomY)
+      let zoom = (zoomX + zoomY) * 0.5
+
+      let (zoomX, zoomY) = 
+        match model.lockAspectRatio with
+          | false -> (zoomX, zoomY)
+          | true -> (zoom, zoom)
       let _fontSize = 
-        match zoom.factor with
-          | z when z < 1.0 -> 
-            FontSize.defaultSize.fontSize + (int (System.Math.Round ((1.0 - z) * 10.0)))
-          | z when z > 1.0 -> 
-            FontSize.defaultSize.fontSize - int (System.Math.Round z)
+        match zoom with
+          | z when z.factor < 1.0 -> 
+            FontSize.defaultSize.fontSize + (int (System.Math.Round ((1.0 - z.factor) * 10.0)))
+          | z when z.factor > 1.0 -> 
+            FontSize.defaultSize.fontSize - int (System.Math.Round z.factor)
           | _ -> FontSize.defaultSize.fontSize
 
-      {model with  //TODO refactor
-        zoomFactorX = zoom
+      {model with 
+        zoomFactorX = zoomX
+        zoomFactorY = zoomY
         fontSize = FontSize.init _fontSize
         lastMousePos = mousepos
       }
@@ -91,9 +130,8 @@
           match b with
             | MouseButtons.Left   -> {model with  dragging = true
                                                   lastMousePos = p}
-            | MouseButtons.Middle -> {model with  zoomingY = true
-                                                  lastMousePos = p}
-            | MouseButtons.Right  -> {model with  zoomingX = true
+            | MouseButtons.Middle -> model
+            | MouseButtons.Right  -> {model with  zooming      = true
                                                   lastMousePos = p}
             | _ -> model
           
@@ -102,11 +140,9 @@
           match b with
             | MouseButtons.Left   -> {model with  dragging = false
                                                   lastMousePos = p}
-            | MouseButtons.Middle -> {model with  zoomingY = false
+            | MouseButtons.Middle ->  model
+            | MouseButtons.Right  -> {model with  zooming      = false
                                                   lastMousePos = p}
-            | MouseButtons.Right  -> {model with  zoomingX = false
-                                                  lastMousePos = p}
-              
             | _ -> model
         | MouseMove p ->
           let _model = 
@@ -114,8 +150,8 @@
               transformedMousePos = mousePosition model p
             }
 
-          match model.dragging, model.zoomingX, model.zoomingY with //TODO refactor
-            | true, false, false ->
+          match model.dragging, model.zooming with //TODO refactor
+            | true, false ->
               let _offset = model.offset + V2d(p - model.lastMousePos)
               {_model with 
                 lastMousePos = p
@@ -123,20 +159,38 @@
                 
               }            
 
-            | false, true, false  -> 
-              zoomInX _model p
-            | false, false, true  -> 
-              zoomInY _model p
-            | false, false, false -> 
+            | false, true -> 
+              zoomIn _model p
+
+            | false, false -> 
               _model
-            | _, _, _ -> 
+            | _, _ -> 
               {
                 _model with dragging = false
-                            zoomingX  = false
-                            zoomingY  = false
+                            zooming  = false
               }
 
+          //match model.dragging, model.zoomingX, model.zoomingY with //TODO refactor
+          //  | true, false, false ->
+          //    let _offset = model.offset + V2d(p - model.lastMousePos)
+          //    {_model with 
+          //      lastMousePos = p
+          //      offset       = _offset
+                
+          //    }            
 
+          //  | false, true, false  -> 
+          //    zoomInX _model p
+          //  | false, false, true  -> 
+          //    zoomInY _model p
+          //  | false, false, false -> 
+          //    _model
+          //  | _, _, _ -> 
+          //    {
+          //      _model with dragging = false
+          //                  zoomingX  = false
+          //                  zoomingY  = false
+          //    }
 
     let transformationAttributes (model : MSvgCamera) =
       let atts =
