@@ -261,7 +261,7 @@
           let _model =
             match model.selectedPoints.IsEmpty with
               | true      -> 
-                printf "no points in list for creating log"
+                printf "no points in list for creating log"                
                 model //TODO create empty log
               | false ->
                 let updLogs =
@@ -388,7 +388,7 @@
                                        
     let listView  (model : MCorrelationPlot) 
                   (semApp : MSemanticApp)
-                  (annoApp : MAnnotationModel) =
+                  (annoApp : amap<AnnotationId, MAnnotation>) =
 
       let mapper (log : MGeologicalLog) = (fun a -> Action.LogMessage (log.id, a))
       

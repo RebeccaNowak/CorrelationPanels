@@ -154,15 +154,15 @@ module SemanticApp =
 
   let getInitialWithSamples =
       initial
-        |> insertSemantic (Semantic.initialHorizon0   (System.Guid.NewGuid().ToString())) State.Display
-        |> insertSemantic (Semantic.initialHorizon1   (System.Guid.NewGuid().ToString())) State.Display
-        |> insertSemantic (Semantic.initialHorizon2   (System.Guid.NewGuid().ToString())) State.Display
-        |> insertSemantic (Semantic.initialHorizon3   (System.Guid.NewGuid().ToString())) State.Display
-        |> insertSemantic (Semantic.initialHorizon4   (System.Guid.NewGuid().ToString())) State.Display
-        |> insertSemantic (Semantic.initialCrossbed   (System.Guid.NewGuid().ToString())) State.Display
+        |> insertSemantic (Semantic.initialHorizon0   ("Horizon0")) State.Display
+        |> insertSemantic (Semantic.initialHorizon1   ("Horizon1")) State.Display
+        |> insertSemantic (Semantic.initialHorizon2   ("Horizon2")) State.Display
+        |> insertSemantic (Semantic.initialHorizon3   ("Horizon3")) State.Display
+        |> insertSemantic (Semantic.initialHorizon4   ("Horizon4")) State.Display
+        |> insertSemantic (Semantic.initialCrossbed   ("Crossbed")) State.Display
         //|> insertSemantic (Semantic.initialGrainSize  (System.Guid.NewGuid().ToString())) State.Display
-        |> insertSemantic (Semantic.impactBreccia (System.Guid.NewGuid().ToString())) State.Display
-        |> insertSemantic (Semantic.initialGrainSize2 (System.Guid.NewGuid().ToString())) State.Edit
+        |> insertSemantic (Semantic.impactBreccia     ("Impact")) State.Display
+        |> insertSemantic (Semantic.initialGrainSize2 ("GrainSize")) State.Edit
 
   let deselectAllSemantics (semantics : hmap<SemanticId, Semantic>) =
     semantics |> HMap.map (fun k s -> disableSemantic' s)

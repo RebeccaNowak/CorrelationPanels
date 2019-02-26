@@ -149,7 +149,7 @@
 
 
     let view  (model    : MCorrelationPlotModel) 
-              (annoApp  : MAnnotationModel) 
+              (annoApp  : amap<AnnotationId, MAnnotation>)
               (semApp   : MSemanticApp) =
 
 
@@ -169,10 +169,7 @@
           ]
         )
 
-      domnode
-    
-
-
+      domnode        
 
     let threads (model : CorrelationPlotModel) =
       CorrelationPlot.threads model.correlationPlot
