@@ -345,10 +345,6 @@
                  let diagr = Diagram.update model.diagramApp (Diagram.UpdateColour _cmap)
                  (model.logs, diagr)
                | _,_ -> (model.logs, model.diagramApp)
-               
-               
-
-          
           
           {model with colourMapApp = _cmap
                       diagramApp   = _diagram
@@ -370,14 +366,6 @@
         ]
 
       let attsGroup = SvgCamera.transformationAttributes model.svgCamera
-        //amap {
-        //  let! zf = model.svgOptions.zoom
-        //  let! offset = model.svgOptions.offset
-        //  let! fs = model.svgOptions.fontSize
-        //  let transform = sprintf "scale(%f) translate(%f %f)" zf.zoomFactor offset.X offset.Y
-        //  yield attribute "transform" transform
-        //  yield attribute "font-size" (sprintf "%ipx" fs.fontSize)
-        //}
 
       let logSvgList =
         (Diagram.view model.diagramApp)
@@ -394,7 +382,6 @@
     let listView  (model : MCorrelationPlot) 
                   (semApp : MSemanticApp)
                   (annoApp : MAnnotationModel) =
-
       let mapper (log : MGeologicalLog) = (fun a -> Action.LogMessage (log.id, a))
       
       let logList =

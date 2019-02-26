@@ -34,56 +34,6 @@
       let _y = origMousePosition.Y / model.zoomFactorY.factor
       V2d(_x, _y)
 
-    //let zoomInY (model : SvgCamera)  (mousepos : V2d) = 
-    //  let diff = mousepos - model.lastMousePos
-    //  let factor = diff.OY.Length * 0.01 //TODO hardcoded zoom speed
-    //  let signum =
-    //    match diff.Y with
-    //      | a when a <= 0.0  -> -1.0
-    //      | b when b >  0.0  -> 1.0
-    //      | _                -> 1.0
-    //  let deltaZoom = factor * signum
-    //  let zoom = (model.zoomFactorY + deltaZoom)
-    //  //let deltaFontSIze = int -signum
-    //  let _fontSize = 
-    //    match zoom.factor with
-    //      | z when z < 1.0 -> 
-    //        FontSize.defaultSize.fontSize + (int (System.Math.Round ((1.0 - z) * 10.0)))
-    //      | z when z > 1.0 -> 
-    //        FontSize.defaultSize.fontSize - int (System.Math.Round z)
-    //      | _ -> FontSize.defaultSize.fontSize
-
-    //  {model with  //TODO refactor
-    //    zoomFactorY = zoom
-    //    fontSize = FontSize.init _fontSize
-    //    lastMousePos = mousepos
-    //  }
-
-    //let zoomInX (model : SvgCamera) (mousepos : V2d) = 
-    //  let diff = mousepos - model.lastMousePos
-    //  let factor = diff.XO.Length * 0.01 //TODO hardcoded zoom speed
-    //  let signum =
-    //    match diff.X with
-    //      | a when a <= 0.0  -> -1.0
-    //      | b when b >  0.0  -> 1.0
-    //      | _                -> 1.0
-    //  let deltaZoom = factor * signum
-    //  let zoom = (model.zoomFactorX + deltaZoom)
-    //  //let deltaFontSIze = int -signum
-    //  let _fontSize = 
-    //    match zoom.factor with
-    //      | z when z < 1.0 -> 
-    //        FontSize.defaultSize.fontSize + (int (System.Math.Round ((1.0 - z) * 10.0)))
-    //      | z when z > 1.0 -> 
-    //        FontSize.defaultSize.fontSize - int (System.Math.Round z)
-    //      | _ -> FontSize.defaultSize.fontSize
-
-    //  {model with  //TODO refactor
-    //    zoomFactorX = zoom
-    //    fontSize = FontSize.init _fontSize
-    //    lastMousePos = mousepos
-    //  }
-
     let zoomIn (model : SvgCamera) (mousepos : V2d) = 
       let diff = mousepos - model.lastMousePos
       let factorY = diff.OY.Length * 0.01 //TODO hardcoded zoom speed
@@ -164,33 +114,11 @@
 
             | false, false -> 
               _model
-            | _, _ -> 
+            | true, true -> 
               {
                 _model with dragging = false
                             zooming  = false
               }
-
-          //match model.dragging, model.zoomingX, model.zoomingY with //TODO refactor
-          //  | true, false, false ->
-          //    let _offset = model.offset + V2d(p - model.lastMousePos)
-          //    {_model with 
-          //      lastMousePos = p
-          //      offset       = _offset
-                
-          //    }            
-
-          //  | false, true, false  -> 
-          //    zoomInX _model p
-          //  | false, false, true  -> 
-          //    zoomInY _model p
-          //  | false, false, false -> 
-          //    _model
-          //  | _, _, _ -> 
-          //    {
-          //      _model with dragging = false
-          //                  zoomingX  = false
-          //                  zoomingY  = false
-          //    }
 
     let transformationAttributes (model : MSvgCamera) =
       let atts =
