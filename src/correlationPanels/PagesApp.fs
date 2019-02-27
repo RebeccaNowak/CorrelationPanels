@@ -549,7 +549,7 @@ module Pages =
                     )
 
                   | Some "logs" -> //DEBUG
-                      CorrelationPlotApp.view model.corrPlot model.annotationApp model.semanticApp
+                      CorrelationPlotApp.view model.corrPlot model.annotationApp.annotations model.semanticApp
                         |> UI.map CorrPlotMessage
                   //| Some "Debug" ->
                   //    CorrelationPlotApp.View.view model.corrPlotApp model.annotationApp model.semanticApp

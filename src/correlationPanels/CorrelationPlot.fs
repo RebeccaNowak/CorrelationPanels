@@ -311,7 +311,7 @@
                  let diagr = Diagram.update model.diagramApp (Diagram.UpdateColour _cmap)
                  (model.logs, diagr)
                | _,_ -> (model.logs, model.diagramApp)
-          
+               
           {model with colourMapApp = _cmap
                       diagramApp   = _diagram
                       logs         = _logs}
@@ -344,7 +344,7 @@
                                        
     let listView  (model : MCorrelationPlot) 
                   (semApp : MSemanticApp)
-                  (annoApp : MAnnotationModel) =
+                  (annoApp : amap<AnnotationId, MAnnotation>) =
       let mapper (log : MGeologicalLog) = (fun a -> Action.LogMessage (log.id, a))
       
       let logList =
