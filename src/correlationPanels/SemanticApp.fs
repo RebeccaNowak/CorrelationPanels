@@ -231,7 +231,7 @@ module SemanticApp =
       (
         sprintf "%s%s" "./" savename, arr
       )
-    printf "write file: %s" savename
+    Log.line "write file: %s" savename
     model
 
   let load (model : SemanticApp) (savename : string) =
@@ -248,7 +248,7 @@ module SemanticApp =
         | :? MBrace.FsPickler.FsPicklerException -> None
     match semantics with
       | Some semantics ->
-        printf "load file" 
+        Log.line "load file" 
         let newModel =
           match HMap.isEmpty semantics with
             | true  -> getInitialWithSamples
@@ -261,7 +261,7 @@ module SemanticApp =
               update upd (Action.SetSemantic ((upd.semanticsList.TryGet 0) |> Option.map (fun s -> s.id)))
         newModel
       | None -> 
-        printfn "could not load semantics"
+        Log.line "could not load semantics"
         model
                     
   ///////////////////////////////// VIEW ///////////////////

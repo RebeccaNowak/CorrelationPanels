@@ -151,12 +151,12 @@ module Pages =
 
   let update (model : Pages) (msg : Action) = //TODO model always last?
     let printCameraDebugInformation () =
-      printfn "Camera Position: %s" 
-              (String.fromV3d model.camera.view.Location)
-      printfn "Up: %s" 
-              (String.fromV3d model.camera.view.Up)
-      printfn "Forward: %s" 
-              (String.fromV3d model.camera.view.Forward)
+      Log.line "Camera Position: %s" 
+               (String.fromV3d model.camera.view.Location)
+      Log.line "Up: %s" 
+               (String.fromV3d model.camera.view.Up)
+      Log.line "Forward: %s" 
+               (String.fromV3d model.camera.view.Forward)
 
     let updateCorrelationDrawing =
       CorrelationDrawing.update model.drawingApp model.semanticApp
@@ -207,6 +207,7 @@ module Pages =
            CorrelationPlotApp.update model.annotationApp model.corrPlot message
         }
       | KeyDown Keys.Enter, true ->                          
+
         match model.drawingApp.working with
           | None   -> model
           | Some w ->
@@ -220,8 +221,13 @@ module Pages =
           match k with
             | Keys.R  -> 
               {model with dockConfig = defaultLayout}
-            | _ -> model
-
+            | _ -> 
+              model
+        let _corrPlot =
+          let m = CorrelationPlotApp.CorrelationPlotMessage
+                    (CorrelationPlot.KeyboardMessage (Keyboard.KeyDown k))
+          CorrelationPlotApp.update model.annotationApp model.corrPlot m
+          
         let annoApp = 
           match k with
             | Keys.C -> 
@@ -233,16 +239,24 @@ module Pages =
                 | None  -> model.annotationApp
             | _ -> model.annotationApp
         {
-          model with 
+          _model with 
             drawingApp    = updateCorrelationDrawing (CorrelationDrawing.KeyDown k)
             annotationApp = AnnotationApp.update annoApp (AnnotationApp.KeyDown k)
-            camera     = updateCamera (CameraController.Message.KeyDown k)
+            camera        = updateCamera (CameraController.Message.KeyDown k)
+            corrPlot      = _corrPlot
         }
       | KeyUp k, _         -> 
+        let _corrPlot =
+          let m = CorrelationPlotApp.CorrelationPlotMessage
+                    (CorrelationPlot.KeyboardMessage (Keyboard.KeyDown k))
+          
+          CorrelationPlotApp.update model.annotationApp model.corrPlot m
+          
         {  
           model with 
             drawingApp = updateCorrelationDrawing (CorrelationDrawing.KeyUp k)
             camera     = updateCamera (CameraController.Message.KeyUp k)
+            corrPlot   = _corrPlot
         }
       | SemanticAppMessage a, false ->
         updateSemantics a model

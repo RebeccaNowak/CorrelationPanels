@@ -1255,6 +1255,7 @@ module Mutable =
         let _diagramApp = Svgplus.DA.Mutable.MDiagram.Create(__initial.diagramApp)
         let _colourMapApp = UIPlus.Mutable.MColourMap.Create(__initial.colourMapApp)
         let _svgCamera = Svgplus.CameraType.Mutable.MSvgCamera.Create(__initial.svgCamera)
+        let _keyboard = ResetMod.Create(__initial.keyboard)
         let _logs = MMap.Create(__initial.logs, (fun v -> MGeologicalLog.Create(v)), (fun (m,v) -> MGeologicalLog.Update(m, v)), (fun v -> v))
         let _correlations = MList.Create(__initial.correlations, (fun v -> MCorrelation.Create(v)), (fun (m,v) -> MCorrelation.Update(m, v)), (fun v -> v))
         let _selectedBorder = MOption.Create(__initial.selectedBorder, (fun v -> MBorder.Create(v)), (fun (m,v) -> MBorder.Update(m, v)), (fun v -> v))
@@ -1277,6 +1278,7 @@ module Mutable =
         member x.diagramApp = _diagramApp
         member x.colourMapApp = _colourMapApp
         member x.svgCamera = _svgCamera
+        member x.keyboard = _keyboard :> IMod<_>
         member x.logs = _logs :> amap<_,_>
         member x.correlations = _correlations :> alist<_>
         member x.selectedBorder = _selectedBorder :> IMod<_>
@@ -1304,6 +1306,7 @@ module Mutable =
                 Svgplus.DA.Mutable.MDiagram.Update(_diagramApp, v.diagramApp)
                 UIPlus.Mutable.MColourMap.Update(_colourMapApp, v.colourMapApp)
                 Svgplus.CameraType.Mutable.MSvgCamera.Update(_svgCamera, v.svgCamera)
+                ResetMod.Update(_keyboard,v.keyboard)
                 MMap.Update(_logs, v.logs)
                 MList.Update(_correlations, v.correlations)
                 MOption.Update(_selectedBorder, v.selectedBorder)
@@ -1355,6 +1358,12 @@ module Mutable =
                     override x.Get(r) = r.svgCamera
                     override x.Set(r,v) = { r with svgCamera = v }
                     override x.Update(r,f) = { r with svgCamera = f r.svgCamera }
+                }
+            let keyboard =
+                { new Lens<CorrelationDrawing.CorrelationPlot, UIPlus.KeyboardTypes.Keyboard<CorrelationDrawing.CorrelationPlot>>() with
+                    override x.Get(r) = r.keyboard
+                    override x.Set(r,v) = { r with keyboard = v }
+                    override x.Update(r,f) = { r with keyboard = f r.keyboard }
                 }
             let logs =
                 { new Lens<CorrelationDrawing.CorrelationPlot, Aardvark.Base.hmap<Svgplus.RectangleStackTypes.RectangleStackId,CorrelationDrawing.GeologicalLog>>() with

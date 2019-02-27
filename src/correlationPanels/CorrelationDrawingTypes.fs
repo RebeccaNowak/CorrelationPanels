@@ -437,6 +437,7 @@ type CorrelationPlot = {
    colourMapApp        : ColourMap
 
    svgCamera           : SvgCamera
+   keyboard            : UIPlus.KeyboardTypes.Keyboard<CorrelationPlot>
 
    logs                : hmap<Svgplus.RectangleStackTypes.RectangleStackId, GeologicalLog>
    correlations        : plist<Correlation>

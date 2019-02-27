@@ -13,11 +13,13 @@
     open Svgplus
     open Svgplus.RectangleStackTypes
     open Svgplus.RectangleType
+    open UIPlus.KeyboardTypes
 
 
     type Action = 
       | Clear
       | SvgCameraMessage of SvgCamera.Action
+      | KeyboardMessage  of Keyboard.Action
      // | ToggleSelectLog        of option<RectangleStackId>
       | SelectLog              of RectangleStackId
       //| NewLog                 
@@ -29,57 +31,18 @@
       | ChangeView             of CorrelationPlotViewType
       //| ChangeXAxis            of (AnnotationApp * SemanticId)
       //| LogAxisAppMessage      of LogAxisApp.Action
-     // | NoMessage              of obj
       | ToggleEditCorrelations
       | SetSecondaryLevel      of NodeLevel
       | ToggleFlag             of SvgFlags
       | DiagramMessage         of Diagram.Action
       | MouseMove              of V2d
       | ColourMapMessage       of ColourMap.Action
+      | KeyDown                of key : Keys
+      | KeyUp                  of key : Keys     
       
-
-
 
     //let logOffset (index : int) =
     //  float (index * 10 + index * 250)
-
-    let initial : CorrelationPlot  = 
-      let xToSvg              = fun x -> (21.0 + Math.Log(x,2.0)) * 10.0
-      let svgToX              = fun x -> (Math.Pow (2.0, (x * 0.1 - 21.0)))
-      let yToSvg              = 25.0
-      let defaultWidth        = 20.0
-
-      {
-        diagramApp          = Svgplus.Diagram.init
-        logs                = HMap.empty
-        correlations        = PList.empty
-        
-        editCorrelations    = false
-        colourMapApp        = ColourMap.initial xToSvg svgToX
-        selectedPoints      = hmap<AnnotationId, V3d>.Empty
-        selectedLog         = None
-        selectedNode        = None
-        selectedBorder      = None
-        secondaryLvl        = NodeLevel.init 1
-
-        //creatingNew         = false
-        viewType            = CorrelationPlotViewType.LogView
-
-        svgFlags            = SvgFlags.None
-        svgOptions          = SvgOptions.init
-        svgCamera           = SvgCamera.init
-
-        //logAxisApp          = LogAxisApp.initial
-        xAxis               = SemanticId.invalid
-        semanticApp         = SemanticApp.getInitialWithSamples
-        //annotations         = hmap<AnnotationId, Annotation>.Empty
-        yRange              = Rangef.init
-        currrentYMapping    = None
-
-        xToSvg              = xToSvg      
-        yToSvg              = yToSvg      
-        defaultWidth        = defaultWidth
-      }
 
     let tryFindLog (model : CorrelationPlot) (logId : RectangleStackId) =
       HMap.tryFind logId model.logs
@@ -121,7 +84,7 @@
         let! lh = model.svgOptions.logHeight
         let! yRange = model.yRange
         match yRange.range with
-          | 0.0 -> printf "Divide by zero: Log range is %.2f-%.2f" yRange.min yRange.max
+          | 0.0 -> Log.line "Divide by zero: Log range is %.2f-%.2f" yRange.min yRange.max
           | _ -> ()
         return lp + (yRange.max - y) * (lh / yRange.range)
         //opt.logPadding + (y - yRange.min) * (opt.logHeight / yRange.range)
@@ -147,7 +110,7 @@
       let opt =  model.svgOptions
       let yRange = model.yRange
       match yRange.range with
-        | 0.0 -> printf "Divide by zero: Log range is %.2f-%.2f" yRange.min yRange.max
+        | 0.0 -> Log.line "Divide by zero: Log range is %.2f-%.2f" yRange.min yRange.max
         | _ -> ()
       let foo = opt.logPadding + (yRange.max - y) * (opt.logHeight / yRange.range)
       foo
@@ -230,6 +193,9 @@
         | SvgCameraMessage m ->
           let _svgCamera = SvgCamera.update model.svgCamera m
           {model with svgCamera = _svgCamera}
+        | KeyboardMessage m ->
+          let (_kb, _model) = Keyboard.update model.keyboard model m
+          {_model with keyboard = _kb}
         | LogMessage (logId, logmsg) ->
           let _dApp =
             match logmsg with
@@ -266,7 +232,7 @@
           let _model =
             match model.selectedPoints.IsEmpty with
               | true      -> 
-                printf "no points in list for creating log"
+                Log.line "no points in list for creating log"
                 model //TODO create empty log
               | false ->
                 let updLogs =
@@ -351,9 +317,6 @@
                       logs         = _logs}
 
 
-        
-
-
     let viewSvg (annoApp : MAnnotationModel) (model : MCorrelationPlot)  = //TODO refactor
       let attsRoot = 
         [
@@ -412,8 +375,72 @@
         Table.toTableView (div[][]) rows ["Log Name";"Order"]
       logList
       
+    let decreaseYToSvg (model : CorrelationPlot) =
+      {model with yToSvg = model.yToSvg - 1.0}
+
+    let increaseYToSvg (model : CorrelationPlot) =
+      {model with yToSvg = model.yToSvg + 1.0}
+
+    let initial : CorrelationPlot  = 
+      let keyboard = Keyboard.init ()
+      let _keyboard = 
+        keyboard
+          |> (Keyboard.register
+                {
+                  update = increaseYToSvg
+                  key    = Keys.Y
+                  ctrl   = false
+                  alt    = false
+                }
+                increaseYToSvg)
+          |> (Keyboard.register
+                {
+                  update = decreaseYToSvg
+                  key    = Keys.Y
+                  ctrl   = true
+                  alt    = false
+                }
+                decreaseYToSvg)
 
 
+      let xToSvg              = fun x -> (21.0 + Math.Log(x,2.0)) * 10.0
+      let svgToX              = fun x -> (Math.Pow (2.0, (x * 0.1 - 21.0)))
+      let yToSvg              = 25.0
+      let defaultWidth        = 20.0
+
+      {
+        diagramApp          = Svgplus.Diagram.init
+        logs                = HMap.empty
+        correlations        = PList.empty
+        
+        editCorrelations    = false
+        colourMapApp        = ColourMap.initial xToSvg svgToX
+        selectedPoints      = hmap<AnnotationId, V3d>.Empty
+        selectedLog         = None
+        selectedNode        = None
+        selectedBorder      = None
+        secondaryLvl        = NodeLevel.init 1
+
+        //creatingNew         = false
+        viewType            = CorrelationPlotViewType.LogView
+
+        svgFlags            = SvgFlags.None
+        svgOptions          = SvgOptions.init
+        svgCamera           = SvgCamera.init
+
+        keyboard            = keyboard
+
+        //logAxisApp          = LogAxisApp.initial
+        xAxis               = SemanticId.invalid
+        semanticApp         = SemanticApp.getInitialWithSamples
+        //annotations         = hmap<AnnotationId, Annotation>.Empty
+        yRange              = Rangef.init
+        currrentYMapping    = None
+
+        xToSvg              = xToSvg      
+        yToSvg              = yToSvg      
+        defaultWidth        = defaultWidth
+      }
 
         //    div [clazz "item"][
         //      div [clazz "content"] [

@@ -19,6 +19,7 @@ open UIPlus
       | MouseMove         of V2d
       | ConnectionMessage of ConnectionApp.Action
       | AddStack          of RectangleStackTypes.RectangleStack
+      | DeleteStack       of RectangleStackTypes.RectangleStackId
       | MoveLeft          of RectangleStackTypes.RectangleStackId
       | MoveRight         of RectangleStackTypes.RectangleStackId
       | UpdateColour      of ColourMap
@@ -229,6 +230,14 @@ open UIPlus
             rectangleStacks = _r
             order           = _order
           } |> layout
+
+        | DeleteStack sid ->
+          let _stacks = model.rectangleStacks.Remove sid
+          let _order  = model.order.Remove sid
+          {model with
+            rectangleStacks = _stacks
+            order           = _order
+          } |> layout          
 
         | RectStackMessage msg -> 
           let (sid, m) = msg

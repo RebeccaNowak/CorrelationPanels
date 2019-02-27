@@ -44,6 +44,8 @@
 	<Compile Include="UIPlus\UI.Buttons.fs" />
 	<Compile Include="UIPlus\UI.Flags.fs" />
 	<Compile Include="UIPlus\UI.Labels.fs" />
+	<Compile Include="UIPlus\KeyboardApp\KeyboardTypes.fs" />
+	<Compile Include="UIPlus\KeyboardApp\Keyboard.fs" />
 	<Compile Include="UIPlus\ColourMapApp\ColourMapItem.fs" />
 	<Compile Include="UIPlus\ColourMapApp\ColourMapApp.fs" />
 	<Compile Include="UIPlus\ArrowButton\ArrowButtonApp.fs" />
