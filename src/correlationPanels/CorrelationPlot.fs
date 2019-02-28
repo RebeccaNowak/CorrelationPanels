@@ -317,7 +317,7 @@
                       logs         = _logs}
 
 
-    let viewSvg (annoApp : MAnnotationModel) (model : MCorrelationPlot)  = //TODO refactor
+    let viewSvg (annoApp : amap<AnnotationId, MAnnotation>) (model : MCorrelationPlot)  = //TODO refactor
       let attsRoot = 
         [
           clazz "svgRoot"
@@ -345,6 +345,7 @@
     let listView  (model : MCorrelationPlot) 
                   (semApp : MSemanticApp)
                   (annoApp : amap<AnnotationId, MAnnotation>) =
+
       let mapper (log : MGeologicalLog) = (fun a -> Action.LogMessage (log.id, a))
       
       let logList =
@@ -503,7 +504,7 @@
               threads = threads
               initial = initial
               update = (update annoApp)
-              view = (viewSvg mAnnoApp)
+              view = (viewSvg mAnnoApp.annotations)
           }
 
     let start (annoApp : AnnotationModel) (mAnnoApp : MAnnotationModel) =

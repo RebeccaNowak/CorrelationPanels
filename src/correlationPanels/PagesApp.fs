@@ -543,7 +543,7 @@ module Pages =
                             (onMouseMove (fun p -> MouseMove (V2d p)))
                             onLayoutChanged UpdateConfig
                            ] [
-                            CorrelationPlotApp.viewSvg model.annotationApp model.corrPlot
+                            CorrelationPlotApp.viewSvg model.annotationApp.annotations model.corrPlot
                               |> (UI.map CorrPlotMessage)
                       ]
                     )
