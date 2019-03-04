@@ -37,8 +37,8 @@
       | DiagramMessage         of Diagram.Action
       | MouseMove              of V2d
       | ColourMapMessage       of ColourMap.Action
-      | KeyDown                of key : Keys
-      | KeyUp                  of key : Keys     
+      //| KeyDown                of key : Keys
+      //| KeyUp                  of key : Keys     
       
 
     //let logOffset (index : int) =
@@ -115,7 +115,7 @@
       let foo = opt.logPadding + (yRange.max - y) * (opt.logHeight / yRange.range)
       foo
 
-    let createNewLog (model : CorrelationPlot) (annoApp : AnnotationModel) (colourMap : ColourMap) =
+    let createNewLog (model : CorrelationPlot) (annoApp : AnnotationApp) (colourMap : ColourMap) =
       let (stack, newLog) = 
         Log.initial 
             model.selectedPoints  //selected points
@@ -127,11 +127,11 @@
             colourMap
 
       let diagram =
-        Diagram.update model.diagramApp (Diagram.AddStack stack)
+        Diagram.update model.diagram (Diagram.AddStack stack)
 
       {
         model with 
-          diagramApp       = diagram
+          diagram       = diagram
           logs             = (model.logs.Add (newLog.id, newLog))
           selectedPoints   = hmap<AnnotationId, V3d>.Empty
       }
@@ -175,7 +175,7 @@
         {model with logs        = _logs
                     selectedLog = _sel}
 
-    let update (annoApp  : AnnotationModel)
+    let update (annoApp  : AnnotationApp)
                (model    : CorrelationPlot) 
                (action   : Action) = 
       
@@ -188,7 +188,7 @@
                       //annotations      = hmap<AnnotationId, Annotation>.Empty
                       currrentYMapping = None
                       selectedBorder   = None
-                      diagramApp       = Diagram.init
+                      diagram       = Diagram.init
           }
         | SvgCameraMessage m ->
           let _svgCamera = SvgCamera.update model.svgCamera m
@@ -200,12 +200,12 @@
           let _dApp =
             match logmsg with
               | Log.TextInputMessage (sid, m) ->
-                 Diagram.update model.diagramApp (Diagram.RectStackMessage (sid, RectangleStack.ChangeLabel m))
+                 Diagram.update model.diagram (Diagram.RectStackMessage (sid, RectangleStack.ChangeLabel m))
               | Log.MoveDown id ->
-                Diagram.update model.diagramApp (Diagram.MoveRight id)
+                Diagram.update model.diagram (Diagram.MoveRight id)
               | Log.MoveUp id ->
-                Diagram.update model.diagramApp (Diagram.MoveLeft id)
-              | _ -> model.diagramApp
+                Diagram.update model.diagram (Diagram.MoveLeft id)
+              | _ -> model.diagram
 
           let _model = 
             match logmsg with
@@ -222,7 +222,7 @@
               | _ -> model
 
           {_model with logs       = updateLog logId logmsg _model.logs
-                       diagramApp = _dApp
+                       diagram = _dApp
           }
         | SelectLog id -> selectLog model id
         //| NewLog             -> 
@@ -253,11 +253,11 @@
           {model with svgFlags = Flags.toggle f model.svgFlags}
         | MouseMove m       -> 
           let _d =
-            Diagram.update model.diagramApp (Diagram.MouseMove m)
-          {model with diagramApp = _d}
+            Diagram.update model.diagram (Diagram.MouseMove m)
+          {model with diagram = _d}
         | DiagramMessage m       -> 
           let _d =
-            Diagram.update model.diagramApp m
+            Diagram.update model.diagram m
 
           let _cp = 
             Diagram.Action.unpack m 
@@ -278,18 +278,18 @@
                                   Diagram.UnpackAction.SelectRectangle
                                   selectMap
                                   model.colourMapApp
-          {_cp with diagramApp   = _d
+          {_cp with diagram   = _d
                     colourMapApp = _cmap}
 
         | ColourMapMessage m -> 
           let _cmap = ColourMap.update model.colourMapApp m
-          let optselid = model.diagramApp.selectedRectangle 
+          let optselid = model.diagram.selectedRectangle 
           let (_logs, _diagram) = 
             match m, optselid.IsSome with
               | ColourMap.SelectItem cmitemid, true ->
                 let selRect = optselid.Value
                 let optsel = 
-                  Diagram.tryFindRectangle model.diagramApp selRect
+                  Diagram.tryFindRectangle model.diagram selRect
                 match optsel with
                   | Some r ->
                     let width = ColourMap.svgValueFromItemId model.colourMapApp cmitemid
@@ -303,21 +303,21 @@
                         let _logs  = updateLog log.id m model.logs
                         let rectIds = {stackid = optselid.Value.stackid; rid = optselid.Value.rid}
                         let rectMessage = Rectangle.SetWidth (width, _cmap)
-                        let diagr = Diagram.update model.diagramApp (Diagram.UpdateRectangle (rectIds, rectMessage))
+                        let diagr = Diagram.update model.diagram (Diagram.UpdateRectangle (rectIds, rectMessage))
                         (_logs, diagr)
-                      | None -> (model.logs, model.diagramApp)
-                  | None   -> (model.logs, model.diagramApp)
+                      | None -> (model.logs, model.diagram)
+                  | None   -> (model.logs, model.diagram)
                | ColourMap.ItemMessage cmitemid, _ -> 
-                 let diagr = Diagram.update model.diagramApp (Diagram.UpdateColour _cmap)
+                 let diagr = Diagram.update model.diagram (Diagram.UpdateColour _cmap)
                  (model.logs, diagr)
-               | _,_ -> (model.logs, model.diagramApp)
+               | _,_ -> (model.logs, model.diagram)
                
           {model with colourMapApp = _cmap
-                      diagramApp   = _diagram
+                      diagram   = _diagram
                       logs         = _logs}
 
 
-    let viewSvg (annoApp : MAnnotationModel) (model : MCorrelationPlot)  = //TODO refactor
+    let viewSvg (annoApp : MAnnotationApp) (model : MCorrelationPlot)  = //TODO refactor
       let attsRoot = 
         [
           clazz "svgRoot"
@@ -331,7 +331,7 @@
       let attsGroup = SvgCamera.transformationAttributes model.svgCamera
 
       let logSvgList =
-        (Diagram.view model.diagramApp)
+        (Diagram.view model.diagram)
           |> AList.map (fun x -> x |> UI.map DiagramMessage)
 
       Svg.svg attsRoot [
@@ -349,9 +349,9 @@
       
       let logList =
         let rows = 
-          let stacks = model.diagramApp.rectangleStacks
+          let stacks = model.diagram.rectangleStacks
           alist {
-            for id in model.diagramApp.order do
+            for id in model.diagram.order do
               let! stack = AMap.find id stacks
               let! log   = AMap.find id model.logs
               let! tmp = 
@@ -375,11 +375,15 @@
         Table.toTableView (div[][]) rows ["Log Name";"Order"]
       logList
       
-    let decreaseYToSvg (model : CorrelationPlot) =
-      {model with yToSvg = model.yToSvg - 1.0}
-
-    let increaseYToSvg (model : CorrelationPlot) =
-      {model with yToSvg = model.yToSvg + 1.0}
+    let updateYToSvg (g : float -> float) (model : CorrelationPlot)  =
+      let _yToSvg = g model.yToSvg
+      match _yToSvg with
+        | _yToSvg when _yToSvg <= 1.0 -> model
+        | _ ->
+          let f size =
+            (size * _yToSvg) / model.yToSvg
+          {model with yToSvg   = _yToSvg
+                      diagram  = Diagram.update model.diagram (Diagram.UpdateYSizes f)}
 
     let initial : CorrelationPlot  = 
       let keyboard = Keyboard.init ()
@@ -387,20 +391,18 @@
         keyboard
           |> (Keyboard.register
                 {
-                  update = increaseYToSvg
+                  update = (updateYToSvg (fun x -> x - 1.0))
                   key    = Keys.Y
                   ctrl   = false
                   alt    = false
-                }
-                increaseYToSvg)
+                })
           |> (Keyboard.register
                 {
-                  update = decreaseYToSvg
+                  update = (updateYToSvg (fun x -> x + 1.0))
                   key    = Keys.Y
                   ctrl   = true
                   alt    = false
-                }
-                decreaseYToSvg)
+                })
 
 
       let xToSvg              = fun x -> (21.0 + Math.Log(x,2.0)) * 10.0
@@ -409,7 +411,7 @@
       let defaultWidth        = 20.0
 
       {
-        diagramApp          = Svgplus.Diagram.init
+        diagram          = Svgplus.Diagram.init
         logs                = HMap.empty
         correlations        = PList.empty
         
@@ -428,7 +430,7 @@
         svgOptions          = SvgOptions.init
         svgCamera           = SvgCamera.init
 
-        keyboard            = keyboard
+        keyboard            = _keyboard
 
         //logAxisApp          = LogAxisApp.initial
         xAxis               = SemanticId.invalid
@@ -497,7 +499,7 @@
 
 
 
-    let app (annoApp : AnnotationModel) (mAnnoApp : MAnnotationModel) : App<CorrelationPlot,MCorrelationPlot,Action> =
+    let app (annoApp : AnnotationApp) (mAnnoApp : MAnnotationApp) : App<CorrelationPlot,MCorrelationPlot,Action> =
           {
               unpersist = Unpersist.instance
               threads = threads
@@ -506,5 +508,5 @@
               view = (viewSvg mAnnoApp)
           }
 
-    let start (annoApp : AnnotationModel) (mAnnoApp : MAnnotationModel) =
+    let start (annoApp : AnnotationApp) (mAnnoApp : MAnnotationApp) =
       App.start (app annoApp mAnnoApp)

@@ -8,6 +8,7 @@ open Aardvark.UI.Primitives
 open SimpleTypes
 open Svgplus
 open UIPlus
+open UIPlus.KeyboardTypes
 open Svgplus.RectangleStackTypes
 open Svgplus.RectangleType
 open Svgplus.CameraType
@@ -293,9 +294,10 @@ type Annotation = {
 }
 
 [<DomainType>]
-type AnnotationModel = {
+type AnnotationApp = {
   annotations         : hmap<AnnotationId, Annotation>
   selectedAnnotation  : option<AnnotationId>
+  keyboard            : Keyboard<AnnotationApp>
 }
 
 
@@ -433,7 +435,7 @@ type SvgOptions = {
 
 [<DomainType>]
 type CorrelationPlot = {
-   diagramApp          : Svgplus.DA.Diagram
+   diagram          : Svgplus.DA.Diagram
    colourMapApp        : ColourMap
 
    svgCamera           : SvgCamera
@@ -481,14 +483,17 @@ type CorrelationPlotModel = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 [<DomainType>]
 type CorrelationDrawingModel = {
-    isDrawing         : bool //maybe change to state selection
+    keyboard          : Keyboard<CorrelationDrawingModel>
     hoverPosition     : option<Trafo3d>
     working           : option<Annotation>
     projection        : Projection 
     //geometry          : GeometryType
     exportPath        : string
    // flags             : SgFlags
-}
+} with
+  member self.isDrawing =
+    self.keyboard.ctrlPressed
+
 
 //[<DomainType>]
 //type CorrelationAppModel = {
@@ -546,6 +551,8 @@ type Pages =
         past          : Option<Pages>
 
         saveIndices   : list<SaveIndex>
+
+        keyboard      : Keyboard<Pages>
         
         [<NonIncremental>]
         future        : Option<Pages>
@@ -560,7 +567,7 @@ type Pages =
         dockConfig    : DockConfig
 
         drawingApp    : CorrelationDrawingModel
-        annotationApp : AnnotationModel
+        annotationApp : AnnotationApp
         semanticApp   : SemanticApp
         corrPlot      : CorrelationPlotModel
     }

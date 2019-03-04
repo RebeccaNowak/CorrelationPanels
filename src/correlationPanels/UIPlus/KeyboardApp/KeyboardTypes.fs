@@ -20,12 +20,10 @@
         let res = c && a && k
         res
       
-
-
-
   type Keyboard<'a> =
     {
       altPressed        : bool
       ctrlPressed       : bool
-      registeredActions : plist<KeyConfig<'a>>
+      registeredKeyUp   : plist<KeyConfig<'a>>
+      registeredKeyDown : plist<KeyConfig<'a>>
     } 

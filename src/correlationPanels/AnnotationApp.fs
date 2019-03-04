@@ -17,35 +17,54 @@ namespace CorrelationDrawing
       | AddAnnotation           of Annotation
       | DeselectAllPoints       
       | SelectPoints            of hmap<AnnotationId, V3d>
-      | KeyDown                 of key : Keys 
+      | KeyboardMessage         of Keyboard.Action
+      //| KeyDown                 of key : Keys 
 
 
-    let initial : AnnotationModel = {
-      annotations         = hmap.Empty
-      selectedAnnotation  = None
-    }
+    let initial : AnnotationApp = 
+      let keyboard = Keyboard.init ()
+      let deleteAnnotation model = 
+        {model with 
+          annotations = 
+            HMap.filter (fun _ a -> not (Annotation.isSelected a)) 
+                        model.annotations
+        }
+      let _keyboard =
+            keyboard
+              |> (Keyboard.register
+                    {
+                      update = deleteAnnotation
+                      key    = Keys.Delete
+                      ctrl   = false
+                      alt    = false
+                    })
+      {
+        annotations         = hmap.Empty
+        selectedAnnotation  = None
+        keyboard            = _keyboard
+      }
  
     let binarySerializer = MBrace.FsPickler.FsPickler.CreateBinarySerializer()
     
-    let findAnnotation (app : AnnotationModel) (id : AnnotationId) =
+    let findAnnotation (app : AnnotationApp) (id : AnnotationId) =
       HMap.tryFind id app.annotations
       
 
-    let annotationOrDefault (app : AnnotationModel) (id : AnnotationId) =
+    let annotationOrDefault (app : AnnotationApp) (id : AnnotationId) =
       let a = HMap.tryFind id app.annotations
       match a with 
         | Some a -> a
         | None   -> Annotation.initialDummy
 
-    let findAnnotation' (app : MAnnotationModel) (id : AnnotationId) =
+    let findAnnotation' (app : MAnnotationApp) (id : AnnotationId) =
       AMap.tryFind id app.annotations
 
-    let findAnnotation'' (app : MAnnotationModel) (optId : Option<AnnotationId>) =
+    let findAnnotation'' (app : MAnnotationApp) (optId : Option<AnnotationId>) =
       optId |> Option.map (fun id -> AMap.tryFind id app.annotations)
             |> Option.flattenModOpt
       
 
-    let tryElevation (app : AnnotationModel) (id : AnnotationId) =
+    let tryElevation (app : AnnotationApp) (id : AnnotationId) =
       let anno = (findAnnotation app id) 
       let el =
         match anno with
@@ -55,7 +74,7 @@ namespace CorrelationDrawing
                 None
       el
     
-    let elevation' (app : MAnnotationModel) (id : IMod<AnnotationId>) =
+    let elevation' (app : MAnnotationApp) (id : IMod<AnnotationId>) =
       adaptive {
         let! anno = Mod.bind (fun id -> (findAnnotation' app id)) id
         let! el =
@@ -67,19 +86,19 @@ namespace CorrelationDrawing
         return el
       }
 
-    let isElevationBetween (annoApp : AnnotationModel) (id : AnnotationId) (lower : V3d) (upper : V3d) =
+    let isElevationBetween (annoApp : AnnotationApp) (id : AnnotationId) (lower : V3d) (upper : V3d) =
       let a = findAnnotation annoApp id
       match a with
         | Some a ->
             Annotation.isElevationBetween lower upper a
         | None   -> false
 
-    let getLevel' (annoApp : AnnotationModel) (semApp : SemanticApp) (id : AnnotationId) =
+    let getLevel' (annoApp : AnnotationApp) (semApp : SemanticApp) (id : AnnotationId) =
       let anno = annoApp.annotations.Item id
       Annotation.getLevel semApp anno 
 
 
-    let getSelectedPoints (model : AnnotationModel) =
+    let getSelectedPoints (model : AnnotationApp) =
       model.annotations
         |> HMap.map (fun k a -> Annotation.getSelected a)
         |> HMap.filter (fun k opt ->
@@ -88,7 +107,7 @@ namespace CorrelationDrawing
                             | Some p -> true
                        )
 
-    let getSelectedPoints' (model : AnnotationModel) =
+    let getSelectedPoints' (model : AnnotationApp) =
         model.annotations
           |> HMap.map (fun k a -> Annotation.getSelected a)
           |> DS.HMap.filterNone
@@ -96,7 +115,7 @@ namespace CorrelationDrawing
 
  
     let getLevel  (id           : AnnotationId) //orInvalid
-                  (annoApp      : AnnotationModel) 
+                  (annoApp      : AnnotationApp) 
                   (semanticApp  : SemanticApp) =
       let anno = findAnnotation annoApp id
       let semantic = 
@@ -108,7 +127,7 @@ namespace CorrelationDrawing
 
     let getColourIcon' (annoId      : AnnotationId) 
                        (semanticApp : MSemanticApp)
-                       (annoApp     : MAnnotationModel) =
+                       (annoApp     : MAnnotationApp) =
       let anno = findAnnotation' annoApp annoId
       let iconAttr =
         amap {
@@ -120,19 +139,23 @@ namespace CorrelationDrawing
       Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
 
 
-    let update (model       : AnnotationModel)
+    let update (model       : AnnotationApp)
                (action      : Action) =
       match action with
         | Clear -> 
-          {model with annotations = HMap.empty; selectedAnnotation = None }                                 
-        | KeyDown k ->
-          match k with 
-            | Keys.Delete ->
-              {model with 
-                annotations = 
-                  HMap.filter (fun _ a -> not (Annotation.isSelected a)) model.annotations
-              }
-            | _ -> model
+          {model with annotations = HMap.empty; selectedAnnotation = None }                
+        | KeyboardMessage m -> 
+           let (keyboard, model) = Keyboard.update model.keyboard model m
+           {model with keyboard = keyboard}
+
+        //| KeyDown k ->
+        //  match k with 
+        //    | Keys.Delete ->
+        //      {model with 
+        //        annotations = 
+        //          HMap.filter (fun _ a -> not (Annotation.isSelected a)) model.annotations
+        //      }
+        //    | _ -> model
 
         | AnnotationMessage m  -> 
             {model with annotations = model.annotations 
@@ -158,7 +181,7 @@ namespace CorrelationDrawing
           let updated = deselected |> HMap.map updateFunction
           {model with annotations = updated}
 
-    let save (model : AnnotationModel) (savename : string) =
+    let save (model : AnnotationApp) (savename : string) =
       let arr = binarySerializer.Pickle model.annotations
       //let info = System.IO.Directory.CreateDirectory "./saved"
       //let success = info.Exists
@@ -169,7 +192,7 @@ namespace CorrelationDrawing
       printf "write file" 
       model
 
-    let load (model : AnnotationModel) (savename : string) =
+    let load (model : AnnotationApp) (savename : string) =
       let bytes = 
         System.IO.File.ReadAllBytes
           (
@@ -189,7 +212,7 @@ namespace CorrelationDrawing
           model
     
  
-    let view (model : MAnnotationModel)  (semanticApp : MSemanticApp)  =
+    let view (model : MAnnotationApp)  (semanticApp : MSemanticApp)  =
       let annos = DS.AMap.valuesToAList model.annotations
       let domList = 
         alist {
@@ -219,7 +242,7 @@ namespace CorrelationDrawing
       ]
 
     module Sg =
-      let view (model         : MAnnotationModel) 
+      let view (model         : MAnnotationApp) 
                (semApp        : MSemanticApp) 
                (cam           : IMod<CameraView>) =    
         

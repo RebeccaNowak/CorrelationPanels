@@ -16,22 +16,48 @@ module CorrelationDrawing =
     open Annotation
     open UIPlus
 
-    let initial : CorrelationDrawingModel = {
-        isDrawing = false
+    let initial : CorrelationDrawingModel = 
+      let keyboard = Keyboard.init ()
+      let onEnter model = 
+        match model.working with
+          | Some w  ->
+              {model with working   = None}
+          | None   -> model
+      let onDelete model = 
+        {model with 
+            working   = None
+            hoverPosition = None 
+        }
+      let _keyboard =
+            keyboard
+              |> (Keyboard.registerKeyDown
+                    {
+                      update = onEnter
+                      key    = Keys.Enter
+                      ctrl   = false
+                      alt    = false
+                    })
+              |> (Keyboard.registerKeyDown
+                    {
+                      update = onDelete
+                      key    = Keys.Delete
+                      ctrl   = false
+                      alt    = false
+                    })
+
+      {
+        keyboard = _keyboard
         hoverPosition = None
         working = None
         projection = Projection.Viewpoint
-        //geometry = GeometryType.Line
-        //annotations = plist.Empty
         exportPath = @"."
-       // log = GeologicalLog.intial (Guid.NewGuid().ToString()) plist<AnnotationPoint * Annotation>.Empty
-        //flags = SgFlags.None
-    }
+      }
 
     type Action =
         | Clear
         | DoNothing
         | AnnotationMessage       of Annotation.Action
+        | KeyboardMessage         of Keyboard.Action
         | SetGeometry             of GeometryType
         | SetProjection           of Projection
         | SetExportPath           of string
@@ -83,36 +109,22 @@ module CorrelationDrawing =
     let update (model : CorrelationDrawingModel) (semanticApp : SemanticApp) (act : Action)  =
         match (act, model.isDrawing) with
             | Clear, _         ->
-                {model with isDrawing = false
-                            working = None
+                {model with working = None
                 }
             | DoNothing, _             -> 
                 model
-            | KeyDown Keys.LeftCtrl, _ ->                     
-                { model with isDrawing = true }
-            | KeyUp Keys.LeftCtrl, _   -> 
-                {model with isDrawing = false; hoverPosition = None }
-            | KeyUp Keys.Delete, _   -> 
-                {model with 
-                  working   = None;
-                  isDrawing = false;
-                  hoverPosition = None 
-                }
+
             | Move p, true -> 
                 { model with hoverPosition = Some (Trafo3d.Translation p) }
             | AddPoint m, true         -> 
                 match isDone model semanticApp with
                   | true               -> 
                     let model = addPoint model semanticApp m
-                    {model with working       = None
-                                isDrawing     = false}
+                    {model with working       = None}
                   | false  -> addPoint model semanticApp m             
-            | KeyDown Keys.Enter, _   -> 
-                  match model.working with
-                    | Some w  ->
-                        {model with working  = None
-                                    isDrawing     = false}
-                    | None   -> model
+            | KeyboardMessage m, _ -> 
+               let (keyboard, model) = Keyboard.update model.keyboard model m
+               {model with keyboard = keyboard}
             | Exit, _                 -> 
                     { model with hoverPosition = None }
             | SetGeometry mode, _     -> model

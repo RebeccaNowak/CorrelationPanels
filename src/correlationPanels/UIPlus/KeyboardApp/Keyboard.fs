@@ -14,14 +14,33 @@
       {
         altPressed        = false
         ctrlPressed       = false
-        registeredActions = PList.empty
+        registeredKeyUp   = PList.empty
+        registeredKeyDown = PList.empty
       }
 
-    let register (k : KeyConfig<'a>) 
-                 (f : 'a -> 'a)
-                 (model : Keyboard<'a>) =
-      let _reg = model.registeredActions.Prepend(k)
-      {model with registeredActions = _reg}
+    let registerKeyUp  (k : KeyConfig<'a>) 
+                       (model : Keyboard<'a>) =
+      let _reg = model.registeredKeyUp.Prepend(k)
+      {model with registeredKeyUp = _reg}
+
+    let registerKeyDown  (k : KeyConfig<'a>) 
+                         (model : Keyboard<'a>) =
+      let _reg = model.registeredKeyDown.Prepend(k)
+      {model with registeredKeyDown = _reg}
+
+    let registerKeyDownAndUp (down  : KeyConfig<'a>)
+                             (up    : 'a -> 'a)
+                             (model : Keyboard<'a>) =
+      let _regDown = model.registeredKeyDown.Prepend(down)
+      let _up = {down with update = up}
+      let _regUp = model.registeredKeyUp.Prepend(_up)
+      {model with registeredKeyUp  = _regUp
+                  registeredKeyDown = _regDown}
+
+    let register (k       : KeyConfig<'a>) 
+                 (model   : Keyboard<'a>) =
+      let _reg = model.registeredKeyDown.Prepend(k)
+      {model with registeredKeyDown = _reg}
 
     let update (model : Keyboard<'a>) 
                (app   : 'a)
@@ -47,14 +66,14 @@
          match action with
           | KeyUp _ -> app
           | KeyDown k ->
-            Log.line "Key Pressed" 
+            Log.line "Key Pressed: %s" (k.ToString ())
             let _filtered = PList.filter (fun (c : KeyConfig<'a>) -> 
                                             c.check
                                                 _model.ctrlPressed
                                                 _model.altPressed
                                                 k
                                          )
-                                          _model.registeredActions
+                                          _model.registeredKeyDown
             match _filtered.IsEmpty () with
              | true  -> app
              | false ->

@@ -14,16 +14,18 @@ open UIPlus
   module Diagram = 
 
     type Action =
-      | RectStackMessage  of (RectangleStackTypes.RectangleStackId * RectangleStack.Action)
-      //| HeaderMessage     of Header.Action
-      | MouseMove         of V2d
-      | ConnectionMessage of ConnectionApp.Action
-      | AddStack          of RectangleStackTypes.RectangleStack
-      | DeleteStack       of RectangleStackTypes.RectangleStackId
-      | MoveLeft          of RectangleStackTypes.RectangleStackId
-      | MoveRight         of RectangleStackTypes.RectangleStackId
-      | UpdateColour      of ColourMap
-      | UpdateRectangle   of (RectangleIdentification * Rectangle.Action)
+      | RectStackMessage      of (RectangleStackTypes.RectangleStackId * RectangleStack.Action)
+      //| HeaderMessage         of Header.Action
+      | MouseMove             of V2d
+      | ConnectionMessage     of ConnectionApp.Action
+      | AddStack              of RectangleStackTypes.RectangleStack
+      | DeleteStack           of RectangleStackTypes.RectangleStackId
+      | MoveLeft              of RectangleStackTypes.RectangleStackId
+      | MoveRight             of RectangleStackTypes.RectangleStackId
+      | UpdateColour          of ColourMap
+      | UpdateRectangle       of (RectangleIdentification * Rectangle.Action)
+      | UpdateYSizes          of (float -> float)
+      | UpdateXSizes          of (float -> float)
 
     type UnpackAction =
       | MouseMessage      of MouseAction
@@ -289,6 +291,17 @@ open UIPlus
             let _stacks = 
               updateRStackFromId model id.stackid stackMessage
             {model with rectangleStacks = _stacks}
+        | UpdateYSizes f ->
+          let _stacks =
+            model.rectangleStacks
+                |> HMap.map (fun id r -> RectangleStack.update r (RectangleStack.UpdateYSizes f) )
+          {model with rectangleStacks = _stacks} |> layout
+        | UpdateXSizes f ->
+          let _stacks =
+            model.rectangleStacks
+                |> HMap.map (fun id r -> RectangleStack.update r (RectangleStack.UpdateXSizes f) )
+          {model with rectangleStacks = _stacks} |> layout            
+            
 
 
 

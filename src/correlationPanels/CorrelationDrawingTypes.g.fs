@@ -560,49 +560,58 @@ module Mutable =
                 }
     
     
-    type MAnnotationModel(__initial : CorrelationDrawing.AnnotationModel) =
+    type MAnnotationApp(__initial : CorrelationDrawing.AnnotationApp) =
         inherit obj()
-        let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.AnnotationModel> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.AnnotationModel>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.AnnotationModel>
+        let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.AnnotationApp> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.AnnotationApp>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.AnnotationApp>
         let _annotations = MMap.Create(__initial.annotations, (fun v -> MAnnotation.Create(v)), (fun (m,v) -> MAnnotation.Update(m, v)), (fun v -> v))
         let _selectedAnnotation = MOption.Create(__initial.selectedAnnotation)
+        let _keyboard = ResetMod.Create(__initial.keyboard)
         
         member x.annotations = _annotations :> amap<_,_>
         member x.selectedAnnotation = _selectedAnnotation :> IMod<_>
+        member x.keyboard = _keyboard :> IMod<_>
         
         member x.Current = __current :> IMod<_>
-        member x.Update(v : CorrelationDrawing.AnnotationModel) =
+        member x.Update(v : CorrelationDrawing.AnnotationApp) =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
                 MMap.Update(_annotations, v.annotations)
                 MOption.Update(_selectedAnnotation, v.selectedAnnotation)
+                ResetMod.Update(_keyboard,v.keyboard)
                 
         
-        static member Create(__initial : CorrelationDrawing.AnnotationModel) : MAnnotationModel = MAnnotationModel(__initial)
-        static member Update(m : MAnnotationModel, v : CorrelationDrawing.AnnotationModel) = m.Update(v)
+        static member Create(__initial : CorrelationDrawing.AnnotationApp) : MAnnotationApp = MAnnotationApp(__initial)
+        static member Update(m : MAnnotationApp, v : CorrelationDrawing.AnnotationApp) = m.Update(v)
         
         override x.ToString() = __current.Value.ToString()
         member x.AsString = sprintf "%A" __current.Value
-        interface IUpdatable<CorrelationDrawing.AnnotationModel> with
+        interface IUpdatable<CorrelationDrawing.AnnotationApp> with
             member x.Update v = x.Update v
     
     
     
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module AnnotationModel =
+    module AnnotationApp =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
             let annotations =
-                { new Lens<CorrelationDrawing.AnnotationModel, Aardvark.Base.hmap<CorrelationDrawing.AnnotationId,CorrelationDrawing.Annotation>>() with
+                { new Lens<CorrelationDrawing.AnnotationApp, Aardvark.Base.hmap<CorrelationDrawing.AnnotationId,CorrelationDrawing.Annotation>>() with
                     override x.Get(r) = r.annotations
                     override x.Set(r,v) = { r with annotations = v }
                     override x.Update(r,f) = { r with annotations = f r.annotations }
                 }
             let selectedAnnotation =
-                { new Lens<CorrelationDrawing.AnnotationModel, Microsoft.FSharp.Core.Option<CorrelationDrawing.AnnotationId>>() with
+                { new Lens<CorrelationDrawing.AnnotationApp, Microsoft.FSharp.Core.Option<CorrelationDrawing.AnnotationId>>() with
                     override x.Get(r) = r.selectedAnnotation
                     override x.Set(r,v) = { r with selectedAnnotation = v }
                     override x.Update(r,f) = { r with selectedAnnotation = f r.selectedAnnotation }
+                }
+            let keyboard =
+                { new Lens<CorrelationDrawing.AnnotationApp, UIPlus.KeyboardTypes.Keyboard<CorrelationDrawing.AnnotationApp>>() with
+                    override x.Get(r) = r.keyboard
+                    override x.Set(r,v) = { r with keyboard = v }
+                    override x.Update(r,f) = { r with keyboard = f r.keyboard }
                 }
     
     
@@ -1252,7 +1261,7 @@ module Mutable =
     type MCorrelationPlot(__initial : CorrelationDrawing.CorrelationPlot) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlot> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.CorrelationPlot>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationPlot>
-        let _diagramApp = Svgplus.DA.Mutable.MDiagram.Create(__initial.diagramApp)
+        let _diagram = Svgplus.DA.Mutable.MDiagram.Create(__initial.diagram)
         let _colourMapApp = UIPlus.Mutable.MColourMap.Create(__initial.colourMapApp)
         let _svgCamera = Svgplus.CameraType.Mutable.MSvgCamera.Create(__initial.svgCamera)
         let _keyboard = ResetMod.Create(__initial.keyboard)
@@ -1275,7 +1284,7 @@ module Mutable =
         let _yToSvg = ResetMod.Create(__initial.yToSvg)
         let _defaultWidth = ResetMod.Create(__initial.defaultWidth)
         
-        member x.diagramApp = _diagramApp
+        member x.diagram = _diagram
         member x.colourMapApp = _colourMapApp
         member x.svgCamera = _svgCamera
         member x.keyboard = _keyboard :> IMod<_>
@@ -1303,7 +1312,7 @@ module Mutable =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
-                Svgplus.DA.Mutable.MDiagram.Update(_diagramApp, v.diagramApp)
+                Svgplus.DA.Mutable.MDiagram.Update(_diagram, v.diagram)
                 UIPlus.Mutable.MColourMap.Update(_colourMapApp, v.colourMapApp)
                 Svgplus.CameraType.Mutable.MSvgCamera.Update(_svgCamera, v.svgCamera)
                 ResetMod.Update(_keyboard,v.keyboard)
@@ -1341,11 +1350,11 @@ module Mutable =
     module CorrelationPlot =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
-            let diagramApp =
+            let diagram =
                 { new Lens<CorrelationDrawing.CorrelationPlot, Svgplus.DA.Diagram>() with
-                    override x.Get(r) = r.diagramApp
-                    override x.Set(r,v) = { r with diagramApp = v }
-                    override x.Update(r,f) = { r with diagramApp = f r.diagramApp }
+                    override x.Get(r) = r.diagram
+                    override x.Set(r,v) = { r with diagram = v }
+                    override x.Update(r,f) = { r with diagram = f r.diagram }
                 }
             let colourMapApp =
                 { new Lens<CorrelationDrawing.CorrelationPlot, UIPlus.ColourMap>() with
@@ -1524,13 +1533,13 @@ module Mutable =
     type MCorrelationDrawingModel(__initial : CorrelationDrawing.CorrelationDrawingModel) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationDrawingModel> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.CorrelationDrawingModel>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.CorrelationDrawingModel>
-        let _isDrawing = ResetMod.Create(__initial.isDrawing)
+        let _keyboard = ResetMod.Create(__initial.keyboard)
         let _hoverPosition = MOption.Create(__initial.hoverPosition)
         let _working = MOption.Create(__initial.working, (fun v -> MAnnotation.Create(v)), (fun (m,v) -> MAnnotation.Update(m, v)), (fun v -> v))
         let _projection = ResetMod.Create(__initial.projection)
         let _exportPath = ResetMod.Create(__initial.exportPath)
         
-        member x.isDrawing = _isDrawing :> IMod<_>
+        member x.keyboard = _keyboard :> IMod<_>
         member x.hoverPosition = _hoverPosition :> IMod<_>
         member x.working = _working :> IMod<_>
         member x.projection = _projection :> IMod<_>
@@ -1541,7 +1550,7 @@ module Mutable =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
-                ResetMod.Update(_isDrawing,v.isDrawing)
+                ResetMod.Update(_keyboard,v.keyboard)
                 MOption.Update(_hoverPosition, v.hoverPosition)
                 MOption.Update(_working, v.working)
                 ResetMod.Update(_projection,v.projection)
@@ -1562,11 +1571,11 @@ module Mutable =
     module CorrelationDrawingModel =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
-            let isDrawing =
-                { new Lens<CorrelationDrawing.CorrelationDrawingModel, System.Boolean>() with
-                    override x.Get(r) = r.isDrawing
-                    override x.Set(r,v) = { r with isDrawing = v }
-                    override x.Update(r,f) = { r with isDrawing = f r.isDrawing }
+            let keyboard =
+                { new Lens<CorrelationDrawing.CorrelationDrawingModel, UIPlus.KeyboardTypes.Keyboard<CorrelationDrawing.CorrelationDrawingModel>>() with
+                    override x.Get(r) = r.keyboard
+                    override x.Set(r,v) = { r with keyboard = v }
+                    override x.Update(r,f) = { r with keyboard = f r.keyboard }
                 }
             let hoverPosition =
                 { new Lens<CorrelationDrawing.CorrelationDrawingModel, Microsoft.FSharp.Core.Option<Aardvark.Base.Trafo3d>>() with
@@ -1598,6 +1607,7 @@ module Mutable =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.Pages> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.Pages>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.Pages>
         let _saveIndices = ResetMod.Create(__initial.saveIndices)
+        let _keyboard = ResetMod.Create(__initial.keyboard)
         let _appFlags = ResetMod.Create(__initial.appFlags)
         let _sgFlags = ResetMod.Create(__initial.sgFlags)
         let _camera = Aardvark.UI.Primitives.Mutable.MCameraControllerState.Create(__initial.camera)
@@ -1606,12 +1616,13 @@ module Mutable =
         let _rendering = MRenderingParameters.Create(__initial.rendering)
         let _dockConfig = ResetMod.Create(__initial.dockConfig)
         let _drawingApp = MCorrelationDrawingModel.Create(__initial.drawingApp)
-        let _annotationApp = MAnnotationModel.Create(__initial.annotationApp)
+        let _annotationApp = MAnnotationApp.Create(__initial.annotationApp)
         let _semanticApp = MSemanticApp.Create(__initial.semanticApp)
         let _corrPlot = MCorrelationPlotModel.Create(__initial.corrPlot)
         
         member x.past = __current.Value.past
         member x.saveIndices = _saveIndices :> IMod<_>
+        member x.keyboard = _keyboard :> IMod<_>
         member x.future = __current.Value.future
         member x.appFlags = _appFlags :> IMod<_>
         member x.sgFlags = _sgFlags :> IMod<_>
@@ -1631,6 +1642,7 @@ module Mutable =
                 __current.Value <- v
                 
                 ResetMod.Update(_saveIndices,v.saveIndices)
+                ResetMod.Update(_keyboard,v.keyboard)
                 ResetMod.Update(_appFlags,v.appFlags)
                 ResetMod.Update(_sgFlags,v.sgFlags)
                 Aardvark.UI.Primitives.Mutable.MCameraControllerState.Update(_camera, v.camera)
@@ -1639,7 +1651,7 @@ module Mutable =
                 MRenderingParameters.Update(_rendering, v.rendering)
                 ResetMod.Update(_dockConfig,v.dockConfig)
                 MCorrelationDrawingModel.Update(_drawingApp, v.drawingApp)
-                MAnnotationModel.Update(_annotationApp, v.annotationApp)
+                MAnnotationApp.Update(_annotationApp, v.annotationApp)
                 MSemanticApp.Update(_semanticApp, v.semanticApp)
                 MCorrelationPlotModel.Update(_corrPlot, v.corrPlot)
                 
@@ -1669,6 +1681,12 @@ module Mutable =
                     override x.Get(r) = r.saveIndices
                     override x.Set(r,v) = { r with saveIndices = v }
                     override x.Update(r,f) = { r with saveIndices = f r.saveIndices }
+                }
+            let keyboard =
+                { new Lens<CorrelationDrawing.Pages, UIPlus.KeyboardTypes.Keyboard<CorrelationDrawing.Pages>>() with
+                    override x.Get(r) = r.keyboard
+                    override x.Set(r,v) = { r with keyboard = v }
+                    override x.Update(r,f) = { r with keyboard = f r.keyboard }
                 }
             let future =
                 { new Lens<CorrelationDrawing.Pages, Microsoft.FSharp.Core.Option<CorrelationDrawing.Pages>>() with
@@ -1725,7 +1743,7 @@ module Mutable =
                     override x.Update(r,f) = { r with drawingApp = f r.drawingApp }
                 }
             let annotationApp =
-                { new Lens<CorrelationDrawing.Pages, CorrelationDrawing.AnnotationModel>() with
+                { new Lens<CorrelationDrawing.Pages, CorrelationDrawing.AnnotationApp>() with
                     override x.Get(r) = r.annotationApp
                     override x.Set(r,v) = { r with annotationApp = v }
                     override x.Update(r,f) = { r with annotationApp = f r.annotationApp }

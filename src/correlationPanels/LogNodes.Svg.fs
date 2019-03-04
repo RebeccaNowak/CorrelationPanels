@@ -30,7 +30,7 @@
 
       let calcDim (xScaleFactor     : float)
                   (yScaleFactor     : float) 
-                  (annoApp          : AnnotationModel)
+                  (annoApp          : AnnotationApp)
                   (node             : LogNode) =
 
         let _height = calcSvgHeight node yScaleFactor
@@ -62,7 +62,7 @@
 
       let rec calcPosition (startAtY         : float) 
                            (startAtX         : float)
-                           (annoApp          : AnnotationModel)
+                           (annoApp          : AnnotationApp)
                            (thisLevel        : plist<LogNode>) = 
 
         let thisLevelWithPos =
@@ -87,7 +87,7 @@
                      (availableHeight  : float) 
                      (xScaleFactor     : float)
                      (yScaleFactor     : Option<float>) 
-                     (annoApp          : AnnotationModel)
+                     (annoApp          : AnnotationApp)
                      (nodes            : plist<LogNode>) = 
         match nodes.IsEmptyOrNull () with
           | true  -> (PList.empty, 0.0)

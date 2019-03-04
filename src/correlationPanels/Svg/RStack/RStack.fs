@@ -25,6 +25,8 @@
       | HeaderMessage    of Header.Action
       | UpdatePosition   of V2d
       | UpdateColour     of ColourMap
+      | UpdateYSizes     of (float -> float)
+      | UpdateXSizes     of (float -> float)
       | Delete
 
     let stack (model : RectangleStack) =
@@ -211,6 +213,16 @@
           let _rects =
             model.rectangles
               |> HMap.map (fun id r -> Rectangle.update r (Rectangle.Action.UpdateColour cmap) )
+          {model with rectangles = _rects}
+        | UpdateYSizes f ->
+          let _rects =
+            model.rectangles
+              |> HMap.map (fun id r -> Rectangle.Lens.height.Update (r,f))
+          {model with rectangles = _rects}
+        | UpdateXSizes f ->
+          let _rects =
+            model.rectangles
+              |> HMap.map (fun id r -> Rectangle.Lens.width.Update (r,f))
           {model with rectangles = _rects}
 
 

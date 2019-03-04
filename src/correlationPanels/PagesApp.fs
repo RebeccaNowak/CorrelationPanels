@@ -9,6 +9,7 @@ module Pages =
   open Aardvark.Base.Incremental
   open Aardvark.Base.Rendering
   open UIPlus
+  
   open Svgplus
 
 
@@ -17,8 +18,9 @@ module Pages =
       | MouseDown                     of (MouseButtons * V2i)
       | MouseUp                       of (MouseButtons * V2i)
       | MouseMove                     of V2d
-      | KeyDown                       of key : Keys
-      | KeyUp                         of key : Keys     
+      | KeyboardMessage               of Keyboard.Action
+      //| KeyDown                       of key : Keys
+      //| KeyUp                         of key : Keys     
       | CorrPlotMessage               of CorrelationPlotApp.Action
       | SemanticAppMessage            of SemanticApp.Action
       | AnnotationAppMessage          of AnnotationApp.Action
@@ -80,24 +82,7 @@ module Pages =
         useCachedConfig false
       }
 
-  let initial   = 
-    let semApp  = SemanticApp.getInitialWithSamples
-    {   
-      past        = None
-      future      = None
-      camera      = Mars.Terrain.CapeDesire.initialCamera
-      cullMode    = CullMode.None
-      fill        = true
-      appFlags    = AppFlags.None
-      sgFlags     = SgFlags.None
-      rendering   = RenderingPars.initial
-      dockConfig  = defaultLayout
-      annotationApp = AnnotationApp.initial
-      semanticApp   = semApp
-      drawingApp    = CorrelationDrawing.initial 
-      corrPlot   = CorrelationPlotApp.initial
-      saveIndices   = SaveIndex.findSavedIndices ()
-    }
+
 
   let updateSemantics action model = 
     let updSemApp = SemanticApp.update model.semanticApp action
@@ -148,6 +133,14 @@ module Pages =
           { model with camera = Mars.Terrain.CapeDesire.initialCamera }
 
  // let 
+  let updateCorrelationDrawing model =
+    CorrelationDrawing.update model.drawingApp model.semanticApp
+
+  let updateAnnotationApp model =
+    AnnotationApp.update model.annotationApp 
+
+  let updateCamera model =
+    CameraController.update model.camera 
 
   let update (model : Pages) (msg : Action) = //TODO model always last?
     let printCameraDebugInformation () =
@@ -157,15 +150,6 @@ module Pages =
                (String.fromV3d model.camera.view.Up)
       Log.line "Forward: %s" 
                (String.fromV3d model.camera.view.Forward)
-
-    let updateCorrelationDrawing =
-      CorrelationDrawing.update model.drawingApp model.semanticApp
-
-    let updateAnnotationApp =
-      AnnotationApp.update model.annotationApp 
-
-    let updateCamera =
-      CameraController.update model.camera 
         
     match msg, model.drawingApp.isDrawing with
       | MouseUp bp,_ ->
@@ -206,58 +190,26 @@ module Pages =
           corrPlot = 
            CorrelationPlotApp.update model.annotationApp model.corrPlot message
         }
-      | KeyDown Keys.Enter, true ->                          
+      | KeyboardMessage m, _ ->
+        let _corrPlot = 
+          let m = CorrelationPlotApp.CorrelationPlotMessage
+                    (CorrelationPlot.KeyboardMessage m)
+          CorrelationPlotApp.update model.annotationApp model.corrPlot m
 
-        match model.drawingApp.working with
-          | None   -> model
-          | Some w ->
-            {
-              model with 
-                drawingApp    = updateCorrelationDrawing (CorrelationDrawing.KeyDown Keys.Enter)
-                annotationApp = updateAnnotationApp (AnnotationApp.AddAnnotation w)
-            }
-      | KeyDown k, _       -> 
-        let _model =
-          match k with
-            | Keys.R  -> 
-              {model with dockConfig = defaultLayout}
-            | _ -> 
-              model
-        let _corrPlot =
-          let m = CorrelationPlotApp.CorrelationPlotMessage
-                    (CorrelationPlot.KeyboardMessage (Keyboard.KeyDown k))
-          CorrelationPlotApp.update model.annotationApp model.corrPlot m
-          
-        let annoApp = 
-          match k with
-            | Keys.C -> 
-               printCameraDebugInformation ()
-               model.annotationApp
-            | Keys.Enter -> 
-              match model.drawingApp.working with
-                | Some anno -> AnnotationApp.update model.annotationApp (AnnotationApp.AddAnnotation anno)
-                | None  -> model.annotationApp
-            | _ -> model.annotationApp
-        {
-          _model with 
-            drawingApp    = updateCorrelationDrawing (CorrelationDrawing.KeyDown k)
-            annotationApp = AnnotationApp.update annoApp (AnnotationApp.KeyDown k)
-            camera        = updateCamera (CameraController.Message.KeyDown k)
-            corrPlot      = _corrPlot
-        }
-      | KeyUp k, _         -> 
-        let _corrPlot =
-          let m = CorrelationPlotApp.CorrelationPlotMessage
-                    (CorrelationPlot.KeyboardMessage (Keyboard.KeyDown k))
-          
-          CorrelationPlotApp.update model.annotationApp model.corrPlot m
-          
-        {  
-          model with 
-            drawingApp = updateCorrelationDrawing (CorrelationDrawing.KeyUp k)
-            camera     = updateCamera (CameraController.Message.KeyUp k)
-            corrPlot   = _corrPlot
-        }
+        let _drawingApp = CorrelationDrawing.update 
+                                              model.drawingApp 
+                                              model.semanticApp 
+                                              (CorrelationDrawing.KeyboardMessage m)
+        let _annoApp = AnnotationApp.update 
+                                      model.annotationApp 
+                                      (AnnotationApp.KeyboardMessage m)
+        let _model = 
+          {model with corrPlot      = _corrPlot
+                      drawingApp    = _drawingApp
+                      annotationApp = _annoApp
+          }
+        _model
+    
       | SemanticAppMessage a, false ->
         updateSemantics a model
 
@@ -269,7 +221,7 @@ module Pages =
         
         let sel = AnnotationApp.getSelectedPoints' model.annotationApp
        
-        { model with annotationApp = updateAnnotationApp m } |> Lenses.set _selectedPoints sel 
+        { model with annotationApp = updateAnnotationApp model m } |> Lenses.set _selectedPoints sel 
       | CorrelationDrawingMessage m, _ -> // used for drawing annotations
         let (drawingApp, annoApp) =               
             match m with
@@ -278,21 +230,21 @@ module Pages =
                   match CorrelationDrawing.isDone model.drawingApp model.semanticApp with
                     | true  -> 
                       let correlationDrawing = CorrelationDrawing.addPoint model.drawingApp model.semanticApp p
-                      let annotationModel = updateAnnotationApp (AnnotationApp.AddAnnotation correlationDrawing.working.Value) //TODO safe but  maybe do this differently
+                      let annotationModel = updateAnnotationApp model (AnnotationApp.AddAnnotation correlationDrawing.working.Value) //TODO safe but  maybe do this differently
 
                       //clear corr drawing state
-                      let correlationDrawing = { correlationDrawing with working = None; isDrawing = false }
+                      let correlationDrawing = { correlationDrawing with working = None}
 
                       (correlationDrawing, annotationModel)
                     | false -> 
-                      (updateCorrelationDrawing m, model.annotationApp)
+                      (updateCorrelationDrawing model m, model.annotationApp)
                 (                 
                   drawingApp,
                   annoApp
                 ) 
               | _  -> 
                 (                
-                  updateCorrelationDrawing m,
+                  updateCorrelationDrawing model m,
                   model.annotationApp
                 )
         {model with 
@@ -389,12 +341,138 @@ module Pages =
               | None -> model
 
       | CameraMessage m,_ -> 
-            { model with camera = updateCamera m }   
+            { model with camera = updateCamera model m }   
 
       | TopLevelEvent, _ -> 
             model
       | _   -> model
         
+
+  let initial   = 
+    let semApp  = SemanticApp.getInitialWithSamples
+    let onEnter (model : Pages) =
+      match model.drawingApp.working with
+        | None   -> model
+        | Some w ->
+          {
+            model with 
+              drawingApp    = updateCorrelationDrawing model (CorrelationDrawing.KeyDown Keys.Enter)
+              annotationApp = updateAnnotationApp model (AnnotationApp.AddAnnotation w)
+          }
+
+    let resetLayout (model : Pages) = // R
+      {model with dockConfig = defaultLayout}
+
+    let keyboard = Keyboard.init ()
+    let _keyboard = 
+      keyboard
+        |> (Keyboard.register
+              {
+                update = resetLayout
+                key    = Keys.R
+                ctrl   = false
+                alt    = false
+              }
+           )
+        |> (Keyboard.register
+              {
+                update = onEnter
+                key    = Keys.Enter
+                ctrl   = true
+                alt    = false
+              }
+            )
+    //let keyDown (model : Pages) =
+
+    //  //let annoApp = 
+      //  match k with
+      //    //| Keys.C -> 
+      //    //    printCameraDebugInformation ()
+      //    //    model.annotationApp
+      //    | Keys.Enter -> 
+      //      match model.drawingApp.working with
+      //        | Some anno -> AnnotationApp.update model.annotationApp (AnnotationApp.AddAnnotation anno)
+      //        | None  -> model.annotationApp
+      //    | _ -> model.annotationApp
+      //{
+      //  _model with 
+      //    drawingApp    = updateCorrelationDrawing (CorrelationDrawing.KeyDown k)
+      //    annotationApp = AnnotationApp.update annoApp (AnnotationApp.KeyDown k)
+      //    camera        = updateCamera (CameraController.Message.KeyDown k)
+      //    corrPlot      = _corrPlot
+      //}
+
+    ////| KeyDown Keys.Enter, true ->                          
+
+    ////    match model.drawingApp.working with
+    ////      | None   -> model
+    ////      | Some w ->
+    ////        {
+    ////          model with 
+    ////            drawingApp    = updateCorrelationDrawing (CorrelationDrawing.KeyDown Keys.Enter)
+    ////            annotationApp = updateAnnotationApp (AnnotationApp.AddAnnotation w)
+    ////        }
+    //  | KeyDown k, _       -> 
+    //    let _model =
+    //      match k with
+    //        | Keys.R  -> 
+    //          {model with dockConfig = defaultLayout}
+    //        | _ -> 
+    //          model
+    //    let _corrPlot =
+    //      let m = CorrelationPlotApp.CorrelationPlotMessage
+    //                (CorrelationPlot.KeyboardMessage (Keyboard.KeyDown k))
+    //      CorrelationPlotApp.update model.annotationApp model.corrPlot m
+          
+    //    let annoApp = 
+    //      match k with
+    //        | Keys.C -> 
+    //           printCameraDebugInformation ()
+    //           model.annotationApp
+    //        | Keys.Enter -> 
+    //          match model.drawingApp.working with
+    //            | Some anno -> AnnotationApp.update model.annotationApp (AnnotationApp.AddAnnotation anno)
+    //            | None  -> model.annotationApp
+    //        | _ -> model.annotationApp
+    //    {
+    //      _model with 
+    //        drawingApp    = updateCorrelationDrawing (CorrelationDrawing.KeyDown k)
+    //        annotationApp = AnnotationApp.update annoApp (AnnotationApp.KeyDown k)
+    //        camera        = updateCamera (CameraController.Message.KeyDown k)
+    //        corrPlot      = _corrPlot
+    //    }
+    //  | KeyUp k, _         -> 
+    //    let _corrPlot =
+    //      let m = CorrelationPlotApp.CorrelationPlotMessage
+    //                (CorrelationPlot.KeyboardMessage (Keyboard.KeyDown k))
+          
+    //      CorrelationPlotApp.update model.annotationApp model.corrPlot m
+          
+    //    {  
+    //      model with 
+    //        drawingApp = updateCorrelationDrawing (CorrelationDrawing.KeyUp k)
+    //        camera     = updateCamera (CameraController.Message.KeyUp k)
+    //        corrPlot   = _corrPlot
+    //    }
+
+    {   
+      past        = None
+      future      = None
+      camera      = Mars.Terrain.CapeDesire.initialCamera
+      keyboard    = _keyboard
+      cullMode    = CullMode.None
+      fill        = true
+      appFlags    = AppFlags.None
+      sgFlags     = SgFlags.None
+      rendering   = RenderingPars.initial
+      dockConfig  = defaultLayout
+      annotationApp = AnnotationApp.initial
+      semanticApp   = semApp
+      drawingApp    = CorrelationDrawing.initial 
+      corrPlot   = CorrelationPlotApp.initial
+      saveIndices   = SaveIndex.findSavedIndices ()
+    }
+
 
 
   let view  (runtime : IRuntime) (model : MPages) =
@@ -441,28 +519,13 @@ module Pages =
           Buttons.iconButton "small arrow left icon"    "undo"    (fun _ -> Undo)
           Buttons.iconButton "small arrow right icon"   "redo"    (fun _ -> Redo)
           Buttons.iconButton "small bullseye icon"      "centre"  (fun _ -> CentreScene)
-        //  Flags.toButtonGroup typeof<AppFlags> ToggleAppFlag //TODO css
-        //  Flags.toButtonGroup typeof<SgFlags> ToggleSgFlag
-        //  (Flags.toButtonGroup typeof<SvgFlags> CorrelationPlot.ToggleFlag) 
-        //    |> UI.map CorrelationPlotApp.CorrelationPlotMessage 
-        //    |> UI.map Action.CorrPlotMessage
-
-        //  div[clazz "ui label"] 
-        //      [
-        //        text "SecondaryLevel"
-        //        div[clazz "detail"] [Html.SemUi.dropDown' 
-        //                NodeLevel.availableLevels
-        //                model.corrPlotApp.correlationPlot.secondaryLvl 
-        //                CorrelationPlot.SetSecondaryLevel 
-        //                (fun (x : NodeLevel) -> sprintf "%i" x.level)
-        //                |> UI.map CorrelationPlotApp.Action.CorrelationPlotMessage
-        //                |> UI.map CorrPlotMessage]
-        //      ]
-        ] 
+        ]
 
       body [style "width: 100%; height:100%; background: transparent; overflow: auto"] [
         div [
-              clazz "ui vertical inverted menu"; 
+              clazz "ui vertical inverted menu"
+              onKeyDown (fun k -> KeyboardMessage (Keyboard.Action.KeyDown k))
+              onKeyUp (fun k -> KeyboardMessage (Keyboard.Action.KeyUp k))
               //style "float:middle; vertical-align: middle; display: inline-block"
             ]
             menuItems     
@@ -501,8 +564,8 @@ module Pages =
                         CameraMessage 
                         frustum
                         (AttributeMap.ofList [
-                                    onKeyDown (KeyDown)
-                                    onKeyUp (KeyUp)
+                                    onKeyDown (fun k -> KeyboardMessage (Keyboard.Action.KeyDown k))
+                                    onKeyUp (fun k -> KeyboardMessage (Keyboard.Action.KeyUp k))
                                     attribute "style" "width:100%; height: 100%; float: left;"]
                         )
 
@@ -541,6 +604,8 @@ module Pages =
                             (onMouseDown (fun b p -> MouseDown (b,p)))
                             (onMouseUp (fun b p -> MouseUp (b,p)))
                             (onMouseMove (fun p -> MouseMove (V2d p)))
+                            onKeyDown (fun k -> KeyboardMessage (Keyboard.Action.KeyDown k))
+                            onKeyUp (fun k -> KeyboardMessage (Keyboard.Action.KeyUp k))
                             onLayoutChanged UpdateConfig
                            ] [
                             CorrelationPlotApp.viewSvg model.annotationApp model.corrPlot

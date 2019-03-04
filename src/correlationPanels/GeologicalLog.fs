@@ -91,7 +91,7 @@
 
       let rec generateLevel (logId          : RectangleStackId)
                             (selectedPoints : hmap<AnnotationId, V3d>) 
-                            (annoApp        : AnnotationModel)
+                            (annoApp        : AnnotationApp)
                             (semApp         : SemanticApp) 
                             (lowerBorder    : Border) //TODO could pass point and anno
                             (upperBorder    : Border) =
@@ -184,7 +184,7 @@
     ///////////////////////////////////////////////////// GENERATE ///////////////////////////////////////////////////////////////////////
     let initial      (selectedPoints  : hmap<AnnotationId, V3d>) 
                      (semApp          : SemanticApp)
-                     (annoApp         : AnnotationModel)
+                     (annoApp         : AnnotationApp)
                      (xToSvg          : float -> float)
                      (yToSvg          : float)
                      (defaultWidth    : float)
