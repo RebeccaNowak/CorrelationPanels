@@ -41,7 +41,8 @@
     //let update' (annos : hmap<AnnotationId, Annotation>) (model : CorrelationPlotModel) (action : Action) = 
     //  update { annotations = annos; selectedAnnotation = None } model action
 
-    let viewSvg (annoApp : MAnnotationApp) (model : MCorrelationPlotModel) =
+    // let viewSvg (annoApp : MAnnotationApp) (model : MCorrelationPlotModel) =
+    let viewSvg (annoApp  : amap<AnnotationId, MAnnotation>) (model : MCorrelationPlotModel) =
      
       //let menu = 
       //    let axisSel = ((LogAxisApp.view model.correlationPlot.logAxisApp) |> AList.map (UI.map AxisMessage))
@@ -77,8 +78,6 @@
               (annoApp  : amap<AnnotationId, MAnnotation>)
               (semApp   : MSemanticApp) =
 
-
-
       let domnode =
         let domNode = (CorrelationPlot.listView model.correlationPlot semApp annoApp) 
                         |> UI.map Action.CorrelationPlotMessage
@@ -99,7 +98,8 @@
     let threads (model : CorrelationPlotModel) =
       CorrelationPlot.threads model.correlationPlot
         
-    let app (annoApp : MAnnotationApp) (mAnnoApp : AnnotationApp) : App<CorrelationPlotModel,MCorrelationPlotModel,Action> =
+    //let app (annoApp : MAnnotationApp) (mAnnoApp : AnnotationApp) : App<CorrelationPlotModel,MCorrelationPlotModel,Action> =
+    let app (annoApp : amap<AnnotationId, MAnnotation>) (mAnnoApp : AnnotationApp) : App<CorrelationPlotModel,MCorrelationPlotModel,Action> =
           {
               unpersist = Unpersist.instance
               threads = threads

@@ -81,6 +81,10 @@
                config.update app
        (_model, _app)
 
+
+    //let view (model : Keyboard<'a>) =
+    //TODO create list view of registered keyboard actions with descriptions
+
            
 
 

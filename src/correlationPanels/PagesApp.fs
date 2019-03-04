@@ -608,7 +608,7 @@ module Pages =
                             onKeyUp (fun k -> KeyboardMessage (Keyboard.Action.KeyUp k))
                             onLayoutChanged UpdateConfig
                            ] [
-                            CorrelationPlotApp.viewSvg model.annotationApp model.corrPlot
+                            CorrelationPlotApp.viewSvg model.annotationApp.annotations model.corrPlot
                               |> (UI.map CorrPlotMessage)
                       ]
                     )
