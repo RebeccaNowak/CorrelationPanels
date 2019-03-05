@@ -16,12 +16,14 @@ module Mutable =
         let _currentModel = ResetMod.Create(__initial.currentModel)
         let _cameraState = Aardvark.UI.Primitives.Mutable.MCameraControllerState.Create(__initial.cameraState)
         let _svgButton = Svgplus.Mutable.MButton.Create(__initial.svgButton)
+        let _arrow = Svgplus.ArrowType.Mutable.MArrow.Create(__initial.arrow)
         let _roseDiagram = Svgplus.RoseDiagramModel.Mutable.MRoseDiagram.Create(__initial.roseDiagram)
         let _diagramApp = Svgplus.DA.Mutable.MDiagram.Create(__initial.diagramApp)
         
         member x.currentModel = _currentModel :> IMod<_>
         member x.cameraState = _cameraState
         member x.svgButton = _svgButton
+        member x.arrow = _arrow
         member x.roseDiagram = _roseDiagram
         member x.diagramApp = _diagramApp
         
@@ -33,6 +35,7 @@ module Mutable =
                 ResetMod.Update(_currentModel,v.currentModel)
                 Aardvark.UI.Primitives.Mutable.MCameraControllerState.Update(_cameraState, v.cameraState)
                 Svgplus.Mutable.MButton.Update(_svgButton, v.svgButton)
+                Svgplus.ArrowType.Mutable.MArrow.Update(_arrow, v.arrow)
                 Svgplus.RoseDiagramModel.Mutable.MRoseDiagram.Update(_roseDiagram, v.roseDiagram)
                 Svgplus.DA.Mutable.MDiagram.Update(_diagramApp, v.diagramApp)
                 
@@ -68,6 +71,12 @@ module Mutable =
                     override x.Get(r) = r.svgButton
                     override x.Set(r,v) = { r with svgButton = v }
                     override x.Update(r,f) = { r with svgButton = f r.svgButton }
+                }
+            let arrow =
+                { new Lens<Test.TestModel, Svgplus.ArrowType.Arrow>() with
+                    override x.Get(r) = r.arrow
+                    override x.Set(r,v) = { r with arrow = v }
+                    override x.Update(r,f) = { r with arrow = f r.arrow }
                 }
             let roseDiagram =
                 { new Lens<Test.TestModel, Svgplus.RoseDiagramModel.RoseDiagram>() with

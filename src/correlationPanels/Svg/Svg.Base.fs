@@ -67,6 +67,16 @@
     let margin = 5.0
     let sw = "3"
 
+    let clickableRectangle' (centre: V2d) (width : float) (height : float) (fOnClick : _ -> 'a) =
+      let leftUpper = V2d(centre.X - width * 0.5, centre.Y - height * 0.5)
+      Svg.rect ([
+                  clazz "clickable"
+                  atf "x" leftUpper.X
+                  atf "y" leftUpper.Y
+                  atf "width" width
+                  atf "height" height
+                ]@(Aardvark.UI.Svg.Events.onClickAttributes [fOnClick]))
+
     let clickableRectangle (centre: V2d) (radius : float) (fOnClick : _ -> 'a) =
       let leftUpper = centre - radius
       Svg.rect ([

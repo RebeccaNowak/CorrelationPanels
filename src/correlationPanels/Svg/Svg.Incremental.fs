@@ -69,6 +69,31 @@
       let a = AttributeMap.ofAMap(atts)
       Incremental.elemNS' "circle" Incremental.Svg.svgNS a (AList.empty)
 
+    let clickableRectangle (centre: IMod<V2d>) 
+                           (width : IMod<float>) 
+                           (height : IMod<float>) 
+                           actions 
+                           children =
+      let attlist =
+        amap {
+          let! centre = centre
+          let! width = width
+          let! height = height
+
+          let leftUpper = V2d(centre.X - width * 0.5, centre.Y - height * 0.5)
+          yield clazz "clickable"
+          yield atf "x" leftUpper.X
+          yield atf "y" leftUpper.Y
+          yield atf "width" width
+          yield atf "height" height
+        }
+
+      let atts = 
+        actions
+          |> AMap.union attlist
+          |> AttributeMap.ofAMap
+                   
+      Incremental.elemNS' "rect" Incremental.Svg.svgNS atts children
 
 
     let drawBorderedRectangle (leftUpper         : IMod<V2d>) 

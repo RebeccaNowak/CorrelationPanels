@@ -16,10 +16,10 @@
     let lineTo (a : V2d)  =
       sprintf "L%.2f %.2f" a.X a.Y
 
-    let curveTo (letter : string) (b : V2d) (c : V2d) =
+    let curveTo (b : V2d) (c : V2d) =
       sprintf "Q %.2f %.2f %.2f %.2f" b.X b.Y c.X c.Y  
 
-    let close = "Z"
+    let close = "Z"  
 
     let buildPath (str : string) (color : C4b) (stroke : float) (fill : bool) =
       let fillAttr =

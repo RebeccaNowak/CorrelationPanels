@@ -10,6 +10,7 @@ open Svgplus.CA
 open Svgplus.DA
 open Svgplus.RoseDiagramModel
 open Svgplus.RoseDiagram
+open SimpleTypes
 
 
 
@@ -21,6 +22,7 @@ type Action =
     | RDMessage       of RoseDiagram.Action
     | DiagramMessage  of Diagram.Action
     | MouseMove       of V2i
+    | ArrowMessage    of Arrow.Action
 
 module App =
     open Svgplus.Mutable
@@ -31,6 +33,7 @@ module App =
       {
         currentModel  = Primitive.Box
         cameraState   = CameraController.initial
+        arrow         = Arrow.init Direction.Right
         svgButton     = {Button.init with pos = V2d (10.0)}
         roseDiagram   = {RoseDiagram.init with centre = V2d (100.0)}
         diagramApp    = Diagram.init
@@ -66,17 +69,19 @@ module App =
                             Diagram.update model.diagramApp 
                                               (Diagram.Action.MouseMove (V2d p))
               }
+            | ArrowMessage m ->
+              {model with arrow = Arrow.update model.arrow m}
     let view (model : MTestModel) =
-        //let svgAtts = 
-        //  [
-        //    clazz "svgRoot"
-        //    style "border: 1px solid black"
-        //    //attribute "viewBox" "0 0 600 400"
-        //    attribute "preserveAspectRatio" "xMinYMin meet"
-        //    attribute "height" "100%"
-        //    attribute "width" "100%"
-        //    (onMouseMove (fun p -> MouseMove p))
-        //  ] |> AttributeMap.ofList
+        let svgAtts = 
+          [
+            clazz "svgRoot"
+            style "border: 1px solid black"
+            //attribute "viewBox" "0 0 600 400"
+            attribute "preserveAspectRatio" "xMinYMin meet"
+            attribute "height" "100%"
+            attribute "width" "100%"
+            (onMouseMove (fun p -> MouseMove p))
+          ] |> AttributeMap.ofList
 
         let button =
           alist {
@@ -85,22 +90,25 @@ module App =
         let rose = ((RoseDiagram.view model.roseDiagram) 
                       |> AList.map (UI.map RDMessage))
       
-        (Diagram.standaloneView model.diagramApp) |> UI.map Action.DiagramMessage
+        //(Diagram.standaloneView model.diagramApp) |> UI.map Action.DiagramMessage
         //let content = 
         //  (DiagramApp.view model.diagramApp) 
         //    |> AList.map (fun d -> d |> UI.map Action.DiagramMessage)
 
-        //require (GUI.CSS.myCss) (
-        //  body [] [
-        //      // CameraController.controlledControl m.cameraState CameraMessage frustum (AttributeMap.ofList att) sg
-                  
-        //      //div [style "position: fixed; left: 20px; top: 20px"] [
-        //      //    button [onClick (fun _ -> ToggleModel)] [text "Toggle Model"]
-        //      //]
+        let content = (Arrow.view model.arrow) 
+                        |> AList.map (UI.map ArrowMessage)
 
-        //      Incremental.Svg.svg svgAtts content
-        //  ]
-        //)
+        require (GUI.CSS.myCss) (
+          body [] [
+              // CameraController.controlledControl m.cameraState CameraMessage frustum (AttributeMap.ofList att) sg
+                  
+              //div [style "position: fixed; left: 20px; top: 20px"] [
+              //    button [onClick (fun _ -> ToggleModel)] [text "Toggle Model"]
+              //]
+
+              Incremental.Svg.svg svgAtts content
+          ]
+        )
 
     let app =
         {
