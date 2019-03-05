@@ -14,4 +14,4 @@ bin/Debug
 /Aardvark.log
 /data/
 /.vs
-
+/src/correlationPanels/.domaincache
