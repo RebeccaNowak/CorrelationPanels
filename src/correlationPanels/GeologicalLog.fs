@@ -282,7 +282,8 @@
 
       let listView (model       : MGeologicalLog) 
                    (semApp      : MSemanticApp)
-                   (annoApp     : amap<AnnotationId, MAnnotation>)
+                   //(annoApp     : amap<AnnotationId, MAnnotation>)
+                   //(annoApp     : MAnnotationModel)
                    (rowOnClick  : 'msg) 
                    (mapper      : Action -> 'msg)
                    (stack       : MRectangleStack) =
@@ -319,7 +320,10 @@
         let viewEdit  : list<DomNode<'msg>> =     
           let nodesRow =
             let viewFunction = 
-              (LogNodes.Debug.view semApp annoApp LogNodeMessage
+              //(LogNodes.Debug.view semApp annoApp LogNodeMessage
+              (LogNodes.Debug.view 
+                  semApp  
+                  LogNodeMessage
               ) >> AList.single
                 
             let domNodes = 

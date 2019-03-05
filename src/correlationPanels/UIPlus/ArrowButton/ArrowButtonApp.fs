@@ -5,6 +5,7 @@
     open Aardvark.Base
     open Aardvark.Base.Incremental
     open Aardvark.UI
+    open SimpleTypes
 
     type Action =
       | OnClick of ArrowButtonId          

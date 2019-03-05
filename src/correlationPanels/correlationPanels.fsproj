@@ -49,6 +49,8 @@
 	<Compile Include="UIPlus\ColourMapApp\ColourMapItem.fs" />
 	<Compile Include="UIPlus\ColourMapApp\ColourMapApp.fs" />
 	<Compile Include="UIPlus\ArrowButton\ArrowButtonApp.fs" />
+	<Compile Include="Svg\ArrowApp\ArrowType.fs" />
+	<Compile Include="Svg\ArrowApp\Arrow.fs" />
 	<Compile Include="Svg\Svgplus.fs" />
 	<Compile Include="Svg\SvgTags.fs" />
 	<Compile Include="Svg\Svg.Attributes.fs" />

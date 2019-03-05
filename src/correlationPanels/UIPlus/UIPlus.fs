@@ -2,40 +2,8 @@
   open Aardvark.Base
   open Aardvark.Base.Incremental
   open Aardvark.UI
+  open SimpleTypes
 
-  type Direction =
-  | Up
-  | Down
-  | Left
-  | Right
-  with
-    member this.toString =
-      match this with
-        | Up    -> "up"
-        | Down  -> "down"
-        | Left  -> "left"
-        | Right -> "right"
-
-  type Size =
-    | Mini
-    | Tiny
-    | Small
-    | Normal
-    | Large
-    | Big
-    | Huge
-    | Massive
-    with
-      member this.toString =
-        match this with
-          | Mini      -> "mini"
-          | Tiny      -> "tiny"
-          | Small     -> "small"
-          | Normal    -> ""
-          | Large     -> "large"
-          | Big       -> "big"
-          | Huge      -> "huge"
-          | Massive   -> "massive"
 
 
   type ArrowButtonId = {

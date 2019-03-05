@@ -317,7 +317,9 @@
                       logs         = _logs}
 
 
-    // let viewSvg (annoApp : MAnnotationApp) (model : MCorrelationPlot)  = //TODO refactor
+        
+
+
     let viewSvg (annoApp : amap<AnnotationId, MAnnotation>) (model : MCorrelationPlot)  = //TODO refactor
       let attsRoot = 
         [
@@ -357,7 +359,7 @@
               let! stack = AMap.find id stacks
               let! log   = AMap.find id model.logs
               let! tmp = 
-                Log.View.listView log semApp annoApp 
+                Log.View.listView log semApp  
                                   (Action.SelectLog log.id) 
                                   (mapper log)        
                                   stack
@@ -502,6 +504,7 @@
 
 
     let app (annoApp : AnnotationApp) (mAnnoApp : MAnnotationApp) : App<CorrelationPlot,MCorrelationPlot,Action> =
+    // let app (annoApp : amap<AnnotationId, MAnnotation>) (mAnnoApp : AnnotationModel) : App<CorrelationPlot,MCorrelationPlot,Action> =
           {
               unpersist = Unpersist.instance
               threads = threads
@@ -510,5 +513,10 @@
               view = (viewSvg mAnnoApp.annotations)
           }
 
-    let start (annoApp : AnnotationApp) (mAnnoApp : MAnnotationApp) =
+    //let start (annoApp : AnnotationApp) (mAnnoApp : MAnnotationApp) =
+    //          update = (update mAnnoApp)
+    //          view = (viewSvg annoApp)
+    //      }
+
+    let start annoApp mAnnoApp =
       App.start (app annoApp mAnnoApp)

@@ -50,13 +50,13 @@ module Mutable =
                     override x.Update(r,f) = { r with id = f r.id }
                 }
             let direction =
-                { new Lens<UIPlus.ArrowButton, UIPlus.Direction>() with
+                { new Lens<UIPlus.ArrowButton, SimpleTypes.Direction>() with
                     override x.Get(r) = r.direction
                     override x.Set(r,v) = { r with direction = v }
                     override x.Update(r,f) = { r with direction = f r.direction }
                 }
             let size =
-                { new Lens<UIPlus.ArrowButton, UIPlus.Size>() with
+                { new Lens<UIPlus.ArrowButton, SimpleTypes.Size>() with
                     override x.Get(r) = r.size
                     override x.Set(r,v) = { r with size = v }
                     override x.Update(r,f) = { r with size = f r.size }

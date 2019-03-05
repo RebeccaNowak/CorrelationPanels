@@ -12,10 +12,8 @@
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module RectangleStack =
-    open System.Windows.Interop
     open Aardvark.SceneGraph
     open UIPlus
-    open OpenTK.Graphics.OpenGL
 
     type Action =
       | RectangleMessage of (RectangleId * Rectangle.Action)

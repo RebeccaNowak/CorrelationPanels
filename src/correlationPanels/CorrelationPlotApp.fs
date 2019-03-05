@@ -42,24 +42,18 @@
     //  update { annotations = annos; selectedAnnotation = None } model action
 
     // let viewSvg (annoApp : MAnnotationApp) (model : MCorrelationPlotModel) =
-    let viewSvg (annoApp  : amap<AnnotationId, MAnnotation>) (model : MCorrelationPlotModel) =
+    //let viewSvg (annoApp  : amap<AnnotationId, MAnnotation>) (model : MCorrelationPlotModel) =
      
-      //let menu = 
-      //    let axisSel = ((LogAxisApp.view model.correlationPlot.logAxisApp) |> AList.map (UI.map AxisMessage))
-            
-      //    div [
-      //         style "float:right; vertical-align: top"
-      //         attribute "position" "sticky"
-      //         attribute "top" "5"
-      //        ]
-      //        [
-      //          div []
-      //              [
-      //                Incremental.div (AttributeMap.ofList [style "display:inline"])
-      //                                axisSel
-      //          ];
-      //        ]
-              
+
+    //let update' (annos : hmap<AnnotationId, Annotation>) (model : CorrelationPlotModel) (action : Action) = 
+    //  update 
+    //    { 
+    //      annotations = annos; 
+    //      selectedAnnotation = None 
+    //      keyboard = model.
+    //    } model action
+
+    let viewSvg (annoApp : amap<AnnotationId, MAnnotation>) (model : MCorrelationPlotModel) =
         
       let domNode = 
         div [attribute "overflow-x" "hidden";attribute "overflow-y" "hidden"] [
@@ -98,7 +92,6 @@
     let threads (model : CorrelationPlotModel) =
       CorrelationPlot.threads model.correlationPlot
         
-    //let app (annoApp : MAnnotationApp) (mAnnoApp : AnnotationApp) : App<CorrelationPlotModel,MCorrelationPlotModel,Action> =
     let app (annoApp : amap<AnnotationId, MAnnotation>) (mAnnoApp : AnnotationApp) : App<CorrelationPlotModel,MCorrelationPlotModel,Action> =
           {
               unpersist = Unpersist.instance
