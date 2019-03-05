@@ -20,8 +20,7 @@ namespace CorrelationDrawing
       | KeyboardMessage         of Keyboard.Action
       //| KeyDown                 of key : Keys 
 
-
-    let initial : AnnotationApp = 
+    let keyboard = 
       let keyboard = Keyboard.init ()
       let deleteAnnotation model = 
         {model with 
@@ -29,19 +28,20 @@ namespace CorrelationDrawing
             HMap.filter (fun _ a -> not (Annotation.isSelected a)) 
                         model.annotations
         }
-      let _keyboard =
-            keyboard
-              |> (Keyboard.register
-                    {
-                      update = deleteAnnotation
-                      key    = Keys.Delete
-                      ctrl   = false
-                      alt    = false
-                    })
+      keyboard
+        |> (Keyboard.register
+              {
+                update = deleteAnnotation
+                key    = Keys.Delete
+                ctrl   = false
+                alt    = false
+              })
+
+    let initial : AnnotationApp = 
       {
         annotations         = hmap.Empty
         selectedAnnotation  = None
-        keyboard            = _keyboard
+        keyboard            = keyboard
       }
  
     let binarySerializer = MBrace.FsPickler.FsPickler.CreateBinarySerializer()

@@ -45,13 +45,15 @@
     //let viewSvg (annoApp  : amap<AnnotationId, MAnnotation>) (model : MCorrelationPlotModel) =
      
 
-    //let update' (annos : hmap<AnnotationId, Annotation>) (model : CorrelationPlotModel) (action : Action) = 
-    //  update 
-    //    { 
-    //      annotations = annos; 
-    //      selectedAnnotation = None 
-    //      keyboard = model.
-    //    } model action
+    let update' (annos : hmap<AnnotationId, Annotation>) 
+                (model : CorrelationPlotModel) 
+                (action : Action) = 
+      update 
+        { 
+          annotations = annos; 
+          selectedAnnotation = None 
+          keyboard = AnnotationApp.keyboard
+        } model action
 
     let viewSvg (annoApp : amap<AnnotationId, MAnnotation>) (model : MCorrelationPlotModel) =
         
