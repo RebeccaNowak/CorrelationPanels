@@ -19,7 +19,6 @@
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Remove="NewFolder1\**" />
-    <EmbeddedResource Remove="NewFolder\**" />
   </ItemGroup>
   <ItemGroup>
 	<Compile Include="DataStructures\Seq.fs" />
@@ -59,6 +58,8 @@
 	<Compile Include="Svg\Camera\SvgCamera.fs" />
 	<Compile Include="Svg\ArrowApp\ArrowType.fs" />
 	<Compile Include="Svg\ArrowApp\Arrow.fs" />
+	<Compile Include="Svg\Text\TextType.fs" />
+	<Compile Include="Svg\Text\Text.fs" />
 	<Compile Include="Svg\RoseDiagram\RoseDiagramModel.fs" />
 	<Compile Include="Svg\RoseDiagram\RoseDiagram.fs" />
 	<Compile Include="Svg\SvgButtonApp\Svg.ButtonApp.fs" />
@@ -120,9 +121,8 @@
 	<Compile Include="CorrelationDrawing.fs" />
 	<Compile Include="PagesApp.fs" />
 	<None Include="paket.references" />
-	<Compile Include="Model.fs" />
-	<Compile Include="Model.g.fs" />
-	<Compile Include="App.fs" />
+	<Compile Include="TestApp\Model.fs" />
+	<Compile Include="TestApp\App.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

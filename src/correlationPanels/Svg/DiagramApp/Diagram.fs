@@ -30,6 +30,8 @@ open UIPlus
     type UnpackAction =
       | MouseMessage      of MouseAction
       | RectangleMessage  of Rectangle.Action
+      | LeftArrowMessage  of Header.Action
+      | RightArrowMessage of Header.Action
     
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module UnpackAction =
@@ -37,8 +39,14 @@ open UIPlus
         UnpackAction.MouseMessage MouseAction.OnLeftClick
       let SelectRectangle =
         UnpackAction.RectangleMessage (Rectangle.Action.Select RectangleId.invalid)
-
-
+      let MoveStackLeft = 
+        UnpackAction.LeftArrowMessage 
+          (Header.LeftArrowMessage (Arrow.MouseMessage MouseAction.OnLeftClick))
+      let MoveStackRight = 
+        UnpackAction.RightArrowMessage 
+          (Header.RightArrowMessage (Arrow.MouseMessage MouseAction.OnLeftClick))
+           
+          
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Action =
       let unpack (fromAction : Action) (toAction : UnpackAction) f (def : 'model) =
@@ -47,13 +55,20 @@ open UIPlus
             match ra, toAction with 
               | RectangleStack.HeaderMessage sm, toAction ->
                 match sm, toAction with
-                  | Header.MouseMessage mm, MouseMessage mm2 ->
-                    match mm, mm2 with 
-                      | MouseAction.OnLeftClick, MouseAction.OnLeftClick -> 
-                          f stackId RectangleId.invalid
-                      | MouseAction.OnMouseEnter, MouseAction.OnMouseEnter ->
-                          def
+                  | Header.TextMessage tm, toAction ->
+                    match tm, toAction with 
+                      | Text.MouseMessage mm, MouseMessage mm2 ->
+                        match mm, mm2 with 
+                          | MouseAction.OnLeftClick, MouseAction.OnLeftClick -> 
+                              f stackId RectangleId.invalid
+                          | MouseAction.OnMouseEnter, MouseAction.OnMouseEnter ->
+                              def
+                          | _ -> def
                       | _ -> def
+                  | Header.LeftArrowMessage lam, toAction ->
+                    f stackId RectangleId.invalid
+                  | Header.RightArrowMessage ram, toAction ->
+                    f stackId RectangleId.invalid
                   | _ -> def
               | RectangleStack.RectangleMessage (rid, rm), RectangleMessage rm2 -> 
                 match rm, rm2 with
@@ -208,6 +223,22 @@ open UIPlus
                    selectedRectangle = _sel
       }
 
+    let moveLogLeft model id = 
+      let _order = 
+        model.order 
+          |> PList.toList
+          |> DS.List.shiftLeft id 
+          |> PList.ofList
+      {model with order = _order }
+
+    let moveLogRight model id =
+      let _order = 
+        model.order 
+          |> PList.toList
+          |> DS.List.shiftRight id 
+          |> PList.ofList
+      {model with order = _order }
+
     let update (model : Diagram) (msg : Action) =
       let updateConnections model message = 
         let upd model msg =
@@ -243,7 +274,29 @@ open UIPlus
 
         | RectStackMessage msg -> 
           let (sid, m) = msg
-          let _model = updateSelectedRectangle model sid m
+          let _model = 
+            match m with  
+              | RectangleStack.HeaderMessage hm ->
+                match hm with
+                  | Header.LeftArrowMessage lam ->
+                    match lam with
+                      | Arrow.MouseMessage mm ->
+                        match mm with 
+                          | MouseAction.OnLeftClick -> (moveLogLeft model sid)
+                          | _ -> model
+                      | _ -> model
+                  | Header.RightArrowMessage lam ->
+                    match lam with
+                      | Arrow.MouseMessage mm ->
+                        match mm with 
+                          | MouseAction.OnLeftClick -> (moveLogRight model sid)
+                          | _ -> model
+                      | _ -> model
+                  | _ -> model
+               | _ -> model
+                
+
+          let _model = updateSelectedRectangle _model sid m
           let _rstacks = _model.rectangleStacks
                           |> HMap.update sid (fun x -> updateRStack model x m)
           let needsLayouting = 
@@ -266,19 +319,9 @@ open UIPlus
                           (ConnectionApp.Action.MouseMoved p)
           {model with connectionApp = _conApp}
         | MoveLeft id ->
-          let _order = 
-            model.order 
-              |> PList.toList
-              |> DS.List.shiftLeft id 
-              |> PList.ofList
-          {model with order = _order }
+          moveLogLeft model id
         | MoveRight id ->
-          let _order = 
-            model.order 
-              |> PList.toList
-              |> DS.List.shiftRight id 
-              |> PList.ofList
-          {model with order = _order }
+          moveLogRight model id
         | UpdateColour cmap ->
           let _stacks =
             model.rectangleStacks

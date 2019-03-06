@@ -33,6 +33,22 @@
           atf "stroke-witdth" stroke
         ]@fillAttr)
 
+    let buildPathRotate (str : string) (color : C4b) (centre : V2d)
+                        (stroke : float) (fill : bool) (degrees : int) =
+      let fillAttr =
+        match fill with
+          | true -> [atc "fill" color]
+          | false -> [ats "fill" "none"]
+      Svg.path
+        ([
+          ats "d" str
+          atc "stroke" color
+          atf "stroke-witdth" stroke
+          ats "transform" (sprintf "rotate(%i, %i, %i)" degrees 
+                                                        (int centre.X) 
+                                                        (int centre.Y))
+        ]@fillAttr)
+
     let circleSegmentTo (radius : float) (b : V2d) =
         sprintf "A %f %f, 0, 0, 0, %f %f" radius radius b.X b.Y
 

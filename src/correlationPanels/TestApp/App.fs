@@ -18,11 +18,11 @@ open SimpleTypes
 type Action =
     | ToggleModel
     | ButtonMessage   of Button.Action
-    | CameraMessage   of CameraControllerMessage
     | RDMessage       of RoseDiagram.Action
     | DiagramMessage  of Diagram.Action
     | MouseMove       of V2i
     | ArrowMessage    of Arrow.Action
+    | HeaderMessage   of Header.Action
 
 module App =
     open Svgplus.Mutable
@@ -32,8 +32,8 @@ module App =
     let initial : TestModel =
       {
         currentModel  = Primitive.Box
-        cameraState   = CameraController.initial
         arrow         = Arrow.init Direction.Right
+        header        = {Header.init with centre = V2d (500.0)} |> Header.layout true
         svgButton     = {Button.init with pos = V2d (10.0)}
         roseDiagram   = {RoseDiagram.init with centre = V2d (100.0)}
         diagramApp    = Diagram.init
@@ -50,9 +50,6 @@ module App =
                 match model.currentModel with
                     | Box -> { model with currentModel = Sphere }
                     | Sphere -> { model with currentModel = Primitive.Box }
-
-            | CameraMessage msg ->
-                { model with cameraState = CameraController.update model.cameraState msg }
 
             | ButtonMessage msg -> 
               match msg with
@@ -71,12 +68,13 @@ module App =
               }
             | ArrowMessage m ->
               {model with arrow = Arrow.update model.arrow m}
+            | HeaderMessage m ->
+              {model with header = Header.update model.header m}
     let view (model : MTestModel) =
         let svgAtts = 
           [
             clazz "svgRoot"
             style "border: 1px solid black"
-            //attribute "viewBox" "0 0 600 400"
             attribute "preserveAspectRatio" "xMinYMin meet"
             attribute "height" "100%"
             attribute "width" "100%"
@@ -95,8 +93,9 @@ module App =
         //  (DiagramApp.view model.diagramApp) 
         //    |> AList.map (fun d -> d |> UI.map Action.DiagramMessage)
 
-        let content = (Arrow.view model.arrow) 
-                        |> AList.map (UI.map ArrowMessage)
+        let content = (Header.view model.header) 
+                          |> AList.map (UI.map HeaderMessage)
+
 
         require (GUI.CSS.myCss) (
           body [] [
@@ -111,10 +110,10 @@ module App =
         )
 
     let app =
-        {
-            initial = initial
-            update = update
-            view = view
-            threads = fun _ -> ThreadPool.empty
-            unpersist = Unpersist.instance
-        }
+      {
+        initial = initial
+        update = update
+        view = view
+        threads = fun _ -> ThreadPool.empty
+        unpersist = Unpersist.instance
+      }

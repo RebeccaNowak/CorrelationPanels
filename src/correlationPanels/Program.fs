@@ -34,17 +34,17 @@ let main argv =
     // the localhost variant does not require to allow the port through your firewall.
     // the non localhost variant runs in 127.0.0.1 which enables remote acces (e.g. via your mobile phone)
 
-    //// CORRELATIONS
-    //WebPart.startServerLocalhost 4321 [ 
-    //    MutableApp.toWebPart' app.Runtime false (Pages.start app.Runtime)
-    //    Suave.Files.browseHome
-    //]  
-
-    //TEST
+    // CORRELATIONS
     WebPart.startServerLocalhost 4321 [ 
-        MutableApp.toWebPart app.Runtime (App.start Test.App.app)
+        MutableApp.toWebPart' app.Runtime false (Pages.start app.Runtime)
         Suave.Files.browseHome
     ]  
+
+    ////TEST
+    //WebPart.startServerLocalhost 4321 [ 
+    //    MutableApp.toWebPart app.Runtime (App.start Test.App.app)
+    //    Suave.Files.browseHome
+    //]  
 
     Aardium.run {
         url "http://localhost:4321/"

@@ -3,15 +3,15 @@
   open Aardvark.Base.Incremental
   open SimpleTypes
   open Svgplus
+  open Svgplus.TextType
   open UIPlus
 
   [<DomainType>]
   type Header = {
-    pos         : V2d
+    centre      : V2d
     dim         : Size2D
-    label       : TextInput
-    leftButton  : Button
-    rightButton : Button
-    
+    label       : Text
+    leftButton  : ArrowType.Arrow
+    rightButton : ArrowType.Arrow
   }
 

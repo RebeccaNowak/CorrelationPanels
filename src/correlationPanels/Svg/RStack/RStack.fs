@@ -47,10 +47,15 @@
                           |> List.map (fun r -> r.dim.width)
                           |> List.max
 
-          let _header = Header.Lens.width.Set (model.header, maxWidth)
+
+
+          let _header = 
+            {model.header with centre = V2d(model.pos.X + maxWidth * 0.5, model.pos.Y)
+            } |> Header.layout false
+
           {
             model with  rectangles = _rs
-                        header     = _header  
+                        header     = _header 
           }
         | false -> model
 
@@ -149,11 +154,14 @@
     let width (model : RectangleStack) =
       //let folded = 
       //  HMap.fold (fun s k v -> s + v.dim.width) 0.0 model.rectangles
-      let max =
+      let rects =
         (DS.HMap.values model.rectangles  )
           |> List.map (fun r -> Rectangle.Lens.width.Get r)
           |> List.max
-      max
+
+      let header =
+        model.header.dim.width
+      max rects header
 
     let height (model : RectangleStack) =
       let folded = 
@@ -205,7 +213,7 @@
           let _header = Header.update model.header msg
           {model with header = _header}
         | ChangeLabel msg ->
-          let _header = Header.update model.header (Header.ChangeLabel msg)
+          let _header = Header.update model.header (Header.TextMessage (Text.ChangeLabel msg))
           {model with header = _header}
         | UpdateColour cmap ->
           let _rects =
@@ -231,7 +239,7 @@
     
       let content =
         alist {
-          yield (Header.view model.header) |> UI.map HeaderMessage
+          yield! (Header.view model.header) |> AList.map (UI.map HeaderMessage)
           for id in model.order do
             let! r = AMap.find id model.rectangles 
             yield! (viewMap r id RectangleMessage)

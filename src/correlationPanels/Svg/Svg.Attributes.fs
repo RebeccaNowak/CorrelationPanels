@@ -51,12 +51,22 @@
           yield atf "cy" v.Y
         }
 
-      let inline xywh (pos : IMod<V2d>) (dim : IMod<Size2D>) =
+      let inline xywh (leftUpper : IMod<V2d>) (dim : IMod<Size2D>) =
         amap {
-          let! pos = pos
+          let! pos = leftUpper
           let! dim = dim
           yield atf "x" pos.X
           yield atf "y" pos.Y
+          yield atf "width"  dim.width
+          yield atf "height" dim.height
+        }
+
+      let inline xywh' (centre : IMod<V2d>) (dim : IMod<Size2D>) =
+        amap {
+          let! centre = centre
+          let! dim = dim 
+          yield atf "x" (centre.X - dim.width * 0.5)
+          yield atf "y" (centre.Y - dim.height * 0.5)
           yield atf "width"  dim.width
           yield atf "height" dim.height
         }

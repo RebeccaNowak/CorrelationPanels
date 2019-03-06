@@ -310,7 +310,7 @@
         let viewNew  : list<DomNode<'msg>> =
             [
               [
-                (labelEditNode stack.header.label) 
+                (labelEditNode stack.header.label.textInput) 
                   |> UI.map (fun m -> Action.TextInputMessage (stack.id, m))
                   |> UI.map mapper
                   |> Table.intoTd
@@ -335,7 +335,7 @@
 
           [
             [
-              (labelEditNode stack.header.label) 
+              (labelEditNode stack.header.label.textInput) 
                 |> UI.map (fun m -> Action.TextInputMessage (stack.id, m))
                 |> UI.map mapper
                 |> Table.intoTd
@@ -351,7 +351,7 @@
           [
             [
               label [clazz "ui horizontal label"]
-                    [Incremental.text (stack.header.label.text)] ///|> UI.map mapper
+                    [Incremental.text (stack.header.label.textInput.text)] ///|> UI.map mapper
                 |> Table.intoTd
               moveUpDown |> Table.intoTd |> UI.map mapper
             ] //@ [nodeViews] 

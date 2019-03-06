@@ -2,29 +2,7 @@
 
 open Aardvark.Base
 open Aardvark.Base.Incremental
-
-type FontSize = {
-  fontSize : int 
-}
-
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module FontSize =
-  let defaultSize = {fontSize = 12}
-  let min = 10
-  let max = 30
-
-  let init d : FontSize = 
-    let s =
-      match d with
-        | a when a <= min -> min
-        | b when b >= max -> max
-        | _ -> d
-    {fontSize = s}
-
-  let add (s : FontSize) (d : int) : FontSize =
-    init (s.fontSize + d)
-
-
+open Svgplus
 
 type Zoom = 
   {

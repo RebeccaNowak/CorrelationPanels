@@ -264,6 +264,7 @@
                                   Diagram.UnpackAction.OnLeftClick
                                   (fun stackid _ -> selectLog model stackid) 
                                   model
+
           let selectMap stackid rectId = 
             let optnode = tryFindNodeFromRectId model stackid rectId
             match optnode with

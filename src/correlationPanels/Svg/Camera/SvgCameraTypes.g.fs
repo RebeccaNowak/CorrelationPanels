@@ -106,7 +106,7 @@ module Mutable =
                     override x.Update(r,f) = { r with offset = f r.offset }
                 }
             let fontSize =
-                { new Lens<Svgplus.CameraType.SvgCamera, Svgplus.CameraType.FontSize>() with
+                { new Lens<Svgplus.CameraType.SvgCamera, Svgplus.FontSize>() with
                     override x.Get(r) = r.fontSize
                     override x.Set(r,v) = { r with fontSize = v }
                     override x.Update(r,f) = { r with fontSize = f r.fontSize }

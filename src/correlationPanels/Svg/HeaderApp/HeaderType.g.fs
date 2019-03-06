@@ -13,13 +13,13 @@ module Mutable =
     type MHeader(__initial : Svgplus.HeaderType.Header) =
         inherit obj()
         let mutable __current : Aardvark.Base.Incremental.IModRef<Svgplus.HeaderType.Header> = Aardvark.Base.Incremental.EqModRef<Svgplus.HeaderType.Header>(__initial) :> Aardvark.Base.Incremental.IModRef<Svgplus.HeaderType.Header>
-        let _pos = ResetMod.Create(__initial.pos)
+        let _centre = ResetMod.Create(__initial.centre)
         let _dim = ResetMod.Create(__initial.dim)
-        let _label = UIPlus.Mutable.MTextInput.Create(__initial.label)
-        let _leftButton = Svgplus.Mutable.MButton.Create(__initial.leftButton)
-        let _rightButton = Svgplus.Mutable.MButton.Create(__initial.rightButton)
+        let _label = Svgplus.TextType.Mutable.MText.Create(__initial.label)
+        let _leftButton = Svgplus.ArrowType.Mutable.MArrow.Create(__initial.leftButton)
+        let _rightButton = Svgplus.ArrowType.Mutable.MArrow.Create(__initial.rightButton)
         
-        member x.pos = _pos :> IMod<_>
+        member x.centre = _centre :> IMod<_>
         member x.dim = _dim :> IMod<_>
         member x.label = _label
         member x.leftButton = _leftButton
@@ -30,11 +30,11 @@ module Mutable =
             if not (System.Object.ReferenceEquals(__current.Value, v)) then
                 __current.Value <- v
                 
-                ResetMod.Update(_pos,v.pos)
+                ResetMod.Update(_centre,v.centre)
                 ResetMod.Update(_dim,v.dim)
-                UIPlus.Mutable.MTextInput.Update(_label, v.label)
-                Svgplus.Mutable.MButton.Update(_leftButton, v.leftButton)
-                Svgplus.Mutable.MButton.Update(_rightButton, v.rightButton)
+                Svgplus.TextType.Mutable.MText.Update(_label, v.label)
+                Svgplus.ArrowType.Mutable.MArrow.Update(_leftButton, v.leftButton)
+                Svgplus.ArrowType.Mutable.MArrow.Update(_rightButton, v.rightButton)
                 
         
         static member Create(__initial : Svgplus.HeaderType.Header) : MHeader = MHeader(__initial)
@@ -51,11 +51,11 @@ module Mutable =
     module Header =
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Lens =
-            let pos =
+            let centre =
                 { new Lens<Svgplus.HeaderType.Header, Aardvark.Base.V2d>() with
-                    override x.Get(r) = r.pos
-                    override x.Set(r,v) = { r with pos = v }
-                    override x.Update(r,f) = { r with pos = f r.pos }
+                    override x.Get(r) = r.centre
+                    override x.Set(r,v) = { r with centre = v }
+                    override x.Update(r,f) = { r with centre = f r.centre }
                 }
             let dim =
                 { new Lens<Svgplus.HeaderType.Header, SimpleTypes.Size2D>() with
@@ -64,19 +64,19 @@ module Mutable =
                     override x.Update(r,f) = { r with dim = f r.dim }
                 }
             let label =
-                { new Lens<Svgplus.HeaderType.Header, UIPlus.TextInput>() with
+                { new Lens<Svgplus.HeaderType.Header, Svgplus.TextType.Text>() with
                     override x.Get(r) = r.label
                     override x.Set(r,v) = { r with label = v }
                     override x.Update(r,f) = { r with label = f r.label }
                 }
             let leftButton =
-                { new Lens<Svgplus.HeaderType.Header, Svgplus.Button>() with
+                { new Lens<Svgplus.HeaderType.Header, Svgplus.ArrowType.Arrow>() with
                     override x.Get(r) = r.leftButton
                     override x.Set(r,v) = { r with leftButton = v }
                     override x.Update(r,f) = { r with leftButton = f r.leftButton }
                 }
             let rightButton =
-                { new Lens<Svgplus.HeaderType.Header, Svgplus.Button>() with
+                { new Lens<Svgplus.HeaderType.Header, Svgplus.ArrowType.Arrow>() with
                     override x.Get(r) = r.rightButton
                     override x.Set(r,v) = { r with rightButton = v }
                     override x.Update(r,f) = { r with rightButton = f r.rightButton }

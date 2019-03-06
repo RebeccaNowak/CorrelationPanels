@@ -95,6 +95,12 @@
                    
       Incremental.elemNS' "rect" Incremental.Svg.svgNS atts children
 
+    let clickableRectangle' (centre: IMod<V2d>) 
+                            (dim   : IMod<Size2D>) 
+                            actions  =
+      let width  = Mod.map (fun x -> x.width) dim
+      let height = Mod.map (fun x -> x.height) dim
+      clickableRectangle centre width height actions AList.empty
 
     let drawBorderedRectangle (leftUpper         : IMod<V2d>) 
                               (size              : IMod<Size2D>)
