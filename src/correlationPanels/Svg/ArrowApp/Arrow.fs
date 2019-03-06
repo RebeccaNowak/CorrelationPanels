@@ -20,11 +20,11 @@ open Svgplus.Paths
           direction = direction
           length    = 80.0
           height    = 40.0
-          horz      = 0.6
+          horz      = 0.5
           vert      = 0.5
           stroke    = 5.0
           fill      = false
-          colour    = C4b.VRVisGreen
+          colour    = C4b.Black
           onEnter   = (fun a -> {a with fill = true})
           onLeave   = (fun a -> {a with fill = false})
         }
@@ -88,7 +88,15 @@ open Svgplus.Paths
           let! col = model.colour
           let! fill = model.fill
           let! stroke = model.stroke
-          yield (buildPath path col stroke fill)
+          let! dir = model.direction
+          let degrees = 
+            match dir with  
+              | Direction.Right  -> 0
+              | Direction.Up    -> 90
+              | Direction.Left -> 180
+              | Direction.Down  -> 270
+
+          yield (buildPathRotate path col centre stroke fill degrees)
         }
 
       let clickable =
