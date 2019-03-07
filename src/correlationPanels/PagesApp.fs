@@ -285,7 +285,7 @@ module Pages =
         let _cp = CorrelationPlot.update 
                     model.annotationApp
                     model.corrPlot.correlationPlot 
-                    (CorrelationPlot.ColourMapMessage m)
+                    (CorrelationPlot.GrainSizeTypeMessage m)
         {model with 
           corrPlot = 
             {model.corrPlot with

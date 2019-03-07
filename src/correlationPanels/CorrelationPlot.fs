@@ -36,7 +36,7 @@
       | ToggleFlag             of SvgFlags
       | DiagramMessage         of Diagram.Action
       | MouseMove              of V2d
-      | ColourMapMessage       of ColourMap.Action
+      | GrainSizeTypeMessage       of ColourMap.Action
       //| KeyDown                of key : Keys
       //| KeyUp                  of key : Keys     
       
@@ -279,10 +279,10 @@
                                   Diagram.UnpackAction.SelectRectangle
                                   selectMap
                                   model.colourMapApp
-          {_cp with diagram   = _d
+          {_cp with diagram   = _d |> Diagram.layout
                     colourMapApp = _cmap}
 
-        | ColourMapMessage m -> 
+        | GrainSizeTypeMessage m -> 
           let _cmap = ColourMap.update model.colourMapApp m
           let optselid = model.diagram.selectedRectangle 
           let (_logs, _diagram) = 
@@ -314,7 +314,7 @@
                | _,_ -> (model.logs, model.diagram)
                
           {model with colourMapApp = _cmap
-                      diagram   = _diagram
+                      diagram   = _diagram |> Diagram.layout
                       logs         = _logs}
 
 

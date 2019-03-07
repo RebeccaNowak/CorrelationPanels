@@ -30,8 +30,8 @@ open UIPlus
     type UnpackAction =
       | MouseMessage      of MouseAction
       | RectangleMessage  of Rectangle.Action
-      | LeftArrowMessage  of Header.Action
-      | RightArrowMessage of Header.Action
+      | LeftArrowMessage  of Arrow.Action
+      | RightArrowMessage of Arrow.Action
     
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module UnpackAction =
@@ -41,10 +41,10 @@ open UIPlus
         UnpackAction.RectangleMessage (Rectangle.Action.Select RectangleId.invalid)
       let MoveStackLeft = 
         UnpackAction.LeftArrowMessage 
-          (Header.LeftArrowMessage (Arrow.MouseMessage MouseAction.OnLeftClick))
+          (Arrow.MouseMessage MouseAction.OnLeftClick)
       let MoveStackRight = 
         UnpackAction.RightArrowMessage 
-          (Header.RightArrowMessage (Arrow.MouseMessage MouseAction.OnLeftClick))
+          (Arrow.MouseMessage MouseAction.OnLeftClick)
            
           
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -65,11 +65,15 @@ open UIPlus
                               def
                           | _ -> def
                       | _ -> def
-                  | Header.LeftArrowMessage lam, toAction ->
-                    f stackId RectangleId.invalid
-                  | Header.RightArrowMessage ram, toAction ->
-                    f stackId RectangleId.invalid
-                  | _ -> def
+                  | Header.LeftArrowMessage sm, LeftArrowMessage _lam ->
+                    match sm = _lam with 
+                      | true -> f stackId RectangleId.invalid
+                      | false -> def
+                  | Header.RightArrowMessage sm, RightArrowMessage _ram ->
+                    match sm = _ram with 
+                       | true -> f stackId RectangleId.invalid
+                       | false -> def
+                  | _,_ -> def
               | RectangleStack.RectangleMessage (rid, rm), RectangleMessage rm2 -> 
                 match rm, rm2 with
                   | Rectangle.Select rid,  Rectangle.Select dummy ->
@@ -79,9 +83,6 @@ open UIPlus
           | _ -> def
 
        
-
-
-        
     let init : Diagram = 
       {
         rectangleStacks    = HMap.empty
