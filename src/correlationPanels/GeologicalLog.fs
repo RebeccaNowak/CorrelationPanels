@@ -153,7 +153,7 @@
                         |> HMap.filter (fun id a -> Annotation.isElevationBetween lp up a)
                     let childrenSelectedPoints = 
                       restSelPoints // only take selected points with elevations within the current node borders
-                        |> HMap.filter (fun a p -> V3d.isElevationBetween p lp up)
+                        |> HMap.filter (fun a p -> Annotation.isElevationBetween' a1.elevation p lp up)
 
                     match childrenSelectedPoints.IsEmptyOrNull () with
                       | true    -> generateNonLevelNodes logId (DS.HMap.toPList childrenAnnos) (lp, la) (up, ua) currentLevel semApp

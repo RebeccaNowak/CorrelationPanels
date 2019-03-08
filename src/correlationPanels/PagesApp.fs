@@ -136,7 +136,7 @@ module Pages =
   let updateCorrelationDrawing model =
     CorrelationDrawing.update model.drawingApp model.semanticApp
 
-  let updateAnnotationApp model =
+  let updateAnnoApp model =
     AnnotationApp.update model.annotationApp 
 
   let updateCamera model =
@@ -191,6 +191,15 @@ module Pages =
            CorrelationPlotApp.update model.annotationApp model.corrPlot message
         }
       | KeyboardMessage m, _ ->
+        let _annoApp = 
+          match m with 
+            | Keyboard.KeyDown Keys.Enter ->
+              match model.drawingApp.working with
+                | None   -> 
+                  model.annotationApp
+                | Some w ->
+                  updateAnnoApp model (AnnotationApp.AddAnnotation w)
+            | _ -> model.annotationApp
         let _corrPlot = 
           let m = CorrelationPlotApp.CorrelationPlotMessage
                     (CorrelationPlot.KeyboardMessage m)
@@ -201,7 +210,7 @@ module Pages =
                                               model.semanticApp 
                                               (CorrelationDrawing.KeyboardMessage m)
         let _annoApp = AnnotationApp.update 
-                                      model.annotationApp 
+                                      _annoApp
                                       (AnnotationApp.KeyboardMessage m)
         let _model = 
           {model with corrPlot      = _corrPlot
@@ -221,7 +230,7 @@ module Pages =
         
         let sel = AnnotationApp.getSelectedPoints' model.annotationApp
        
-        { model with annotationApp = updateAnnotationApp model m } |> Lenses.set _selectedPoints sel 
+        { model with annotationApp = updateAnnoApp model m } |> Lenses.set _selectedPoints sel 
       | CorrelationDrawingMessage m, _ -> // used for drawing annotations
         let (drawingApp, annoApp) =               
             match m with
@@ -230,7 +239,8 @@ module Pages =
                   match CorrelationDrawing.isDone model.drawingApp model.semanticApp with
                     | true  -> 
                       let correlationDrawing = CorrelationDrawing.addPoint model.drawingApp model.semanticApp p
-                      let annotationModel = updateAnnotationApp model (AnnotationApp.AddAnnotation correlationDrawing.working.Value) //TODO safe but  maybe do this differently
+                      let annotationModel = 
+                        updateAnnoApp model (AnnotationApp.AddAnnotation correlationDrawing.working.Value) //TODO safe but  maybe do this differently
 
                       //clear corr drawing state
                       let correlationDrawing = { correlationDrawing with working = None}
@@ -273,7 +283,8 @@ module Pages =
                   let annoApp = 
                     AnnotationApp.update upd (AnnotationApp.SelectPoints selPoints)
                   let cPlot =
-                    CorrelationPlot.update model.annotationApp model.corrPlot.correlationPlot (CorrelationPlot.SelectLog id)
+                    CorrelationPlot.update model.annotationApp 
+                                           model.corrPlot.correlationPlot (CorrelationPlot.SelectLog id)
                   (annoApp, {model.corrPlot with correlationPlot = cPlot})
                 | _ -> (model.annotationApp, updCorrPlotApp m)
             | _ -> (model.annotationApp, updCorrPlotApp m)
@@ -357,7 +368,7 @@ module Pages =
           {
             model with 
               drawingApp    = updateCorrelationDrawing model (CorrelationDrawing.KeyDown Keys.Enter)
-              annotationApp = updateAnnotationApp model (AnnotationApp.AddAnnotation w)
+              annotationApp = updateAnnoApp model (AnnotationApp.AddAnnotation w)
           }
 
     let resetLayout (model : Pages) = // R

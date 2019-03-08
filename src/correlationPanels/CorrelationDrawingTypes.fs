@@ -281,6 +281,9 @@ type Annotation = {
     [<NonIncremental>]
     semanticType          : SemanticType
 
+    [<NonIncremental>]
+    elevation             : V3d -> float
+
     selected              : bool
     hovered               : bool
 

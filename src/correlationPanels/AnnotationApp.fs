@@ -48,7 +48,6 @@ namespace CorrelationDrawing
     
     let findAnnotation (app : AnnotationApp) (id : AnnotationId) =
       HMap.tryFind id app.annotations
-      
 
     let annotationOrDefault (app : AnnotationApp) (id : AnnotationId) =
       let a = HMap.tryFind id app.annotations
@@ -74,17 +73,17 @@ namespace CorrelationDrawing
                 None
       el
     
-    let elevation' (app : MAnnotationApp) (id : IMod<AnnotationId>) =
-      adaptive {
-        let! anno = Mod.bind (fun id -> (findAnnotation' app id)) id
-        let! el =
-          match anno with
-                | Some a -> Annotation.elevation' a
-                | None   ->
-                  printf "could not find annotation id" //TODO proper error handling
-                  Mod.constant 0.0
-        return el
-      }
+    //let elevation' (app : MAnnotationApp) (id : IMod<AnnotationId>) =
+    //  adaptive {
+    //    let! anno = Mod.bind (fun id -> (findAnnotation' app id)) id
+    //    let! el =
+    //      match anno with
+    //            | Some a -> Annotation.elevation' a
+    //            | None   ->
+    //              printf "could not find annotation id" //TODO proper error handling
+    //              Mod.constant 0.0
+    //    return el
+    //  }
 
     let isElevationBetween (annoApp : AnnotationApp) (id : AnnotationId) (lower : V3d) (upper : V3d) =
       let a = findAnnotation annoApp id

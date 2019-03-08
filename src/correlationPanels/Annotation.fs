@@ -17,6 +17,7 @@ module Annotation =
           semanticType    = SemanticType.Hierarchical
           geometry        = t
           semanticId      = SemanticId.invalid
+          elevation       = fun v -> v.Length
           points          = plist<AnnotationPoint>.Empty
           segments        = plist.Empty
           projection      = Projection.Viewpoint
@@ -34,6 +35,7 @@ module Annotation =
         semanticType    = SemanticType.Dummy
         geometry        = GeometryType.Line
         semanticId      = SemanticId.invalid
+        elevation       = fun v -> v.Length
         points          = plist.Empty
         segments        = plist.Empty
         projection      = Projection.Viewpoint
@@ -51,6 +53,7 @@ module Annotation =
         semanticType    = SemanticType.Dummy
         geometry        = GeometryType.Point
         semanticId      = SemanticId.invalid
+        elevation       = fun v -> v.Length
         points          = PList.ofList [{point    = v
                                          selected = false
                                        }]
@@ -349,48 +352,51 @@ module Annotation =
 //  let getAvgElevation (anno : MAnnotation) =
 //    anno.points
 //      |> AList.averageOf (calcElevation 
-//
+////
+  let isElevationBetween' (f : V3d -> float) (v : V3d) (lower : V3d) (upper : V3d) =
+      (f lower < f v) && (f upper > f v)
+
   let elevation (anno : Annotation) =
     anno.points 
       |> PList.toList
-      |> List.map (fun x -> V3d.elevation x.point)
+      |> List.map (fun x -> anno.elevation x.point)
       |> List.average
 
   let lowestPoint (anno : Annotation) = //TODO unsafe
     anno.points 
-      |> DS.PList.minBy (fun x -> V3d.elevation x.point)
+      |> DS.PList.minBy (fun x -> anno.elevation x.point)
 
   let tryLowestPoint (anno : Annotation) =
     anno.points 
-      |> DS.PList.tryMinBy (fun x ->V3d.elevation x.point)
+      |> DS.PList.tryMinBy (fun x ->anno.elevation x.point)
 
   let highestPoint (anno : Annotation) = //TODO unsafe
     anno.points 
-      |> DS.PList.maxBy (fun x -> V3d.elevation x.point)
+      |> DS.PList.maxBy (fun x -> anno.elevation x.point)
 
   let tryHighestPoint (anno : Annotation) = 
     anno.points 
-      |> DS.PList.tryMaxBy (fun x -> V3d.elevation x.point)
+      |> DS.PList.tryMaxBy (fun x -> anno.elevation x.point)
   
 
-  let elevation' (anno : MAnnotation) =
-    adaptive {
-      let! lst = anno.points.Content
-      return lst
-              |> PList.map (fun x -> V3d.elevation x.point)
-              |> PList.toList
-              |> List.average
-    }
+  //let elevation' (anno : MAnnotation) =
+  //  adaptive {
+  //    let! lst = anno.points.Content
+  //    return lst
+  //            |> PList.map (fun x -> anno.elevation x.point)
+  //            |> PList.toList
+  //            |> List.average
+  //  }
 
   let isElevationBetween (a : V3d) (b : V3d) (model : Annotation)  =
-      V3d.elevation a < (elevation model) 
-        && (V3d.elevation b > (elevation model))
+      model.elevation a < (elevation model) 
+        && (model.elevation b > (elevation model))
     
   
 
   let sortByElevation (p1 : V3d, a1 : Annotation)  (p2 : V3d, a2 : Annotation) =
-    let (lp, la) = if V3d.elevation p1 < V3d.elevation p2 then (p1, a1) else (p2, a2) //TODO refactor
-    let (up, ua) = if V3d.elevation p1 < V3d.elevation p2 then (p2, a2) else (p1, a1)
+    let (lp, la) = if a1.elevation p1 < a2.elevation p2 then (p1, a1) else (p2, a2) //TODO refactor
+    let (up, ua) = if a1.elevation p1 < a2.elevation p2 then (p2, a2) else (p1, a1)
     ((lp,la),(up,ua))
 
 //

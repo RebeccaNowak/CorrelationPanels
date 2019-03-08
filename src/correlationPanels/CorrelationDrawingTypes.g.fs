@@ -448,6 +448,7 @@ module Mutable =
         member x.geometry = __current.Value.geometry
         member x.projection = __current.Value.projection
         member x.semanticType = __current.Value.semanticType
+        member x.elevation = __current.Value.elevation
         member x.selected = _selected :> IMod<_>
         member x.hovered = _hovered :> IMod<_>
         member x.semanticId = _semanticId :> IMod<_>
@@ -509,6 +510,12 @@ module Mutable =
                     override x.Get(r) = r.semanticType
                     override x.Set(r,v) = { r with semanticType = v }
                     override x.Update(r,f) = { r with semanticType = f r.semanticType }
+                }
+            let elevation =
+                { new Lens<CorrelationDrawing.Annotation, Aardvark.Base.V3d -> System.Double>() with
+                    override x.Get(r) = r.elevation
+                    override x.Set(r,v) = { r with elevation = v }
+                    override x.Update(r,f) = { r with elevation = f r.elevation }
                 }
             let selected =
                 { new Lens<CorrelationDrawing.Annotation, System.Boolean>() with
