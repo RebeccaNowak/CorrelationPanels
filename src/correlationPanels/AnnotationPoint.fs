@@ -10,35 +10,39 @@ module AnnotationPoint =
     selected = false
   }
 
-  let elevation (model : AnnotationPoint) = 
-    model.point.Length
+
+
 
   let calcRange (annos : plist<Annotation>) : Rangef = //TODO refactor (not in the right place)
     let rangeMin = 
       annos 
-        |> PList.map Annotation.lowestPoint
-        |> PList.map elevation
+        |> PList.map (fun a -> (a, Annotation.lowestPoint a))
+        |> PList.map (fun (a,p) -> a.elevation p.point)
         |> DS.PList.minBy (fun x -> x) //TODO unsafe
 
     let rangeMax = 
       annos 
-        |> PList.map Annotation.highestPoint
-        |> PList.map elevation
+        |> PList.map (fun a -> (a, Annotation.highestPoint a))
+        |> PList.map (fun (a,p) -> a.elevation p.point)
         |> DS.PList.maxBy (fun x -> x) //TODO unsafe
     {min = rangeMin; max = rangeMax}
 
-  let tryCalcRange (annos : plist<Annotation>) : option<Rangef> = //TODO refactor (not in the right place)
+  let tryCalcRange (annos : plist<Annotation>) = //TODO refactor (not in the right place)
+    let foo ((a,p) : (Annotation * Option<AnnotationPoint>)) =
+      Option.map (fun (x : AnnotationPoint) -> a.elevation x.point) p
+      
+
     let rangeMin = 
       annos 
-        |> PList.map Annotation.tryLowestPoint
-        |> PList.map (fun x -> Option.map elevation x)
+        |> PList.map (fun a -> (a, Annotation.tryLowestPoint a))
+        |> PList.map (fun x -> foo x)
         |> DS.PList.filterNone
         |> DS.PList.tryMinBy (fun x -> x) 
 
     let rangeMax = 
       annos 
-        |> PList.map Annotation.tryHighestPoint
-        |> PList.map (fun x -> Option.map elevation x)
+        |> PList.map (fun a -> (a, Annotation.tryHighestPoint a))
+        |> PList.map (fun x -> foo x)
         |> DS.PList.filterNone
         |> DS.PList.tryMaxBy (fun x -> x) 
     Option.map2 (fun min max -> {min = min; max = max}) rangeMin rangeMax

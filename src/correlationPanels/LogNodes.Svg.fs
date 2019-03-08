@@ -10,15 +10,16 @@
     module Calc =
       open Aardvark.Base
 
-      let calcSvgHeight (node : LogNode) (factor : float) =
-        (Helper.elevationRange node).range * factor  
+      let calcSvgHeight (node : LogNode) (factor : float) (annoApp : AnnotationApp) =
+        (Helper.elevationRange node annoApp).range * factor  
 
       let calcYScaleFactor (availableHeight : float) 
-                           (logNodes : plist<LogNode>) = 
+                           (logNodes : plist<LogNode>)
+                           (annoApp : AnnotationApp) = 
         let accumulatedHeight =
           logNodes 
             |> PList.toList
-            |> List.sumBy (fun x -> (abs (Helper.elevationRange x).range))
+            |> List.sumBy (fun x -> (abs (Helper.elevationRange x annoApp).range))
         availableHeight / accumulatedHeight
 
       let mapPrev (lst : plist<'a>) (f : option<'a> -> 'a -> 'b) =
@@ -33,7 +34,7 @@
                   (annoApp          : AnnotationApp)
                   (node             : LogNode) =
 
-        let _height = calcSvgHeight node yScaleFactor
+        let _height = calcSvgHeight node yScaleFactor annoApp
         let metricValue = 
           node 
             |> Recursive.metricChildren
@@ -95,7 +96,7 @@
             let factor = 
               match yScaleFactor with 
                 | Some factor -> factor
-                | None        -> calcYScaleFactor availableHeight nodes
+                | None        -> calcYScaleFactor availableHeight nodes annoApp
             let _nodes = 
               nodes
                 |> LogNodes.Recursive.applyAll 

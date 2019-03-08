@@ -74,12 +74,16 @@ module Border =
   let annotationId (optModel : option<Border>)  =
     Option.map (fun (m : Border) -> m.annotationId) optModel
 
-  //let tryElevation (model : Border) = // (annoApp : AnnotationApp) =  
+  //let tryLowerElevation (model : Border) (annoApp : AnnotationApp) =  
+  //  let optAnno = AnnotationApp.findAnnotation model.
+  //  match optAnno with
+  //    | Some a -> a.elevation model.point
+  //    | None -> None
   //  model.point
     //(AnnotationApp.tryElevation annoApp model.annotationId)
 
-  let elevation' (model : MBorder) = // (annoApp : MAnnotationApp) =
-    model.point
+  //let elevation' (model : MBorder) = // (annoApp : MAnnotationApp) =
+  //  model.point
    // (AnnotationApp.elevation' annoApp model.annotationId)
 
   let colorOrDefault (model : IMod<Option<MBorder>>)  =
@@ -87,9 +91,10 @@ module Border =
                             (fun b -> b.color)
                             C4b.Red
 
-
+  let tryElevation (model : Border) (annoApp : AnnotationApp) =
+    let optAnno = AnnotationApp.findAnnotation annoApp model.annotationId
+    Option.map (fun a -> a.elevation model.point) optAnno
         
-
   module Sg =
     let createLabel (str : string) (pos : V3d) =
       Sg.text (Font.create "courier" FontStyle.Regular) C4b.White (Mod.constant str)

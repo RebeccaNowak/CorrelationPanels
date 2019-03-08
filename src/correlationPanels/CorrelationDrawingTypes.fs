@@ -63,6 +63,8 @@ type Rangef = { //TODO move to math
         min = min this.min other.min
         max = max this.max other.max
       }
+    member this.average =
+      (this.min + this.max) * 0.5
         
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]

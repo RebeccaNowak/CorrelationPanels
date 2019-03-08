@@ -117,7 +117,7 @@
                 |> List.map (fun ((p : V3d) ,id) -> 
                               (p, AnnotationApp.findAnnotation annoApp id))
                 |> DS.PairList.filterNone
-                |> List.sortBy (fun (p, k) -> (p.Length))
+                |> List.sortBy (fun (p, k) -> (k.elevation p))
         
             let listWithBorders = 
               List.concat 
@@ -126,7 +126,7 @@
                       onlyCurrentLevel
                       [(upperBorder.point, AnnotationApp.annotationOrDefault annoApp upperBorder.annotationId)]
                     ]
-              |> List.sortBy (fun (p, a) -> (p.Length))
+              |> List.sortBy (fun (p, a) -> (a.elevation p))
               
             let pairwiseWithBorders =
               listWithBorders
@@ -217,7 +217,12 @@
             | Some c -> c
             | None -> {ColorPicker.init with c = C4b.Black}
 
-        let height = (LogNodes.Helper.elevationRange n).range * yToSvg
+        let height = (LogNodes.Helper.elevationRange n annoApp).range * yToSvg
+        let _height = //DEBUGGING
+          match height with
+            | height when height > 1000.0 ->
+              1000.0
+            | _ -> height
         let rectangle =
           {
             Rectangle.init n.id.rectangleId with 
@@ -381,50 +386,6 @@
           |> AttributeMap.ofAMap
 
         Incremental.div attributes AList.empty  
-
-
-
-    
-    let getLogConnectionSg //TODO connections wrong
-          (model : MGeologicalLog) 
-          (semanticApp : MSemanticApp) 
-          (isSelected : bool) //TODO performance: IMod<bool>
-          (camera : MCameraControllerState) =
-            
-      match isSelected with
-        | false -> Sg.empty
-        | true  ->
-          let color = Mod.constant C4b.Yellow
-          let width = Mod.constant 3.0 
-          let lines =
-            adaptive {
-              let! aps = model.annoPoints.Content
-              let points =  
-                DS.HMap.toPList aps
-                  |> PList.toList
-                
-              let head = points |> List.tryHead
-              return match head with
-                      | Some h ->  points
-                                      |> List.sortBy (fun v -> v.Length) //TODO dirty hack. use click order
-                                      |> List.pairwise
-                                      |> List.map (fun (a,b) -> new Line3d(a, b))
-                                      |> List.toArray
-                      | None -> [||]
-            }
-        
-          lines
-              |> Sg.lines color
-              |> Sg.noEvents
-              |> Sg.effect [
-                  toEffect DefaultSurfaces.trafo
-                  toEffect DefaultSurfaces.vertexColor
-                  toEffect DefaultSurfaces.thickLine                                
-                  ] 
-              |> Sg.noEvents
-              |> Sg.uniform "LineWidth" width
-              |> Sg.pass (RenderPass.after "lines" RenderPassOrder.Arbitrary RenderPass.main)
-              |> Sg.depthTest (Mod.constant DepthTestMode.None)
 
 
     let update (model : GeologicalLog) (action : Action) =

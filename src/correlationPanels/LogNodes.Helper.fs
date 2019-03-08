@@ -5,6 +5,7 @@ open CorrelationDrawing
     open Aardvark.Base
     open Aardvark.UI
     open Aardvark.Base.Incremental
+    open Aardvark.Base.MultimethodTest
 
 
     let hasChildren (model : MLogNode) =
@@ -26,25 +27,43 @@ open CorrelationDrawing
         | None -> SemanticId.invalid
         | Some a -> a.semanticId
 
+    let elevationRange (node : LogNode) (annoApp : AnnotationApp) = 
+      match node.lBorder, node.uBorder, node.annotation with
+        | Some lb, Some ub, _ ->
+          let lower = Border.tryElevation lb annoApp
+          let upper = Border.tryElevation ub annoApp
+          match lower, upper with
+            | Some lo, Some up ->
+              {Rangef.init with min = lo
+                                max = up}
+            | _,_ -> 
+              Log.warn "range calc failed"
+              Rangef.init
+        | None,None, Some a -> 
+          let optEl = AnnotationApp.tryElevation annoApp a
+          match optEl with
+            | Some el ->
+              {Rangef.init with min = el
+                                max = el}
+            | None ->           
+              Log.warn "range calc failed"
+              Rangef.init
+        | _,_,_ ->
+          Log.warn "range calc failed"
+          Rangef.init
+
+    let elevationLowerBorder (node : LogNode) (annoApp : AnnotationApp) = 
+       (elevationRange node annoApp).min
+
+    let elevationUpperBorder (node : LogNode) (annoApp : AnnotationApp) = 
+       (elevationRange node annoApp).max
+
 
 /////////////////////////////////////////////////////////
 
     let elevation  (model : LogNode) (annoApp : AnnotationApp) =
-      match model.lBorder, model.uBorder, model.annotation with
-        | Some lb, Some ub, _ -> 
-          let el = (lb.point + ub.point) * 0.5
-          el.Length
-        | _,_, Some a -> 
-         let el = AnnotationApp.tryElevation annoApp a
-         match el with
-           | Some e -> e
-           | None   -> 
-              printf "node has neither annotation nor border"
-              0.0
-          
-        | _,_,_ -> 
-          printf "could not calculate elevation" //TODO proper error handling
-          0.0
+      let r = elevationRange model annoApp
+      r.average
 
 
     //TODO need to change for Pro3D integration
@@ -98,15 +117,32 @@ open CorrelationDrawing
                               SimpleTypes.Math.Angle.init (V3d.Distance (x,y))) h t
       }
 
+    let filterInfinity annoApp border  = 
+      let opt = Border.tryElevation border annoApp
+      let keep =
+        match opt, border.borderType with
+          | Some d, BorderType.Normal -> Some (border, d)
+          | _, _ -> None
+      keep
+
     let tryLowestBorder (lst : plist<LogNode>) (annoApp : AnnotationApp)  =
+
+      let opt = 
         lst |> PList.map (fun p -> p.lBorder) 
             |> DS.PList.filterNone
-            |> DS.PList.tryMinBy (fun b -> b.point.Length)
+            |> PList.map (filterInfinity annoApp)
+            |> DS.PList.filterNone
+            |> DS.PList.tryMinBy (fun (b, d) -> d)
+      Option.map (fun (b,d) -> b) opt
 
     let tryHighestBorder (lst : plist<LogNode>) (annoApp : AnnotationApp) =
+      let opt =
         lst |> PList.map (fun p -> p.uBorder) 
             |> DS.PList.filterNone
-            |> DS.PList.tryMaxBy (fun b -> b.point.Length)
+            |> PList.map (filterInfinity annoApp)
+            |> DS.PList.filterNone
+            |> DS.PList.tryMaxBy (fun (b, d) -> d)
+      Option.map (fun (b,d) -> b) opt
 
     let findLowestNode (lst : plist<LogNode>) (annoApp : AnnotationApp)  =
       lst |> DS.PList.tryMaxBy (fun n -> elevation n annoApp)
@@ -116,14 +152,7 @@ open CorrelationDrawing
 
 
 /////////////////////////////////////////////////////////////
-    let elevationRange (node : LogNode)  = 
-      match node.lBorder, node.uBorder with
-        | Some lb, Some ub ->
-          {Rangef.init with min = lb.point.Length
-                            max = ub.point.Length}
-        | _,_ -> 
-          printf "range calc failed"
-          Rangef.init
+
 
     let private isInfinityTypeLeaf (model : LogNode) =
       let noChildren = (model.children.IsEmpty())
@@ -147,7 +176,7 @@ open CorrelationDrawing
                                |> PList.map (fun c -> replaceInfinity c annoApp)   
             if children.IsEmpty() then model else
               let optLb = tryLowestBorder children annoApp
-              {model with lBorder =  Option.map (fun lb -> {lb with nodeId = model.id}) optLb
+              {model with lBorder   =  Option.map (fun lb -> {lb with nodeId = model.id}) optLb
                           children  = children
                           nodeType  = LogNodeType.Hierarchical
               }
@@ -159,7 +188,7 @@ open CorrelationDrawing
             if children.IsEmpty() then model else
               let optUb = tryHighestBorder children annoApp
               let ub = optUb |> Option.map (fun b -> {b with nodeId = model.id})
-              {model with uBorder =   ub
+              {model with uBorder   =   ub
                           children  = children
                           nodeType  = LogNodeType.Hierarchical
               }
