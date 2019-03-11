@@ -31,6 +31,7 @@
     dim           : Size2D
     colour        : Aardvark.UI.ColorInput
     borderColour  : C4b
+    overwriteColour : option<C4b>
     isToggled     : bool
     colChange     : V3i
     isHovering    : bool

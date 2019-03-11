@@ -18,7 +18,7 @@ module ColourMap =
     | SelectItemFromSvg of float
 
 
-  let initial dataToSvg svgToData : ColourMap = 
+  let initial defaultValue dataToSvg svgToData : ColourMap = 
     let _mappings = [
                      ColourMapItem.boulder 
                      ColourMapItem.cobble  
@@ -38,22 +38,27 @@ module ColourMap =
                     ] |> PList.ofList
 
     {
-      mappings    = _mappings
-      dataToSvg   = dataToSvg
-      svgToData   = svgToData
-      unit        = Unit.Micrometre
-      selected    = None
+      mappings     = _mappings
+      dataToSvg    = dataToSvg
+      svgToData    = svgToData
+      defaultValue = defaultValue
+      unit         = Unit.Micrometre
+      selected     = None
     }
       
   let svgValueToCMItem (model : ColourMap) (value : float) =
-    let dataValue = model.svgToData value
-    let filtered = 
-      model.mappings
-        |> PList.filter (fun m -> (dataValue < m.upper) && (dataValue >= m.lower))
-    let first =
-      filtered
-        |> PList.tryAt 0
-    first
+    match value with
+      | v when v < 0.0 -> //TODO could be solved better
+        Some ColourMapItem.empty
+      | _ ->
+        let dataValue = model.svgToData value
+        let filtered = 
+          model.mappings
+            |> PList.filter (fun m -> (dataValue < m.upper) && (dataValue >= m.lower))
+        let first =
+          filtered
+            |> PList.tryAt 0
+        first
 
   let svgValueToColourPicker (model : ColourMap) (value : float) =
     let first = svgValueToCMItem model value
@@ -61,15 +66,15 @@ module ColourMap =
       | Some ma -> Some ma.colour
       | None    -> None
 
-  let svgValueToColourPicker_OPT (model : ColourMap) (value : option<float>) =
-    match value with
-      | Some v -> 
-        svgValueToColourPicker model v
-      | None    -> None
+  //let svgValueToColourPicker_OPT (model : ColourMap) (value : option<float>) =
+  //  match value with
+  //    | Some v -> 
+  //      svgValueToColourPicker model v
+  //    | None    -> None
 
-  let valueToColour (model : ColourMap) (value : float) =
-    let cp = svgValueToColourPicker model value
-    Option.map (fun x -> x.c) cp
+  //let valueToColour (model : ColourMap) (value : float) =
+  //  let cp = svgValueToColourPicker model value
+  //  Option.map (fun x -> x.c) cp
 
   let update (model : ColourMap) (action : Action) =
     match action with
@@ -117,7 +122,8 @@ module ColourMap =
     let dataValue =
       let item = tryfindItem model cmitemid
       match item with
+        | Some it when not it.id.isValid -> model.dataToSvg model.defaultValue
         | Some it -> it.defaultMiddle
-        | None    -> 1.0
+        | None    -> model.dataToSvg  model.defaultValue
     model.dataToSvg dataValue
     

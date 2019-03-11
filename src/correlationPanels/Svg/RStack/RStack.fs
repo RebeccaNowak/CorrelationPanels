@@ -7,7 +7,7 @@
   open Svgplus.RectangleType // always import this before importing Svgplus, so correct Lenses are used //TODO
   open Svgplus.RectangleStackTypes
   open Svgplus
-
+  open UIPlus
 
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -22,7 +22,7 @@
       | AddRectangle     of Rectangle
       | HeaderMessage    of Header.Action
       | UpdatePosition   of V2d
-      | UpdateColour     of ColourMap
+      | UpdateColour     of (ColourMap * CMItemId)
       | UpdateYSizes     of (float -> float)
       | UpdateXSizes     of (float -> float)
       | Delete
@@ -218,7 +218,7 @@
         | UpdateColour cmap ->
           let _rects =
             model.rectangles
-              |> HMap.map (fun id r -> Rectangle.update r (Rectangle.Action.UpdateColour cmap) )
+              |> HMap.map (fun id r -> Rectangle.update r (Rectangle.Action.UpdateColour cmap))
           {model with rectangles = _rects}
         | UpdateYSizes f ->
           let _rects =

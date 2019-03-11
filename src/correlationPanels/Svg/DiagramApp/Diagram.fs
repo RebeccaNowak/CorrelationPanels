@@ -22,7 +22,7 @@ open UIPlus
       | DeleteStack           of RectangleStackTypes.RectangleStackId
       | MoveLeft              of RectangleStackTypes.RectangleStackId
       | MoveRight             of RectangleStackTypes.RectangleStackId
-      | UpdateColour          of ColourMap
+      | UpdateColour          of (ColourMap * CMItemId)
       | UpdateRectangle       of (RectangleIdentification * Rectangle.Action)
       | UpdateYSizes          of (float -> float)
       | UpdateXSizes          of (float -> float)
@@ -323,10 +323,10 @@ open UIPlus
           moveLogLeft model id
         | MoveRight id ->
           moveLogRight model id
-        | UpdateColour cmap ->
+        | UpdateColour (cmap, _id) ->
           let _stacks =
             model.rectangleStacks
-              |> HMap.map (fun id r -> RectangleStack.update r (RectangleStack.UpdateColour cmap) )
+              |> HMap.map (fun id r -> RectangleStack.update r (RectangleStack.UpdateColour (cmap, _id)))
           {model with rectangleStacks = _stacks}
         | UpdateRectangle (id, m) ->
             let stackMessage = 

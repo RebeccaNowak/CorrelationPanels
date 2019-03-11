@@ -7,6 +7,8 @@ open UIPlus.Table
   module ColourMapItem =
     type Action =
       | ColourMessage of ColorPicker.Action
+
+
       //| TextMessage   of TextInput.Action
       //| NumericMessage of Numeric.Action
 
@@ -14,10 +16,10 @@ open UIPlus.Table
       {
         id        = CMItemId.invalid
         upper     = 0.0
-        defaultMiddle       = 0.0
+        defaultMiddle  = -1.0
         lower     = 0.0
         upperStr  = ""
-        colour    = {ColorPicker.init with c = C4b.Gray}
+        colour    = {ColorPicker.init with c = C4b.White}
         label     = ""
       }
 
@@ -32,7 +34,8 @@ open UIPlus.Table
         label           = label
       }
 
-    // default values
+// default values
+    //let none      = init (CMItemId.invalid)  "none"               (new C4b(255,255,255)) -2.0           0.003          0.0              "   -    "  
     let boulder   = init (CMItemId.newId ()) "boulder"            (new C4b(217,95,14))   1.0            0.628          0.256            "< -8    "  
     let cobble    = init (CMItemId.newId ()) "cobble"             (new C4b(217,95,14))   0.256          0.16           0.064            "-6 to -8" 
     let vcGravel  = init (CMItemId.newId ()) "very coarse gravel" (new C4b(217,95,14))   0.064          0.048          0.032            "-5 to -6"
@@ -47,7 +50,7 @@ open UIPlus.Table
     let vfSand    = init (CMItemId.newId ()) "very fine sand"     (new C4b(254,196,79))  0.000125       7e-05          0.000015         " 4 to 3 "
     let silt      = init (CMItemId.newId ()) "silt"               (new C4b(255,247,188)) 0.000015       9.4e-06        0.0000038        " 8 to 4 "
     let clay      = init (CMItemId.newId ()) "clay"               (new C4b(99,99,99))    0.0000038      2.39e-06       0.00000098       " 10 to 8 "
-    let colloid   = init (CMItemId.newId ()) "colloid"            (new C4b(99,99,99))    0.00000098     0.6e-06        3.8e-08          " 20 to 10 "
+    let colloid   = init (CMItemId.newId ()) "colloid"            (new C4b(99,99,99))    0.00000098     0.6e-06        3.8e-08          " 20 to 10 "    
   
 
     let update (model : ColourMapItem) (action : Action) =

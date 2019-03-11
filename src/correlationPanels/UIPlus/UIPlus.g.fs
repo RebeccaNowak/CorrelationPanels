@@ -222,12 +222,14 @@ module Mutable =
         let _mappings = MList.Create(__initial.mappings, (fun v -> MColourMapItem.Create(v)), (fun (m,v) -> MColourMapItem.Update(m, v)), (fun v -> v))
         let _dataToSvg = ResetMod.Create(__initial.dataToSvg)
         let _svgToData = ResetMod.Create(__initial.svgToData)
+        let _defaultValue = ResetMod.Create(__initial.defaultValue)
         let _unit = ResetMod.Create(__initial.unit)
         let _selected = MOption.Create(__initial.selected)
         
         member x.mappings = _mappings :> alist<_>
         member x.dataToSvg = _dataToSvg :> IMod<_>
         member x.svgToData = _svgToData :> IMod<_>
+        member x.defaultValue = _defaultValue :> IMod<_>
         member x.unit = _unit :> IMod<_>
         member x.selected = _selected :> IMod<_>
         
@@ -239,6 +241,7 @@ module Mutable =
                 MList.Update(_mappings, v.mappings)
                 ResetMod.Update(_dataToSvg,v.dataToSvg)
                 ResetMod.Update(_svgToData,v.svgToData)
+                ResetMod.Update(_defaultValue,v.defaultValue)
                 ResetMod.Update(_unit,v.unit)
                 MOption.Update(_selected, v.selected)
                 
@@ -274,6 +277,12 @@ module Mutable =
                     override x.Get(r) = r.svgToData
                     override x.Set(r,v) = { r with svgToData = v }
                     override x.Update(r,f) = { r with svgToData = f r.svgToData }
+                }
+            let defaultValue =
+                { new Lens<UIPlus.ColourMap, System.Double>() with
+                    override x.Get(r) = r.defaultValue
+                    override x.Set(r,v) = { r with defaultValue = v }
+                    override x.Update(r,f) = { r with defaultValue = f r.defaultValue }
                 }
             let unit =
                 { new Lens<UIPlus.ColourMap, UIPlus.Unit>() with

@@ -20,6 +20,7 @@ module Mutable =
         let _dim = ResetMod.Create(__initial.dim)
         let _colour = Aardvark.UI.Mutable.MColorInput.Create(__initial.colour)
         let _borderColour = ResetMod.Create(__initial.borderColour)
+        let _overwriteColour = MOption.Create(__initial.overwriteColour)
         let _isToggled = ResetMod.Create(__initial.isToggled)
         let _colChange = ResetMod.Create(__initial.colChange)
         let _isHovering = ResetMod.Create(__initial.isHovering)
@@ -38,6 +39,7 @@ module Mutable =
         member x.dim = _dim :> IMod<_>
         member x.colour = _colour
         member x.borderColour = _borderColour :> IMod<_>
+        member x.overwriteColour = _overwriteColour :> IMod<_>
         member x.isToggled = _isToggled :> IMod<_>
         member x.colChange = _colChange :> IMod<_>
         member x.isHovering = _isHovering :> IMod<_>
@@ -60,6 +62,7 @@ module Mutable =
                 ResetMod.Update(_dim,v.dim)
                 Aardvark.UI.Mutable.MColorInput.Update(_colour, v.colour)
                 ResetMod.Update(_borderColour,v.borderColour)
+                MOption.Update(_overwriteColour, v.overwriteColour)
                 ResetMod.Update(_isToggled,v.isToggled)
                 ResetMod.Update(_colChange,v.colChange)
                 ResetMod.Update(_isHovering,v.isHovering)
@@ -132,6 +135,12 @@ module Mutable =
                     override x.Get(r) = r.borderColour
                     override x.Set(r,v) = { r with borderColour = v }
                     override x.Update(r,f) = { r with borderColour = f r.borderColour }
+                }
+            let overwriteColour =
+                { new Lens<Svgplus.RectangleType.Rectangle, Microsoft.FSharp.Core.Option<Aardvark.Base.C4b>>() with
+                    override x.Get(r) = r.overwriteColour
+                    override x.Set(r,v) = { r with overwriteColour = v }
+                    override x.Update(r,f) = { r with overwriteColour = f r.overwriteColour }
                 }
             let isToggled =
                 { new Lens<Svgplus.RectangleType.Rectangle, System.Boolean>() with

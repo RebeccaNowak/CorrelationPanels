@@ -4,8 +4,6 @@
   open Aardvark.UI
   open SimpleTypes
 
-
-
   type ArrowButtonId = {
     id        : string 
   } with
@@ -110,6 +108,7 @@
     mappings    : plist<ColourMapItem>
     dataToSvg   : float -> float
     svgToData   : float -> float
+    defaultValue : float
     unit        : Unit
     selected    : option<CMItemId>
   }

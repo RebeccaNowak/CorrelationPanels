@@ -146,16 +146,6 @@ namespace CorrelationDrawing
         | KeyboardMessage m -> 
            let (keyboard, model) = Keyboard.update model.keyboard model m
            {model with keyboard = keyboard}
-
-        //| KeyDown k ->
-        //  match k with 
-        //    | Keys.Delete ->
-        //      {model with 
-        //        annotations = 
-        //          HMap.filter (fun _ a -> not (Annotation.isSelected a)) model.annotations
-        //      }
-        //    | _ -> model
-
         | AnnotationMessage m  -> 
             {model with annotations = model.annotations 
                                         |> HMap.map (fun k a -> Annotation.update m a)}

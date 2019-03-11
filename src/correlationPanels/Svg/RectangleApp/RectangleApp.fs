@@ -25,8 +25,9 @@
       | NEButtonMessage of Button.Action
       | SWButtonMessage of Button.Action
       | SEButtonMessage of Button.Action
-      | UpdateColour    of ColourMap
+      | UpdateColour    of (ColourMap * CMItemId)
       | SetWidth        of (float * ColourMap)
+      | SetDottedBorder of bool 
       | LayoutX          
       | LayoutY
 
@@ -119,11 +120,16 @@
 
       let col =
         {new Lens<Rectangle, C4b>() with
-          override x.Get(r)   = r.colour.c
+          override x.Get(r)   = 
+            match r.overwriteColour with
+              | Some c -> c
+              | None   -> r.colour.c
           override x.Set(r,v) = 
-            {r with colour = {r.colour with c = v}}
+            {r with colour = {r.colour with c = v}
+                    overwriteColour = None}
           override x.Update(r,f) = 
-            {r with colour = {r.colour with c = f r.colour.c}}
+            {r with colour = {r.colour with c = f r.colour.c}
+                    overwriteColour = None}
         }
 
       let dottedBorder = 
@@ -153,6 +159,7 @@
           pos            = V2d (0.0)
           dim            = {width = 0.0; height = 0.0}
           colour         = {c = C4b.Gray}
+          overwriteColour = Some C4b.White
           borderColour   = C4b.Black
           isToggled      = false
           colChange      = V3i (0,0,0)
@@ -179,7 +186,7 @@
       let updateColour cmap r = 
         let opt = ColourMap.svgValueToColourPicker cmap r.dim.width 
         match opt with
-          | Some c -> {r with colour = c}
+          | Some c -> {r with colour = c; overwriteColour = None}
           | None   -> r
 
       match action with
@@ -211,12 +218,14 @@
         | NEButtonMessage m -> {model with northEastButton = Button.update model.northEastButton m}
         | SWButtonMessage m -> {model with southWestButton = Button.update model.southWestButton m}
         | SEButtonMessage m -> {model with southEastButton = Button.update model.southEastButton m}
-        | UpdateColour cmap -> updateColour cmap model
+        | UpdateColour (cmap, itemid) -> updateColour cmap model
         | LayoutX            -> {model with needsLayoutingX = false}
         | LayoutY            -> {model with needsLayoutingY = false}
         | SetWidth (w, cmap)        -> 
           let _model = Lens.width.Set (model, w)
           updateColour cmap _model
+        | SetDottedBorder b -> 
+          {model with dottedBorder = b}
 
 
         
@@ -225,14 +234,20 @@
       alist {
         let! pos  = model.pos
         let! dim  = model.dim
-        let! c1   = model.colour.c
+        let! overwriteColour = model.overwriteColour
+        let! baseCol   = model.colour.c
+        let col = 
+          match overwriteColour with
+            | Some c -> c
+            | None -> baseCol
+        
         let! sel  = model.isToggled
         let! db   = model.dottedBorder
 
         let! draw = model.draw
         if draw then
           yield (Svgplus.Base.drawBorderedRectangle
-                    pos dim c1
+                    pos dim col
                     C4b.Black C4b.Black
                     SvgWeight.init
                     (fun _ -> Select model.id)

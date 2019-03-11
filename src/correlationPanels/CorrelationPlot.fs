@@ -175,6 +175,36 @@
         {model with logs        = _logs
                     selectedLog = _sel}
 
+    let updateYToSvg (g : float -> float) (model : CorrelationPlot)  =
+      let _yToSvg = g model.yToSvg
+      match _yToSvg with
+        | _yToSvg when _yToSvg <= 1.0 -> model
+        | _ ->
+          let f size =
+            (size * _yToSvg) / model.yToSvg
+          {model with yToSvg   = _yToSvg
+                      diagram  = Diagram.update model.diagram (Diagram.UpdateYSizes f)}
+
+    let keyboard =
+      let keyboard = Keyboard.init ()
+      let _keyboard = 
+        keyboard
+          |> (Keyboard.register
+                {
+                  update = (updateYToSvg (fun x -> x - 1.0))
+                  key    = Keys.Y
+                  ctrl   = false
+                  alt    = false
+                })
+          |> (Keyboard.register
+                {
+                  update = (updateYToSvg (fun x -> x + 1.0))
+                  key    = Keys.Y
+                  ctrl   = true
+                  alt    = false
+                })
+      _keyboard
+
     let update (annoApp  : AnnotationApp)
                (model    : CorrelationPlot) 
                (action   : Action) = 
@@ -304,20 +334,32 @@
                         let _logs  = updateLog log.id m model.logs
                         let rectIds = {stackid = optselid.Value.stackid; rid = optselid.Value.rid}
                         let rectMessage = Rectangle.SetWidth (width, _cmap)
+                        let rectMessage2 = Rectangle.SetDottedBorder false
                         let diagr = Diagram.update model.diagram (Diagram.UpdateRectangle (rectIds, rectMessage))
+                        //let _diagr = Diagram.update diagr (Diagram.UpdateRectangle (rectIds, rectMessage2))
+                        
                         (_logs, diagr)
                       | None -> (model.logs, model.diagram)
                   | None   -> (model.logs, model.diagram)
-               | ColourMap.ItemMessage cmitemid, _ -> 
-                 let diagr = Diagram.update model.diagram (Diagram.UpdateColour _cmap)
+               | ColourMap.ItemMessage (id, a), _ -> 
+                 let diagr = Diagram.update model.diagram (Diagram.UpdateColour (_cmap, id))
                  (model.logs, diagr)
                | _,_ -> (model.logs, model.diagram)
                
           {model with colourMapApp = _cmap
-                      diagram   = _diagram |> Diagram.layout
+                      diagram      = _diagram |> Diagram.layout
                       logs         = _logs}
 
-
+    let update' (annos  : hmap<AnnotationId, Annotation>)
+                (model  : CorrelationPlot) 
+                (action : Action) = 
+      let annoApp : AnnotationApp =
+        {
+          annotations = annos
+          selectedAnnotation = None
+          keyboard = AnnotationApp.keyboard
+        }
+      update annoApp model action
         
 
 
@@ -380,40 +422,16 @@
         Table.toTableView (div[][]) rows ["Log Name";"Order"]
       logList
       
-    let updateYToSvg (g : float -> float) (model : CorrelationPlot)  =
-      let _yToSvg = g model.yToSvg
-      match _yToSvg with
-        | _yToSvg when _yToSvg <= 1.0 -> model
-        | _ ->
-          let f size =
-            (size * _yToSvg) / model.yToSvg
-          {model with yToSvg   = _yToSvg
-                      diagram  = Diagram.update model.diagram (Diagram.UpdateYSizes f)}
+
 
     let initial : CorrelationPlot  = 
-      let keyboard = Keyboard.init ()
-      let _keyboard = 
-        keyboard
-          |> (Keyboard.register
-                {
-                  update = (updateYToSvg (fun x -> x - 1.0))
-                  key    = Keys.Y
-                  ctrl   = false
-                  alt    = false
-                })
-          |> (Keyboard.register
-                {
-                  update = (updateYToSvg (fun x -> x + 1.0))
-                  key    = Keys.Y
-                  ctrl   = true
-                  alt    = false
-                })
+
 
 
       let xToSvg              = fun x -> (21.0 + Math.Log(x,2.0)) * 10.0
       let svgToX              = fun x -> (Math.Pow (2.0, (x * 0.1 - 21.0)))
       let yToSvg              = 25.0
-      let defaultWidth        = 20.0
+      let defaultWidth        = xToSvg UIPlus.ColourMapItem.vfGravel.defaultMiddle
 
       {
         diagram          = Svgplus.Diagram.init
@@ -421,7 +439,7 @@
         correlations        = PList.empty
         
         editCorrelations    = false
-        colourMapApp        = ColourMap.initial xToSvg svgToX
+        colourMapApp        = ColourMap.initial ColourMapItem.vfGravel.defaultMiddle xToSvg svgToX 
         selectedPoints      = hmap<AnnotationId, V3d>.Empty
         selectedLog         = None
         selectedNode        = None
@@ -435,7 +453,7 @@
         svgOptions          = SvgOptions.init
         svgCamera           = SvgCamera.init
 
-        keyboard            = _keyboard
+        keyboard            = keyboard
 
         //logAxisApp          = LogAxisApp.initial
         xAxis               = SemanticId.invalid

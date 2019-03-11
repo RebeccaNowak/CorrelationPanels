@@ -398,6 +398,7 @@ module Annotation =
     let (lp, la) = if a1.elevation p1 < a2.elevation p2 then (p1, a1) else (p2, a2) //TODO refactor
     let (up, ua) = if a1.elevation p1 < a2.elevation p2 then (p2, a2) else (p1, a1)
     ((lp,la),(up,ua))
+  
 
 //
 //  let getMinElevation (anno : MAnnotation) = 

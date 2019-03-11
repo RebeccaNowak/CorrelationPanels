@@ -189,7 +189,6 @@
                      (yToSvg          : float)
                      (defaultWidth    : float)
                      (colourMap       : ColourMap) : (RectangleStack * GeologicalLog) = 
-
       let id = RectangleStackId.newId()
       let wInfNodes = (Generate.generateLevel //TODO make more compact by removing debug stuff
                         id
@@ -205,17 +204,20 @@
       let nodeToRectangle (n : LogNode) =
         let metricVal = LogNodes.Recursive.calcMetricValue n annoApp
 
-        let (dotted, width) = 
+        let (dotted, width, colour, overwriteColour) = 
           match metricVal  with
             | Some d -> 
-              (false, xToSvg d)
-            | None   -> (true, defaultWidth)
+              let width = xToSvg d
+              let c = 
+                let opt = ColourMap.svgValueToColourPicker colourMap width
+                match opt with
+                  | Some c -> c
+                  | None -> {ColorPicker.init with c = C4b.Black}
+              (false,width, c, None)
+            | None   -> 
+              let white : ColorInput = {c = C4b.White} 
+              (true, defaultWidth, white, Some white.c)
         
-        let colour = 
-          let opt = ColourMap.svgValueToColourPicker colourMap width
-          match opt with
-            | Some c -> c
-            | None -> {ColorPicker.init with c = C4b.Black}
 
         let height = (LogNodes.Helper.elevationRange n annoApp).range * yToSvg
         let _height = //DEBUGGING
@@ -230,6 +232,7 @@
               draw = true
               dottedBorder = dotted
               colour = colour
+              overwriteColour = overwriteColour
           }
 
         rectangle
