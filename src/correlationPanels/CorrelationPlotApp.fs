@@ -13,6 +13,8 @@
     type Action =
       | CorrelationPlotMessage of CorrelationPlot.Action
       | Clear
+      | OnKeyUp of Keys
+      | OnKeyDown of Keys
 
     let defaultZoomFactor = 1.0
     let defaultOffset     = V2d.OO
@@ -34,6 +36,17 @@
           }
         | CorrelationPlotMessage lm -> 
           {model with correlationPlot = CorrelationPlot.update annoApp model.correlationPlot lm}
+        | OnKeyUp k ->
+          let a = (CorrelationPlot.KeyboardMessage (Keyboard.Action.KeyUp k))
+          {model with correlationPlot =
+                        CorrelationPlot.update annoApp model.correlationPlot a
+          }
+              
+        | OnKeyDown k ->
+          let a = (CorrelationPlot.KeyboardMessage (Keyboard.Action.KeyDown k))
+          {model with correlationPlot =
+                        CorrelationPlot.update annoApp model.correlationPlot a
+          }
 
 
 
@@ -91,13 +104,17 @@
       let domnode =
         let domNode = (CorrelationPlot.listView model.correlationPlot semApp annoApp) 
                         |> UI.map Action.CorrelationPlotMessage
-
+        let attsBody =
+            [
+              style "overflow: auto"
+            ]
+        let attsDiv = 
+          AttributeMap.ofList [clazz "ui inverted segment"]
         require (GUI.CSS.myCss) (
-          body [style "overflow: auto"] [
+          body attsBody [
             div [] [
               // menu |> ui.map correlationplotmessage
-              Incremental.div (AttributeMap.ofList [clazz "ui inverted segment"])
-                              (AList.single domNode)
+              Incremental.div attsDiv (AList.single domNode)
                               
             ]
           ]

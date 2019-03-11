@@ -66,7 +66,7 @@
          match action with
           | KeyUp _ -> app
           | KeyDown k ->
-            Log.line "Key Pressed: %s" (k.ToString ())
+            //Log.line "Key Pressed: %s" (k.ToString ())
             let _filtered = PList.filter (fun (c : KeyConfig<'a>) -> 
                                             c.check
                                                 _model.ctrlPressed
