@@ -95,25 +95,36 @@ module ColourMap =
           | None      -> model
 
   let view (model : MColourMap) =
+    let tableview = 
+      let domList =
+        alist {                 
+          for m in model.mappings do
+            let mapper = UI.map (fun a -> Action.ItemMessage (m.id, a) ) 
+            let _v = (ColourMapItem.view m) 
+                        |> List.map mapper
+            let! selid = model.selected
+            match selid with
+              | Some id  -> 
+                if id = m.id then
+                  yield Table.intoActiveTr (Action.SelectItem m.id) _v           
+                else
+                  yield Table.intoTrOnClick (Action.SelectItem m.id) _v
+              | None ->
+                yield Table.intoTrOnClick (Action.SelectItem m.id) _v              
+        }
 
-    let domList =
-      alist {                 
-        for m in model.mappings do
-          let mapper = UI.map (fun a -> Action.ItemMessage (m.id, a) ) 
-          let _v = (ColourMapItem.view m) 
-                      |> List.map mapper
-          let! selid = model.selected
-          match selid with
-            | Some id  -> 
-              if id = m.id then
-                yield Table.intoActiveTr (Action.SelectItem m.id) _v           
-              else
-                yield Table.intoTrOnClick (Action.SelectItem m.id) _v
-            | None ->
-              yield Table.intoTrOnClick (Action.SelectItem m.id) _v              
-      }
+      Table.toTableView (div[][]) domList ["Grain size";"Colour";"φ-scale"]
 
-    Table.toTableView (div[][]) domList ["Grain size";"Colour";"φ-scale"]
+    require (GUI.CSS.myCss) (
+      body [style "overflow: scroll"] [
+        div [] [
+          // menu |> ui.map correlationplotmessage
+          Incremental.div (AttributeMap.ofList [clazz "ui inverted segment"])
+                          (AList.single tableview)
+                             
+        ]
+      ]
+    )
 
   let tryfindItem (model : ColourMap) (iid : CMItemId) =
     PList.tryFind (fun ind it -> it.id = iid) model.mappings

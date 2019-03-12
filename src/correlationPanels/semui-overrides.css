@@ -4,10 +4,6 @@ input {
     color: black;
 }
 
-body {
-    overflow-y: hidden;
-}
-
 .ui.vertical.menu {
     width: 5rem
 }
@@ -25,8 +21,9 @@ body {
     z-index: 1;
 }
 
-
-
+html {
+    overflow: auto;
+}
 
 
 

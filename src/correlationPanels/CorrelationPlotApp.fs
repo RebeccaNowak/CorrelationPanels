@@ -71,8 +71,8 @@
     let viewSvg (annoApp : amap<AnnotationId, MAnnotation>) (model : MCorrelationPlotModel) =
 
       require (GUI.CSS.myCss) (
-        body [attribute "overflow-x" "hidden";
-              attribute "overflow-y" "hidden"; 
+        body [attribute "overflow-x" "auto";
+              attribute "overflow-y" "auto"; 
               (onMouseDown (fun b p -> CorrelationPlot.SvgCameraMessage 
                                           (SvgCamera.Action.MouseDown (b,p)))) 
               (onMouseUp   (fun b p -> CorrelationPlot.SvgCameraMessage 
@@ -83,7 +83,7 @@
               //onLayoutChanged UpdateConfig
              ] 
              [
-                div [attribute "overflow-x" "hidden";attribute "overflow-y" "hidden"] [
+                div [attribute "overflow-x" "auto";attribute "overflow-y" "auto"] [
                         //menu
                         CorrelationPlot.viewSvg annoApp model.correlationPlot
                         ]

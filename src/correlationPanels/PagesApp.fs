@@ -610,8 +610,8 @@ module Pages =
 
                   | Some "svg" -> 
                     require (GUI.CSS.myCss) (
-                      body [attribute "overflow-x" "hidden";
-                            attribute "overflow-y" "hidden"; 
+                      body [attribute "overflow-x" "auto";
+                            attribute "overflow-y" "auto"; 
                             (onMouseDown (fun b p -> MouseDown (b,p)))
                             (onMouseUp (fun b p -> MouseUp (b,p)))
                             (onMouseMove (fun p -> MouseMove (V2d p)))
@@ -642,16 +642,7 @@ module Pages =
                        (ColourMap.view model.corrPlot.correlationPlot.colourMapApp)
                          |> UI.map Action.ColourMapMessage
 
-                     require (GUI.CSS.myCss) (
-                       body [style "overflow: auto"] [
-                         div [] [
-                           // menu |> ui.map correlationplotmessage
-                           Incremental.div (AttributeMap.ofList [clazz "ui inverted segment"])
-                                           (AList.single domNode)
-                             
-                         ]
-                       ]
-                     )
+                     domNode
 
                   | Some "lognode" -> body [] []
                     //adaptive {
