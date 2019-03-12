@@ -155,22 +155,18 @@ open CorrelationDrawing
 
 
     let private isInfinityTypeLeaf (model : LogNode) =
-      let noChildren = (model.children.IsEmpty())
-      let infType = (model.nodeType = LogNodeType.NegInfinity 
+      let hasChildren = not 
+      let isInfType = (model.nodeType = LogNodeType.NegInfinity 
                       || model.nodeType = LogNodeType.PosInfinity)
-      let notDataNode = (model.nodeType <> LogNodeType.Angular 
-                          && model.nodeType <> LogNodeType.Metric)
-      (noChildren && infType && notDataNode)
+      let isDataNode = (model.nodeType <> LogNodeType.Angular 
+                          || model.nodeType <> LogNodeType.Metric)
+      ((model.children.IsEmpty () ) && isInfType)
         
-  
-
     let rec replaceInfinity (model : LogNode) (annoApp : AnnotationApp) : (LogNode) =
-      let (newNode) =
-        let notLeaf = not (isInfinityTypeLeaf model)  
+      let (newNode) = 
         let noChildren = model.children.IsEmpty()
-        match notLeaf, noChildren, model.nodeType with
-          | true, true, _  -> model //(model, false)
-          | true, false, LogNodeType.NegInfinity -> 
+        match noChildren, model.nodeType with
+          | false, LogNodeType.NegInfinity -> 
             let children   = model.children 
                                |> PList.filter (fun n -> not (isInfinityTypeLeaf n))
                                |> PList.map (fun c -> replaceInfinity c annoApp)   
@@ -181,7 +177,7 @@ open CorrelationDrawing
                           nodeType  = LogNodeType.Hierarchical
               }
             
-          | true, false, LogNodeType.PosInfinity ->
+          | false, LogNodeType.PosInfinity ->
             let children   = model.children 
                               |> PList.filter (fun n -> not (isInfinityTypeLeaf n))
                               |> PList.map (fun c -> replaceInfinity c annoApp)   
@@ -192,8 +188,7 @@ open CorrelationDrawing
                           children  = children
                           nodeType  = LogNodeType.Hierarchical
               }
-            
-          | _, _ , _ -> (model)
+          | _ , _ -> (model)
       (newNode)
 
     let replaceInfinity' (nodes : plist<LogNode>) 
@@ -203,8 +198,8 @@ open CorrelationDrawing
           |> PList.map (fun n -> (replaceInfinity n annoApp))
           |> PList.filter (fun n -> not (isInfinityTypeLeaf n ))
       
-      for n in _nodes do
-        printf "%s" (n.nodeType.ToString ())
+      //for n in _nodes do
+      //  printf "%s" (n.nodeType.ToString ())
 
       _nodes
         

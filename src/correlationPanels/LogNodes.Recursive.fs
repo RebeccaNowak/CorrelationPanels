@@ -230,12 +230,11 @@ open CorrelationDrawing
           let _children = 
             node.children
               |> PList.map lowestHierarchical
+              |> DS.PList.flattenLists
 
           match _children.IsEmptyOrNull () with
             | true -> [node]
-            | false -> 
-              _children
-                |> DS.PList.flattenLists
+            | false -> _children
         | false -> []
 
 

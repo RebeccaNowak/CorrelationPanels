@@ -157,7 +157,7 @@
       let rects =
         (DS.HMap.values model.rectangles  )
           |> List.map (fun r -> Rectangle.Lens.width.Get r)
-          |> List.max
+          |> List.max //TODO RUNTIME ERROR SOURCE -> try
 
       let header =
         model.header.dim.width

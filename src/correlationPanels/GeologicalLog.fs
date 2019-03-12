@@ -96,7 +96,28 @@
           |> PList.map f
           |> DS.PList.flattenLists
 
-                
+      let getMinimumLevel (points : hmap<AnnotationId, V3d>) annoApp semApp =
+        let lvl =
+          points
+            |> HMap.keys
+            |> HSet.toList
+            |> List.map (fun id -> AnnotationApp.getLevel' annoApp semApp id)
+            |> List.min 
+        lvl
+
+      let filterAllButLevel points (level : NodeLevel) annoApp semApp =
+        let filtered = 
+          HMap.filter 
+            (fun id p -> ( AnnotationApp.getLevel' annoApp semApp id) = level)
+            points
+        filtered
+          |> DS.HMap.toSwappedPairList
+          |> List.map (fun ((p : V3d) ,id) -> 
+                        (p, AnnotationApp.findAnnotation annoApp id))
+          |> DS.PairList.filterNone
+          |> List.sortBy (fun (p, k) -> (k.elevation p))
+
+       
 
       let rec generateLevel (logId          : RectangleStackId)
                             (selectedPoints : hmap<AnnotationId, V3d>) 
@@ -104,87 +125,120 @@
                             (semApp         : SemanticApp) 
                             (lowerBorder    : Border) //TODO could pass point and anno
                             (upperBorder    : Border) =
-      
-        match selectedPoints.IsEmpty with
-          | true -> plist.Empty
-          | false ->
-            let currentLevel =
-              selectedPoints
-                |> HMap.keys
-                |> HSet.toList
-                // |> DS.HMap.keys
-                |> List.map (fun id -> AnnotationApp.getLevel' annoApp semApp id)
-                |> List.min
+        ///// FUNCTION //////////
+        let generateOneLogNodeAndItsChildren p1 a1 p2 a2 restAnnos restSelPoints currentLevel =
+          let ((lp,la),(up,ua)) = Annotation.sortByElevation (p1, a1) (p2, a2)
+          let nodeId = LogNodeId.newId()
+          let nodeChildren = 
+            let childrenAnnos = 
+              restAnnos // only take Annotations with elevations within the current node borders
+                |> HMap.filter (fun id a -> Annotation.isElevationBetween lp up a)
+            let childrenSelectedPoints = 
+              restSelPoints // only take selected points with elevations within the current node borders
+                |> HMap.filter (fun a p -> Annotation.isElevationBetween' a1.elevation p lp up)
+            let ncs = 
+              match childrenSelectedPoints.IsEmptyOrNull () with
+                | true    -> 
+                  let children = generateNonLevelNodes logId (DS.HMap.toPList childrenAnnos) (lp, la) (up, ua) currentLevel semApp
+                  children |> PList.ofList
+                | false   -> 
+                  match childrenAnnos.IsEmptyOrNull () with
+                    | true  -> PList.empty
+                    | false -> 
+                      let lBorder = Border.initial la.id lp nodeId logId
+                      let uBorder = Border.initial ua.id up nodeId logId
+                      generateLevel logId childrenSelectedPoints annoApp semApp lBorder uBorder 
+            ncs
+          let thisLevelHierarchicalNodesWithChildren =
+            LogNodes.Init.topLevelWithId nodeId logId
+                  (up, ua.id) (lp, la.id) nodeChildren currentLevel 
+          thisLevelHierarchicalNodesWithChildren
 
-            let onlyCurrentLevel = 
-              let filtered = 
-                HMap.filter 
-                  (fun id p -> ( AnnotationApp.getLevel' annoApp semApp id) = currentLevel)
-                  selectedPoints
-              filtered
-                |> DS.HMap.toSwappedPairList
-                |> List.map (fun ((p : V3d) ,id) -> 
-                              (p, AnnotationApp.findAnnotation annoApp id))
-                |> DS.PairList.filterNone
-                |> List.sortBy (fun (p, k) -> (k.elevation p))
+        /// START ///
+        let thisLevel = 
+          match selectedPoints.IsEmpty with
+            | true -> plist.Empty
+            | false ->
+              let currentLevel = getMinimumLevel selectedPoints annoApp semApp
+                //selectedPoints
+                //  |> HMap.keys
+                //  |> HSet.toList
+                //  // |> DS.HMap.keys
+                //  |> List.map (fun id -> AnnotationApp.getLevel' annoApp semApp id)
+                //  |> List.min
+
+              let onlyCurrentLevel = filterAllButLevel selectedPoints currentLevel annoApp semApp
+                //let filtered = 
+                //  HMap.filter 
+                //    (fun id p -> ( AnnotationApp.getLevel' annoApp semApp id) = currentLevel)
+                //    selectedPoints
+                //filtered
+                //  |> DS.HMap.toSwappedPairList
+                //  |> List.map (fun ((p : V3d) ,id) -> 
+                //                (p, AnnotationApp.findAnnotation annoApp id))
+                //  |> DS.PairList.filterNone
+                //  |> List.sortBy (fun (p, k) -> (k.elevation p))
         
-            let listWithBorders = 
-              List.concat 
-                    [
-                      [(lowerBorder.point, AnnotationApp.annotationOrDefault annoApp lowerBorder.annotationId)]
-                      onlyCurrentLevel
-                      [(upperBorder.point, AnnotationApp.annotationOrDefault annoApp upperBorder.annotationId)]
-                    ]
-              |> List.sortBy (fun (p, a) -> (a.elevation p))
+              let listWithBorders = 
+                List.concat 
+                      [
+                        [(lowerBorder.point, AnnotationApp.annotationOrDefault annoApp lowerBorder.annotationId)]
+                        onlyCurrentLevel
+                        [(upperBorder.point, AnnotationApp.annotationOrDefault annoApp upperBorder.annotationId)]
+                      ]
+                |> List.sortBy (fun (p, a) -> (a.elevation p))
               
-            let pairwiseWithBorders =
-              listWithBorders
-                |> List.pairwise
+              let pairwiseWithBorders =
+                listWithBorders
+                  |> List.pairwise
 
-            let level a =
-              (Annotation.getLevel semApp a)
-            let restAnnos =
-              annoApp.annotations
-                |> HMap.filter (fun k a -> (level a) <> currentLevel)
+              let level a =
+                (Annotation.getLevel semApp a)
+              let restAnnos =
+                annoApp.annotations
+                  |> HMap.filter (fun k a -> (level a) <> currentLevel)
 
-            let restSelPoints =
-              selectedPoints 
-                |> HMap.filter (fun id p -> AnnotationApp.getLevel id annoApp semApp <> currentLevel)
+              let restSelPoints =
+                selectedPoints 
+                  |> HMap.filter (fun id p -> AnnotationApp.getLevel id annoApp semApp <> currentLevel)
        
-            let nodesInCurrentLevel =
-              seq {
-                for ((p1, a1), (p2, a2)) in pairwiseWithBorders do
-                  let ((lp,la),(up,ua)) = Annotation.sortByElevation (p1, a1) (p2, a2)
-                  let nodeId = LogNodeId.newId()
-                  let nodeChildren = 
-                    let childrenAnnos = 
-                      restAnnos // only take Annotations with elevations within the current node borders
-                        |> HMap.filter (fun id a -> Annotation.isElevationBetween lp up a)
-                    let childrenSelectedPoints = 
-                      restSelPoints // only take selected points with elevations within the current node borders
-                        |> HMap.filter (fun a p -> Annotation.isElevationBetween' a1.elevation p lp up)
-                    let ncs = 
-                      match childrenSelectedPoints.IsEmptyOrNull () with
-                        | true    -> 
-                          let children = generateNonLevelNodes logId (DS.HMap.toPList childrenAnnos) (lp, la) (up, ua) currentLevel semApp
-                          children |> PList.ofList
-                        | false   -> 
-                          match childrenAnnos.IsEmptyOrNull () with
-                            | true  -> PList.empty
-                            | false -> 
-                              let lBorder = Border.initial la.id lp nodeId logId
-                              let uBorder = Border.initial ua.id up nodeId logId
-                              generateLevel logId childrenSelectedPoints annoApp semApp lBorder uBorder 
-                    ncs
-                  let topLevel =
-                    LogNodes.Init.topLevelWithId nodeId logId
-                          (up, ua.id) (lp, la.id) nodeChildren currentLevel        
-                  yield topLevel
-              }
+              let nodesInCurrentLevel =
+                seq {
+                  for ((p1, a1), (p2, a2)) in pairwiseWithBorders do
+                    let thisLevelHierarchicalNodesWithChildren =
+                      generateOneLogNodeAndItsChildren p1 a1 p2 a2 restAnnos restSelPoints currentLevel
+                    //let ((lp,la),(up,ua)) = Annotation.sortByElevation (p1, a1) (p2, a2)
+                    //let nodeId = LogNodeId.newId()
+                    //let nodeChildren = 
+                    //  let childrenAnnos = 
+                    //    restAnnos // only take Annotations with elevations within the current node borders
+                    //      |> HMap.filter (fun id a -> Annotation.isElevationBetween lp up a)
+                    //  let childrenSelectedPoints = 
+                    //    restSelPoints // only take selected points with elevations within the current node borders
+                    //      |> HMap.filter (fun a p -> Annotation.isElevationBetween' a1.elevation p lp up)
+                    //  let ncs = 
+                    //    match childrenSelectedPoints.IsEmptyOrNull () with
+                    //      | true    -> 
+                    //        let children = generateNonLevelNodes logId (DS.HMap.toPList childrenAnnos) (lp, la) (up, ua) currentLevel semApp
+                    //        children |> PList.ofList
+                    //      | false   -> 
+                    //        match childrenAnnos.IsEmptyOrNull () with
+                    //          | true  -> PList.empty
+                    //          | false -> 
+                    //            let lBorder = Border.initial la.id lp nodeId logId
+                    //            let uBorder = Border.initial ua.id up nodeId logId
+                    //            generateLevel logId childrenSelectedPoints annoApp semApp lBorder uBorder 
+                    //  ncs
+                    //let thisLevelHierarchicalNodesWithChildren =
+                    //  LogNodes.Init.topLevelWithId nodeId logId
+                    //        (up, ua.id) (lp, la.id) nodeChildren currentLevel        
+                    yield thisLevelHierarchicalNodesWithChildren
+                }
 
-            nodesInCurrentLevel
-              |> Seq.sortByDescending (fun x -> LogNodes.Helper.elevation x annoApp)
-              |> PList.ofSeq
+              nodesInCurrentLevel
+                |> Seq.sortByDescending (fun x -> LogNodes.Helper.elevation x annoApp)
+                |> PList.ofSeq
+        thisLevel
         
 
     let printDebug nodes = 
@@ -215,8 +269,10 @@
       let nodes = 
         LogNodes.Helper.replaceInfinity' wInfNodes annoApp
 
+      let foo = 2 * 3
+
       let nodeToRectangle (n : LogNode) =
-        let metricVal = LogNodes.Recursive.calcMetricValue n annoApp
+        let metricVal = LogNodes.Recursive.calcMetricValue n annoApp //TODO!!!!
 
         let (dotted, width, colour, overwriteColour) = 
           match metricVal  with
@@ -260,6 +316,7 @@
       let _nodes =
         nodes 
           |> LogNodes.Recursive.treeCutLowestLevel
+          |> List.sortByDescending (fun n -> LogNodes.Helper.elevation n annoApp)
 
       let rectangles = 
         _nodes
