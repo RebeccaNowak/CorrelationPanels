@@ -82,12 +82,21 @@
     module Generate = 
       let generateNonLevelNodes (logId : RectangleStackId) 
                                 (annos : plist<Annotation>) 
-                                (lp, la) (up, ua) 
+                                ((lp, la) : (V3d * Annotation))
+                                ((up, ua)  : (V3d * Annotation))
                                 (level : NodeLevel)
-                                (semApp : SemanticApp) =                   
+                                (semApp : SemanticApp) =         
+        let f (a : Annotation) =
+          let inSel = a.id = la.id || a.id = ua.id
+          match inSel with
+            | true -> []
+            | false -> [LogNodes.Init.fromSemanticType a semApp logId lp up level]
+
         annos 
-          |> PList.map (fun a ->
-              LogNodes.Init.fromSemanticType a semApp logId lp up level)
+          |> PList.map f
+          |> DS.PList.flattenLists
+
+                
 
       let rec generateLevel (logId          : RectangleStackId)
                             (selectedPoints : hmap<AnnotationId, V3d>) 
@@ -154,18 +163,23 @@
                     let childrenSelectedPoints = 
                       restSelPoints // only take selected points with elevations within the current node borders
                         |> HMap.filter (fun a p -> Annotation.isElevationBetween' a1.elevation p lp up)
-
-                    match childrenSelectedPoints.IsEmptyOrNull () with
-                      | true    -> generateNonLevelNodes logId (DS.HMap.toPList childrenAnnos) (lp, la) (up, ua) currentLevel semApp
-                      | false   -> 
-                        match childrenAnnos.IsEmptyOrNull () with
-                          | true  -> PList.empty
-                          | false -> 
-                            let lBorder = Border.initial la.id lp nodeId logId
-                            let uBorder = Border.initial ua.id up nodeId logId
-                            generateLevel logId childrenSelectedPoints annoApp semApp lBorder uBorder 
-                  yield LogNodes.Init.topLevelWithId nodeId logId
+                    let ncs = 
+                      match childrenSelectedPoints.IsEmptyOrNull () with
+                        | true    -> 
+                          let children = generateNonLevelNodes logId (DS.HMap.toPList childrenAnnos) (lp, la) (up, ua) currentLevel semApp
+                          children |> PList.ofList
+                        | false   -> 
+                          match childrenAnnos.IsEmptyOrNull () with
+                            | true  -> PList.empty
+                            | false -> 
+                              let lBorder = Border.initial la.id lp nodeId logId
+                              let uBorder = Border.initial ua.id up nodeId logId
+                              generateLevel logId childrenSelectedPoints annoApp semApp lBorder uBorder 
+                    ncs
+                  let topLevel =
+                    LogNodes.Init.topLevelWithId nodeId logId
                           (up, ua.id) (lp, la.id) nodeChildren currentLevel        
+                  yield topLevel
               }
 
             nodesInCurrentLevel
@@ -237,11 +251,19 @@
 
         rectangle
 
+      //let rectangles = //////////////////////// LOWEST LEVEL NODES!!!
+      //  nodes
+      //   |> PList.toList
+      //   |> List.map (fun n -> nodeToRectangle n)
+
+
+      let _nodes =
+        nodes 
+          |> LogNodes.Recursive.treeCutLowestLevel
+
       let rectangles = 
-        nodes
-         |> PList.toList
-        // |> List.rev
-         |> List.map (fun n -> nodeToRectangle n)
+        _nodes
+          |> List.map (fun n -> nodeToRectangle n)
 
       
       let rmap = 
@@ -256,8 +278,8 @@
 
       // let allNodes = LogNodes.Recursive.collectAll
       // WIP
-      let zipped = List.zip order (PList.toList nodes)
-      let _nodes = zipped 
+      let zipped = List.zip order _nodes
+      let __nodes = zipped 
                     |> List.map (fun (r,n) -> {n with rectangleId = r})
                     |> PList.ofList
 
@@ -273,7 +295,7 @@
           //yToSvg         =  yToSvg      
           defaultWidth   =  defaultWidth
 
-          nodes          = _nodes
+          nodes          = __nodes
           annoPoints     = selectedPoints    
       
         }
@@ -288,7 +310,7 @@
 
       open UIPlus
 
-      let listView (model       : MGeologicalLog) 
+      let viewList (model       : MGeologicalLog) 
                    (semApp      : MSemanticApp)
                    //(annoApp     : amap<AnnotationId, MAnnotation>)
                    //(annoApp     : MAnnotationModel)

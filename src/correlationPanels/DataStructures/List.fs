@@ -84,4 +84,15 @@
       let indSec = indFirst + 1
       _swap indFirst indSec items
 
-      
+
+    //let a = [[1;5];[2;3];[4;7];[6;2];[7;8]]
+
+    let rec flattenLists (plst : list<list<'a>>) =
+      let head = List.tryHead plst
+      match head with
+        | None  -> []
+        | Some lst -> 
+          lst @ (flattenLists (List.tail plst))      
+
+    //let b = flattenLists a
+    //b

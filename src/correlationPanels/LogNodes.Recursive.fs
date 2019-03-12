@@ -147,14 +147,14 @@ open CorrelationDrawing
     let childrenWith (n : LogNode) (f : LogNode -> bool) =
       filterAndCollect f n
 
-    let rec hasChildrenWith (n : LogNode) (f : LogNode -> bool) =
-      match PList.count n.children with
-      | 0     -> f n
-      | other ->  
-          (f n) || (n.children 
-                    |> PList.map (fun n -> (hasChildrenWith n f))
-                    |> DS.PList.anyTrue (fun x -> x)
-                   )
+    //let rec hasChildrenWith (n : LogNode) (f : LogNode -> bool) = /// check if bug!!
+    //  match PList.count n.children with
+    //  | 0     -> f n
+    //  | other ->  
+    //      (f n) || (n.children 
+    //                |> PList.map (fun n -> (hasChildrenWith n f))
+    //                |> DS.PList.anyTrue (fun x -> x)
+    //               )
 
 
     let rec hasNodesWith' (lst : plist<MLogNode>) (f : MLogNode -> IMod<bool>) =
@@ -222,6 +222,28 @@ open CorrelationDrawing
         | true  -> None
         | false -> Some (vals |> List.max)
 
+    let rec lowestHierarchical (node : LogNode) =
+      let isHier = node.nodeType = LogNodeType.Hierarchical
+
+      match isHier with
+        | true -> 
+          let _children = 
+            node.children
+              |> PList.map lowestHierarchical
+
+          match _children.IsEmptyOrNull () with
+            | true -> [node]
+            | false -> 
+              _children
+                |> DS.PList.flattenLists
+        | false -> []
+
+
+    let treeCutLowestLevel (nodes : plist<LogNode>) =
+      nodes
+        |> PList.map lowestHierarchical 
+        |> DS.PList.flattenLists
+        
 
      
 

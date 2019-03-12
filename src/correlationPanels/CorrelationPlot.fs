@@ -402,7 +402,7 @@
               let! stack = AMap.find id stacks
               let! log   = AMap.find id model.logs
               let! tmp = 
-                Log.View.listView log semApp  
+                Log.View.viewList log semApp  
                                   (Action.SelectLog log.id) 
                                   (mapper log)        
                                   stack
