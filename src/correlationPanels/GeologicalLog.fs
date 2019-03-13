@@ -258,6 +258,8 @@
                      (defaultWidth    : float)
                      (colourMap       : ColourMap) : (RectangleStack * GeologicalLog) = 
       let id = RectangleStackId.newId()
+      if annoApp.annotations.IsEmptyOrNull () then Log.error "Creating log failed. There are no annotations."
+
       let wInfNodes = (Generate.generateLevel //TODO make more compact by removing debug stuff
                         id
                         selectedPoints 

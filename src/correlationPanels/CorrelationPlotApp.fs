@@ -65,7 +65,7 @@
         { 
           annotations = annos; 
           selectedAnnotation = None 
-          keyboard = AnnotationApp.keyboard
+          keyboard = AnnotationApp.keyboard // ???
         } model action
 
     let viewSvg (annoApp : amap<AnnotationId, MAnnotation>) (model : MCorrelationPlotModel) =
