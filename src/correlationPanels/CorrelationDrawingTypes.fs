@@ -210,7 +210,6 @@ type Semantic = {
 
    state             : State
    label             : TextInput
-   size              : double
    style             : Style
    semanticType      : SemanticType
    geometryType      : GeometryType

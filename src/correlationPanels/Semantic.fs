@@ -27,7 +27,6 @@ module Semantic =
       timestamp     = Time.getTimestamp
       state         = State.New
       label         = TextInput.init
-      size          = 0.0
       style         = 
         { Style.color     = { c = C4b.Red }
           Style.thickness = 

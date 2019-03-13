@@ -215,7 +215,6 @@ module Mutable =
         let mutable __current : Aardvark.Base.Incremental.IModRef<CorrelationDrawing.Semantic> = Aardvark.Base.Incremental.EqModRef<CorrelationDrawing.Semantic>(__initial) :> Aardvark.Base.Incremental.IModRef<CorrelationDrawing.Semantic>
         let _state = ResetMod.Create(__initial.state)
         let _label = UIPlus.Mutable.MTextInput.Create(__initial.label)
-        let _size = ResetMod.Create(__initial.size)
         let _style = MStyle.Create(__initial.style)
         let _semanticType = ResetMod.Create(__initial.semanticType)
         let _geometryType = ResetMod.Create(__initial.geometryType)
@@ -225,7 +224,6 @@ module Mutable =
         member x.timestamp = __current.Value.timestamp
         member x.state = _state :> IMod<_>
         member x.label = _label
-        member x.size = _size :> IMod<_>
         member x.style = _style
         member x.semanticType = _semanticType :> IMod<_>
         member x.geometryType = _geometryType :> IMod<_>
@@ -238,7 +236,6 @@ module Mutable =
                 
                 ResetMod.Update(_state,v.state)
                 UIPlus.Mutable.MTextInput.Update(_label, v.label)
-                ResetMod.Update(_size,v.size)
                 MStyle.Update(_style, v.style)
                 ResetMod.Update(_semanticType,v.semanticType)
                 ResetMod.Update(_geometryType,v.geometryType)
@@ -282,12 +279,6 @@ module Mutable =
                     override x.Get(r) = r.label
                     override x.Set(r,v) = { r with label = v }
                     override x.Update(r,f) = { r with label = f r.label }
-                }
-            let size =
-                { new Lens<CorrelationDrawing.Semantic, System.Double>() with
-                    override x.Get(r) = r.size
-                    override x.Set(r,v) = { r with size = v }
-                    override x.Update(r,f) = { r with size = f r.size }
                 }
             let style =
                 { new Lens<CorrelationDrawing.Semantic, CorrelationDrawing.Style>() with
