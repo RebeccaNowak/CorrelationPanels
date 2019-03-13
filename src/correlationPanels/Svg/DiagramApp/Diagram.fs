@@ -40,6 +40,10 @@ open SimpleTypes
         UnpackAction.MouseMessage MouseAction.OnLeftClick
       let SelectRectangle =
         UnpackAction.RectangleMessage (Rectangle.Action.Select RectangleId.invalid)
+      let SelectUpperBorder =
+        UnpackAction.RectangleMessage (Rectangle.Action.SelectUpperBorder)
+      let SelectLowerBorder =
+        UnpackAction.RectangleMessage (Rectangle.Action.SelectLowerBorder)
       let MoveStackLeft = 
         UnpackAction.LeftArrowMessage 
           (Arrow.MouseMessage MouseAction.OnLeftClick)
@@ -78,6 +82,10 @@ open SimpleTypes
               | RectangleStack.RectangleMessage (rid, rm), RectangleMessage rm2 -> 
                 match rm, rm2 with
                   | Rectangle.Select rid,  Rectangle.Select dummy ->
+                    f stackId rid
+                  | Rectangle.SelectLowerBorder, Rectangle.SelectLowerBorder ->
+                    f stackId rid
+                  | Rectangle.SelectUpperBorder, Rectangle.SelectUpperBorder ->
                     f stackId rid
                   | _,_ -> def
                 | _ -> def       

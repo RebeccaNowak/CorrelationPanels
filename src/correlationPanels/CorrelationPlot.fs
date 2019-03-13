@@ -198,6 +198,24 @@
           {model with yToSvg   = _yToSvg
                       diagram  = Diagram.update model.diagram (Diagram.UpdateYSizes f)}
 
+    let selectUpperBorder (model : CorrelationPlot)  
+                          (rstackId : RectangleStackId)
+                          (rectangleId : RectangleId) =
+      let opt = 
+        tryFindNodeFromRectangleId model {rid = rectangleId;stackid = rstackId}
+      let optBorder =
+        Option.bind (fun (n, l) -> n.uBorder) opt
+      {model with selectedBorder = optBorder}
+
+    let selectLowerBorder (model : CorrelationPlot)  
+                          (rstackId : RectangleStackId)
+                          (rectangleId : RectangleId) =
+      let opt = 
+        tryFindNodeFromRectangleId model {rid = rectangleId;stackid = rstackId}
+      let optBorder =
+        Option.bind (fun (n, l) -> n.lBorder) opt
+      {model with selectedBorder = optBorder}
+
     let keyboard =
       let keyboard = Keyboard.init ()
       let _keyboard = 
@@ -308,12 +326,19 @@
           let _d =
             Diagram.update model.diagram m
 
-          let _cp = 
-            Diagram.Action.unpack m 
+          let unpackchain = 
+            (Diagram.Action.unpack m 
                                   Diagram.UnpackAction.OnLeftClick
-                                  (fun stackid _ -> selectLog model stackid) 
-                                  model
+                                  (fun stackid _ -> selectLog model stackid))
+            >> (Diagram.Action.unpack m 
+                                  Diagram.UnpackAction.SelectLowerBorder
+                                  (fun stackid rid -> selectLowerBorder model stackid rid))
+            >> (Diagram.Action.unpack m 
+                                  Diagram.UnpackAction.SelectUpperBorder
+                                  (fun stackid rid -> selectUpperBorder model stackid rid))                                  
 
+          let _cp =
+            unpackchain model
           let selectMap stackid rectId = 
             let optnode = tryFindNodeFromRectId model stackid rectId
             match optnode with
@@ -328,6 +353,7 @@
                                   Diagram.UnpackAction.SelectRectangle
                                   selectMap
                                   model.colourMapApp
+
           {_cp with diagram   = _d |> Diagram.layout
                     colourMapApp = _cmap}
 

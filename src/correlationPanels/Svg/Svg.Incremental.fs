@@ -102,37 +102,37 @@
       let height = Mod.map (fun x -> x.height) dim
       clickableRectangle centre width height actions AList.empty
 
-    let drawBorderedRectangle (leftUpper         : IMod<V2d>) 
-                              (size              : IMod<Size2D>)
-                              (fill              : IMod<C4b>) 
-                              (borderColors      : IMod<BorderColors>)
-                              (bWeight           : IMod<SvgWeight>)
-                              (selectionCallback : _ -> 'msg)
-                              (selected          : IMod<bool>)
-                              (dottedBorder      : IMod<bool>) =
-      adaptive {
-        let! size = size
-        let! leftUpper = leftUpper
-        let! color = fill
-        let! bColors = borderColors
-        let lborder = bColors.lower
-        let uborder = bColors.upper
-        let! isSelected = selected 
-        let! bWeight = bWeight
+    //let drawBorderedRectangle (leftUpper         : IMod<V2d>) 
+    //                          (size              : IMod<Size2D>)
+    //                          (fill              : IMod<C4b>) 
+    //                          (borderColors      : IMod<BorderColors>)
+    //                          (bWeight           : IMod<SvgWeight>)
+    //                          (selectionCallback : _ -> 'msg)
+    //                          (selected          : IMod<bool>)
+    //                          (dottedBorder      : IMod<bool>) =
+    //  adaptive {
+    //    let! size = size
+    //    let! leftUpper = leftUpper
+    //    let! color = fill
+    //    let! bColors = borderColors
+    //    let lborder = bColors.lower
+    //    let uborder = bColors.upper
+    //    let! isSelected = selected 
+    //    let! bWeight = bWeight
 
-        let rfun = Svgplus.Base.drawBorderedRectangle
-                            leftUpper
-                            size
-                            color lborder uborder
-                            bWeight
-                            selectionCallback
-                            isSelected
+    //    let rfun = Svgplus.Base.drawBorderedRectangle
+    //                        leftUpper
+    //                        size
+    //                        color lborder uborder
+    //                        bWeight
+    //                        selectionCallback
+    //                        isSelected
 
-        let! dottedBorder = dottedBorder
-        return match dottedBorder with
-                | true ->
-                    rfun true
-                | false ->
-                    rfun false
-      }
+    //    let! dottedBorder = dottedBorder
+    //    return match dottedBorder with
+    //            | true ->
+    //                rfun true
+    //            | false ->
+    //                rfun false
+    //  }
 

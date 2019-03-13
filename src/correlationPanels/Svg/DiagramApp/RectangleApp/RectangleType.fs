@@ -18,6 +18,17 @@
       let id = System.Guid.NewGuid ()
       {id = id.ToString () }
 
+  //[<DomainType>]
+  //type RectangleBorder = {
+  //  [<NonIncremental>]
+  //  id             : RectangleId
+    
+  //  colour         : C4b
+  //}
+
+
+
+
   [<DomainType>]
   type Rectangle = {
     [<NonIncremental>]

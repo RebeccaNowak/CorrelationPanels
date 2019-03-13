@@ -17,6 +17,8 @@
 
     type Action =
       | Select          of RectangleId
+      | SelectUpperBorder
+      | SelectLowerBorder
       | Deselect        of RectangleId
       | OnMouseEnter
       | OnMouseLeave
@@ -239,7 +241,12 @@
           updateColour cmap _model
         | SetDottedBorder b -> 
           {model with dottedBorder = b}
-        | _ -> model
+        | SelectLowerBorder -> 
+          let _model = model
+          _model
+        | SelectUpperBorder -> 
+          let _model = model
+          _model
 
 
         
@@ -262,12 +269,15 @@
         let! draw = model.draw
         if draw then
           yield! ((Text.view model.svgYAxisLabel) |> AList.map (UI.map TextAction))
-          yield (Svgplus.Base.drawBorderedRectangle
-                    pos dim col
-                    lowerCol upperCol
-                    SvgWeight.init
-                    (fun _ -> Select model.id)
-                    sel db)
+          yield! AList.ofList
+                  (Svgplus.Base.drawBorderedRectangle
+                                  pos dim col
+                                  lowerCol upperCol
+                                  (fun _ -> SelectLowerBorder)
+                                  (fun _ -> SelectUpperBorder)
+                                  SvgWeight.init
+                                  (fun _ -> Select model.id)
+                                  sel db)
           yield (Button.view model.northWestButton) |> UI.map NWButtonMessage
           yield (Button.view model.northEastButton) |> UI.map NEButtonMessage
           yield (Button.view model.southWestButton) |> UI.map SWButtonMessage

@@ -165,16 +165,16 @@
           atf "stroke-width" strokeWidth
         ]
 
-    let drawHorizontalLine (a : V2d) (length : float) (color : C4b) (strokeWidth : float) =
+    let drawHorizontalLine (a : V2d) (length : float) (color : C4b) (strokeWidth : float) (fOnClick : _ -> 'a) =
       Svg.line 
-        [
+        ([
           atf "x1" a.X
           atf "y1" a.Y
           atf "x2" (a.X + length)
           atf "y2" a.Y
           atc "stroke" color
           atf "stroke-width" strokeWidth
-        ]
+        ]@(Aardvark.UI.Svg.Events.onClickAttributes [fOnClick]))
 
     let drawVerticalLine (a : V2d) (length : float) (color : C4b) (strokeWidth : float) =
       Svg.line 
@@ -472,6 +472,8 @@
                       (width      : float)
                       (height     : float)
                       (uBorder    : C4b) 
+                      (uBorderAction : _ -> 'msg)
+                      (lBorderAction : _ -> 'msg)
                       (lBorder    : C4b)
                       (bWeight    : float)
                       (callback   : V2i -> 'msg) =
@@ -479,10 +481,10 @@
         [ 
           drawHorizontalLine 
             (new V2d(leftUpper.X, leftUpper.Y + bWeight * 0.5)) 
-            width uBorder bWeight
+            width uBorder bWeight uBorderAction
           drawHorizontalLine 
             (new V2d(leftUpper.X, leftUpper.Y + height - bWeight * 0.5)) 
-            width lBorder bWeight
+            width lBorder bWeight lBorderAction
         ][ onMouseEnter (callback) ]
 
     let drawBorderedRectangle (leftUpper         : V2d) 
@@ -490,6 +492,8 @@
                               (fill              : C4b) 
                               (lowerBorderColor  : C4b)
                               (upperBorderColor  : C4b)
+                              (uBorderAction : _ -> 'msg)
+                              (lBorderAction : _ -> 'msg)
                               (bWeight           : SvgWeight)
                               (selectionCallback : list<string> -> 'msg)
                               (selected          : bool)
@@ -503,15 +507,19 @@
         match selected with //TODO read papers: mark selection state
           | true  -> bWeight.value * 2.0
           | false -> bWeight.value
+      let borders = 
+        [
+            drawHorizontalLine 
+              (new V2d(leftUpper.X, leftUpper.Y)) //+ bWeight.value * 0.5)) 
+              width lBorder bWeight.value uBorderAction
+            drawHorizontalLine 
+              (new V2d(leftUpper.X, leftUpper.Y + height )) // - bWeight.value * 0.5)) 
+              width uBorder bWeight.value lBorderAction        
+        ]
+
       let elements = 
           [  
             drawRectangle leftUpper width height fill
-            drawHorizontalLine 
-              (new V2d(leftUpper.X, leftUpper.Y + bWeight.value * 0.5)) 
-              width lBorder bWeight.value
-            drawHorizontalLine 
-              (new V2d(leftUpper.X, leftUpper.Y + height - bWeight.value * 0.5)) 
-              width uBorder bWeight.value
             drawVerticalLine leftUpper height C4b.Black _bweightLeftHorz
           ]
       let rBorder = 
@@ -519,27 +527,29 @@
           | true  -> drawVerticalDottedLine (new V2d(leftUpper.X + width , leftUpper.Y)) height C4b.Black bWeight.value 3.0 3.0
           | false -> drawVerticalLine (new V2d(leftUpper.X + width , leftUpper.Y)) height C4b.Black bWeight.value 
 
-      toGroup 
-        (elements @ [rBorder])
-        (Svg.Events.onClickToggleButton (selectionCallback))
+      let rgroup = 
+        toGroup 
+          (elements @ [rBorder])
+          (Svg.Events.onClickToggleButton (selectionCallback))
+      borders@[rgroup]
 
-    let drawLogarithmicXAxis (leftUpper : V2d) (length : float) (color : C4b) (weight : float) (granularity : float) =
-      //TODO
-      toGroup
-        [
-          drawHorizontalLine  (new V2d(leftUpper.X, leftUpper.Y + weight * 0.5)) length color weight
-          drawHorizontalDottedLine (new V2d(leftUpper.X, leftUpper.Y + weight)) length color (weight * 3.0) 1.0 (granularity - 1.0)
-        ]
-        [] 
+    //let drawLogarithmicXAxis (leftUpper : V2d) (length : float) (color : C4b) (weight : float) (granularity : float) =
+    //  //TODO
+    //  toGroup
+    //    [
+    //      drawHorizontalLine  (new V2d(leftUpper.X, leftUpper.Y + weight * 0.5)) length color weight
+    //      drawHorizontalDottedLine (new V2d(leftUpper.X, leftUpper.Y + weight)) length color (weight * 3.0) 1.0 (granularity - 1.0)
+    //    ]
+    //    [] 
 
      
-    let drawXAxis (leftUpper : V2d) (length : float) (color : C4b) (weight : float) (granularity : float) =
-      toGroup
-        [
-          drawHorizontalLine  (new V2d(leftUpper.X, leftUpper.Y + weight * 0.5)) length color weight
-          drawHorizontalDottedLine (new V2d(leftUpper.X, leftUpper.Y + weight)) length color (weight * 3.0) 1.0 (granularity - 1.0)
-        ]
-        []
+    //let drawXAxis (leftUpper : V2d) (length : float) (color : C4b) (weight : float) (granularity : float) =
+    //  toGroup
+    //    [
+    //      drawHorizontalLine  (new V2d(leftUpper.X, leftUpper.Y + weight * 0.5)) length color weight
+    //      drawHorizontalDottedLine (new V2d(leftUpper.X, leftUpper.Y + weight)) length color (weight * 3.0) 1.0 (granularity - 1.0)
+    //    ]
+    //    []
 
     let drawYAxis (leftUpper : V2d) (length : float) (color : C4b) (weight : float) (granularity : float) =
       toGroup
