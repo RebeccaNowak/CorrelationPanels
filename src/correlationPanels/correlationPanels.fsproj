@@ -54,6 +54,8 @@
 	<Compile Include="Svg\Svg.Paths.fs" />
 	<Compile Include="Svg\Svg.Base.fs" />
 	<Compile Include="Svg\Svg.Incremental.fs" />
+	<Compile Include="Svg\Axes\AxesTypes.fs" />
+	<Compile Include="Svg\Axes\AxisApp.fs" />
 	<Compile Include="Svg\Camera\SvgCameraTypes.fs" />
 	<Compile Include="Svg\Camera\SvgCamera.fs" />
 	<Compile Include="Svg\ArrowApp\ArrowType.fs" />
@@ -105,8 +107,6 @@
 	<Compile Include="AnnotationApp.fs" />
 	<Compile Include="AnnotationPoint.fs" />
 	<Compile Include="Border.fs" />
-	<Compile Include="LogAxisSection.fs" />
-	<Compile Include="LogAxisApp.fs" />
 	<Compile Include="LogNodes.Init.fs" />
 	<Compile Include="LogNodes.Helper.fs" />
 	<Compile Include="LogNodes.Recursive.fs" />

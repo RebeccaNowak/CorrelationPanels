@@ -109,3 +109,35 @@ module Math =
 
     let init radians =
       {radians = radians % twoPi.radians}
+
+type Rangef = { //TODO move to math
+  min     : float
+  max     : float
+} with 
+    member this.range   = this.max - this.min
+    member this.mapRange (other : Rangef) = 
+      fun (x : float) ->
+        x *  (other.range / this.range)
+    member this.outer (other : Rangef) : Rangef =
+      {
+        min = min this.min other.min
+        max = max this.max other.max
+      }
+    member this.average =
+      (this.min + this.max) * 0.5
+        
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Rangef =
+  let init : Rangef = {
+      min     = 0.0
+      max     = 0.0
+    }
+
+  let calcRange (r : Rangef) =
+    r.max - r.min
+
+  let calcRangeNoInf (r : Rangef) =
+    match r.max with 
+      | a when a = Operators.infinity -> r.min * 1.01 //TODO HACK
+      | _ -> r.max - r.min

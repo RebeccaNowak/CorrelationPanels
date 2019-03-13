@@ -4,14 +4,12 @@
 module AnnotationPoint =
   open System
   open Aardvark.Base
+  open SimpleTypes
 
   let initial : AnnotationPoint = {
     point = V3d.OOO
     selected = false
   }
-
-
-
 
   let calcRange (annos : plist<Annotation>) : Rangef = //TODO refactor (not in the right place)
     let rangeMin = 

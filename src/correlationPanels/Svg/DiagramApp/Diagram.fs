@@ -9,6 +9,7 @@ open Svgplus.RectangleType
 open Svgplus.CA
 open Svgplus.DA
 open UIPlus
+open SimpleTypes
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module Diagram = 
@@ -83,7 +84,7 @@ open UIPlus
           | _ -> def
 
        
-    let init : Diagram = 
+    let init yMapping nativeRange : Diagram = 
       {
         rectangleStacks    = HMap.empty
         order              = PList.empty
@@ -92,6 +93,7 @@ open UIPlus
         marginLeft         = 50.0
         marginTop          = 50.0
         selectedRectangle  = None
+        yAxis              = AxisApp.initial yMapping nativeRange
       }
 
     let sampleInit : Diagram =
@@ -115,31 +117,33 @@ open UIPlus
 
       let order = [s1.id;s2.id;s3.id] |> PList.ofList
 
-      {init with 
+      {init (fun x -> x) Rangef.init with 
         rectangleStacks    = smap
         order              = order
         connectionApp      = ConnectionApp.init
       }
 
     let layout (model : Diagram) =
-      match model.order.Count > 0 with
-        | true ->
-          let clean = 
-            model.rectangleStacks
-              |> HMap.map (fun id s -> RectangleStack.resetPosition s (V2d 0.0))
-              |> HMap.update (model.order.Item 0) 
-                             (fun opts -> RectangleStack.Lens.pos.Set (opts.Value, V2d (model.marginLeft, model.marginTop))) //hack
+      let _stacks = 
+        match model.order.Count > 0 with
+          | true ->
+            let cleanStacks = 
+              model.rectangleStacks
+                |> HMap.map (fun id s -> RectangleStack.resetPosition s (V2d 0.0))
+                |> HMap.update (model.order.Item 0) 
+                               (fun opts -> RectangleStack.Lens.pos.Set (opts.Value, V2d (model.marginLeft, model.marginTop))) //hack
 
-          let f (prev : RectangleStackTypes.RectangleStack) (curr : RectangleStackTypes.RectangleStack) =
-            let _pos =
-              let cx = model.rstackGap + prev.pos.X + (RectangleStack.width prev)
-              V2d (cx,model.marginTop)
-            RectangleStack.Lens.pos.Set (curr, _pos)
+            let f (prev : RectangleStackTypes.RectangleStack) (curr : RectangleStackTypes.RectangleStack) =
+              let _pos =
+                let cx = model.rstackGap + prev.pos.X + (RectangleStack.width prev)
+                V2d (cx,model.marginTop)
+              RectangleStack.Lens.pos.Set (curr, _pos)
 
-          let _rs = 
-            DS.PList.mapPrev' model.order clean None f
-          {model with rectangleStacks = _rs}
-        | false -> model
+            let _rs = 
+              DS.PList.mapPrev' model.order cleanStacks None f
+            _rs
+          | false -> model.rectangleStacks
+      {model with rectangleStacks = _stacks}
 
     let findRectangle_M (model : MDiagram) (id : RectangleId) =
       let optList = 
@@ -352,6 +356,9 @@ open UIPlus
     let view (model : MDiagram) =
       //let foo = 
       //    RectangleStack.view >> UIMapping.mapAListId  
+      let axis =
+        AxisApp.view model.yAxis
+
       let stacks = 
         alist {
           for id in model.order do

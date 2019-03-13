@@ -50,37 +50,6 @@ type DropdownList<'a> = {
 
 
 
-type Rangef = { //TODO move to math
-  min     : float
-  max     : float
-} with 
-    member this.range   = this.max - this.min
-    member this.mapRange (other : Rangef) = 
-      fun (x : float) ->
-        x *  (other.range / this.range)
-    member this.outer (other : Rangef) : Rangef =
-      {
-        min = min this.min other.min
-        max = max this.max other.max
-      }
-    member this.average =
-      (this.min + this.max) * 0.5
-        
-
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Rangef =
-  let init : Rangef = {
-      min     = 0.0
-      max     = 0.0
-    }
-
-  let calcRange (r : Rangef) =
-    r.max - r.min
-
-  let calcRangeNoInf (r : Rangef) =
-    match r.max with 
-      | a when a = Operators.infinity -> r.min * 1.01 //TODO HACK
-      | _ -> r.max - r.min
 
 
 
@@ -335,16 +304,7 @@ type LogNodeBoxType          = SimpleBox | TwoColorBox | FancyBox
 type XAxisFunction           = Average | Minimum | Maximum
 
 
-[<DomainType>]
-type LogAxisSection = {
-    label     : string
-    color     : C4b
-    range     : Rangef
-}
 
-type LogAxisConfigId = {
-    id        : string
-}
 
 
 [<DomainType>]
@@ -374,27 +334,6 @@ type LogNode = {
 }
       
 
-[<DomainType>]
-type LogAxisConfig = { //TODO make dynamic
-    [<NonIncremental>]
-    id                 : LogAxisConfigId
-    [<NonIncremental>]
-    label              : string
-    [<NonIncremental>]
-    defaultRange       : Rangef
-    [<NonIncremental>]
-    defaultGranularity : float //TODO must be positive and > 0; maybe use uint
-    [<NonIncremental>]
-    styleTemplate      : list<LogAxisSection>
-    
-}
-
-[<DomainType>]
-type LogAxisApp = {
-    [<NonIncremental>]
-    templates        : list<LogAxisConfig>
-    selectedTemplate : LogAxisConfigId
-}
 
 
 

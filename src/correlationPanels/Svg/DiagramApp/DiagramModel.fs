@@ -10,6 +10,7 @@ open Svgplus.CA
 open Svgplus
 open Svgplus.HeaderType
 open UIPlus
+open Svgplus.AxesTypes
 
   type RectangleIdentification = {
     rid         : RectangleId
@@ -26,6 +27,7 @@ open UIPlus
     marginLeft        : float
     marginTop         : float
     selectedRectangle : option<RectangleIdentification>
+    yAxis             : AxisApp
   }
 
   

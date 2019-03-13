@@ -20,6 +20,7 @@ module Mutable =
         let _marginLeft = ResetMod.Create(__initial.marginLeft)
         let _marginTop = ResetMod.Create(__initial.marginTop)
         let _selectedRectangle = MOption.Create(__initial.selectedRectangle)
+        let _yAxis = Svgplus.AxesTypes.Mutable.MAxisApp.Create(__initial.yAxis)
         
         member x.rectangleStacks = _rectangleStacks :> amap<_,_>
         member x.order = _order :> alist<_>
@@ -28,6 +29,7 @@ module Mutable =
         member x.marginLeft = _marginLeft :> IMod<_>
         member x.marginTop = _marginTop :> IMod<_>
         member x.selectedRectangle = _selectedRectangle :> IMod<_>
+        member x.yAxis = _yAxis
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : Svgplus.DA.Diagram) =
@@ -41,6 +43,7 @@ module Mutable =
                 ResetMod.Update(_marginLeft,v.marginLeft)
                 ResetMod.Update(_marginTop,v.marginTop)
                 MOption.Update(_selectedRectangle, v.selectedRectangle)
+                Svgplus.AxesTypes.Mutable.MAxisApp.Update(_yAxis, v.yAxis)
                 
         
         static member Create(__initial : Svgplus.DA.Diagram) : MDiagram = MDiagram(__initial)
@@ -98,4 +101,10 @@ module Mutable =
                     override x.Get(r) = r.selectedRectangle
                     override x.Set(r,v) = { r with selectedRectangle = v }
                     override x.Update(r,f) = { r with selectedRectangle = f r.selectedRectangle }
+                }
+            let yAxis =
+                { new Lens<Svgplus.DA.Diagram, Svgplus.AxesTypes.AxisApp>() with
+                    override x.Get(r) = r.yAxis
+                    override x.Set(r,v) = { r with yAxis = v }
+                    override x.Update(r,f) = { r with yAxis = f r.yAxis }
                 }

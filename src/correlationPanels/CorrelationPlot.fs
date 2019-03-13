@@ -14,6 +14,7 @@
     open Svgplus.RectangleStackTypes
     open Svgplus.RectangleType
     open UIPlus.KeyboardTypes
+    open SimpleTypes
 
 
     type Action = 
@@ -218,7 +219,12 @@
                       //annotations      = hmap<AnnotationId, Annotation>.Empty
                       currrentYMapping = None
                       selectedBorder   = None
-                      diagram       = Diagram.init
+                      diagram          = {model.diagram with rectangleStacks = HMap.empty
+                                                             order = PList.empty
+                                                             connectionApp   = ConnectionApp.init
+                                                             selectedRectangle = None
+                                                             yAxis = {model.diagram.yAxis with draw = false}
+                                         }
           }
         | SvgCameraMessage m ->
           let _svgCamera = SvgCamera.update model.svgCamera m
@@ -425,16 +431,13 @@
 
 
     let initial : CorrelationPlot  = 
-
-
-
       let xToSvg              = fun x -> (21.0 + Math.Log(x,2.0)) * 10.0
       let svgToX              = fun x -> (Math.Pow (2.0, (x * 0.1 - 21.0)))
       let yToSvg              = 25.0
       let defaultWidth        = xToSvg UIPlus.ColourMapItem.vfGravel.defaultMiddle
 
       {
-        diagram          = Svgplus.Diagram.init
+        diagram             = Svgplus.Diagram.init (fun x -> x * yToSvg) Rangef.init
         logs                = HMap.empty
         correlations        = PList.empty
         
