@@ -65,6 +65,30 @@ open CorrelationDrawing
       let r = elevationRange model annoApp
       r.average
 
+    let tryGetSemanticAttribute (border : option<Border>) 
+                                (f : Semantic -> 'a) 
+                                (annoApp : AnnotationApp) 
+                                (semApp : SemanticApp) =
+      let optAnno = 
+        Option.bind (fun b -> AnnotationApp.findAnnotation annoApp b.annotationId) border
+      let optSem =
+        Option.bind (fun a -> SemanticApp.getSemantic semApp a.semanticId) optAnno
+      let attr =
+        Option.map (fun s -> f s) optSem
+      attr
+
+
+    let upperBorderColour (node : LogNode) (annoApp : AnnotationApp) (semApp : SemanticApp) =
+      let f s = s.style.color.c
+      let optCol = tryGetSemanticAttribute node.uBorder f annoApp semApp
+      optCol
+
+    let lowerBorderColour (node : LogNode) (annoApp : AnnotationApp) (semApp : SemanticApp) =
+      let f s = s.style.color.c
+      let optCol = tryGetSemanticAttribute node.lBorder f annoApp semApp
+      optCol
+
+    
 
     //TODO need to change for Pro3D integration
     let calcMetricValue (n : LogNode) (annoApp : AnnotationApp) =

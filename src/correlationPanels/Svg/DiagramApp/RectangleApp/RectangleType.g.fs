@@ -19,7 +19,8 @@ module Mutable =
         let _pos = ResetMod.Create(__initial.pos)
         let _dim = ResetMod.Create(__initial.dim)
         let _colour = Aardvark.UI.Mutable.MColorInput.Create(__initial.colour)
-        let _borderColour = ResetMod.Create(__initial.borderColour)
+        let _lowerBorderColour = ResetMod.Create(__initial.lowerBorderColour)
+        let _upperBorderColour = ResetMod.Create(__initial.upperBorderColour)
         let _overwriteColour = MOption.Create(__initial.overwriteColour)
         let _isToggled = ResetMod.Create(__initial.isToggled)
         let _colChange = ResetMod.Create(__initial.colChange)
@@ -39,7 +40,8 @@ module Mutable =
         member x.pos = _pos :> IMod<_>
         member x.dim = _dim :> IMod<_>
         member x.colour = _colour
-        member x.borderColour = _borderColour :> IMod<_>
+        member x.lowerBorderColour = _lowerBorderColour :> IMod<_>
+        member x.upperBorderColour = _upperBorderColour :> IMod<_>
         member x.overwriteColour = _overwriteColour :> IMod<_>
         member x.isToggled = _isToggled :> IMod<_>
         member x.colChange = _colChange :> IMod<_>
@@ -63,7 +65,8 @@ module Mutable =
                 ResetMod.Update(_pos,v.pos)
                 ResetMod.Update(_dim,v.dim)
                 Aardvark.UI.Mutable.MColorInput.Update(_colour, v.colour)
-                ResetMod.Update(_borderColour,v.borderColour)
+                ResetMod.Update(_lowerBorderColour,v.lowerBorderColour)
+                ResetMod.Update(_upperBorderColour,v.upperBorderColour)
                 MOption.Update(_overwriteColour, v.overwriteColour)
                 ResetMod.Update(_isToggled,v.isToggled)
                 ResetMod.Update(_colChange,v.colChange)
@@ -133,11 +136,17 @@ module Mutable =
                     override x.Set(r,v) = { r with colour = v }
                     override x.Update(r,f) = { r with colour = f r.colour }
                 }
-            let borderColour =
+            let lowerBorderColour =
                 { new Lens<Svgplus.RectangleType.Rectangle, Aardvark.Base.C4b>() with
-                    override x.Get(r) = r.borderColour
-                    override x.Set(r,v) = { r with borderColour = v }
-                    override x.Update(r,f) = { r with borderColour = f r.borderColour }
+                    override x.Get(r) = r.lowerBorderColour
+                    override x.Set(r,v) = { r with lowerBorderColour = v }
+                    override x.Update(r,f) = { r with lowerBorderColour = f r.lowerBorderColour }
+                }
+            let upperBorderColour =
+                { new Lens<Svgplus.RectangleType.Rectangle, Aardvark.Base.C4b>() with
+                    override x.Get(r) = r.upperBorderColour
+                    override x.Set(r,v) = { r with upperBorderColour = v }
+                    override x.Update(r,f) = { r with upperBorderColour = f r.upperBorderColour }
                 }
             let overwriteColour =
                 { new Lens<Svgplus.RectangleType.Rectangle, Microsoft.FSharp.Core.Option<Aardvark.Base.C4b>>() with

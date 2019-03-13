@@ -300,6 +300,16 @@
             | height when height > 1000.0 ->
               1000.0
             | _ -> height
+        let lowerBorderCol =
+          let optCol = LogNodes.Helper.lowerBorderColour n annoApp semApp
+          match optCol with
+            | Some c -> c
+            | None   -> C4b.Black
+        let upperBorderCol =
+          let optCol = LogNodes.Helper.upperBorderColour n annoApp semApp
+          match optCol with
+            | Some c -> c
+            | None   -> C4b.Black
         let rectangle =
           {
             Rectangle.init n.id.rectangleId with 
@@ -308,6 +318,8 @@
               dottedBorder = dotted
               colour = colour
               overwriteColour = overwriteColour
+              lowerBorderColour = lowerBorderCol
+              upperBorderColour = upperBorderCol
               svgYAxisLabel = Svgplus.Text.init' yAxisUpperBorder
           }
 

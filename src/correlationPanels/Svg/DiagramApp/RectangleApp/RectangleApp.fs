@@ -170,7 +170,8 @@
           dim            = {width = 0.0; height = 0.0}
           colour         = {c = C4b.Gray}
           overwriteColour = Some C4b.White
-          borderColour   = C4b.Black
+          lowerBorderColour   = C4b.Black
+          upperBorderColour = C4b.Black
           isToggled      = false
           colChange      = V3i (0,0,0)
           isHovering     = false
@@ -256,13 +257,14 @@
         
         let! sel  = model.isToggled
         let! db   = model.dottedBorder
-
+        let! lowerCol = model.lowerBorderColour
+        let! upperCol = model.upperBorderColour
         let! draw = model.draw
         if draw then
           yield! ((Text.view model.svgYAxisLabel) |> AList.map (UI.map TextAction))
           yield (Svgplus.Base.drawBorderedRectangle
                     pos dim col
-                    C4b.Black C4b.Black
+                    lowerCol upperCol
                     SvgWeight.init
                     (fun _ -> Select model.id)
                     sel db)

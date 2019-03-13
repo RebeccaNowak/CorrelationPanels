@@ -494,12 +494,12 @@
                               (selectionCallback : list<string> -> 'msg)
                               (selected          : bool)
                               (dottedBorder      : bool) =
-      let width = size.width
-      let height = size.height
-      let uBorder = lowerBorderColor
-      let lBorder = upperBorderColor
+      let width     = size.width
+      let height    = size.height
+      let uBorder   = lowerBorderColor
+      let lBorder   = upperBorderColor
 
-      let _bweight =
+      let _bweightLeftHorz =
         match selected with //TODO read papers: mark selection state
           | true  -> bWeight.value * 2.0
           | false -> bWeight.value
@@ -507,17 +507,17 @@
           [  
             drawRectangle leftUpper width height fill
             drawHorizontalLine 
-              (new V2d(leftUpper.X, leftUpper.Y + _bweight * 0.5)) 
-              width lBorder _bweight
+              (new V2d(leftUpper.X, leftUpper.Y + bWeight.value * 0.5)) 
+              width lBorder bWeight.value
             drawHorizontalLine 
-              (new V2d(leftUpper.X, leftUpper.Y + height - _bweight * 0.5)) 
-              width uBorder _bweight
-            drawVerticalLine leftUpper height C4b.Black _bweight
+              (new V2d(leftUpper.X, leftUpper.Y + height - bWeight.value * 0.5)) 
+              width uBorder bWeight.value
+            drawVerticalLine leftUpper height C4b.Black _bweightLeftHorz
           ]
       let rBorder = 
         match dottedBorder with
-          | true  -> drawVerticalDottedLine (new V2d(leftUpper.X + width , leftUpper.Y)) height C4b.Black _bweight 3.0 3.0
-          | false -> drawVerticalLine (new V2d(leftUpper.X + width , leftUpper.Y)) height C4b.Black _bweight 
+          | true  -> drawVerticalDottedLine (new V2d(leftUpper.X + width , leftUpper.Y)) height C4b.Black bWeight.value 3.0 3.0
+          | false -> drawVerticalLine (new V2d(leftUpper.X + width , leftUpper.Y)) height C4b.Black bWeight.value 
 
       toGroup 
         (elements @ [rBorder])

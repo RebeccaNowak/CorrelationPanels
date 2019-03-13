@@ -30,7 +30,8 @@
     pos           : V2d
     dim           : Size2D
     colour        : Aardvark.UI.ColorInput
-    borderColour  : C4b
+    lowerBorderColour  : C4b
+    upperBorderColour : C4b
     overwriteColour : option<C4b>
     isToggled     : bool
     colChange     : V3i
