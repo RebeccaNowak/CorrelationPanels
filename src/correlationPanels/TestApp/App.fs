@@ -36,7 +36,7 @@ module App =
         header        = {Header.init with centre = V2d (500.0)} |> Header.layout true
         svgButton     = {Button.init with pos = V2d (10.0)}
         roseDiagram   = {RoseDiagram.init with centre = V2d (100.0)}
-        diagramApp    = Diagram.init
+        //diagramApp    = Diagram.init ra
       }
 
     let updateConnections model msg =
@@ -58,14 +58,14 @@ module App =
                 | _ -> {model with svgButton = (Svgplus.Button.update model.svgButton msg)}
             
             | RDMessage msg -> {model with roseDiagram = Svgplus.RoseDiagram.update model.roseDiagram msg}
-            | DiagramMessage msg -> 
-              {model with diagramApp = Diagram.update model.diagramApp msg}
+            //| DiagramMessage msg -> 
+            //  {model with diagramApp = Diagram.update model.diagramApp msg}
               
-            | MouseMove p -> 
-              {model with diagramApp = 
-                            Diagram.update model.diagramApp 
-                                              (Diagram.Action.MouseMove (V2d p))
-              }
+            //| MouseMove p -> 
+            //  {model with diagramApp = 
+            //                Diagram.update model.diagramApp 
+            //                                  (Diagram.Action.MouseMove (V2d p))
+            //  }
             | ArrowMessage m ->
               {model with arrow = Arrow.update model.arrow m}
             | HeaderMessage m ->

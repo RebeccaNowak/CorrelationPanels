@@ -20,5 +20,5 @@ type TestModel =
     arrow           : Arrow
     header          : Svgplus.HeaderType.Header
     roseDiagram     : RoseDiagram
-    diagramApp      : Svgplus.DA.Diagram
+    //diagramApp      : Svgplus.DA.Diagram
   }

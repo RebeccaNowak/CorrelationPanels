@@ -18,14 +18,12 @@ module Mutable =
         let _arrow = Svgplus.ArrowType.Mutable.MArrow.Create(__initial.arrow)
         let _header = Svgplus.HeaderType.Mutable.MHeader.Create(__initial.header)
         let _roseDiagram = Svgplus.RoseDiagramModel.Mutable.MRoseDiagram.Create(__initial.roseDiagram)
-        let _diagramApp = Svgplus.DA.Mutable.MDiagram.Create(__initial.diagramApp)
         
         member x.currentModel = _currentModel :> IMod<_>
         member x.svgButton = _svgButton
         member x.arrow = _arrow
         member x.header = _header
         member x.roseDiagram = _roseDiagram
-        member x.diagramApp = _diagramApp
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : Test.TestModel) =
@@ -37,7 +35,6 @@ module Mutable =
                 Svgplus.ArrowType.Mutable.MArrow.Update(_arrow, v.arrow)
                 Svgplus.HeaderType.Mutable.MHeader.Update(_header, v.header)
                 Svgplus.RoseDiagramModel.Mutable.MRoseDiagram.Update(_roseDiagram, v.roseDiagram)
-                Svgplus.DA.Mutable.MDiagram.Update(_diagramApp, v.diagramApp)
                 
         
         static member Create(__initial : Test.TestModel) : MTestModel = MTestModel(__initial)
@@ -83,10 +80,4 @@ module Mutable =
                     override x.Get(r) = r.roseDiagram
                     override x.Set(r,v) = { r with roseDiagram = v }
                     override x.Update(r,f) = { r with roseDiagram = f r.roseDiagram }
-                }
-            let diagramApp =
-                { new Lens<Test.TestModel, Svgplus.DA.Diagram>() with
-                    override x.Get(r) = r.diagramApp
-                    override x.Set(r,v) = { r with diagramApp = v }
-                    override x.Update(r,f) = { r with diagramApp = f r.diagramApp }
                 }
