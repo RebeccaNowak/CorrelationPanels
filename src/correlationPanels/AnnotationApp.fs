@@ -6,6 +6,7 @@ namespace CorrelationDrawing
   open Aardvark.UI
   open Aardvark.Application
   open UIPlus
+  open SimpleTypes
 
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -137,6 +138,21 @@ namespace CorrelationDrawing
         }      
       Incremental.i (AttributeMap.ofAMap iconAttr) (AList.ofList [])
 
+    let elevationRange (model : AnnotationApp) : Rangef =
+      let elevations = 
+        model.annotations
+          |> HMap.values
+          |> Seq.map (fun a -> Annotation.elevation a)
+      let min =
+        elevations
+          |> Seq.min
+
+      let max =
+         elevations
+          |> Seq.max
+
+      {min = min; max = max}
+        
 
     let update (model       : AnnotationApp)
                (action      : Action) =

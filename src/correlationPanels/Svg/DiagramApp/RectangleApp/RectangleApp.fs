@@ -28,6 +28,7 @@
       | UpdateColour    of (ColourMap * CMItemId)
       | SetWidth        of (float * ColourMap)
       | SetDottedBorder of bool 
+      | TextAction      of Svgplus.Text.Action
       | LayoutX          
       | LayoutY
 
@@ -70,19 +71,26 @@
         {new Lens<Rectangle, float>() with
           override x.Get(r)   = r.pos.X
           override x.Set(r,v) = 
+            let _label = 
+              let xpos = v - (Text.preferredWidth r.svgYAxisLabel) * 0.5
+              {r.svgYAxisLabel with centre = V2d (xpos, r.pos.Y)}
             {r with pos = V2d (v, r.pos.Y)
                     northWestButton = Button.Lens.posX.Set (r.northWestButton, v)
                     northEastButton = Button.Lens.posX.Set (r.northEastButton, v + width.Get r)
                     southWestButton = Button.Lens.posX.Set (r.southWestButton, v)
                     southEastButton = Button.Lens.posX.Set (r.southEastButton, v + width.Get r)
-          
+                    svgYAxisLabel   = _label
             }
           override x.Update(r,f) = 
+            let _label =
+              let xpos = f r.pos.X - (Text.preferredWidth r.svgYAxisLabel) * 0.5
+              {r.svgYAxisLabel with centre = V2d (xpos, r.pos.Y)}
             {r with pos =  V2d (f r.pos.X, r.pos.Y)
                     northWestButton = Button.Lens.posX.Set (r.northWestButton, f r.pos.X)
                     northEastButton = Button.Lens.posX.Set (r.northEastButton, f r.pos.X + width.Get r)
                     southWestButton = Button.Lens.posX.Set (r.southWestButton, f r.pos.X)
                     southEastButton = Button.Lens.posX.Set (r.southEastButton, f r.pos.X + width.Get r)
+                    svgYAxisLabel   = _label
             }
         }
 
@@ -95,6 +103,7 @@
                     northEastButton = Button.Lens.posY.Set (r.northEastButton, v)
                     southWestButton = Button.Lens.posY.Set (r.southWestButton, v + height.Get r)
                     southEastButton = Button.Lens.posY.Set (r.southEastButton, v + height.Get r)
+                    svgYAxisLabel   = {r.svgYAxisLabel with centre = V2d (r.svgYAxisLabel.centre.X, v)}
             }
 
           override x.Update(r,f) = 
@@ -103,6 +112,7 @@
                     northEastButton = Button.Lens.posY.Set (r.northEastButton, f r.pos.Y)
                     southWestButton = Button.Lens.posY.Set (r.southWestButton, f r.pos.Y + height.Get r)
                     southEastButton = Button.Lens.posY.Set (r.southEastButton, f r.pos.Y + height.Get r)
+                    svgYAxisLabel   = {r.svgYAxisLabel with centre = V2d (r.svgYAxisLabel.centre.X, f r.pos.Y)}
             }
         }
 
@@ -173,6 +183,8 @@
           northEastButton = Button.init
           southWestButton = Button.init
           southEastButton = Button.init
+
+          svgYAxisLabel   = Svgplus.Text.init
       } 
 
       let _new = Lens.width.Set (_new, 50.0)
@@ -226,6 +238,7 @@
           updateColour cmap _model
         | SetDottedBorder b -> 
           {model with dottedBorder = b}
+        | _ -> model
 
 
         
@@ -246,6 +259,7 @@
 
         let! draw = model.draw
         if draw then
+          yield! ((Text.view model.svgYAxisLabel) |> AList.map (UI.map TextAction))
           yield (Svgplus.Base.drawBorderedRectangle
                     pos dim col
                     C4b.Black C4b.Black

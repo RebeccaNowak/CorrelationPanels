@@ -256,10 +256,9 @@
                      (xToSvg          : float -> float)
                      (yToSvg          : float)
                      (defaultWidth    : float)
-                     (colourMap       : ColourMap) : (RectangleStack * GeologicalLog) = 
+                     (colourMap       : ColourMap) 
+                     (elevationZeroHeight : float) : (RectangleStack * GeologicalLog) = 
       let id = RectangleStackId.newId()
-      if annoApp.annotations.IsEmptyOrNull () then Log.error "Creating log failed. There are no annotations."
-
       let wInfNodes = (Generate.generateLevel //TODO make more compact by removing debug stuff
                         id
                         selectedPoints 
@@ -290,8 +289,12 @@
               let white : ColorInput = {c = C4b.White} 
               (true, defaultWidth, white, Some white.c)
         
+        let dataRange = (LogNodes.Helper.elevationRange n annoApp)
 
-        let height = (LogNodes.Helper.elevationRange n annoApp).range * yToSvg
+        let dataHeight = dataRange.range
+        let yAxisUpperBorder = sprintf "%.2f" (dataRange.max - elevationZeroHeight)
+        
+        let height = dataHeight * yToSvg
         let _height = //DEBUGGING
           match height with
             | height when height > 1000.0 ->
@@ -305,9 +308,10 @@
               dottedBorder = dotted
               colour = colour
               overwriteColour = overwriteColour
+              svgYAxisLabel = Svgplus.Text.init' yAxisUpperBorder
           }
 
-        rectangle
+        (rectangle, dataHeight)
 
       //let rectangles = //////////////////////// LOWEST LEVEL NODES!!!
       //  nodes
@@ -327,12 +331,12 @@
       
       let rmap = 
         rectangles 
-          |> List.map (fun r -> (r.id, r))
+          |> List.map (fun (r,h) -> (r.id, r))
           |> HMap.ofList
           
       let order =
         rectangles 
-          |> List.map (fun r -> r.id)
+          |> List.map (fun (r,h) -> r.id)
 
 
       // let allNodes = LogNodes.Recursive.collectAll
@@ -341,9 +345,50 @@
       let __nodes = zipped 
                     |> List.map (fun (r,n) -> {n with rectangleId = r})
                     |> PList.ofList
+      
+      let lowest =
+        LogNodes.Helper.tryLowestBorder' __nodes annoApp
+      let upmost =
+        LogNodes.Helper.tryHighestBorder' __nodes annoApp
+      let _dataRange =
+        Option.map2 (fun l u -> {min = l; max = u}) lowest upmost
+
+      let dataRange =
+        match _dataRange with
+        | None -> Rangef.init
+        | Some r -> r
+
+      //let dataRangeFromRects =
+      //  let r = 
+      //    rectangles 
+      //      |> List.map (fun (r,h) -> h)
+      //      |> List.reduce (fun h1 h2 -> h1 + h2)
+      //  r
+
+      //let foo = 1 + 1
+
+      
+      //let dataRange = 
+      //  let topNode = List.tryHead _nodes 
+      //  let bottomNode = List.tryLast _nodes
+      //  let optRange = 
+      //    match topNode, bottomNode with
+      //    | Some t, Some b -> 
+      //      let max = (Option.bind (fun a -> AnnotationApp.tryElevation annoApp a.annotationId) t.uBorder)
+      //      let min = (Option.bind (fun a -> AnnotationApp.tryElevation annoApp a.annotationId) t.lBorder)
+      //      Option.map2 (fun min max -> {min = min; max = max}) min max//Some 
+      //    | _,_ -> None
+      //  let r = 
+      //    match optRange with
+      //    | Some o -> o
+      //    | None   -> 
+      //      Log.error "elevation range og log could not be calculated"
+      //      Rangef.init
+      //  r
+
 
       let stack = 
-        RectangleStack.init id rmap (PList.ofList order)
+        RectangleStack.init id rmap (PList.ofList order) (fun x -> x * yToSvg) dataRange
 
       let log =
         {

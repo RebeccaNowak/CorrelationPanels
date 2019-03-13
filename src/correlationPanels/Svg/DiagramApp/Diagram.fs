@@ -84,7 +84,7 @@ open SimpleTypes
           | _ -> def
 
        
-    let init yMapping nativeRange : Diagram = 
+    let init dataToY yToData : Diagram = 
       {
         rectangleStacks    = HMap.empty
         order              = PList.empty
@@ -93,7 +93,9 @@ open SimpleTypes
         marginLeft         = 50.0
         marginTop          = 50.0
         selectedRectangle  = None
-        yAxis              = AxisApp.initial yMapping nativeRange
+        dataToY            = dataToY
+        yToData            = yToData
+        dataRange          = Rangef.init
       }
 
     let sampleInit : Diagram =
@@ -117,7 +119,7 @@ open SimpleTypes
 
       let order = [s1.id;s2.id;s3.id] |> PList.ofList
 
-      {init (fun x -> x) Rangef.init with 
+      {init (fun x -> x) (fun x -> x) with 
         rectangleStacks    = smap
         order              = order
         connectionApp      = ConnectionApp.init
@@ -356,8 +358,6 @@ open SimpleTypes
     let view (model : MDiagram) =
       //let foo = 
       //    RectangleStack.view >> UIMapping.mapAListId  
-      let axis =
-        AxisApp.view model.yAxis
 
       let stacks = 
         alist {

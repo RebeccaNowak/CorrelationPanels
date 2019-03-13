@@ -20,7 +20,9 @@ module Mutable =
         let _marginLeft = ResetMod.Create(__initial.marginLeft)
         let _marginTop = ResetMod.Create(__initial.marginTop)
         let _selectedRectangle = MOption.Create(__initial.selectedRectangle)
-        let _yAxis = Svgplus.AxesTypes.Mutable.MAxisApp.Create(__initial.yAxis)
+        let _yToData = ResetMod.Create(__initial.yToData)
+        let _dataToY = ResetMod.Create(__initial.dataToY)
+        let _dataRange = ResetMod.Create(__initial.dataRange)
         
         member x.rectangleStacks = _rectangleStacks :> amap<_,_>
         member x.order = _order :> alist<_>
@@ -29,7 +31,9 @@ module Mutable =
         member x.marginLeft = _marginLeft :> IMod<_>
         member x.marginTop = _marginTop :> IMod<_>
         member x.selectedRectangle = _selectedRectangle :> IMod<_>
-        member x.yAxis = _yAxis
+        member x.yToData = _yToData :> IMod<_>
+        member x.dataToY = _dataToY :> IMod<_>
+        member x.dataRange = _dataRange :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : Svgplus.DA.Diagram) =
@@ -43,7 +47,9 @@ module Mutable =
                 ResetMod.Update(_marginLeft,v.marginLeft)
                 ResetMod.Update(_marginTop,v.marginTop)
                 MOption.Update(_selectedRectangle, v.selectedRectangle)
-                Svgplus.AxesTypes.Mutable.MAxisApp.Update(_yAxis, v.yAxis)
+                ResetMod.Update(_yToData,v.yToData)
+                ResetMod.Update(_dataToY,v.dataToY)
+                ResetMod.Update(_dataRange,v.dataRange)
                 
         
         static member Create(__initial : Svgplus.DA.Diagram) : MDiagram = MDiagram(__initial)
@@ -102,9 +108,21 @@ module Mutable =
                     override x.Set(r,v) = { r with selectedRectangle = v }
                     override x.Update(r,f) = { r with selectedRectangle = f r.selectedRectangle }
                 }
-            let yAxis =
-                { new Lens<Svgplus.DA.Diagram, Svgplus.AxesTypes.AxisApp>() with
-                    override x.Get(r) = r.yAxis
-                    override x.Set(r,v) = { r with yAxis = v }
-                    override x.Update(r,f) = { r with yAxis = f r.yAxis }
+            let yToData =
+                { new Lens<Svgplus.DA.Diagram, System.Double -> System.Double>() with
+                    override x.Get(r) = r.yToData
+                    override x.Set(r,v) = { r with yToData = v }
+                    override x.Update(r,f) = { r with yToData = f r.yToData }
+                }
+            let dataToY =
+                { new Lens<Svgplus.DA.Diagram, System.Double -> System.Double>() with
+                    override x.Get(r) = r.dataToY
+                    override x.Set(r,v) = { r with dataToY = v }
+                    override x.Update(r,f) = { r with dataToY = f r.dataToY }
+                }
+            let dataRange =
+                { new Lens<Svgplus.DA.Diagram, SimpleTypes.Rangef>() with
+                    override x.Get(r) = r.dataRange
+                    override x.Set(r,v) = { r with dataRange = v }
+                    override x.Update(r,f) = { r with dataRange = f r.dataRange }
                 }

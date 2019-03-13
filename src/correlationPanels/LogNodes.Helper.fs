@@ -130,7 +130,7 @@ open CorrelationDrawing
       let opt = 
         lst |> PList.map (fun p -> p.lBorder) 
             |> DS.PList.filterNone
-            |> PList.map (filterInfinity annoApp)
+            |> PList.map (filterInfinity annoApp) 
             |> DS.PList.filterNone
             |> DS.PList.tryMinBy (fun (b, d) -> d)
       Option.map (fun (b,d) -> b) opt
@@ -143,6 +143,20 @@ open CorrelationDrawing
             |> DS.PList.filterNone
             |> DS.PList.tryMaxBy (fun (b, d) -> d)
       Option.map (fun (b,d) -> b) opt
+
+    let tryHighestBorder' (lst : plist<LogNode>) (annoApp : AnnotationApp) =
+      let optBorder = tryHighestBorder lst annoApp
+      let res =
+        Option.bind (fun b -> Border.tryElevation b annoApp) optBorder 
+      res
+
+    let tryLowestBorder' (lst : plist<LogNode>) (annoApp : AnnotationApp) =
+      let optBorder = tryLowestBorder lst annoApp
+      let res =
+        Option.bind (fun b -> Border.tryElevation b annoApp) optBorder 
+      res
+
+        
 
     let findLowestNode (lst : plist<LogNode>) (annoApp : AnnotationApp)  =
       lst |> DS.PList.tryMaxBy (fun n -> elevation n annoApp)
@@ -161,47 +175,66 @@ open CorrelationDrawing
       let isDataNode = (model.nodeType <> LogNodeType.Angular 
                           || model.nodeType <> LogNodeType.Metric)
       ((model.children.IsEmpty () ) && isInfType)
+
+    
         
     let rec replaceInfinity (model : LogNode) (annoApp : AnnotationApp) : (LogNode) =
-      let (newNode) = 
+      let _replaceNegInf (model : LogNode) (annoApp : AnnotationApp) : LogNode =
+        let children   = model.children 
+                            |> PList.filter (fun n -> not (isInfinityTypeLeaf n))
+                            |> PList.map (fun c -> replaceInfinity c annoApp)   
+        if children.IsEmpty () 
+        then model 
+        else
+        let _model =
+          let optLb = tryLowestBorder children annoApp
+          {model with lBorder   =  Option.map (fun lb -> {lb with nodeId = model.id}) optLb
+                      children  = children
+                      nodeType  = LogNodeType.Hierarchical
+          }
+        _model
+
+      let _replacePosInf (model : LogNode) (annoApp : AnnotationApp) : LogNode =
+        let children   = model.children 
+                          |> PList.filter (fun n -> not (isInfinityTypeLeaf n))
+                          |> PList.map (fun c -> replaceInfinity c annoApp)   
+        if children.IsEmpty() 
+        then model 
+        else
+          let optUb = tryHighestBorder children annoApp
+          let ub = optUb |> Option.map (fun b -> {b with nodeId = model.id})
+          let _model =
+            {model with uBorder   =   ub
+                        children  = children
+                        nodeType  = LogNodeType.Hierarchical
+            }
+          _model
+
+
+      let newNode = 
         let noChildren = model.children.IsEmpty()
         match noChildren, model.nodeType with
           | false, LogNodeType.NegInfinity -> 
-            let children   = model.children 
-                               |> PList.filter (fun n -> not (isInfinityTypeLeaf n))
-                               |> PList.map (fun c -> replaceInfinity c annoApp)   
-            if children.IsEmpty() then model else
-              let optLb = tryLowestBorder children annoApp
-              {model with lBorder   =  Option.map (fun lb -> {lb with nodeId = model.id}) optLb
-                          children  = children
-                          nodeType  = LogNodeType.Hierarchical
-              }
-            
+            _replaceNegInf model annoApp
           | false, LogNodeType.PosInfinity ->
-            let children   = model.children 
-                              |> PList.filter (fun n -> not (isInfinityTypeLeaf n))
-                              |> PList.map (fun c -> replaceInfinity c annoApp)   
-            if children.IsEmpty() then model else
-              let optUb = tryHighestBorder children annoApp
-              let ub = optUb |> Option.map (fun b -> {b with nodeId = model.id})
-              {model with uBorder   =   ub
-                          children  = children
-                          nodeType  = LogNodeType.Hierarchical
-              }
+            _replacePosInf model annoApp
           | _ , _ -> (model)
-      (newNode)
+      newNode
 
     let replaceInfinity' (nodes : plist<LogNode>) 
                          (annoApp : AnnotationApp) : plist<LogNode> =
       let _nodes = 
         nodes
           |> PList.map (fun n -> (replaceInfinity n annoApp))
+
+      let __nodes =
+        _nodes
           |> PList.filter (fun n -> not (isInfinityTypeLeaf n ))
       
       //for n in _nodes do
       //  printf "%s" (n.nodeType.ToString ())
 
-      _nodes
+      __nodes
         
 ///////////////////////////////////////////      
 

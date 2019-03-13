@@ -107,35 +107,47 @@
                   ypos (yRange.range * m ) opt
       }
 
-    let yToSvg (model : CorrelationPlot) (y : float)  =
-      let opt =  model.svgOptions
-      let yRange = model.yRange
-      match yRange.range with
-        | 0.0 -> Log.line "Divide by zero: Log range is %.2f-%.2f" yRange.min yRange.max
-        | _ -> ()
-      let foo = opt.logPadding + (yRange.max - y) * (opt.logHeight / yRange.range)
-      foo
+    //let yToSvg (model : CorrelationPlot) (y : float)  =
+    //  let opt =  model.svgOptions
+    //  let yRange = model.yRange
+    //  match yRange.range with
+    //    | 0.0 -> Log.line "Divide by zero: Log range is %.2f-%.2f" yRange.min yRange.max
+    //    | _ -> ()
+    //  let foo = opt.logPadding + (yRange.max - y) * (opt.logHeight / yRange.range)
+    //  foo
 
-    let createNewLog (model : CorrelationPlot) (annoApp : AnnotationApp) (colourMap : ColourMap) =
-      let (stack, newLog) = 
-        Log.initial 
-            model.selectedPoints  //selected points
-            model.semanticApp     //selected
-            annoApp
-            model.xToSvg
-            model.yToSvg
-            model.defaultWidth
-            colourMap
+    let createNewLog (model : CorrelationPlot) 
+                     (annoApp : AnnotationApp) 
+                     (colourMap : ColourMap) =
+      let dataRange = AnnotationApp.elevationRange annoApp
 
-      let diagram =
-        Diagram.update model.diagram (Diagram.AddStack stack)
+      match annoApp.annotations.IsEmptyOrNull () with
+      | true -> 
+        Log.error "Creating log failed. There are no annotations."
+        model
+      | false ->
+        let (stack, newLog) = 
+          Log.initial 
+              model.selectedPoints  //selected points
+              model.semanticApp     //selected
+              annoApp
+              model.xToSvg
+              model.yToSvg
+              model.defaultWidth
+              colourMap
+              model.elevationZeroHeight
 
-      {
-        model with 
-          diagram       = diagram
-          logs             = (model.logs.Add (newLog.id, newLog))
-          selectedPoints   = hmap<AnnotationId, V3d>.Empty
-      }
+
+
+        let diagram =
+          Diagram.update model.diagram (Diagram.AddStack stack)
+
+        {
+          model with 
+            diagram          = diagram
+            logs             = (model.logs.Add (newLog.id, newLog))
+            selectedPoints   = hmap<AnnotationId, V3d>.Empty
+        }
 
 
       
@@ -212,6 +224,12 @@
       
       match action with
         | Clear                    ->
+          let _diagram = 
+            {
+              model.diagram with rectangleStacks =  HMap.empty
+                                                    order = PList.empty
+                                                    connectionApp   = ConnectionApp.init
+                                                    selectedRectangle = None}
           {model with logs             = HMap.empty
                       selectedPoints   = hmap<AnnotationId, V3d>.Empty
                       selectedLog      = None
@@ -219,12 +237,7 @@
                       //annotations      = hmap<AnnotationId, Annotation>.Empty
                       currrentYMapping = None
                       selectedBorder   = None
-                      diagram          = {model.diagram with rectangleStacks = HMap.empty
-                                                             order = PList.empty
-                                                             connectionApp   = ConnectionApp.init
-                                                             selectedRectangle = None
-                                                             yAxis = {model.diagram.yAxis with draw = false}
-                                         }
+                      diagram          = _diagram
           }
         | SvgCameraMessage m ->
           let _svgCamera = SvgCamera.update model.svgCamera m
@@ -437,7 +450,7 @@
       let defaultWidth        = xToSvg UIPlus.ColourMapItem.vfGravel.defaultMiddle
 
       {
-        diagram             = Svgplus.Diagram.init (fun x -> x * yToSvg) Rangef.init
+        diagram             = Svgplus.Diagram.init (fun x -> x * yToSvg) (fun x -> x / yToSvg)
         logs                = HMap.empty
         correlations        = PList.empty
         
@@ -468,6 +481,7 @@
         xToSvg              = xToSvg      
         yToSvg              = yToSvg      
         defaultWidth        = defaultWidth
+        elevationZeroHeight = 2982748.0
       }
 
         //    div [clazz "item"][

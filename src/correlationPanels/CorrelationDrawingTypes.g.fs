@@ -1128,6 +1128,7 @@ module Mutable =
         let _xToSvg = ResetMod.Create(__initial.xToSvg)
         let _yToSvg = ResetMod.Create(__initial.yToSvg)
         let _defaultWidth = ResetMod.Create(__initial.defaultWidth)
+        let _elevationZeroHeight = ResetMod.Create(__initial.elevationZeroHeight)
         
         member x.diagram = _diagram
         member x.colourMapApp = _colourMapApp
@@ -1151,6 +1152,7 @@ module Mutable =
         member x.xToSvg = _xToSvg :> IMod<_>
         member x.yToSvg = _yToSvg :> IMod<_>
         member x.defaultWidth = _defaultWidth :> IMod<_>
+        member x.elevationZeroHeight = _elevationZeroHeight :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : CorrelationDrawing.CorrelationPlot) =
@@ -1179,6 +1181,7 @@ module Mutable =
                 ResetMod.Update(_xToSvg,v.xToSvg)
                 ResetMod.Update(_yToSvg,v.yToSvg)
                 ResetMod.Update(_defaultWidth,v.defaultWidth)
+                ResetMod.Update(_elevationZeroHeight,v.elevationZeroHeight)
                 
         
         static member Create(__initial : CorrelationDrawing.CorrelationPlot) : MCorrelationPlot = MCorrelationPlot(__initial)
@@ -1326,6 +1329,12 @@ module Mutable =
                     override x.Get(r) = r.defaultWidth
                     override x.Set(r,v) = { r with defaultWidth = v }
                     override x.Update(r,f) = { r with defaultWidth = f r.defaultWidth }
+                }
+            let elevationZeroHeight =
+                { new Lens<CorrelationDrawing.CorrelationPlot, System.Double>() with
+                    override x.Get(r) = r.elevationZeroHeight
+                    override x.Set(r,v) = { r with elevationZeroHeight = v }
+                    override x.Update(r,f) = { r with elevationZeroHeight = f r.elevationZeroHeight }
                 }
     
     

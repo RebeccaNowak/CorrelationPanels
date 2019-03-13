@@ -410,6 +410,7 @@ type CorrelationPlot = {
    xToSvg              : float -> float
    yToSvg              : float
    defaultWidth        : float
+   elevationZeroHeight : float
 }
 
 [<DomainType>]

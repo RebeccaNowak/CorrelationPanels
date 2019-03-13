@@ -28,6 +28,9 @@
 
       }
 
+    let init' text : Text =
+      {init with textInput = {TextInput.init with text = text}}
+
     let preferredWidth (model : Text) =
       let fs = float model.fontSize.fontSize
       let nrchars = float model.textInput.text.Length

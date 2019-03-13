@@ -18,6 +18,8 @@ module Mutable =
         let _header = Svgplus.HeaderType.Mutable.MHeader.Create(__initial.header)
         let _order = MList.Create(__initial.order)
         let _pos = ResetMod.Create(__initial.pos)
+        let _yAxis = Svgplus.AxesTypes.Mutable.MAxisApp.Create(__initial.yAxis)
+        let _yAxisMargin = ResetMod.Create(__initial.yAxisMargin)
         
         member x.id = __current.Value.id
         member x.needsLayouting = _needsLayouting :> IMod<_>
@@ -25,6 +27,8 @@ module Mutable =
         member x.header = _header
         member x.order = _order :> alist<_>
         member x.pos = _pos :> IMod<_>
+        member x.yAxis = _yAxis
+        member x.yAxisMargin = _yAxisMargin :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : Svgplus.RectangleStackTypes.RectangleStack) =
@@ -36,6 +40,8 @@ module Mutable =
                 Svgplus.HeaderType.Mutable.MHeader.Update(_header, v.header)
                 MList.Update(_order, v.order)
                 ResetMod.Update(_pos,v.pos)
+                Svgplus.AxesTypes.Mutable.MAxisApp.Update(_yAxis, v.yAxis)
+                ResetMod.Update(_yAxisMargin,v.yAxisMargin)
                 
         
         static member Create(__initial : Svgplus.RectangleStackTypes.RectangleStack) : MRectangleStack = MRectangleStack(__initial)
@@ -87,4 +93,16 @@ module Mutable =
                     override x.Get(r) = r.pos
                     override x.Set(r,v) = { r with pos = v }
                     override x.Update(r,f) = { r with pos = f r.pos }
+                }
+            let yAxis =
+                { new Lens<Svgplus.RectangleStackTypes.RectangleStack, Svgplus.AxesTypes.AxisApp>() with
+                    override x.Get(r) = r.yAxis
+                    override x.Set(r,v) = { r with yAxis = v }
+                    override x.Update(r,f) = { r with yAxis = f r.yAxis }
+                }
+            let yAxisMargin =
+                { new Lens<Svgplus.RectangleStackTypes.RectangleStack, System.Double>() with
+                    override x.Get(r) = r.yAxisMargin
+                    override x.Set(r,v) = { r with yAxisMargin = v }
+                    override x.Update(r,f) = { r with yAxisMargin = f r.yAxisMargin }
                 }

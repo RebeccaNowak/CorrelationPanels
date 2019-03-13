@@ -30,6 +30,7 @@ module Mutable =
         let _northEastButton = Svgplus.Mutable.MButton.Create(__initial.northEastButton)
         let _southWestButton = Svgplus.Mutable.MButton.Create(__initial.southWestButton)
         let _southEastButton = Svgplus.Mutable.MButton.Create(__initial.southEastButton)
+        let _svgYAxisLabel = Svgplus.TextType.Mutable.MText.Create(__initial.svgYAxisLabel)
         
         member x.id = __current.Value.id
         member x.needsLayoutingX = _needsLayoutingX :> IMod<_>
@@ -49,6 +50,7 @@ module Mutable =
         member x.northEastButton = _northEastButton
         member x.southWestButton = _southWestButton
         member x.southEastButton = _southEastButton
+        member x.svgYAxisLabel = _svgYAxisLabel
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : Svgplus.RectangleType.Rectangle) =
@@ -72,6 +74,7 @@ module Mutable =
                 Svgplus.Mutable.MButton.Update(_northEastButton, v.northEastButton)
                 Svgplus.Mutable.MButton.Update(_southWestButton, v.southWestButton)
                 Svgplus.Mutable.MButton.Update(_southEastButton, v.southEastButton)
+                Svgplus.TextType.Mutable.MText.Update(_svgYAxisLabel, v.svgYAxisLabel)
                 
         
         static member Create(__initial : Svgplus.RectangleType.Rectangle) : MRectangle = MRectangle(__initial)
@@ -195,4 +198,10 @@ module Mutable =
                     override x.Get(r) = r.southEastButton
                     override x.Set(r,v) = { r with southEastButton = v }
                     override x.Update(r,f) = { r with southEastButton = f r.southEastButton }
+                }
+            let svgYAxisLabel =
+                { new Lens<Svgplus.RectangleType.Rectangle, Svgplus.TextType.Text>() with
+                    override x.Get(r) = r.svgYAxisLabel
+                    override x.Set(r,v) = { r with svgYAxisLabel = v }
+                    override x.Update(r,f) = { r with svgYAxisLabel = f r.svgYAxisLabel }
                 }

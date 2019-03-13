@@ -42,6 +42,7 @@
     northEastButton : Button
     southWestButton : Button
     southEastButton : Button
+    svgYAxisLabel   : Svgplus.TextType.Text
   }
 
 

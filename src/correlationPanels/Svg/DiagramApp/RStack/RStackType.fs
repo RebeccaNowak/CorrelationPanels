@@ -26,5 +26,6 @@ open Svgplus.RectangleType
     header          : HeaderType.Header
     order           : plist<RectangleId>
     pos             : V2d
-
+    yAxis           : Svgplus.AxesTypes.AxisApp
+    yAxisMargin     : float
   }

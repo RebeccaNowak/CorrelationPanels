@@ -13,15 +13,15 @@ module AxisApp =
 
   let initial yMapping nativeRange: AxisApp = 
     {
-      positionTop     = V2d(0)
-      weight          = 2.0
-      step            = 1.0
-      label  = "axis label"
-      defaultGranularity = 1.0
-      yMapping = yMapping
-      nativeRange = nativeRange
-      fontSize = FontSize.defaultSize
-      draw     = true
+      positionTop         = V2d(0)
+      weight              = 2.0
+      step                = 1.0
+      label               = "axis label"
+      defaultGranularity  = 1.0
+      yMapping            = yMapping
+      nativeRange         = nativeRange
+      fontSize            = FontSize.defaultSize
+      draw                = false
     }
   
   let makeIndexList (a : float) (step: float) (b : float) = 
@@ -51,7 +51,8 @@ module AxisApp =
             | Orientation.Horizontal ->
               (new V2d((posList.Item i) + (startPoint.X + shift), (startPoint.Y + 15.0))) //TODO hardcoded
             | Orientation.Vertical ->
-              (new V2d((startPoint.X + shift*2.0), (posList.Item i) + (startPoint.Y + shift)))
+              // (new V2d((startPoint.X + shift*2.0), (posList.Item i) + (startPoint.Y + shift)))
+              (new V2d((startPoint.X + shift*2.0), (posList.Item i) + (startPoint.Y - shift * 0.5)))
         yield Svgplus.Base.drawText' pos txt dir // could rotate labels with Svg.drawText
     } |> Seq.toList
 
@@ -86,7 +87,13 @@ module AxisApp =
           let shift = centreShift label fontSize
           //TODO calc number label width first to determine required padding
           // AXIS LABEL //TODO hardcoded padding
-          yield Svgplus.Base.drawBoldText (new V2d(svgStartPoint.X + 2.0*shift, svgStartPoint.Y + (svgLength * 0.5) + shift)) label Orientation.Vertical
+          let labelXPos : float = svgStartPoint.X + 2.0 * shift
+          //let labelXPos : float = svgStartPoint.X + (float fontSize) * 1.5
+          let labelYPos : float = svgStartPoint.Y + (svgLength * 0.5) + shift
+          //let labelYPos : float = svgStartPoint.Y + (svgLength * 0.5)
+
+          let labelPos =  V2d(labelXPos,labelYPos)
+          yield Svgplus.Base.drawBoldText labelPos label Orientation.Vertical
           // NR LABELS
           let nrLabels = 
             makeNrLabels ((nativeYRange.max + nativeYRange.range * 0.1))
@@ -101,24 +108,27 @@ module AxisApp =
       Svgplus.Attributes.toGroup (List.ofSeq domNodes) []//[attribute "font-size" "10px"]
 
   let view (model       : MAxisApp) =
-    adaptive {
-      let! weight = model.weight
-      let! step = model.step
-      let! fontSize = model.fontSize
-      let! nativeRange = model.nativeRange
-      let! yMapping = model.yMapping
-      let! label = model.label
+    alist {
+      let! show = model.draw
+      if show then
+        let! weight = model.weight
+        let! step = model.step
+        let! fontSize = model.fontSize
+        let! nativeRange = model.nativeRange
+        let! yMapping = model.yMapping
+        let! label = model.label
 
-      let! startPoint = model.positionTop
+        let! startPoint = model.positionTop
 
-      return svgYAxis 
-                      startPoint
-                      nativeRange
-                      weight
-                      yMapping
-                      step
-                      (fontSize.fontSize)
-                      label //TODO hardcoded
+        yield svgYAxis 
+                startPoint
+                nativeRange
+                weight
+                yMapping
+                step
+                (fontSize.fontSize)
+                label //TODO hardcoded
+      
     }
 
 

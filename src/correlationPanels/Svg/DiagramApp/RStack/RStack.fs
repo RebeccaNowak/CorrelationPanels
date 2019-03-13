@@ -14,6 +14,7 @@
   module RectangleStack =
     open Aardvark.SceneGraph
     open UIPlus
+    open Aardvark.Base
 
     type Action =
       | RectangleMessage of (RectangleId * Rectangle.Action)
@@ -27,39 +28,45 @@
       | UpdateXSizes     of (float -> float)
       | Delete
 
+    let axisStart (model : RectangleStack) (header : Svgplus.HeaderType.Header) = 
+      V2d(model.pos.X - model.yAxisMargin, model.pos.Y + header.dim.height * 1.0)
+
     let stack (model : RectangleStack) =
       match model.order.Count > 0 with
-        | true ->
-          let clean = 
-            model.rectangles
-              |> HMap.map (fun id r -> Rectangle.Lens.pos.Set (r, V2d 0.0))
+      | true ->
+        let clean = 
+          model.rectangles
+            |> HMap.map (fun id r -> Rectangle.Lens.pos.Set (r, V2d 0.0))
           
+        let f (prev : Rectangle) (curr : Rectangle) =
+          let cposy = prev.pos.Y + prev.dim.height
+          Rectangle.Lens.posY.Set (curr, cposy)
 
-          let f (prev : Rectangle) (curr : Rectangle) =
-            let cposy = prev.pos.Y + prev.dim.height
-            Rectangle.Lens.posY.Set (curr, cposy)
+        let _rs = 
+          DS.PList.mapPrev' model.order clean None f
 
-          let _rs = 
-            DS.PList.mapPrev' model.order clean None f
-
-          let maxWidth = model.rectangles 
-                          |> DS.HMap.values
-                          |> List.map (fun r -> r.dim.width)
-                          |> List.max
-
+        let maxWidth = model.rectangles 
+                        |> DS.HMap.values
+                        |> List.map (fun r -> r.dim.width)
+                        |> List.max
 
 
-          let _header = 
-            {model.header with centre = V2d(model.pos.X + maxWidth * 0.5, model.pos.Y)
-            } |> Header.layout false
 
-          {
-            model with  rectangles = _rs
-                        header     = _header 
-          }
-        | false -> model
+        let _header = 
+          {model.header with centre = V2d(model.pos.X + maxWidth * 0.5, model.pos.Y)
+          } |> Header.layout false
 
-    let init id rmap order : RectangleStack =
+        let _yAxis =
+          {model.yAxis with positionTop = axisStart model _header}
+
+        {
+          model with  rectangles = _rs
+                      header     = _header 
+                      yAxis     = _yAxis
+        }
+      | false -> model
+
+    let init id rmap order yMapping nativeRange: RectangleStack =
       let header = Header.init
 
       let rs = 
@@ -70,6 +77,8 @@
           header        = header
           order         = order
           pos           = V2d.OO
+          yAxis         = AxisApp.initial yMapping nativeRange
+          yAxisMargin   = 20.0
         } 
       
       let stacked = rs |> stack
@@ -102,6 +111,7 @@
                         yield (r3.id, r3)
                   ]    
 
+
       let rs = 
         {
           id            = id
@@ -110,6 +120,8 @@
           header        = header
           order         = PList.ofList order
           pos           = V2d.OO
+          yAxis         = AxisApp.initial (fun x -> x) SimpleTypes.Rangef.init
+          yAxisMargin   = 20.0
         } 
       
       let stacked = rs |> stack
@@ -128,11 +140,14 @@
                                   let _v = V2d (_x, _y)
                                   Rectangle.Lens.pos.Set (r, _v))
               let _header = Header.Lens.pos.Set (s.header, v) 
+              let _yAxis  = {s.yAxis with positionTop = V2d(v.X - s.yAxisMargin, v.Y + _header.dim.height * 1.0)}
               {
                   s with  rectangles = _rectangles
                           header     = _header
+                          yAxis      = _yAxis
                           pos        = v
               }
+              
             override x.Update(s,f) =
               let v = f s.pos
               let _rectangles = 
@@ -143,10 +158,12 @@
                                 let _v = V2d (_x, _y)
                                 Rectangle.Lens.pos.Set (r, _v))
               let _header = Header.Lens.pos.Set (s.header, v) 
+              let _yAxis  = {s.yAxis with positionTop = V2d(v.X - s.yAxisMargin, v.Y + _header.dim.height * 1.0)}
               {
                 s with  rectangles = _rectangles
                         header     = _header
                         pos        = v
+                        yAxis      = _yAxis
               }
         }
 
@@ -173,6 +190,7 @@
         model.rectangles 
           |> HMap.map (fun id r -> Rectangle.Lens.pos.Set (r, v))
       let _header = Header.Lens.pos.Set (model.header, v)      
+      let _yAxis  = {model.yAxis with positionTop = V2d(v)}
       {
         model with  rectangles     = _rectangles
                     header         = _header
@@ -225,6 +243,8 @@
             model.rectangles
               |> HMap.map (fun id r -> Rectangle.Lens.height.Update (r,f))
           {model with rectangles = _rects}
+          //let _yAxis = //TODO!
+          //  AxisApp.update
         | UpdateXSizes f ->
           let _rects =
             model.rectangles
@@ -240,6 +260,7 @@
       let content =
         alist {
           yield! (Header.view model.header) |> AList.map (UI.map HeaderMessage)
+          yield! (AxisApp.view model.yAxis)
           for id in model.order do
             let! r = AMap.find id model.rectangles 
             yield! (viewMap r id RectangleMessage)

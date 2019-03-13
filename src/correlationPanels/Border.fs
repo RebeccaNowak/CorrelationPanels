@@ -92,8 +92,17 @@ module Border =
                             C4b.Red
 
   let tryElevation (model : Border) (annoApp : AnnotationApp) =
-    let optAnno = AnnotationApp.findAnnotation annoApp model.annotationId
-    Option.map (fun a -> a.elevation model.point) optAnno
+    match model.borderType with 
+    | BorderType.NegativeInfinity -> 
+      Some System.Double.NegativeInfinity
+    | BorderType.PositiveInfinity -> 
+      Some System.Double.PositiveInfinity
+    | BorderType.Invalid          -> 
+      Log.warn "Invalid Border Type, could nor calculate elevation."
+      None
+    | BorderType.Normal           ->
+      let optAnno = AnnotationApp.findAnnotation annoApp model.annotationId
+      Option.map (fun a -> a.elevation model.point) optAnno
         
   module Sg =
     let createLabel (str : string) (pos : V3d) =
