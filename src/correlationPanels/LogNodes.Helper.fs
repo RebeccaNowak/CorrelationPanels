@@ -6,7 +6,7 @@ open CorrelationDrawing
     open Aardvark.UI
     open Aardvark.Base.Incremental
     open Aardvark.Base.MultimethodTest
-
+    open SimpleTypes
 
     let hasChildren (model : MLogNode) =
       let isEmpty = DS.AList.isEmpty model.children
