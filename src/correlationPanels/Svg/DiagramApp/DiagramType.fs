@@ -12,19 +12,17 @@ open Svgplus.HeaderType
 open UIPlus
 open Svgplus.AxesTypes
 open SimpleTypes
-
-  type RectangleIdentification = {
-    rid         : RectangleId
-    stackid     : RectangleStackId
-  }
+open Svgplus.DiagramItemType
 
 
   [<DomainType>]
   type Diagram = {
-    rectangleStacks   : hmap<RectangleStackTypes.RectangleStackId, RectangleStackTypes.RectangleStack>
-    order             : plist<RectangleStackTypes.RectangleStackId>
+    //rectangleStacks   : hmap<RectangleStackTypes.RectangleStackId, RectangleStackTypes.RectangleStack>
+    items             : hmap<DiagramItemId, DiagramItem>
+    //order             : plist<RectangleStackTypes.RectangleStackId>
+    order             : plist<DiagramItemId>
     connectionApp     : ConnectionApp
-    rstackGap         : float
+    itemGap         : float
     marginLeft        : float
     marginTop         : float
     selectedRectangle : option<RectangleIdentification>

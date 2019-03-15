@@ -40,10 +40,13 @@
     label         : UIPlus.TextInput
     pos           : V2d
     dim           : Size2D
+
     colour        : Aardvark.UI.ColorInput
     lowerBorderColour  : C4b
     upperBorderColour : C4b
     overwriteColour : option<C4b>
+    useColourMap  : bool
+
     isToggled     : bool
     colChange     : V3i
     isHovering    : bool
@@ -55,6 +58,9 @@
     southWestButton : Button
     southEastButton : Button
     svgYAxisLabel   : Svgplus.TextType.Text
-  }
+  } with 
+    member this.maxWidth =
+      this.dim.width + Text.preferredWidth this.svgYAxisLabel
+
 
 

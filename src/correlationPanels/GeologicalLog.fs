@@ -16,16 +16,16 @@
     open Svgplus.RectangleStackTypes
     open Svgplus
     open Svgplus.RectangleType
+    open Svgplus.DiagramItemType
     open UIPlus
-    open Aardvark.Base.IL.Serializer
-    open System.Windows.Interop
+   
     
     type Action =
       | SetState                  of State
       | ToggleState                  
       | LogNodeMessage            of (LogNodeId * LogNodes.Action)
       | SelectLogNode             of LogNodeId
-      | TextInputMessage          of (RectangleStackId * TextInput.Action)
+      | TextInputMessage          of (DiagramItemId * TextInput.Action)
       | MoveUp                    of RectangleStackId
       | MoveDown                  of RectangleStackId
 
@@ -257,7 +257,7 @@
                      (yToSvg          : float)
                      (defaultWidth    : float)
                      (colourMap       : ColourMap) 
-                     (elevationZeroHeight : float) : (RectangleStack * GeologicalLog) = 
+                     (elevationZeroHeight : float) = 
       let id = RectangleStackId.newId()
       let wInfNodes = (Generate.generateLevel //TODO make more compact by removing debug stuff
                         id
@@ -269,8 +269,6 @@
                       )
       let nodes = 
         LogNodes.Helper.replaceInfinity' wInfNodes annoApp
-
-      let foo = 2 * 3
 
       let nodeToRectangle (n : LogNode) =
         let metricVal = LogNodes.Recursive.calcMetricValue n annoApp //TODO!!!!
@@ -402,9 +400,19 @@
       let stack = 
         RectangleStack.init id rmap (PList.ofList order) (fun x -> x * yToSvg) dataRange
 
+      let item = DiagramItem.init (HMap.ofList [(stack.id, stack)]) (PList.ofList [stack.id])
+      
+      let ref : LogDiagramReferences =
+        {
+          itemId = item.id
+          mainLog     = stack.id
+          secondaryLog = None
+        }
+
       let log =
         {
           id             = id
+          diagramRef     = ref
           state          = State.Display
 
           //xToSvg         =  xToSvg      
@@ -416,7 +424,7 @@
       
         }
 
-      (stack, log)
+      (item, log)
     ///////////////////////////////////////// SVG VIEW ///////////////////////////////////////////
 
     module View = 
@@ -432,7 +440,7 @@
                    //(annoApp     : MAnnotationModel)
                    (rowOnClick  : 'msg) 
                    (mapper      : Action -> 'msg)
-                   (stack       : MRectangleStack) =
+                   (stack       : MDiagramItem) =
 
         let labelEditNode textInput = 
           (TextInput.view'' 
@@ -457,7 +465,7 @@
             [
               [
                 (labelEditNode stack.header.label.textInput) 
-                  |> UI.map (fun m -> Action.TextInputMessage (stack.id, m))
+                  |> UI.map (fun m -> Action.TextInputMessage (model.diagramRef.itemId, m))
                   |> UI.map mapper
                   |> Table.intoTd
               ] |> Table.intoTr // |> Table.intoActiveTr rowOnClick      
@@ -482,7 +490,7 @@
           [
             [
               (labelEditNode stack.header.label.textInput) 
-                |> UI.map (fun m -> Action.TextInputMessage (stack.id, m))
+                |> UI.map (fun m -> Action.TextInputMessage (model.diagramRef.itemId, m))
                 |> UI.map mapper
                 |> Table.intoTd
               moveUpDown |> Table.intoTd |> UI.map mapper
@@ -565,6 +573,11 @@
     let init = 
       {
         id              = RectangleStackId.invalid
+        diagramRef      = {
+                            itemId  = DiagramItemId.invalid
+                            mainLog      = RectangleStackId.invalid
+                            secondaryLog = None
+                          }
         state           = State.Display
         //xToSvg          = (fun x -> x)
         //yToSvg          = 10.0

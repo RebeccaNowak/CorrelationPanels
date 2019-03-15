@@ -22,6 +22,7 @@ module Mutable =
         let _lowerBorderColour = ResetMod.Create(__initial.lowerBorderColour)
         let _upperBorderColour = ResetMod.Create(__initial.upperBorderColour)
         let _overwriteColour = MOption.Create(__initial.overwriteColour)
+        let _useColourMap = ResetMod.Create(__initial.useColourMap)
         let _isToggled = ResetMod.Create(__initial.isToggled)
         let _colChange = ResetMod.Create(__initial.colChange)
         let _isHovering = ResetMod.Create(__initial.isHovering)
@@ -43,6 +44,7 @@ module Mutable =
         member x.lowerBorderColour = _lowerBorderColour :> IMod<_>
         member x.upperBorderColour = _upperBorderColour :> IMod<_>
         member x.overwriteColour = _overwriteColour :> IMod<_>
+        member x.useColourMap = _useColourMap :> IMod<_>
         member x.isToggled = _isToggled :> IMod<_>
         member x.colChange = _colChange :> IMod<_>
         member x.isHovering = _isHovering :> IMod<_>
@@ -68,6 +70,7 @@ module Mutable =
                 ResetMod.Update(_lowerBorderColour,v.lowerBorderColour)
                 ResetMod.Update(_upperBorderColour,v.upperBorderColour)
                 MOption.Update(_overwriteColour, v.overwriteColour)
+                ResetMod.Update(_useColourMap,v.useColourMap)
                 ResetMod.Update(_isToggled,v.isToggled)
                 ResetMod.Update(_colChange,v.colChange)
                 ResetMod.Update(_isHovering,v.isHovering)
@@ -153,6 +156,12 @@ module Mutable =
                     override x.Get(r) = r.overwriteColour
                     override x.Set(r,v) = { r with overwriteColour = v }
                     override x.Update(r,f) = { r with overwriteColour = f r.overwriteColour }
+                }
+            let useColourMap =
+                { new Lens<Svgplus.RectangleType.Rectangle, System.Boolean>() with
+                    override x.Get(r) = r.useColourMap
+                    override x.Set(r,v) = { r with useColourMap = v }
+                    override x.Update(r,f) = { r with useColourMap = f r.useColourMap }
                 }
             let isToggled =
                 { new Lens<Svgplus.RectangleType.Rectangle, System.Boolean>() with

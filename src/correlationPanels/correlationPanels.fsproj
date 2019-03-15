@@ -74,7 +74,9 @@
 	<Compile Include="Svg\DiagramApp\HeaderApp\HeaderApp.fs" />
 	<Compile Include="Svg\DiagramApp\RStack\RStackType.fs" />
 	<Compile Include="Svg\DiagramApp\RStack\RStack.fs" />
-	<Compile Include="Svg\DiagramApp\DiagramModel.fs" />
+	<Compile Include="Svg\DiagramApp\DiagramElement\DiagramItemType.fs" />
+	<Compile Include="Svg\DiagramApp\DiagramElement\DiagramItem.fs" />
+	<Compile Include="Svg\DiagramApp\DiagramType.fs" />
 	<Compile Include="Svg\DiagramApp\Diagram.fs" />
 	<Content Include="docking.css">
 	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -114,6 +116,7 @@
 	<Compile Include="LogNodes.Update.fs" />
 	<Compile Include="LogNodes.Debug.fs" />
 	<Compile Include="LogNodes.View.fs" />
+	<Compile Include="LogToDiagramItem.fs" />
 	<Compile Include="GeologicalLog.fs" />
 	<Compile Include="Correlation.fs" />
 	<Compile Include="CorrelationPlot.fs" />

@@ -83,6 +83,7 @@
         label         = Text.init
         leftButton    = left
         rightButton   = right
+        visible       = true
       }
 
     let centreToPos r =
@@ -136,7 +137,6 @@
           {model with rightButton = Arrow.update model.rightButton m}
         | TextMessage m ->
           {model with label = Text.update model.label m} |> (layout false)
-        | _ -> model
 
     let view (model : MHeader) =
       let left  = Arrow.view model.leftButton
@@ -144,13 +144,10 @@
       let right = Arrow.view model.rightButton
 
       alist {
-        yield! (left  |> AList.map (UI.map Action.LeftArrowMessage))
-        yield!  (label |> AList.map (UI.map Action.TextMessage))
-        yield! (right |> AList.map (UI.map Action.RightArrowMessage))
-
-        //let! centre = model.centre
-        //let! dim    = model.dim
-        //let leftUpper = V2d(centre.X - dim.width * 0.5, centre.Y - dim.height * 0.5)
-        //yield Svgplus.Base.drawRectangle leftUpper dim.width dim.height C4b.Cyan
+        let! vis = model.visible
+        if vis then
+          yield! (left  |> AList.map (UI.map Action.LeftArrowMessage))
+          yield!  (label |> AList.map (UI.map Action.TextMessage))
+          yield! (right |> AList.map (UI.map Action.RightArrowMessage))
       }
 

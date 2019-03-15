@@ -859,6 +859,7 @@ module Mutable =
         let _annoPoints = MMap.Create(__initial.annoPoints)
         
         member x.id = __current.Value.id
+        member x.diagramRef = __current.Value.diagramRef
         member x.state = _state :> IMod<_>
         member x.defaultWidth = _defaultWidth :> IMod<_>
         member x.nodes = _nodes :> alist<_>
@@ -894,6 +895,12 @@ module Mutable =
                     override x.Get(r) = r.id
                     override x.Set(r,v) = { r with id = v }
                     override x.Update(r,f) = { r with id = f r.id }
+                }
+            let diagramRef =
+                { new Lens<CorrelationDrawing.GeologicalLog, CorrelationDrawing.LogDiagramReferences>() with
+                    override x.Get(r) = r.diagramRef
+                    override x.Set(r,v) = { r with diagramRef = v }
+                    override x.Update(r,f) = { r with diagramRef = f r.diagramRef }
                 }
             let state =
                 { new Lens<CorrelationDrawing.GeologicalLog, CorrelationDrawing.State>() with
@@ -1214,7 +1221,7 @@ module Mutable =
                     override x.Update(r,f) = { r with keyboard = f r.keyboard }
                 }
             let logs =
-                { new Lens<CorrelationDrawing.CorrelationPlot, Aardvark.Base.hmap<Svgplus.RectangleStackTypes.RectangleStackId,CorrelationDrawing.GeologicalLog>>() with
+                { new Lens<CorrelationDrawing.CorrelationPlot, Aardvark.Base.hmap<Svgplus.DiagramItemType.DiagramItemId,CorrelationDrawing.GeologicalLog>>() with
                     override x.Get(r) = r.logs
                     override x.Set(r,v) = { r with logs = v }
                     override x.Update(r,f) = { r with logs = f r.logs }
@@ -1250,7 +1257,7 @@ module Mutable =
                     override x.Update(r,f) = { r with selectedNode = f r.selectedNode }
                 }
             let selectedLog =
-                { new Lens<CorrelationDrawing.CorrelationPlot, Microsoft.FSharp.Core.Option<Svgplus.RectangleStackTypes.RectangleStackId>>() with
+                { new Lens<CorrelationDrawing.CorrelationPlot, Microsoft.FSharp.Core.Option<Svgplus.DiagramItemType.DiagramItemId>>() with
                     override x.Get(r) = r.selectedLog
                     override x.Set(r,v) = { r with selectedLog = v }
                     override x.Update(r,f) = { r with selectedLog = f r.selectedLog }

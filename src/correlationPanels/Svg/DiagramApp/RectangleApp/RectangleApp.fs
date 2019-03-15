@@ -170,10 +170,13 @@
           needsLayoutingY = false
           pos            = V2d (0.0)
           dim            = {width = 0.0; height = 0.0}
+
           colour         = {c = C4b.Gray}
           overwriteColour = Some C4b.White
           lowerBorderColour   = C4b.Black
           upperBorderColour = C4b.Black
+          useColourMap   = true
+
           isToggled      = false
           colChange      = V3i (0,0,0)
           isHovering     = false
@@ -238,7 +241,11 @@
         | LayoutY            -> {model with needsLayoutingY = false}
         | SetWidth (w, cmap)        -> 
           let _model = Lens.width.Set (model, w)
-          updateColour cmap _model
+          match model.useColourMap with
+          | true ->
+            updateColour cmap _model
+          | false ->
+            _model
         | SetDottedBorder b -> 
           {model with dottedBorder = b}
         | SelectLowerBorder -> 
@@ -246,7 +253,9 @@
           _model
         | SelectUpperBorder -> 
           let _model = model
-          _model
+          _model 
+        | TextAction m -> // elevation labels of LogNodes
+          model
 
 
         
