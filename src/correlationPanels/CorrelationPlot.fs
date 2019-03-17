@@ -261,6 +261,7 @@
           let _svgCamera = SvgCamera.update model.svgCamera m
           {model with svgCamera = _svgCamera}
         | KeyboardMessage m ->
+          //Log.line "CorrelationPlot received kbmsg %A" m
           let (_kb, _model) = Keyboard.update model.keyboard model m
           {_model with keyboard = _kb}
         | LogMessage (logId, logmsg) ->

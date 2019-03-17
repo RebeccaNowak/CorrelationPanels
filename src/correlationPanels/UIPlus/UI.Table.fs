@@ -46,7 +46,7 @@
             |> List.map (fun str -> th[] [text str])
 
         require (GUI.CSS.myCss) (
-          body [clazz "ui"; style "background: #1B1C1E;position:fixed;width:100%;overflow: auto;"] [
+         // body [clazz "ui"; style "background: #1B1C1E;position:fixed;width:100%;height:100%"] [
             div [] [
               menu
               table
@@ -58,7 +58,7 @@
                     ]
                 )
             ]
-          ]
+         // ]
         )
 
 

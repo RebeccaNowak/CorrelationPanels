@@ -115,16 +115,16 @@ module ColourMap =
 
       Table.toTableView (div[][]) domList ["Grain size";"Colour";"φ-scale"]
 
-    require (GUI.CSS.myCss) (
-      body [style "overflow: scroll"] [
-        div [] [
+    //require (GUI.CSS.myCss) (
+    //  body [style "overflow-y: scroll"] [
+    div [] [
           // menu |> ui.map correlationplotmessage
           Incremental.div (AttributeMap.ofList [clazz "ui inverted segment"])
                           (AList.single tableview)
                              
         ]
-      ]
-    )
+      //]
+    //)
 
   let tryfindItem (model : ColourMap) (iid : CMItemId) =
     PList.tryFind (fun ind it -> it.id = iid) model.mappings
