@@ -247,6 +247,7 @@
         | SelectUpperBorder -> 
           let _model = model
           _model
+        | _ -> model
 
 
         

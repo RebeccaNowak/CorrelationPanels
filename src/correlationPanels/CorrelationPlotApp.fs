@@ -80,7 +80,9 @@
               (onMouseMove (fun p   -> 
                  CorrelationPlot.SvgCameraMessage 
                     (SvgCamera.Action.MouseMove (V2d p))))
-              //onLayoutChanged UpdateConfig
+              
+              onKeyDown (fun k -> CorrelationPlot.KeyboardMessage (Keyboard.Action.KeyDown k))
+              onKeyUp   (fun k -> CorrelationPlot.KeyboardMessage (Keyboard.Action.KeyUp k))
              ] 
              [
                 div [attribute "overflow-x" "auto";attribute "overflow-y" "auto"] [
