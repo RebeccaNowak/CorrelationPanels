@@ -129,7 +129,6 @@ module BorderId =
 
 type LogNodeId = {
   id            : string 
-  rectangleId   : RectangleId
 } with
   member this.isValid = (this.id <> "")
 
@@ -137,12 +136,10 @@ module LogNodeId =
   let invalid = 
     {
       id = ""
-      rectangleId = RectangleId.invalid
     }
   let newId unit : LogNodeId  = 
     {
       id = System.Guid.NewGuid().ToString()
-      rectangleId = RectangleId.newId unit
     }
 /////
 

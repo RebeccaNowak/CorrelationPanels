@@ -14,7 +14,7 @@ open Svgplus.RectangleType
     | ToggleSelectNode    of LogNodeId
     | BorderMessage       of Border.Action
     | RectangleMessage    of Svgplus.Rectangle.Action
-    | ColorPickerMessage  of ColorPicker.Action
+    //| ColorPickerMessage  of ColorPicker.Action
     | RoseDiagramMessage  of Svgplus.RoseDiagram.Action
 
 
@@ -148,6 +148,7 @@ open Svgplus.RectangleType
       { 
         empty with 
           id          = nodeId
+          rectangleId = RectangleId.newId ()
           logId       = logId
           nodeType    = nodeType
           //label       = "log node"
@@ -169,6 +170,7 @@ open Svgplus.RectangleType
       let n = topLevel logId (up, ua) (lp, la) children level
       {
         n with id       = nodeId
+               rectangleId = RectangleId.newId ()
                logId    = logId
                lBorder  = Some lBorder
                uBorder  = Some uBorder

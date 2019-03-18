@@ -132,17 +132,26 @@ open CorrelationDrawing
 
     let rec filterAndCollect (f : LogNode -> bool) (n : LogNode) =
       match PList.count n.children, f n with
-      | 0, true      -> [n]
-      | 0, false     -> []
+      | a, true when a = 0 -> 
+        let res = [n]
+        res
+      | a, false when a = 0 -> 
+        let res = []
+        res
       | other, true  -> 
-        [n] @ 
-          (n.children 
-                |> PList.toList
-                |> List.collect (fun (x : LogNode) -> filterAndCollect f x))
+        let res = 
+          [n] @ 
+            (n.children 
+                  |> PList.toList
+                  |> List.collect (fun (x : LogNode) -> filterAndCollect f x))
+        res
       | other, false -> 
-        [] @  (n.children 
-                |> PList.toList
-                |> List.collect (fun (x : LogNode) -> filterAndCollect f x))
+        let res = 
+          [] @  (n.children 
+                  |> PList.toList
+                  |> List.collect (fun (x : LogNode) -> filterAndCollect f x))
+        res
+
 
     let childrenWith (n : LogNode) (f : LogNode -> bool) =
       filterAndCollect f n

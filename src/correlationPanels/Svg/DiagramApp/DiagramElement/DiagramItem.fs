@@ -25,7 +25,7 @@ open Svgplus.DiagramItemType
       | DeleteStack           of RectangleStackTypes.RectangleStackId
       | MoveLeft              of RectangleStackTypes.RectangleStackId
       | MoveRight             of RectangleStackTypes.RectangleStackId
-      | UpdateColour          of (ColourMap * CMItemId)
+      | UpdateColour          of (Rectangle -> Rectangle) //(ColourMap * CMItemId)
       | UpdateRectangle       of (RectangleIdentification * Rectangle.Action)
       | UpdateYSizes          of (float -> float)
       | UpdateXSizes          of (float -> float)
@@ -212,10 +212,10 @@ open Svgplus.DiagramItemType
           rectangleStacks = _stacks
           order           = _order
         } |> layout          
-      | UpdateColour (cmap, _id) ->
+      | UpdateColour rectFun  -> //(cmap, _id) ->
         let _stacks =
           model.rectangleStacks
-            |> HMap.map (fun id r -> RectangleStack.update r (RectangleStack.UpdateColour (cmap, _id)))
+            |> HMap.map (fun id r -> RectangleStack.update r (RectangleStack.UpdateColour rectFun)) //(cmap, _id)))
         {model with rectangleStacks = _stacks}
       | UpdateRectangle (id, m) ->
           let stackMessage = 

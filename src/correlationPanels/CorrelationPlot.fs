@@ -70,7 +70,7 @@
                               (rectId : RectangleId) =
       let optLog = tryFindLog model logId
       Option.bind
-        (fun log -> Log.findNode log (fun n -> n.id.rectangleId = rectId)) optLog
+        (fun log -> Log.findNode log (fun n -> n.rectangleId = rectId)) optLog
         
       
 
@@ -142,7 +142,7 @@
 
 
         let diagram =
-          Diagram.update model.diagram (Diagram.AddStack item)
+          Diagram.update model.diagram (Diagram.AddItem item)
 
         {
           model with 
@@ -241,6 +241,11 @@
     let update (annoApp  : AnnotationApp)
                (model    : CorrelationPlot) 
                (action   : Action) = 
+      let updateColoursFromCMap r =
+        let opt = ColourMap.svgValueToColourPicker model.colourMapApp r.dim.width 
+        match opt with
+          | Some c -> {r with colour = c; overwriteColour = None}
+          | None   -> r
       
       match action with
         | Clear                    ->
@@ -379,22 +384,27 @@
                     let _optn = tryFindNodeFromRectangleId model selRect.rid selRect.diagramItemId
                     match _optn with
                       | Some (n, log) ->
-                        let m = 
+                        let logM1 = 
                               (Log.LogNodeMessage 
-                                (n.id, LogNodes.RectangleMessage (Rectangle.SetWidth (width, _cmap)))
+                                (n.id, LogNodes.RectangleMessage (Rectangle.UpdateColour updateColoursFromCMap))
                               )
-                        let _logs  = updateLog log.diagramRef.itemId m model.logs
+                        let logM2 = 
+                              (Log.LogNodeMessage 
+                                (n.id, LogNodes.RectangleMessage (Rectangle.SetWidth (width)))
+                              )
+                        let _logs  = 
+                          (updateLog log.diagramRef.itemId logM1 model.logs)
+                            |> (updateLog log.diagramRef.itemId logM2)
                         let rectIds = {stackid = selRect.stackid; rid = selRect.rid; diagramItemId = selRect.diagramItemId}
-                        let rectMessage = Rectangle.SetWidth (width, _cmap)
-                        let rectMessage2 = Rectangle.SetDottedBorder false
-                        let diagr = Diagram.update model.diagram (Diagram.UpdateRectangle (rectIds, rectMessage))
-                        //let _diagr = Diagram.update diagr (Diagram.UpdateRectangle (rectIds, rectMessage2))
-                        
-                        (_logs, diagr)
+                        let rectMessage1 = Rectangle.SetWidth width
+                        let rectMessage2 = Rectangle.UpdateColour updateColoursFromCMap
+                        let diagr = Diagram.update model.diagram (Diagram.UpdateRectangle (rectIds, rectMessage1))
+                        let _diagr = Diagram.update diagr (Diagram.UpdateRectangle (rectIds, rectMessage2))
+                        (_logs, _diagr)
                       | None -> (model.logs, model.diagram)
                   | None   -> (model.logs, model.diagram)
                | ColourMap.ItemMessage (id, a), _ -> 
-                 let diagr = Diagram.update model.diagram (Diagram.UpdateColour (_cmap, id))
+                 let diagr = Diagram.update model.diagram (Diagram.UpdateColour updateColoursFromCMap) //(_cmap, id))
                  (model.logs, diagr)
                | _,_ -> (model.logs, model.diagram)
                

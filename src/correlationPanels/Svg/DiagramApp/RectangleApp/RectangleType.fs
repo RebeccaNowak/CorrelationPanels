@@ -37,15 +37,16 @@
     needsLayoutingX : bool
     needsLayoutingY : bool
 
+    drawLabel     : bool
     label         : UIPlus.TextInput
     pos           : V2d
     dim           : Size2D
+    fixedWidth    : option<float>
 
     colour        : Aardvark.UI.ColorInput
     lowerBorderColour  : C4b
     upperBorderColour : C4b
     overwriteColour : option<C4b>
-    useColourMap  : bool
 
     isToggled     : bool
     colChange     : V3i
@@ -53,6 +54,7 @@
     dottedBorder  : bool
     draw          : bool
 
+    drawButtons     : bool
     northWestButton : Button
     northEastButton : Button
     southWestButton : Button
@@ -60,7 +62,13 @@
     svgYAxisLabel   : Svgplus.TextType.Text
   } with 
     member this.maxWidth =
-      this.dim.width + Text.preferredWidth this.svgYAxisLabel
+      let labelWidth =
+        match this.drawLabel with
+        | true  -> Text.preferredWidth this.svgYAxisLabel
+        | false -> 0.0
+      match this.fixedWidth with
+      | Some w  -> w + labelWidth
+      | None    -> this.dim.width + labelWidth
 
 
 

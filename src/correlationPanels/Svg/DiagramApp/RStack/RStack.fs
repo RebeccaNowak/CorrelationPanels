@@ -24,9 +24,12 @@
       | AddRectangle     of Rectangle
       | HeaderMessage    of Header.Action
       | UpdatePosition   of V2d
-      | UpdateColour     of (ColourMap * CMItemId)
+      | UpdateColour     of (Rectangle -> Rectangle) //(ColourMap * CMItemId)
       | UpdateYSizes     of (float -> float)
       | UpdateXSizes     of (float -> float)
+      | FixWidthTo       of float
+      | SetDrawButtons   of bool
+      | SetDrawLabels    of bool
       | Delete
 
     let axisStart (model : RectangleStack) (header : Svgplus.HeaderType.Header) = 
@@ -262,6 +265,22 @@
             model.rectangles
               |> HMap.map (fun id r -> Rectangle.Lens.width.Update (r,f))
           {model with rectangles = _rects}
+        | FixWidthTo d ->
+          let _rects =
+            model.rectangles
+              |> HMap.map (fun id r -> {r with fixedWidth = Some d})
+          {model with rectangles = _rects}
+        | SetDrawButtons b ->
+          let _rects =
+            model.rectangles
+              |> HMap.map (fun id r -> {r with drawButtons = b})
+          {model with rectangles = _rects}
+        | SetDrawLabels b ->
+          let _rects =
+            model.rectangles
+              |> HMap.map (fun id r -> {r with drawLabel = b})
+          {model with rectangles = _rects}
+
 
     let updateOptRStack (optr : option<RectangleStack>) 
                         (m : Action) = 

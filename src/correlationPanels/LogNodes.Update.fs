@@ -29,9 +29,9 @@
           apply model f //TODO performance!
         | RectangleMessage m ->
           {model with mainBody = (Svgplus.Rectangle.update model.mainBody m)}
-        | ColorPickerMessage m -> 
-          let _inp = Aardvark.UI.ColorPicker.update model.mainBody.colour m
-          Lens.colour.Set (model, _inp.c)
+        //| ColorPickerMessage m -> 
+        //  let _inp = Aardvark.UI.ColorPicker.update model.mainBody.colour m
+        //  Lens.colour.Set (model, _inp.c)
         //| RoseDiagramMessage m ->
         //  let _rd = Svgplus.RoseDiagram.update model.roseDiagram m 
         //  {model with roseDiagram = _rd}

@@ -19,11 +19,11 @@ open Svgplus.DiagramItemType
       //| RectStackMessage      of (RectangleStackTypes.RectangleStackId * RectangleStack.Action)
       | MouseMove             of V2d
       | ConnectionMessage     of ConnectionApp.Action
-      | AddStack              of DiagramItem
+      | AddItem              of DiagramItem
       | DeleteStack           of DiagramItemId
       | MoveLeft              of DiagramItemId
       | MoveRight             of DiagramItemId
-      | UpdateColour          of (ColourMap * CMItemId)
+      | UpdateColour          of (Rectangle -> Rectangle) //(ColourMap * CMItemId)
       | UpdateRectangle       of (RectangleIdentification * Rectangle.Action)
       | UpdateYSizes          of (float -> float)
       | UpdateXSizes          of (float -> float)
@@ -52,6 +52,21 @@ open Svgplus.DiagramItemType
         match fromAction, toAction with
         | DiagramItemMessage (itemId, im), _ ->
           match im, toAction with
+          | DiagramItem.HeaderMessage hm, _ ->
+            match hm, toAction with
+              | Header.TextMessage tm, toAction ->
+                match tm, toAction with 
+                  | Text.MouseMessage mm, MouseMessage mm2 ->
+                    match mm, mm2 with 
+                      | MouseAction.OnLeftClick, MouseAction.OnLeftClick -> 
+                          f itemId RectangleId.invalid
+                      //| MouseAction.OnMouseDown Aardvark.Application.MouseButtons.Left, MouseAction.OnLeftClick -> 
+                      //    f itemId RectangleId.invalid
+                      | MouseAction.OnMouseEnter, MouseAction.OnMouseEnter ->
+                          def
+                      | _ -> def
+                  | _ -> def
+              | _,_ -> def
           | DiagramItem.RectangleStackMessage (stackId,ra), _ -> 
             match ra, toAction with 
               | RectangleStack.HeaderMessage sm, toAction ->
@@ -281,7 +296,7 @@ open Svgplus.DiagramItemType
           | _ -> model.connectionApp
 
       match msg with
-        | AddStack r ->
+        | AddItem r ->
           let _r = model.items.Add (r.id,r)
           let _order = model.order.Append r.id
           {model with
@@ -347,10 +362,10 @@ open Svgplus.DiagramItemType
           moveItemLeft model id
         | MoveRight id ->
           moveItemRight model id
-        | UpdateColour (cmap, _id) ->
+        | UpdateColour rectFun -> //(cmap, _id) ->
           let _stacks =
             model.items
-              |> HMap.map (fun id r -> DiagramItem.update r (DiagramItem.UpdateColour (cmap, _id)))
+              |> HMap.map (fun id r -> DiagramItem.update r (DiagramItem.UpdateColour rectFun)) //(cmap, _id)))
           {model with items = _stacks}
         | UpdateRectangle (id, m) ->
             let stackMessage = 

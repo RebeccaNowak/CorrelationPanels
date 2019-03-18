@@ -52,8 +52,5 @@ open SimpleTypes
         this.rectangleStacks
           |> HMap.values
           |> Seq.map (fun s -> s.maxWidth)
-      let max =
-        match Seq.isEmpty widths with
-        | true -> 0.0
-        | false -> Seq.max widths
-      max
+      widths |> Seq.reduce (fun a b -> a + b)
+     
