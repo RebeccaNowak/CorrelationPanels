@@ -16,16 +16,16 @@
     open Svgplus.RectangleStackTypes
     open Svgplus
     open Svgplus.RectangleType
+    open Svgplus.DiagramItemType
     open UIPlus
-    open Aardvark.Base.IL.Serializer
-    open System.Windows.Interop
+   
     
     type Action =
       | SetState                  of State
       | ToggleState                  
       | LogNodeMessage            of (LogNodeId * LogNodes.Action)
       | SelectLogNode             of LogNodeId
-      | TextInputMessage          of (RectangleStackId * TextInput.Action)
+      | TextInputMessage          of (DiagramItemId * TextInput.Action)
       | MoveUp                    of RectangleStackId
       | MoveDown                  of RectangleStackId
 
@@ -257,7 +257,7 @@
                      (yToSvg          : float)
                      (defaultWidth    : float)
                      (colourMap       : ColourMap) 
-                     (elevationZeroHeight : float) : (RectangleStack * GeologicalLog) = 
+                     (elevationZeroHeight : float) = 
       let id = RectangleStackId.newId()
       let wInfNodes = (Generate.generateLevel //TODO make more compact by removing debug stuff
                         id
@@ -269,8 +269,6 @@
                       )
       let nodes = 
         LogNodes.Helper.replaceInfinity' wInfNodes annoApp
-
-      let foo = 2 * 3
 
       let nodeToRectangle (n : LogNode) =
         let metricVal = LogNodes.Recursive.calcMetricValue n annoApp //TODO!!!!
@@ -312,7 +310,7 @@
             | None   -> C4b.Black
         let rectangle =
           {
-            Rectangle.init n.id.rectangleId with 
+            Rectangle.init n.rectangleId with 
               dim = {width = width; height = height}
               draw = true
               dottedBorder = dotted
@@ -329,94 +327,94 @@
       //  nodes
       //   |> PList.toList
       //   |> List.map (fun n -> nodeToRectangle n)
+      //////////////// NOES TO LOG //////////////////////////////////
+      let nodesToLog (nodes : list<LogNode>) (rmap : hmap<RectangleId, Rectangle>) =
+        let _rids =
+          nodes |> List.map (fun n -> n.rectangleId)
+        let _rmap = 
+          rmap |> HMap.filter (fun rid _ -> _rids |> List.contains rid)
 
+        let order =
+          nodes 
+            |> List.map (fun n -> n.rectangleId)
+         
+        let zipped = List.zip order nodes
+        let __nodes = zipped 
+                      |> List.map (fun (r,n) -> {n with rectangleId = r})
+                      |> PList.ofList
 
-      let _nodes =
-        nodes 
-          |> LogNodes.Recursive.treeCutLowestLevel
-          |> List.sortByDescending (fun n -> LogNodes.Helper.elevation n annoApp)
+        let lowest =
+          LogNodes.Helper.tryLowestBorder' __nodes annoApp
+        let upmost =
+          LogNodes.Helper.tryHighestBorder' __nodes annoApp
+        let _dataRange =
+          Option.map2 (fun l u -> {min = l; max = u}) lowest upmost
+
+        let dataRange =
+          match _dataRange with
+          | None -> Rangef.init
+          | Some r -> r
+
+        let log = 
+          RectangleStack.init id rmap (PList.ofList order) (fun x -> x * yToSvg) dataRange
+        log
+        //////////////// \NODES TO LOG //////////////////////////////////
 
       let rectangles = 
-        _nodes
+        nodes
+          |> LogNodes.Recursive.collectAll
+          |> List.filter (fun n -> n.nodeType = LogNodeType.Hierarchical)
           |> List.map (fun n -> nodeToRectangle n)
-
-      
       let rmap = 
         rectangles 
           |> List.map (fun (r,h) -> (r.id, r))
-          |> HMap.ofList
-          
-      let order =
-        rectangles 
-          |> List.map (fun (r,h) -> r.id)
+          |> HMap.ofList          
 
+      let primaryLog =
+        let _nodes =
+          nodes 
+            |> LogNodes.Recursive.treeCutLowestLevel
+            |> List.sortByDescending (fun n -> LogNodes.Helper.elevation n annoApp)
+        (nodesToLog _nodes rmap)
 
-      // let allNodes = LogNodes.Recursive.collectAll
-      // WIP
-      let zipped = List.zip order _nodes
-      let __nodes = zipped 
-                    |> List.map (fun (r,n) -> {n with rectangleId = r})
-                    |> PList.ofList
+      let secondaryLog =
+        let _nodes =
+          nodes 
+            |> PList.toList
+            |> List.sortByDescending (fun n -> LogNodes.Helper.elevation n annoApp)
+        let stack = {(nodesToLog _nodes rmap) with id = RectangleStackId.newId ()}
+        let _stack = RectangleStack.update stack (RectangleStack.FixWidthTo 50.0)
+        let __stack = RectangleStack.update _stack (RectangleStack.SetDrawLabels true)
+        RectangleStack.update __stack (RectangleStack.SetDrawButtons false)
+        //TODO hardcoded width of secondary level
+
+      let logList = [(primaryLog.id, primaryLog); (secondaryLog.id, secondaryLog)]
+      let orderList = [secondaryLog.id;primaryLog.id]
+      let item = (DiagramItem.init (HMap.ofList logList) (PList.ofList orderList))
       
-      let lowest =
-        LogNodes.Helper.tryLowestBorder' __nodes annoApp
-      let upmost =
-        LogNodes.Helper.tryHighestBorder' __nodes annoApp
-      let _dataRange =
-        Option.map2 (fun l u -> {min = l; max = u}) lowest upmost
-
-      let dataRange =
-        match _dataRange with
-        | None -> Rangef.init
-        | Some r -> r
-
-      //let dataRangeFromRects =
-      //  let r = 
-      //    rectangles 
-      //      |> List.map (fun (r,h) -> h)
-      //      |> List.reduce (fun h1 h2 -> h1 + h2)
-      //  r
-
-      //let foo = 1 + 1
-
-      
-      //let dataRange = 
-      //  let topNode = List.tryHead _nodes 
-      //  let bottomNode = List.tryLast _nodes
-      //  let optRange = 
-      //    match topNode, bottomNode with
-      //    | Some t, Some b -> 
-      //      let max = (Option.bind (fun a -> AnnotationApp.tryElevation annoApp a.annotationId) t.uBorder)
-      //      let min = (Option.bind (fun a -> AnnotationApp.tryElevation annoApp a.annotationId) t.lBorder)
-      //      Option.map2 (fun min max -> {min = min; max = max}) min max//Some 
-      //    | _,_ -> None
-      //  let r = 
-      //    match optRange with
-      //    | Some o -> o
-      //    | None   -> 
-      //      Log.error "elevation range og log could not be calculated"
-      //      Rangef.init
-      //  r
-
-
-      let stack = 
-        RectangleStack.init id rmap (PList.ofList order) (fun x -> x * yToSvg) dataRange
+      let ref : LogDiagramReferences =
+        {
+          itemId        = item.id
+          mainLog       = primaryLog.id
+          secondaryLog  = Some secondaryLog.id
+        }
 
       let log =
         {
           id             = id
+          diagramRef     = ref
           state          = State.Display
 
           //xToSvg         =  xToSvg      
           //yToSvg         =  yToSvg      
           defaultWidth   =  defaultWidth
 
-          nodes          = __nodes
+          nodes          = nodes
           annoPoints     = selectedPoints    
       
         }
 
-      (stack, log)
+      (item, log)
     ///////////////////////////////////////// SVG VIEW ///////////////////////////////////////////
 
     module View = 
@@ -432,7 +430,7 @@
                    //(annoApp     : MAnnotationModel)
                    (rowOnClick  : 'msg) 
                    (mapper      : Action -> 'msg)
-                   (stack       : MRectangleStack) =
+                   (stack       : MDiagramItem) =
 
         let labelEditNode textInput = 
           (TextInput.view'' 
@@ -457,41 +455,41 @@
             [
               [
                 (labelEditNode stack.header.label.textInput) 
-                  |> UI.map (fun m -> Action.TextInputMessage (stack.id, m))
+                  |> UI.map (fun m -> Action.TextInputMessage (model.diagramRef.itemId, m))
                   |> UI.map mapper
                   |> Table.intoTd
-              ] |> Table.intoTr // |> Table.intoActiveTr rowOnClick      
+              ] |> Table.intoTr //|> Table.intoActiveTr rowOnClick      
             ]
 
-        let viewEdit  : list<DomNode<'msg>> =     
-          let nodesRow =
-            let viewFunction = 
-              //(LogNodes.Debug.view semApp annoApp LogNodeMessage
-              (LogNodes.Debug.view 
-                  semApp  
-                  LogNodeMessage
-              ) >> AList.single
+        //let viewEdit  : list<DomNode<'msg>> =     
+        //  let nodesRow =
+        //    let viewFunction = 
+        //      //(LogNodes.Debug.view semApp annoApp LogNodeMessage
+        //      (LogNodes.Debug.view 
+        //          semApp  
+        //          LogNodeMessage
+        //      ) >> AList.single
                 
-            let domNodes = 
-              (LogNodes.Debug.viewAll' model.nodes (viewFunction))  
+        //    let domNodes = 
+        //      (LogNodes.Debug.viewAll' model.nodes (viewFunction))  
                         
-            let mapped = domNodes |> (UI.map mapper)
-            [mapped]
+        //    let mapped = domNodes |> (UI.map mapper)
+        //    [mapped]
               
 
-          [
-            [
-              (labelEditNode stack.header.label.textInput) 
-                |> UI.map (fun m -> Action.TextInputMessage (stack.id, m))
-                |> UI.map mapper
-                |> Table.intoTd
-              moveUpDown |> Table.intoTd |> UI.map mapper
+        //  [
+        //    [
+        //      (labelEditNode stack.header.label.textInput) 
+        //        |> UI.map (fun m -> Action.TextInputMessage (model.diagramRef.itemId, m))
+        //        |> UI.map mapper
+        //        |> Table.intoTd
+        //      moveUpDown |> Table.intoTd |> UI.map mapper
 
-            ] |> Table.intoTr//|> Table.intoActiveTr rowOnClick  
-            //[
-            //  (div [] nodesRow) |> Table.intoTd 
-            //] |> Table.intoActiveTr rowOnClick
-          ]          
+        //    ] |> Table.intoTr//|> Table.intoActiveTr rowOnClick  
+        //    //[
+        //    //  (div [] nodesRow) |> Table.intoTd 
+        //    //] |> Table.intoActiveTr rowOnClick
+        //  ]          
 
         let viewDisplay  : list<DomNode<'msg>>  =
           [
@@ -501,7 +499,7 @@
                 |> Table.intoTd
               moveUpDown |> Table.intoTd |> UI.map mapper
             ] //@ [nodeViews] 
-           // |> Table.intoTrOnClick rowOnClick  
+            //|> Table.intoTrOnClick rowOnClick  
             |> Table.intoTr
             
           ] 
@@ -510,8 +508,8 @@
           |> Mod.map (fun state -> 
                         match state with
                           | State.Display  -> viewDisplay 
-                          | State.Edit     -> viewEdit 
-                          | State.New      -> viewNew 
+                          | State.Edit     -> viewNew 
+                          | State.New      -> viewNew
                      ) 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -565,6 +563,11 @@
     let init = 
       {
         id              = RectangleStackId.invalid
+        diagramRef      = {
+                            itemId  = DiagramItemId.invalid
+                            mainLog      = RectangleStackId.invalid
+                            secondaryLog = None
+                          }
         state           = State.Display
         //xToSvg          = (fun x -> x)
         //yToSvg          = 10.0

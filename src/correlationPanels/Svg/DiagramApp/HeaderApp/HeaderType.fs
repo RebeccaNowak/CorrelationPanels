@@ -13,5 +13,6 @@
     label       : Text
     leftButton  : ArrowType.Arrow
     rightButton : ArrowType.Arrow
+    visible     : bool
   }
 

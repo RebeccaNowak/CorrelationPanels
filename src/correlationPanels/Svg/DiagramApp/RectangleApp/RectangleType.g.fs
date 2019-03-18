@@ -15,9 +15,11 @@ module Mutable =
         let mutable __current : Aardvark.Base.Incremental.IModRef<Svgplus.RectangleType.Rectangle> = Aardvark.Base.Incremental.EqModRef<Svgplus.RectangleType.Rectangle>(__initial) :> Aardvark.Base.Incremental.IModRef<Svgplus.RectangleType.Rectangle>
         let _needsLayoutingX = ResetMod.Create(__initial.needsLayoutingX)
         let _needsLayoutingY = ResetMod.Create(__initial.needsLayoutingY)
+        let _drawLabel = ResetMod.Create(__initial.drawLabel)
         let _label = UIPlus.Mutable.MTextInput.Create(__initial.label)
         let _pos = ResetMod.Create(__initial.pos)
         let _dim = ResetMod.Create(__initial.dim)
+        let _fixedWidth = MOption.Create(__initial.fixedWidth)
         let _colour = Aardvark.UI.Mutable.MColorInput.Create(__initial.colour)
         let _lowerBorderColour = ResetMod.Create(__initial.lowerBorderColour)
         let _upperBorderColour = ResetMod.Create(__initial.upperBorderColour)
@@ -27,6 +29,7 @@ module Mutable =
         let _isHovering = ResetMod.Create(__initial.isHovering)
         let _dottedBorder = ResetMod.Create(__initial.dottedBorder)
         let _draw = ResetMod.Create(__initial.draw)
+        let _drawButtons = ResetMod.Create(__initial.drawButtons)
         let _northWestButton = Svgplus.Mutable.MButton.Create(__initial.northWestButton)
         let _northEastButton = Svgplus.Mutable.MButton.Create(__initial.northEastButton)
         let _southWestButton = Svgplus.Mutable.MButton.Create(__initial.southWestButton)
@@ -36,9 +39,11 @@ module Mutable =
         member x.id = __current.Value.id
         member x.needsLayoutingX = _needsLayoutingX :> IMod<_>
         member x.needsLayoutingY = _needsLayoutingY :> IMod<_>
+        member x.drawLabel = _drawLabel :> IMod<_>
         member x.label = _label
         member x.pos = _pos :> IMod<_>
         member x.dim = _dim :> IMod<_>
+        member x.fixedWidth = _fixedWidth :> IMod<_>
         member x.colour = _colour
         member x.lowerBorderColour = _lowerBorderColour :> IMod<_>
         member x.upperBorderColour = _upperBorderColour :> IMod<_>
@@ -48,6 +53,7 @@ module Mutable =
         member x.isHovering = _isHovering :> IMod<_>
         member x.dottedBorder = _dottedBorder :> IMod<_>
         member x.draw = _draw :> IMod<_>
+        member x.drawButtons = _drawButtons :> IMod<_>
         member x.northWestButton = _northWestButton
         member x.northEastButton = _northEastButton
         member x.southWestButton = _southWestButton
@@ -61,9 +67,11 @@ module Mutable =
                 
                 ResetMod.Update(_needsLayoutingX,v.needsLayoutingX)
                 ResetMod.Update(_needsLayoutingY,v.needsLayoutingY)
+                ResetMod.Update(_drawLabel,v.drawLabel)
                 UIPlus.Mutable.MTextInput.Update(_label, v.label)
                 ResetMod.Update(_pos,v.pos)
                 ResetMod.Update(_dim,v.dim)
+                MOption.Update(_fixedWidth, v.fixedWidth)
                 Aardvark.UI.Mutable.MColorInput.Update(_colour, v.colour)
                 ResetMod.Update(_lowerBorderColour,v.lowerBorderColour)
                 ResetMod.Update(_upperBorderColour,v.upperBorderColour)
@@ -73,6 +81,7 @@ module Mutable =
                 ResetMod.Update(_isHovering,v.isHovering)
                 ResetMod.Update(_dottedBorder,v.dottedBorder)
                 ResetMod.Update(_draw,v.draw)
+                ResetMod.Update(_drawButtons,v.drawButtons)
                 Svgplus.Mutable.MButton.Update(_northWestButton, v.northWestButton)
                 Svgplus.Mutable.MButton.Update(_northEastButton, v.northEastButton)
                 Svgplus.Mutable.MButton.Update(_southWestButton, v.southWestButton)
@@ -112,6 +121,12 @@ module Mutable =
                     override x.Set(r,v) = { r with needsLayoutingY = v }
                     override x.Update(r,f) = { r with needsLayoutingY = f r.needsLayoutingY }
                 }
+            let drawLabel =
+                { new Lens<Svgplus.RectangleType.Rectangle, System.Boolean>() with
+                    override x.Get(r) = r.drawLabel
+                    override x.Set(r,v) = { r with drawLabel = v }
+                    override x.Update(r,f) = { r with drawLabel = f r.drawLabel }
+                }
             let label =
                 { new Lens<Svgplus.RectangleType.Rectangle, UIPlus.TextInput>() with
                     override x.Get(r) = r.label
@@ -129,6 +144,12 @@ module Mutable =
                     override x.Get(r) = r.dim
                     override x.Set(r,v) = { r with dim = v }
                     override x.Update(r,f) = { r with dim = f r.dim }
+                }
+            let fixedWidth =
+                { new Lens<Svgplus.RectangleType.Rectangle, Microsoft.FSharp.Core.Option<System.Double>>() with
+                    override x.Get(r) = r.fixedWidth
+                    override x.Set(r,v) = { r with fixedWidth = v }
+                    override x.Update(r,f) = { r with fixedWidth = f r.fixedWidth }
                 }
             let colour =
                 { new Lens<Svgplus.RectangleType.Rectangle, Aardvark.UI.ColorInput>() with
@@ -183,6 +204,12 @@ module Mutable =
                     override x.Get(r) = r.draw
                     override x.Set(r,v) = { r with draw = v }
                     override x.Update(r,f) = { r with draw = f r.draw }
+                }
+            let drawButtons =
+                { new Lens<Svgplus.RectangleType.Rectangle, System.Boolean>() with
+                    override x.Get(r) = r.drawButtons
+                    override x.Set(r,v) = { r with drawButtons = v }
+                    override x.Update(r,f) = { r with drawButtons = f r.drawButtons }
                 }
             let northWestButton =
                 { new Lens<Svgplus.RectangleType.Rectangle, Svgplus.Button>() with

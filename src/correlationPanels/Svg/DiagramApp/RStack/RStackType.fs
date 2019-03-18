@@ -28,4 +28,11 @@ open Svgplus.RectangleType
     pos             : V2d
     yAxis           : Svgplus.AxesTypes.AxisApp
     yAxisMargin     : float
-  }
+  } with
+    member this.maxWidth = 
+      let maxRectangleWidth =
+        this.rectangles 
+          |> DS.HMap.values
+          |> List.map (fun r -> r.maxWidth)
+          |> List.max
+      maxRectangleWidth

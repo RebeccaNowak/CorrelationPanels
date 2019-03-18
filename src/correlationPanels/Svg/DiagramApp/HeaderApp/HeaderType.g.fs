@@ -18,12 +18,14 @@ module Mutable =
         let _label = Svgplus.TextType.Mutable.MText.Create(__initial.label)
         let _leftButton = Svgplus.ArrowType.Mutable.MArrow.Create(__initial.leftButton)
         let _rightButton = Svgplus.ArrowType.Mutable.MArrow.Create(__initial.rightButton)
+        let _visible = ResetMod.Create(__initial.visible)
         
         member x.centre = _centre :> IMod<_>
         member x.dim = _dim :> IMod<_>
         member x.label = _label
         member x.leftButton = _leftButton
         member x.rightButton = _rightButton
+        member x.visible = _visible :> IMod<_>
         
         member x.Current = __current :> IMod<_>
         member x.Update(v : Svgplus.HeaderType.Header) =
@@ -35,6 +37,7 @@ module Mutable =
                 Svgplus.TextType.Mutable.MText.Update(_label, v.label)
                 Svgplus.ArrowType.Mutable.MArrow.Update(_leftButton, v.leftButton)
                 Svgplus.ArrowType.Mutable.MArrow.Update(_rightButton, v.rightButton)
+                ResetMod.Update(_visible,v.visible)
                 
         
         static member Create(__initial : Svgplus.HeaderType.Header) : MHeader = MHeader(__initial)
@@ -80,4 +83,10 @@ module Mutable =
                     override x.Get(r) = r.rightButton
                     override x.Set(r,v) = { r with rightButton = v }
                     override x.Update(r,f) = { r with rightButton = f r.rightButton }
+                }
+            let visible =
+                { new Lens<Svgplus.HeaderType.Header, System.Boolean>() with
+                    override x.Get(r) = r.visible
+                    override x.Set(r,v) = { r with visible = v }
+                    override x.Update(r,f) = { r with visible = f r.visible }
                 }

@@ -8,6 +8,7 @@
   open Svgplus.RectangleStackTypes
   open Svgplus
   open UIPlus
+  open SimpleTypes
 
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -23,9 +24,12 @@
       | AddRectangle     of Rectangle
       | HeaderMessage    of Header.Action
       | UpdatePosition   of V2d
-      | UpdateColour     of (ColourMap * CMItemId)
+      | UpdateColour     of (Rectangle -> Rectangle) //(ColourMap * CMItemId)
       | UpdateYSizes     of (float -> float)
       | UpdateXSizes     of (float -> float)
+      | FixWidthTo       of float
+      | SetDrawButtons   of bool
+      | SetDrawLabels    of bool
       | Delete
 
     let axisStart (model : RectangleStack) (header : Svgplus.HeaderType.Header) = 
@@ -45,15 +49,12 @@
         let _rs = 
           DS.PList.mapPrev' model.order clean None f
 
-        let maxWidth = model.rectangles 
-                        |> DS.HMap.values
-                        |> List.map (fun r -> r.dim.width)
-                        |> List.max
+
 
 
 
         let _header = 
-          {model.header with centre = V2d(model.pos.X + maxWidth * 0.5, model.pos.Y)
+          {model.header with centre = V2d(model.pos.X + model.maxWidth * 0.5, model.pos.Y)
           } |> Header.layout false
 
         let _yAxis =
@@ -62,12 +63,26 @@
         {
           model with  rectangles = _rs
                       header     = _header 
-                      yAxis     = _yAxis
+                      yAxis      = _yAxis
         }
       | false -> model
 
+    let initDummy =
+      let rs = 
+        {
+          id            = RectangleStackId.invalid
+          needsLayouting = false
+          rectangles    = HMap.empty
+          header        = Header.init
+          order         = PList.empty
+          pos           = V2d.OO
+          yAxis         = AxisApp.initial (fun x -> x) Rangef.init
+          yAxisMargin   = 20.0
+        } 
+      rs
+
     let init id rmap order yMapping nativeRange: RectangleStack =
-      let header = Header.init
+      let header = {Header.init with visible = false; dim = {width = 0.0; height = 0.0}}
 
       let rs = 
         {
@@ -250,6 +265,28 @@
             model.rectangles
               |> HMap.map (fun id r -> Rectangle.Lens.width.Update (r,f))
           {model with rectangles = _rects}
+        | FixWidthTo d ->
+          let _rects =
+            model.rectangles
+              |> HMap.map (fun id r -> {r with fixedWidth = Some d})
+          {model with rectangles = _rects}
+        | SetDrawButtons b ->
+          let _rects =
+            model.rectangles
+              |> HMap.map (fun id r -> {r with drawButtons = b})
+          {model with rectangles = _rects}
+        | SetDrawLabels b ->
+          let _rects =
+            model.rectangles
+              |> HMap.map (fun id r -> {r with drawLabel = b})
+          {model with rectangles = _rects}
+
+
+    let updateOptRStack (optr : option<RectangleStack>) 
+                        (m : Action) = 
+      match optr with
+        | Some r -> update r m
+        | None   -> initSample (RectangleStackTypes.RectangleStackId.newId ())
 
 
     let view (model : MRectangleStack) =

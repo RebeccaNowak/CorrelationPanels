@@ -12,6 +12,7 @@ open UIPlus.KeyboardTypes
 open Svgplus.RectangleStackTypes
 open Svgplus.RectangleType
 open Svgplus.CameraType
+open Svgplus.DiagramItemType
 
 //[<DomainType>]
 //type BorderedRectangle = {
@@ -128,7 +129,6 @@ module BorderId =
 
 type LogNodeId = {
   id            : string 
-  rectangleId   : RectangleId
 } with
   member this.isValid = (this.id <> "")
 
@@ -136,12 +136,10 @@ module LogNodeId =
   let invalid = 
     {
       id = ""
-      rectangleId = RectangleId.invalid
     }
   let newId unit : LogNodeId  = 
     {
       id = System.Guid.NewGuid().ToString()
-      rectangleId = RectangleId.newId unit
     }
 /////
 
@@ -333,6 +331,27 @@ type LogNode = {
 }
       
 
+type LogId = {
+  id            : string 
+} with
+  member this.isValid = (this.id <> "")
+
+module LogId = 
+  let invalid = 
+    {
+      id = ""
+    }
+  let newId unit : LogId  = 
+    {
+      id = System.Guid.NewGuid().ToString()
+    }
+
+type LogDiagramReferences = {
+  itemId         : DiagramItemId
+  mainLog        : RectangleStackId
+  secondaryLog   : option<RectangleStackId>
+}
+
 
 
 
@@ -340,7 +359,8 @@ type LogNode = {
 type GeologicalLog = {
     [<NonIncremental;PrimaryKey>]
     id              : Svgplus.RectangleStackTypes.RectangleStackId
-
+    [<NonIncremental>]
+    diagramRef      : LogDiagramReferences
     state           : State
     //xToSvg          : float -> float
     //yToSvg          : float
@@ -384,7 +404,7 @@ type CorrelationPlot = {
    svgCamera           : SvgCamera
    keyboard            : UIPlus.KeyboardTypes.Keyboard<CorrelationPlot>
 
-   logs                : hmap<Svgplus.RectangleStackTypes.RectangleStackId, GeologicalLog>
+   logs                : hmap<DiagramItemId, GeologicalLog>
    correlations        : plist<Correlation>
    selectedBorder      : Option<Border>
    //aardvark dies: selectedBorder      : Option<(Border * V2d)>
@@ -392,7 +412,7 @@ type CorrelationPlot = {
    editCorrelations    : bool
    selectedPoints      : hmap<AnnotationId, V3d>
    selectedNode        : option<LogNodeId>
-   selectedLog         : option<RectangleStackId>
+   selectedLog         : option<DiagramItemId>
    secondaryLvl        : NodeLevel
    //creatingNew         : bool
    viewType            : CorrelationPlotViewType

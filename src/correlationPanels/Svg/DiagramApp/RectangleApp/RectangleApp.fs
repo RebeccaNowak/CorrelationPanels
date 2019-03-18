@@ -27,8 +27,8 @@
       | NEButtonMessage of Button.Action
       | SWButtonMessage of Button.Action
       | SEButtonMessage of Button.Action
-      | UpdateColour    of (ColourMap * CMItemId)
-      | SetWidth        of (float * ColourMap)
+      | UpdateColour    of (Rectangle -> Rectangle) //(ColourMap * CMItemId)
+      | SetWidth        of float
       | SetDottedBorder of bool 
       | TextAction      of Svgplus.Text.Action
       | LayoutX          
@@ -37,7 +37,10 @@
     module Lens =
       let width = 
         {new Lens<Rectangle, float>() with
-          override x.Get(r)   = r.dim.width
+          override x.Get(r)   =
+            match r.fixedWidth with
+              | Some w -> w
+              | None   -> r.dim.width
           override x.Set(r,v) = 
             {r with dim = {r.dim with width = v}
                     northEastButton = Button.Lens.posX.Set (r.northEastButton, r.pos.X + v)
@@ -74,7 +77,7 @@
           override x.Get(r)   = r.pos.X
           override x.Set(r,v) = 
             let _label = 
-              let xpos = v - (Text.preferredWidth r.svgYAxisLabel) * 0.5
+              let xpos = v //- (Text.preferredWidth r.svgYAxisLabel) * 0.5
               {r.svgYAxisLabel with centre = V2d (xpos, r.pos.Y)}
             {r with pos = V2d (v, r.pos.Y)
                     northWestButton = Button.Lens.posX.Set (r.northWestButton, v)
@@ -85,7 +88,7 @@
             }
           override x.Update(r,f) = 
             let _label =
-              let xpos = f r.pos.X - (Text.preferredWidth r.svgYAxisLabel) * 0.5
+              let xpos = f r.pos.X // + (Text.preferredWidth r.svgYAxisLabel) * 0.5
               {r.svgYAxisLabel with centre = V2d (xpos, r.pos.Y)}
             {r with pos =  V2d (f r.pos.X, r.pos.Y)
                     northWestButton = Button.Lens.posX.Set (r.northWestButton, f r.pos.X)
@@ -137,11 +140,11 @@
               | Some c -> c
               | None   -> r.colour.c
           override x.Set(r,v) = 
-            {r with colour = {r.colour with c = v}
-                    overwriteColour = None}
+            {r with colour = {r.colour with c = v}}
+                    //overwriteColour = None}
           override x.Update(r,f) = 
-            {r with colour = {r.colour with c = f r.colour.c}
-                    overwriteColour = None}
+            {r with colour = {r.colour with c = f r.colour.c}}
+                    //overwriteColour = None}
         }
 
       let dottedBorder = 
@@ -170,18 +173,20 @@
           needsLayoutingY = false
           pos            = V2d (0.0)
           dim            = {width = 0.0; height = 0.0}
+          fixedWidth     = None
           colour         = {c = C4b.Gray}
           overwriteColour = Some C4b.White
           lowerBorderColour   = C4b.Black
           upperBorderColour = C4b.Black
+
           isToggled      = false
           colChange      = V3i (0,0,0)
           isHovering     = false
           dottedBorder   = true
           draw           = false
-
+          drawLabel      = false
           label          = {TextInput.init with text = "label"}
-
+          drawButtons    = true
           northWestButton = Button.init
           northEastButton = Button.init
           southWestButton = Button.init
@@ -198,12 +203,6 @@
       _new
 
     let update (model : Rectangle) (action : Action) =
-      let updateColour cmap r = 
-        let opt = ColourMap.svgValueToColourPicker cmap r.dim.width 
-        match opt with
-          | Some c -> {r with colour = c; overwriteColour = None}
-          | None   -> r
-
       match action with
         | Select  id   -> 
           match model.isToggled with
@@ -233,12 +232,12 @@
         | NEButtonMessage m -> {model with northEastButton = Button.update model.northEastButton m}
         | SWButtonMessage m -> {model with southWestButton = Button.update model.southWestButton m}
         | SEButtonMessage m -> {model with southEastButton = Button.update model.southEastButton m}
-        | UpdateColour (cmap, itemid) -> updateColour cmap model
-        | LayoutX            -> {model with needsLayoutingX = false}
-        | LayoutY            -> {model with needsLayoutingY = false}
-        | SetWidth (w, cmap)        -> 
+        | UpdateColour f    -> f model
+        | LayoutX           -> {model with needsLayoutingX = false}
+        | LayoutY           -> {model with needsLayoutingY = false}
+        | SetWidth w        -> 
           let _model = Lens.width.Set (model, w)
-          updateColour cmap _model
+          _model
         | SetDottedBorder b -> 
           {model with dottedBorder = b}
         | SelectLowerBorder -> 
@@ -246,16 +245,21 @@
           _model
         | SelectUpperBorder -> 
           let _model = model
-          _model
-        | _ -> model
+          _model 
+        | TextAction m -> // elevation labels of LogNodes
+          model
 
 
         
 
     let view (model : MRectangle) =
       alist {
-        let! pos  = model.pos
         let! dim  = model.dim
+        let! optWidth = model.fixedWidth
+        let dim = 
+          match optWidth with
+          | Some w -> {dim with width = w}
+          | None   -> dim
         let! overwriteColour = model.overwriteColour
         let! baseCol   = model.colour.c
         let col = 
@@ -268,22 +272,40 @@
         let! lowerCol = model.lowerBorderColour
         let! upperCol = model.upperBorderColour
         let! draw = model.draw
+        let! pos  = model.pos
         if draw then
-          yield! ((Text.view model.svgYAxisLabel) |> AList.map (UI.map TextAction))
-          yield! AList.ofList
-                  (Svgplus.Base.drawBorderedRectangle
-                                  pos dim col
-                                  lowerCol upperCol
-                                  (fun _ -> SelectLowerBorder)
-                                  (fun _ -> SelectUpperBorder)
-                                  SvgWeight.init
-                                  (fun _ -> Select model.id)
-                                  sel db)
-          yield (Button.view model.northWestButton) |> UI.map NWButtonMessage
-          yield (Button.view model.northEastButton) |> UI.map NEButtonMessage
-          yield (Button.view model.southWestButton) |> UI.map SWButtonMessage
-          yield (Button.view model.southEastButton) |> UI.map SEButtonMessage
+          let! drawLabel = model.drawLabel
 
-       
+          
+
+          if drawLabel then //TODO refactor
+            yield! ((Text.view model.svgYAxisLabel) |> AList.map (UI.map TextAction))
+            let! labelDim = model.svgYAxisLabel.dim
+            let pos = V2d (pos.X + labelDim.width, pos.Y)
+            yield! AList.ofList
+                    (Svgplus.Base.drawBorderedRectangle
+                                    pos dim col
+                                    lowerCol upperCol
+                                    (fun _ -> SelectLowerBorder)
+                                    (fun _ -> SelectUpperBorder)
+                                    SvgWeight.init
+                                    (fun _ -> Select model.id)
+                                    sel db)
+          else 
+            yield! AList.ofList
+                    (Svgplus.Base.drawBorderedRectangle
+                                    pos dim col
+                                    lowerCol upperCol
+                                    (fun _ -> SelectLowerBorder)
+                                    (fun _ -> SelectUpperBorder)
+                                    SvgWeight.init
+                                    (fun _ -> Select model.id)
+                                    sel db)
+          let! drawButtons = model.drawButtons
+          if drawButtons then
+            yield (Button.view model.northWestButton) |> UI.map NWButtonMessage
+            yield (Button.view model.northEastButton) |> UI.map NEButtonMessage
+            yield (Button.view model.southWestButton) |> UI.map SWButtonMessage
+            yield (Button.view model.southEastButton) |> UI.map SEButtonMessage
       }
 
