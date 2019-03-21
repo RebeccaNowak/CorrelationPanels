@@ -1,5 +1,5 @@
 ﻿namespace UIPlus
-    module Table =
+    module Tables =
       open Aardvark.UI
       open System
       open Aardvark.Base

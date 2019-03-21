@@ -5,6 +5,8 @@ open Aardvark.Base.Incremental
 
 type Orientation  = Horizontal | Vertical
 
+type Alignment = LEFT | RIGHT
+
 type Direction =
 | Up
 | Down

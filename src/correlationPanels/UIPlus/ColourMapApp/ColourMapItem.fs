@@ -65,7 +65,8 @@ open UIPlus.Table
         //  let _n = Numeric.update model.upper m
         //  {model with upper = _n}
 
-    let view (model : MColourMapItem)  = 
+
+    let editView (model : MColourMapItem) =
       [
         (div [] [Incremental.text model.label])
           |> intoLeftAlignedTd
@@ -75,4 +76,18 @@ open UIPlus.Table
         (div [] [Incremental.text model.upperStr])
           |> intoLeftAlignedTd
       ]
+
+    let displayView (model : MColourMapItem) =
+      [
+        (div [] [Incremental.text model.label])
+          |> intoLeftAlignedTd
+        ColorPicker.view model.colour
+          |> intoTd
+          |> UI.map ColourMessage
+        (div [] [Incremental.text model.upperStr])
+          |> intoLeftAlignedTd
+      ]
+
+    let view (model : MColourMapItem)  = 
+      displayView model
 

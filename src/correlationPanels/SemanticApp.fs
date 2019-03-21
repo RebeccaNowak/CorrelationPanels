@@ -273,7 +273,7 @@ module SemanticApp =
             let! state = mSem.state
            // match state with 
             let! col = mSem.style.color.c
-            let textCol = Table.textColorFromBackground col
+            let textCol = Tables.textColorFromBackground col
             let st = 
               match state with
                 | State.Display -> []
@@ -289,7 +289,7 @@ module SemanticApp =
                       domNodes
         } 
         
-      Table.toTableView (div[][]) domList ["Annotation Type"]
+      Tables.toTableView (div[][]) domList ["Annotation Type"]
 
     let expertGUI (model : MSemanticApp) = 
       let menu = 
@@ -316,16 +316,16 @@ module SemanticApp =
               let! domNode = Semantic.View.view mSem
               let menu = Menus.saveCancelMenu SaveNew CancelNew
 
-              yield Table.intoActiveTr 
+              yield Tables.intoActiveTr 
                       (SetSemantic (Some mSem.id))
                       (domNode |> List.map (fun x -> x |> UI.map SemanticMessage)) 
                      
-              yield Table.intoTr [(Table.intoTd' menu domNode.Length)]   
+              yield Tables.intoTr [(Tables.intoTd' menu domNode.Length)]   
                   
             else if state = State.Edit then
               let! domNode = Semantic.View.view mSem    
               let! col = mSem.style.color.c
-              let textCol = Table.textColorFromBackground col
+              let textCol = Tables.textColorFromBackground col
               let st = style (sprintf "background: %s;%s" (GUI.CSS.colorToHexStr col) textCol)
               yield tr 
                       ([st; onClick (fun str -> SetSemantic (Some mSem.id))]) 
@@ -337,7 +337,7 @@ module SemanticApp =
                       (List.map (fun x -> x |> UI.map SemanticMessage) domNode)
         } 
 
-      Table.toTableView menu domList ["Label";"Weight";"Colour";"Level";"Semantic Type";"Geometry"]
+      Tables.toTableView menu domList ["Label";"Weight";"Colour";"Level";"Semantic Type";"Geometry"]
 
 
   let threads (model : SemanticApp) = 

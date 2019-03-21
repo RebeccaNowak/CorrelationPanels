@@ -3,7 +3,7 @@ open Aardvark.UI
 open Aardvark.Base
 open Aardvark.Base.Incremental
 open UIPlus
-open UIPlus.Table
+open UIPlus.Tables
 
 
 
@@ -106,14 +106,14 @@ module ColourMap =
             match selid with
               | Some id  -> 
                 if id = m.id then
-                  yield Table.intoActiveTr (Action.SelectItem m.id) _v           
+                  yield intoActiveTr (Action.SelectItem m.id) _v           
                 else
-                  yield Table.intoTrOnClick (Action.SelectItem m.id) _v
+                  yield intoTrOnClick (Action.SelectItem m.id) _v
               | None ->
-                yield Table.intoTrOnClick (Action.SelectItem m.id) _v              
+                yield intoTrOnClick (Action.SelectItem m.id) _v              
         }
 
-      Table.toTableView (div[][]) domList ["Grain size";"Colour";"φ-scale"]
+      toTableView (div[][]) domList ["Grain size";"Colour";"φ-scale"]
 
     //require (GUI.CSS.myCss) (
     //  body [style "overflow-y: scroll"] [

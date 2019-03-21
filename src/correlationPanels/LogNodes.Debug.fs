@@ -40,7 +40,7 @@ open CorrelationDrawing
             yield! Recursive.mapAndCollect_M el f
         }  
         
-      Table.toTableView (div[][]) rows ["Nodes"]
+      Tables.toTableView (div[][]) rows ["Nodes"]
 
     //let view (semApp  : MSemanticApp) 
     //         //(annoApp  : amap<AnnotationId, MAnnotation>)

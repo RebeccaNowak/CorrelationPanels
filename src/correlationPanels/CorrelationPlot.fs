@@ -482,7 +482,7 @@
               //    yield Table.intoTr [(Table.intoTd' menu tmp.Length)]     
           }
         
-        Table.toTableView (div[][]) rows ["Log Name";"Order"]
+        Tables.toTableView (div[][]) rows ["Log Name";"Order"]
       logList
       
 

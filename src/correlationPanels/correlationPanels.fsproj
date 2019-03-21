@@ -45,9 +45,12 @@
 	<Compile Include="UIPlus\UI.Labels.fs" />
 	<Compile Include="UIPlus\KeyboardApp\KeyboardTypes.fs" />
 	<Compile Include="UIPlus\KeyboardApp\Keyboard.fs" />
+	<Compile Include="UIPlus\ArrowButton\ArrowButtonApp.fs" />
+	<Compile Include="UIPlus\Table\TableTypes.fs" />
+	<Compile Include="UIPlus\Table\TableRow.fs" />
+	<Compile Include="UIPlus\Table\Table.fs" />
 	<Compile Include="UIPlus\ColourMapApp\ColourMapItem.fs" />
 	<Compile Include="UIPlus\ColourMapApp\ColourMapApp.fs" />
-	<Compile Include="UIPlus\ArrowButton\ArrowButtonApp.fs" />
 	<Compile Include="Svg\Svgplus.fs" />
 	<Compile Include="Svg\SvgTags.fs" />
 	<Compile Include="Svg\Svg.Attributes.fs" />
