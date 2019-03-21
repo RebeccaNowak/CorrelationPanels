@@ -4,16 +4,19 @@
   open Aardvark.UI
   open UIPlus
   open UIPlus.TableTypes
+  open SimpleTypes
 
+  [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module TableRow =
     
-    let init isSelected onSelect update displayView editView  : TableRow<'dtype, 'mtype, 'action> = //, 'mtype, 'action> =
+    let init isSelected onSelect update displayView editView alignment : TableRow<'dtype, 'mtype, 'action> = //, 'mtype, 'action> =
       {
         isSelected    = isSelected
         onSelect      = onSelect
         update        = update
         displayView   = displayView
         editView      = editView
+        align         = alignment
       }
 
     let update (guiModel  : TableRow<'dtype, 'mtype, 'action>) 

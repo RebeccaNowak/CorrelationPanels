@@ -5,6 +5,7 @@
   open UIPlus
   open UIPlus.TableTypes
 
+  [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module Table =
 
     let init mapper align colHeadings =

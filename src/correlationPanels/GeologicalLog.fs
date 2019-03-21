@@ -457,8 +457,8 @@
                 (labelEditNode stack.header.label.textInput) 
                   |> UI.map (fun m -> Action.TextInputMessage (model.diagramRef.itemId, m))
                   |> UI.map mapper
-                  |> Table.intoTd
-              ] |> Table.intoTr //|> Table.intoActiveTr rowOnClick      
+                  |> Tables.intoTd
+              ] |> Tables.intoTr //|> Table.intoActiveTr rowOnClick      
             ]
 
         //let viewEdit  : list<DomNode<'msg>> =     
@@ -496,11 +496,11 @@
             [
               label [clazz "ui horizontal label"]
                     [Incremental.text (stack.header.label.textInput.text)] ///|> UI.map mapper
-                |> Table.intoTd
-              moveUpDown |> Table.intoTd |> UI.map mapper
+                |> Tables.intoTd
+              moveUpDown |> Tables.intoTd |> UI.map mapper
             ] //@ [nodeViews] 
             //|> Table.intoTrOnClick rowOnClick  
-            |> Table.intoTr
+            |> Tables.intoTr
             
           ] 
 

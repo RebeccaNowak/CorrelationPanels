@@ -1,7 +1,8 @@
 ﻿namespace UIPlus
 open Aardvark.UI
 open Aardvark.Base
-open UIPlus.Table
+open UIPlus.Tables
+
 
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module ColourMapItem =
