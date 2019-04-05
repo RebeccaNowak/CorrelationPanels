@@ -37,9 +37,9 @@
       align         : 'mtype -> Alignment
     }
 
-  type Table<'dtype, 'mtype, 'action>  =
+  type Table<'dtype, 'mtype, 'arg, 'action>  =
     {
-      mapper      : 'mtype -> TableRow<'dtype, 'mtype, 'action>
+      mapper      : 'mtype -> 'arg -> TableRow<'dtype, 'mtype, 'action>
       colHeadings : list<string>
     }
 

@@ -5,7 +5,14 @@ open Aardvark.Base.Incremental
 
 type Orientation  = Horizontal | Vertical
 
-type Alignment = LEFT | RIGHT
+type Alignment = LEFT | RIGHT | CENTRE
+  with 
+    member this.clazz =
+      match this with
+      | Alignment.LEFT -> "left aligned"
+      | Alignment.CENTRE -> "left aligned"
+      | Alignment.RIGHT -> "right aligned"
+
 
 type Direction =
 | Up

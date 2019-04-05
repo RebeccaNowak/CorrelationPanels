@@ -9,7 +9,7 @@
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module TableRow =
     
-    let init isSelected onSelect update displayView editView alignment : TableRow<'dtype, 'mtype, 'action> = //, 'mtype, 'action> =
+    let init isSelected update displayView editView onSelect alignment : TableRow<'dtype, 'mtype, 'action> = //, 'mtype, 'action> =
       {
         isSelected    = isSelected
         onSelect      = onSelect
@@ -24,11 +24,8 @@
                (action    : 'action) =
       guiModel.update dataModel action
 
-    let intoTd (domNode) = 
-      td [clazz "center aligned"] [domNode]
-
-    let intoLeftAlignedTd (domNode) =
-      td [clazz "left aligned"] [domNode]
+    let intoTd (alignment : Alignment) (domNode : DomNode<'a>) = 
+      td [clazz alignment.clazz] [domNode]
 
     let intoTd' domNode colSpan = 
       td [clazz "center aligned";
@@ -50,19 +47,18 @@
 
     let view   (guiModel  : TableRow<'dtype, 'mtype, 'action>)
                (dataModel : 'mtype) =
+      
+      let itemsContent = guiModel.editView dataModel
+      let items =
+        List.map (fun c -> intoTd (guiModel.align dataModel) c) itemsContent
+
       alist {
         let! sel = guiModel.isSelected dataModel
         let row = 
           match sel with
             | true ->
-              let itemsContent = guiModel.editView dataModel
-              let items =
-                itemsContent |> List.map intoTd
               intoActiveTr guiModel.onSelect items
             | false ->
-              let itemsContent = guiModel.displayView dataModel
-              let items =
-                itemsContent |> List.map intoTd
               intoTrOnClick guiModel.onSelect items
         yield row
       }

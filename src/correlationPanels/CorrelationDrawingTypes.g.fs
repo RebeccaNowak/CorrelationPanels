@@ -1109,6 +1109,7 @@ module Mutable =
         let _svgCamera = Svgplus.CameraType.Mutable.MSvgCamera.Create(__initial.svgCamera)
         let _keyboard = ResetMod.Create(__initial.keyboard)
         let _logs = MMap.Create(__initial.logs, (fun v -> MGeologicalLog.Create(v)), (fun (m,v) -> MGeologicalLog.Update(m, v)), (fun v -> v))
+        let _logsTable = ResetMod.Create(__initial.logsTable)
         let _correlations = MList.Create(__initial.correlations, (fun v -> MCorrelation.Create(v)), (fun (m,v) -> MCorrelation.Update(m, v)), (fun v -> v))
         let _selectedBorder = MOption.Create(__initial.selectedBorder, (fun v -> MBorder.Create(v)), (fun (m,v) -> MBorder.Update(m, v)), (fun v -> v))
         let _editCorrelations = ResetMod.Create(__initial.editCorrelations)
@@ -1133,6 +1134,7 @@ module Mutable =
         member x.svgCamera = _svgCamera
         member x.keyboard = _keyboard :> IMod<_>
         member x.logs = _logs :> amap<_,_>
+        member x.logsTable = _logsTable :> IMod<_>
         member x.correlations = _correlations :> alist<_>
         member x.selectedBorder = _selectedBorder :> IMod<_>
         member x.editCorrelations = _editCorrelations :> IMod<_>
@@ -1162,6 +1164,7 @@ module Mutable =
                 Svgplus.CameraType.Mutable.MSvgCamera.Update(_svgCamera, v.svgCamera)
                 ResetMod.Update(_keyboard,v.keyboard)
                 MMap.Update(_logs, v.logs)
+                ResetMod.Update(_logsTable,v.logsTable)
                 MList.Update(_correlations, v.correlations)
                 MOption.Update(_selectedBorder, v.selectedBorder)
                 ResetMod.Update(_editCorrelations,v.editCorrelations)
@@ -1225,6 +1228,12 @@ module Mutable =
                     override x.Get(r) = r.logs
                     override x.Set(r,v) = { r with logs = v }
                     override x.Update(r,f) = { r with logs = f r.logs }
+                }
+            let logsTable =
+                { new Lens<CorrelationDrawing.CorrelationPlot, System.Object>() with
+                    override x.Get(r) = r.logsTable
+                    override x.Set(r,v) = { r with logsTable = v }
+                    override x.Update(r,f) = { r with logsTable = f r.logsTable }
                 }
             let correlations =
                 { new Lens<CorrelationDrawing.CorrelationPlot, Aardvark.Base.plist<CorrelationDrawing.Correlation>>() with
