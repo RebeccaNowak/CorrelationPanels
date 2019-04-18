@@ -130,7 +130,6 @@
 	<Compile Include="CorrelationPanels\Correlation\Correlation.fs" />
 	<Compile Include="CorrelationPanels\CorrelationPlot\CorrelationPlotTypes.fs" />
 	<Compile Include="CorrelationPanels\CorrelationPlot\CorrelationPlot.fs" />
-	<Compile Include="CorrelationPanels\CorrelationPlot\CorrelationPlotApp.fs" />
 	<Compile Include="CorrelationPanels\CorrelationDrawingTypes.fs" />
 	<Compile Include="CorrelationPanels\CorrelationDrawing.fs" />
 	<Compile Include="CorrelationPanels\PagesApp.fs" />

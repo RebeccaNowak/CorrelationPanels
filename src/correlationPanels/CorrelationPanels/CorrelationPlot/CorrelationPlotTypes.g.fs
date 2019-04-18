@@ -38,6 +38,7 @@ module Mutable =
         member x.svgCamera = _svgCamera
         member x.keyboard = _keyboard :> IMod<_>
         member x.logs = _logs :> amap<_,_>
+        member x.logsTable = __current.Value.logsTable
         member x.correlations = _correlations :> alist<_>
         member x.selectedBorder = _selectedBorder :> IMod<_>
         member x.editCorrelations = _editCorrelations :> IMod<_>
@@ -122,6 +123,12 @@ module Mutable =
                     override x.Get(r) = r.logs
                     override x.Set(r,v) = { r with logs = v }
                     override x.Update(r,f) = { r with logs = f r.logs }
+                }
+            let logsTable =
+                { new Lens<CorrelationDrawing.CorrelationPlotTypes.CorrelationPlot, UIPlus.TableTypes.Table<CorrelationDrawing.LogTypes.GeologicalLog,CorrelationDrawing.LogTypes.Mutable.MGeologicalLog,Svgplus.DiagramItemType.Mutable.MDiagramItem,CorrelationDrawing.GeologicalLog.Action,CorrelationDrawing.CorrelationPlotTypes.Action>>() with
+                    override x.Get(r) = r.logsTable
+                    override x.Set(r,v) = { r with logsTable = v }
+                    override x.Update(r,f) = { r with logsTable = f r.logsTable }
                 }
             let correlations =
                 { new Lens<CorrelationDrawing.CorrelationPlotTypes.CorrelationPlot, Aardvark.Base.plist<CorrelationDrawing.CorrelationTypes.Correlation>>() with

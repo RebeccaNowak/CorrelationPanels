@@ -133,3 +133,15 @@
                             | Some el -> true
                             | None    -> false)
         |> AList.map (fun el -> el.Value)
+
+
+    let zip (lst1 : alist<'a>) (lst2 : alist<'b>) =
+      alist {
+        let! plst1 = lst1.Content
+        let! plst2 = lst2.Content
+        let zipped = (PList.zip plst1 plst2)
+        for z in zipped do
+          yield z
+      }
+      
+      

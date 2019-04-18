@@ -30,3 +30,11 @@
             let! rview = AMap.find id mp
             yield! rview
         }
+
+    let toOrderedAList (map : amap<'k, 'v>) (order : alist<'k>) =
+      alist {
+        for id in order do
+          let! opt = AMap.tryFind id map
+          if opt.IsSome then yield opt.Value
+      }      
+    

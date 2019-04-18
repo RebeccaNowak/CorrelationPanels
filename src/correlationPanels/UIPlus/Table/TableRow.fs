@@ -9,7 +9,8 @@
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module TableRow =
     
-    let init isSelected update displayView editView onSelect alignment : TableRow<'dtype, 'mtype, 'action> = //, 'mtype, 'action> =
+    let init isSelected update displayView editView onSelect alignment actionMapping
+            : TableRow<'dtype, 'mtype, 'arg, 'action, 'parentaction> = //, 'mtype, 'action> =
       {
         isSelected    = isSelected
         onSelect      = onSelect
@@ -17,9 +18,10 @@
         displayView   = displayView
         editView      = editView
         align         = alignment
+        actionMapping = actionMapping
       }
 
-    let update (guiModel  : TableRow<'dtype, 'mtype, 'action>) 
+    let update (guiModel  : TableRow<'dtype, 'mtype, 'arg, 'action, 'parentaction>) 
                (dataModel : 'dtype)
                (action    : 'action) =
       guiModel.update dataModel action
@@ -45,10 +47,11 @@
     let intoActiveTr fOnClick domNodeList =
       tr [clazz "active";onClick (fun () -> fOnClick)] domNodeList
 
-    let view   (guiModel  : TableRow<'dtype, 'mtype, 'action>)
-               (dataModel : 'mtype) =
+    let view   (guiModel  : TableRow<'dtype, 'mtype, 'arg, 'action, 'parentaction>)
+               (dataModel : 'mtype)
+               (arg       : 'arg) =
       
-      let itemsContent = guiModel.editView dataModel
+      let itemsContent = guiModel.editView arg dataModel
       let items =
         List.map (fun c -> intoTd (guiModel.align dataModel) c) itemsContent
 
@@ -60,7 +63,7 @@
               intoActiveTr guiModel.onSelect items
             | false ->
               intoTrOnClick guiModel.onSelect items
-        yield row
+        yield (guiModel.actionMapping dataModel row)
       }
       
 

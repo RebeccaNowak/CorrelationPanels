@@ -1,6 +1,6 @@
 ﻿namespace CorrelationDrawing
 
-  module Log =
+  module GeologicalLog =
     open Aardvark.Base
     open Aardvark.Base.Incremental
     open Aardvark.UI
@@ -27,6 +27,13 @@
       | TextInputMessage          of (DiagramItemId * TextInput.Action)
       | MoveUp                    of RectangleStackId
       | MoveDown                  of RectangleStackId
+
+    let headings =
+      ["name";"move"]
+
+
+
+
 
     //[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     //module Action =
@@ -485,13 +492,7 @@
           moveUpDown model
         ]
 
-      let logToRow  (model       : MGeologicalLog) (argument : MDiagramItem) =
-        TableRow.init isSelected 
-                      update
-                      (displayView argument)
-                      (editView argument)
-                      Action.ToggleState
-                      (fun model -> Alignment.CENTRE)
+
 
 
 
@@ -594,8 +595,14 @@
 
 
     
-
-          
+    let logToRow actionMapping =
+      (TableRow.init View.isSelected 
+                     update
+                     View.displayView
+                     View.editView
+                     Action.ToggleState
+                     (fun model -> Alignment.CENTRE))
+                     actionMapping
 
 
     let init = 

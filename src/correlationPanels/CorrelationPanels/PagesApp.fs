@@ -11,7 +11,7 @@ module Pages =
   open UIPlus
   
   open Svgplus
-
+  open CorrelationDrawing.CorrelationPlotTypes
   open CorrelationDrawing.Types
   open CorrelationDrawing.CorrelationPlotTypes
   open CorrelationDrawing.SemanticTypes
@@ -27,7 +27,7 @@ module Pages =
       | KeyboardMessage               of Keyboard.Action
       //| KeyDown                       of key : Keys
       //| KeyUp                         of key : Keys     
-      | CorrPlotMessage               of CorrelationPlot.Action
+      | CorrPlotMessage               of CorrelationPlotTypes.Action
       | SemanticAppMessage            of SemanticApp.Action
       | AnnotationAppMessage          of AnnotationApp.Action
       | CorrelationDrawingMessage     of CorrelationDrawing.Action
@@ -102,7 +102,7 @@ module Pages =
 
   let loadAnnotations (ind : SaveIndex) model = 
       let annoApp = AnnotationApp.load model.annotationApp (ind.filename SaveType.Annotations)
-      let updCPA = (CorrelationPlot.update model.annotationApp model.semanticApp model.corrPlot CorrelationPlot.Clear)
+      let updCPA = (CorrelationPlot.update model.annotationApp model.semanticApp model.corrPlot CorrelationPlotTypes.Clear)
       {model with   
          annotationApp = annoApp
          corrPlot   = updCPA
@@ -112,7 +112,7 @@ module Pages =
       { model with  
          annotationApp = AnnotationApp.update model.annotationApp (AnnotationApp.Clear)
          drawingApp    = CorrelationDrawing.update model.drawingApp model.semanticApp (CorrelationDrawing.Clear)
-         corrPlot   = CorrelationPlot.update model.annotationApp model.semanticApp model.corrPlot (CorrelationPlot.Clear)                     
+         corrPlot   = CorrelationPlot.update model.annotationApp model.semanticApp model.corrPlot (CorrelationPlotTypes.Clear)                     
       } 
 
   let centerScene model =
@@ -144,7 +144,7 @@ module Pages =
     match msg, model.drawingApp.isDrawing with
       | MouseUp bp,_ ->
         let message =
-            (CorrelationPlot.Action.SvgCameraMessage 
+            (CorrelationPlotTypes.SvgCameraMessage 
               (SvgCamera.Action.MouseUp bp)
             )
           
@@ -157,7 +157,7 @@ module Pages =
         }
       | MouseDown bp,_-> 
         let message =
-            (CorrelationPlot.Action.SvgCameraMessage 
+            (CorrelationPlotTypes.SvgCameraMessage 
               (SvgCamera.Action.MouseDown bp)
             )
           
@@ -170,7 +170,7 @@ module Pages =
         }
       | MouseMove p,_ -> 
         let message =
-            (CorrelationPlot.Action.SvgCameraMessage 
+            (CorrelationPlotTypes.SvgCameraMessage 
               (SvgCamera.Action.MouseMove p)
             )
           
@@ -190,7 +190,7 @@ module Pages =
                   updateAnnoApp model (AnnotationApp.AddAnnotation w)
             | _ -> model.annotationApp
         let _corrPlot = 
-          let m = (CorrelationPlot.KeyboardMessage m)
+          let m = (CorrelationPlotTypes.KeyboardMessage m)
           CorrelationPlot.update model.annotationApp model.semanticApp model.corrPlot m
 
         let _drawingApp = CorrelationDrawing.update 
@@ -259,7 +259,7 @@ module Pages =
 
         let (annoApp, corrPlotApp) =
           match m with 
-          | CorrelationPlot.SelectLog id ->
+          | CorrelationPlotTypes.SelectLog id ->
             let selPoints = CorrelationPlot.getPointsOfLog model.corrPlot id
             let upd =
               AnnotationApp.update model.annotationApp AnnotationApp.DeselectAllPoints
@@ -268,7 +268,7 @@ module Pages =
             let cPlot =
               CorrelationPlot.update model.annotationApp 
                                       model.semanticApp
-                                      model.corrPlot (CorrelationPlot.SelectLog id)
+                                      model.corrPlot (CorrelationPlotTypes.SelectLog id)
             (annoApp, cPlot)
           | _ -> (model.annotationApp, updCorrPlotApp m)
         
@@ -280,7 +280,7 @@ module Pages =
                     model.annotationApp
                     model.semanticApp
                     model.corrPlot 
-                    (CorrelationPlot.GrainSizeTypeMessage m)
+                    (CorrelationPlotTypes.GrainSizeTypeMessage m)
         {model with corrPlot = _cp}
             
       | CentreScene,  _ -> 
@@ -492,7 +492,7 @@ module Pages =
       let newLogButton = 
           (
             button [clazz "ui button"; 
-                  (onMouseClick (fun _ -> CorrelationPlot.Action.FinishLog)) 
+                  (onMouseClick (fun _ -> CorrelationPlotTypes.FinishLog)) 
                  ] 
                  [text "New Log"]
           )

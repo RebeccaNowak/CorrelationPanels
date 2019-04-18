@@ -8,31 +8,34 @@
   [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
   module Table =
 
-    let init mapper colHeadings =
+    let init (mapper : TableRow<'a,'b,'c,'d, 'e>) colHeadings : Table<'a,'b,'c,'d, 'e> =
       {
         mapper      = mapper
         colHeadings = colHeadings
       }
 
-    let view  (guiModel  : Table<'dtype, 'arg, 'mtype, 'action>)
+    let view  (guiModel  : Table<'dtype, 'arg, 'mtype, 'action, 'parentaction>)
               (data      : alist<'mtype>) 
               (args      : alist<'arg>) =
-      let magic (d : 'mtype) (arg : 'arg) =
-        let row = guiModel.mapper arg  d 
-        let domNode = TableRow.view row d
-        domNode
-      
       let header = 
         guiModel.colHeadings
           |> List.map (fun str -> th[] [text str])
 
+      let rows = 
+        let zipped = DS.AList.zip data args
+        alist {
+          for tuple in zipped do
+            let (dat, arg) = tuple
+            let res = TableRow.view guiModel.mapper arg dat
+            yield! res
+        }
       require (GUI.CSS.myCss) (
         table
           ([clazz "ui celled striped inverted table unstackable";
                                 style "padding: 1px 5px 2px 5px"]) (
               [
                 thead [][tr[] header]
-                //Incremental.tbody  (AttributeMap.ofList []) rows
+                Incremental.tbody  (AttributeMap.ofList []) rows
               ]
           )
       )

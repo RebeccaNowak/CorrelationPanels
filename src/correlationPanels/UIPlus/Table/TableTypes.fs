@@ -27,19 +27,20 @@
         id = System.Guid.NewGuid()
       }
 
-  type TableRow<'dtype, 'mtype, 'action> =
+  type TableRow<'dtype, 'mtype, 'arg, 'action, 'parentaction> =
     {
       isSelected    : 'mtype -> IMod<bool>
       update        : 'dtype -> 'action -> 'dtype
-      displayView   : 'mtype -> list<DomNode<'action>>
-      editView      : 'mtype -> list<DomNode<'action>>
+      displayView   : 'arg   -> 'mtype -> list<DomNode<'action>>
+      editView      : 'arg   -> 'mtype -> list<DomNode<'action>>
       onSelect      : 'action
       align         : 'mtype -> Alignment
+      actionMapping : 'mtype -> DomNode<'action> -> DomNode<'parentaction>
     }
 
-  type Table<'dtype, 'mtype, 'arg, 'action>  =
+  type Table<'dtype, 'mtype, 'arg, 'action, 'parentaction>  =
     {
-      mapper      : 'mtype -> 'arg -> TableRow<'dtype, 'mtype, 'action>
+      mapper      : TableRow<'dtype, 'mtype, 'arg, 'action, 'parentaction>
       colHeadings : list<string>
     }
 

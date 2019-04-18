@@ -25,30 +25,7 @@
     open CorrelationDrawing.CorrelationTypes
     open CorrelationDrawing.CorrelationPlotTypes
 
-
-    type Action = 
-      | Clear
-      | SvgCameraMessage of SvgCamera.Action
-      | KeyboardMessage  of Keyboard.Action
-     // | ToggleSelectLog        of option<RectangleStackId>
-      | SelectLog              of DiagramItemId
-      //| NewLog                 
-   //   | TogglePoint            of (V3d * AnnotationId)
-      | FinishLog              
-   //   | SaveLog                of RectangleStackId              
-      | DeleteLog              of DiagramItemId
-      | LogMessage             of (DiagramItemId * Log.Action)
-      //| ChangeView             of CorrelationPlotViewType
-      //| ChangeXAxis            of (AnnotationApp * SemanticId)
-      //| LogAxisAppMessage      of LogAxisApp.Action
-      | ToggleEditCorrelations
-      | SetSecondaryLevel      of NodeLevel
-      //| ToggleFlag             of SvgFlags
-      | DiagramMessage         of Diagram.Action
-      | MouseMove              of V2d
-      | GrainSizeTypeMessage       of ColourMap.Action
-      //| KeyDown                of key : Keys
-      //| KeyUp                  of key : Keys     
+ 
       
 
     //let logOffset (index : int) =
@@ -62,7 +39,7 @@
                                    (stackid : DiagramItemId) =
       let log = tryFindLog model stackid
       Option.bind (fun lo -> 
-                    let on = Log.findNodeFromRectangleId lo rid
+                    let on = GeologicalLog.findNodeFromRectangleId lo rid
                     Option.map (fun n -> (n, lo)) on
                   ) log
 
@@ -71,17 +48,15 @@
                     (nodeId : LogNodeId) =
       let optLog = tryFindLog model logId
       Option.bind
-        (fun log -> Log.findNode log (fun n -> n.id = nodeId)) optLog
+        (fun log -> GeologicalLog.findNode log (fun n -> n.id = nodeId)) optLog
 
     let tryFindNodeFromRectId (model  : CorrelationPlot) 
                               (logId  : DiagramItemId) 
                               (rectId : RectangleId) =
       let optLog = tryFindLog model logId
       Option.bind
-        (fun log -> Log.findNode log (fun n -> n.rectangleId = rectId)) optLog
+        (fun log -> GeologicalLog.findNode log (fun n -> n.rectangleId = rectId)) optLog
         
-      
-
     let getPointsOfLog (model : CorrelationPlot) (logId : DiagramItemId) =
       let opt = HMap.tryFind logId model.logs
       match opt with
@@ -138,7 +113,7 @@
         model
       | false ->
         let (item, newLog) = 
-          Log.initial 
+          GeologicalLog.initial 
               model.selectedPoints  //selected points
               semanticApp
               annoApp
@@ -170,8 +145,8 @@
       let _logs = (HMap.remove id model.logs)
       {model with logs = _logs}
 
-    let updateLog  index (message : Log.Action) (logs : hmap<DiagramItemId, GeologicalLog>) =
-       HMap.update index (fun (x : option<GeologicalLog>) -> Log.update x.Value message) logs//hack
+    let updateLog  index (message : GeologicalLog.Action) (logs : hmap<DiagramItemId, GeologicalLog>) =
+       HMap.update index (fun (x : option<GeologicalLog>) -> GeologicalLog.update x.Value message) logs//hack
 
     let selectLog (model    : CorrelationPlot) (id       : DiagramItemId) =
       let hasNew = not (model.logs |> HMap.forall (fun id x -> x.state <> State.New))
@@ -183,18 +158,18 @@
             | None -> 
               let _logs = 
                 model.logs
-                  |> updateLog id (Log.Action.SetState State.Edit)
+                  |> updateLog id (GeologicalLog.Action.SetState State.Edit)
               (_logs, Some id)
             | Some logId when logId = id ->
               let _logs = 
                 model.logs
-                  |> updateLog id (Log.Action.SetState State.Display)
+                  |> updateLog id (GeologicalLog.Action.SetState State.Display)
               (_logs, None)
             | Some logId ->
               let _logs = 
                 model.logs
-                    |> updateLog logId (Log.Action.SetState State.Display)
-                    |> updateLog id (Log.Action.SetState State.Edit)
+                    |> updateLog logId (GeologicalLog.Action.SetState State.Display)
+                    |> updateLog id (GeologicalLog.Action.SetState State.Edit)
               (_logs, Some id)
         {model with logs        = _logs
                     selectedLog = _sel}
@@ -287,18 +262,18 @@
           | Some log ->
             let _dApp =
               match logmsg with
-                | Log.TextInputMessage (sid, textMessage) ->
+                | GeologicalLog.TextInputMessage (sid, textMessage) ->
                   let itemMessage = DiagramItem.ChangeLabel textMessage
                   Diagram.updateItemFromId model.diagram log.diagramRef.itemId itemMessage
-                | Log.MoveDown id ->
+                | GeologicalLog.MoveDown id ->
                   Diagram.update model.diagram (Diagram.MoveRight log.diagramRef.itemId)
-                | Log.MoveUp id ->
+                | GeologicalLog.MoveUp id ->
                   Diagram.update model.diagram (Diagram.MoveLeft log.diagramRef.itemId)
                 | _ -> model.diagram
 
             let _model = 
               match logmsg with
-                | Log.SelectLogNode nid ->
+                | GeologicalLog.SelectLogNode nid ->
                   let optNode = tryFindNode model logId nid
                   let _cmap = 
                     match optNode with
@@ -396,11 +371,11 @@
                     match _optn with
                       | Some (n, log) ->
                         let logM1 = 
-                              (Log.LogNodeMessage 
+                              (GeologicalLog.LogNodeMessage 
                                 (n.id, LogNodes.RectangleMessage (Rectangle.UpdateColour updateColoursFromCMap))
                               )
                         let logM2 = 
-                              (Log.LogNodeMessage 
+                              (GeologicalLog.LogNodeMessage 
                                 (n.id, LogNodes.RectangleMessage (Rectangle.SetWidth (width)))
                               )
                         let _logs  = 
@@ -495,13 +470,21 @@
              ]
         )   
 
+
                                        
-    let listView  (model : MCorrelationPlot) 
+    let listView  (model   : MCorrelationPlot) 
                   (annoApp : amap<AnnotationId, MAnnotation>)
-                  (semApp : MSemanticApp) =
-      let logList =
-        let rows = AList.empty
-        Tables.toTableView (div[][]) rows ["Log Name";"Order"]
+                  (semApp  : MSemanticApp) =
+      let logList = 
+        DS.AMap.toOrderedAList model.logs model.diagram.order
+      
+      let itemList = 
+        DS.AMap.toOrderedAList model.diagram.items model.diagram.order
+
+      let tview =
+          Table.view model.logsTable itemList logList
+        
+      //Tables.toTableView (div[][]) rows ["Log Name";"Order"]
 
       let domnode =
         let attsBody =
@@ -512,11 +495,7 @@
           AttributeMap.ofList [clazz "ui inverted segment"]
         require (GUI.CSS.myCss) (
           body attsBody [
-            div [] [
-              // menu |> ui.map correlationplotmessage
-              Incremental.div attsDiv (AList.single logList)
-                              
-            ]
+            Incremental.div attsDiv (AList.single tview)
           ]
         )
 
@@ -524,12 +503,19 @@
       
 
 
-    let initial : CorrelationPlot  = 
+    let initial : CorrelationPlot  =
       let xToSvg              = fun x -> (21.0 + Math.Log(x,2.0)) * 10.0
       let svgToX              = fun x -> (Math.Pow (2.0, (x * 0.1 - 21.0)))
       let yToSvg              = 25.0
       let defaultWidth        = xToSvg UIPlus.ColourMapItem.vfGravel.defaultMiddle
+      let actionMapping (log       : MGeologicalLog)
+                        (domNode   : DomNode<GeologicalLog.Action>) =
+         
+        UI.map (fun a -> Action.LogMessage (log.diagramRef.itemId, a)) domNode 
+           
 
+      let uitable = 
+        Table.init (GeologicalLog.logToRow actionMapping) GeologicalLog.headings
       {
         diagram             = Svgplus.Diagram.init (fun x -> x * yToSvg) (fun x -> x / yToSvg)
         logs                = HMap.empty
@@ -542,7 +528,7 @@
         selectedNode        = None
         selectedBorder      = None
         secondaryLvl        = NodeLevel.init 1
-
+        logsTable           = uitable
         //creatingNew         = false
 
         //svgFlags            = SvgFlags.None
@@ -583,7 +569,7 @@
       match model.logs.Count = 0 with
         | true  -> ThreadPool.empty
         | false ->
-            model.logs |> HMap.map (fun id lo -> Log.threads lo)
+            model.logs |> HMap.map (fun id lo -> GeologicalLog.threads lo)
                        |> DS.HMap.values
                        |> List.reduce ThreadPool.union
 

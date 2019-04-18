@@ -229,3 +229,30 @@ module PList =
             HMap.add c _current rest
           bar   
     result
+
+  let removeLast (plst : plist<'a>) =
+    PList.remove (PList.lastIndex plst) plst
+
+  let reverse (plst : plist<'a>) =
+    plst
+      |> PList.toListBack 
+      |> PList.ofList
+
+
+  let zip (plst1 : plist<'a>) (plst2 : plist<'b>) =
+    let rec _zip (res : plist<'a*'b>) (lst1 : plist<'a>) (lst2 : plist<'b>) =
+      match lst1.IsEmptyOrNull (), lst2.IsEmptyOrNull () with
+      | true, true -> res
+      | false, false ->
+        let last1 =  PList.last lst1
+        let last2 =  PList.last lst2
+        let result = PList.prepend (last1, last2) res
+        let rest1 = removeLast lst1
+        let rest2 = removeLast lst2
+        (_zip result rest1 rest2)
+      | _,_ -> failwith "lists must have the same size"
+    _zip PList.empty plst1 plst2
+
+    
+
+      
